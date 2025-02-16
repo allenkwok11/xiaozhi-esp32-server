@@ -76,15 +76,15 @@ server:
 
 ### LLM
 
-| 类型 | 平台名称                      | 使用方式            | 收费模式      | 备注                                                                                       |
-|:----:|:-----------------------------:|:-------------------:|:-------------:|:------------------------------------------------------------------------------------------:|
-| LLM  | 阿里百炼 (AliLLM)             | openai 接口调用     | 消耗 token    | [点击申请密钥](https://bailian.console.aliyun.com/?apiKey=1#/api-key)                        |
-| LLM  | 深度求索 (DeepSeekLLM)        | openai 接口调用     | 消耗 token    | [点击申请密钥](https://platform.deepseek.com/)                                             |
-| LLM  | 智谱（ChatGLMLLM）                    | openai 接口调用     | 消耗 token    | 需注册申请 API key，请参考 [BigModel](https://bigmodel.cn/usercenter/proj-mgmt/apikeys)        |
-| LLM  | OllamaLLM                     | ollama 接口调用     | 免费/自定义   | 需预先下载模型（`ollama pull`），服务地址：`http://localhost:11434`                         |
-| LLM  | DifyLLM                       | dify 接口调用       | 消耗 token    | 本地化部署，注意配置提示词需在 Dify 控制台设置                                             |
-| LLM  | GeminiLLM                     | gemini 接口调用     | 免费          | [点击申请密钥](https://aistudio.google.com/apikey)                                |
-| LLM  | CozeLLM                       | coze 接口调用       | 消耗 token    | 需提供 bot_id、user_id 及个人令牌                                                           |
+| 类型 | 平台名称                      | 使用方式            |   收费模式   |                                      备注                                       |
+|:----:|:-----------------------------:|:-------------------:|:--------:|:-----------------------------------------------------------------------------:|
+| LLM  | 阿里百炼 (AliLLM)             | openai 接口调用     | 消耗 token |        [点击申请密钥](https://bailian.console.aliyun.com/?apiKey=1#/api-key)        |
+| LLM  | 深度求索 (DeepSeekLLM)        | openai 接口调用     | 消耗 token |                   [点击申请密钥](https://platform.deepseek.com/)                    |
+| LLM  | 智谱（ChatGLMLLM）                    | openai 接口调用     |    免费    |       虽然免费，仍需[点击申请密钥](https://bigmodel.cn/usercenter/proj-mgmt/apikeys)       |
+| LLM  | OllamaLLM                     | ollama 接口调用     |  免费/自定义  |             需预先下载模型（`ollama pull`），服务地址：`http://localhost:11434`              |
+| LLM  | DifyLLM                       | dify 接口调用       | 消耗 token |                          本地化部署，注意配置提示词需在 Dify 控制台设置                           |
+| LLM  | GeminiLLM                     | gemini 接口调用     |    免费    |                 [点击申请密钥](https://aistudio.google.com/apikey)                  |
+| LLM  | CozeLLM                       | coze 接口调用       | 消耗 token |                           需提供 bot_id、user_id 及个人令牌                            |
 
 实际上，任何支持 openai 接口调用的 LLM 均可接入使用。
 
