@@ -283,7 +283,7 @@ const resetConfig = async () => {
 
 <style scoped>
 .app-container {
-  height: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #f5f7fa;
@@ -299,7 +299,9 @@ const resetConfig = async () => {
   max-width: 1000px;
   margin: 0 auto;
   padding: 16px 24px;
-  overflow: auto;
+  width: 100%;
+  overflow-y: auto;
+  height: calc(100vh - 120px); /* 减去头部和面包屑的高度 */
 }
 
 .page-title {
@@ -313,6 +315,7 @@ const resetConfig = async () => {
   border-radius: 4px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
 }
 
 .form-group {
