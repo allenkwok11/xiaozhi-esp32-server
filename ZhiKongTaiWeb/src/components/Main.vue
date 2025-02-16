@@ -33,7 +33,9 @@
 
 <script setup>
 import NavBar from './NavBar.vue';
-const emit = defineEmits(['enter-panel']);
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const openTutorial = () => {
   window.open('https://ccnphfhqs21z.feishu.cn/wiki/F5krwD16viZoF0kKkvDcrZNYnhb', '_blank');
@@ -48,12 +50,12 @@ const openGithubServer = () => {
 };
 
 const enterPanel = () => {
-  emit('enter-panel');
+  router.push('/panel');
 };
 
 const handleTabChange = (tab) => {
   if (tab === 'device') {
-    emit('enter-panel');
+    router.push('/panel');
   }
 };
 </script>
