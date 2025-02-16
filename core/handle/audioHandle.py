@@ -156,7 +156,6 @@ async def no_voice_close_connect(conn):
     else:
         no_voice_time = time.time() * 1000 - conn.client_no_voice_last_time
         close_connection_no_voice_time = conn.config.get("close_connection_no_voice_time", 120)
-        print(no_voice_time)
         if no_voice_time > 1000 * close_connection_no_voice_time:
             conn.client_abort = False
             conn.asr_server_receive = False
