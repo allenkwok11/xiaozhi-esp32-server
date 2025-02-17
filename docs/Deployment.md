@@ -17,46 +17,7 @@ docker镜像已支持x86架构、arm64架构的CPU，支持在国产操作系统
 在页面的右侧找到名称为`RAW`按钮，在`RAW`按钮的旁边，找到下载的图标，点击下载按钮，下载`config.yaml`文件。 把文件下载到你的
 `项目目录`。
 
-## 4. 修改配置文件
-
-修改刚才你下载的`config.yaml`文件，配置本项目所需的各种参数。默认的LLM使用的是`ChatGLMLLM`
-，你需要配置密钥，因为他们的模型，虽然有免费的，但是仍要去[官网](https://bigmodel.cn/usercenter/proj-mgmt/apikeys)注册密钥，才能启动。
-
-默认的TTS使用的是`EdgeTTS`，这个无需配置，如果你需要更换成`豆包TTS`，则需要配置密钥。
-
-配置说明：这里是各个功能使用的默认组件，例如LLM默认使用`ChatGLMLLM`模型。如果需要切换模型，就是改对应的名称。
-
-本项目的默认配置原则是成本最低配置原则（`glm-4-flash`和`EdgeTTS`都是免费的），如果需要更优的更快的搭配，需要自己结合部署环境切换各组件的使用。
-
-```
-selected_module:
-  ASR: FunASR
-  VAD: SileroVAD
-  LLM: ChatGLMLLM
-  TTS: EdgeTTS
-```
-
-比如修改`LLM`使用的组件，就看本项目支持哪些`LLM` API接口，当前支持的是`openai`、`dify`。欢迎验证和支持更多LLM平台的接口。
-
-使用时，在`selected_module`修改成对应的如下LLM配置的名称：
-
-```
-LLM:
-  AliLLM:
-    type: openai
-    ...
-  DeepSeekLLM:
-    type: openai
-    ...
-  ChatGLMLLM:
-    type: openai
-    ...
-  DifyLLM:
-    type: dify
-    ...
-```
-
-有些服务，比如如果你使用`Dify`、`豆包的TTS`，是需要密钥的，记得在配置文件加上哦！
+## 4.[跳转到配置项目文件](#配置项目)
 
 ## 5. 执行docker命令
 
@@ -75,46 +36,15 @@ dir
 docker run -d --name xiaozhi-esp32-server --restart always --security-opt seccomp:unconfined -p 8000:8000 -v $(pwd)/config.yaml:/opt/xiaozhi-esp32-server/config.yaml ccr.ccs.tencentyun.com/xinnan/xiaozhi-esp32-server:latest
 ```
 
-如果首次执行，可能需要几分钟时间，你要耐心等待他完成拉取。正常拉取完成后，你可以在命令行执行以下命令查看服务是否启动成功
+## 6.[跳转到运行状态确认](#运行状态确认)
 
-```
-docker ps
-```
-
-如果你能看到`xiaozhi-server`，说明服务启动成功。那你还可以进一步执行以下命令，查看服务的日志
-
-```
-docker logs -f xiaozhi-esp32-server
-```
-
-如果你能看到，类似以下日志,则是本项目服务启动成功的标志。
-
-```
-2025-xx-xx xx:51:59,492 - core.server - INFO - Server is running at ws://xx.xx.xx.xxx:8000
-2025-xx-xx xx:51:59,516 - websockets.server - INFO - server listening on 0.0.0.0:8000
-```
-
-接下来，你就可以开始 `编译esp32固件`了，请往下翻，翻到编译`esp32固件`相关章节。那么由于你是用docker部署，你要自己查看自己本机电脑的ip是多少。
-正常来说，假设你的ip是`192.168.1.25`，那么你的接口地址就是：`ws://192.168.1.25:8000`。这个信息很有用的，后面`编译esp32固件`
-需要用到。
-
-请注意，你的接口地址是`websocket`协议的地址，你可以使用`apifox`等工具调试。但是不能直接用浏览器打开访问，如果用浏览器打开，日志会显示错误，会让你怀疑是否部署成功了。
-
-后期如果想升级版本，可以这么操作
-
-1、备份好`config.yaml`文件，一些关键的配置到时复制到新的`config.yaml`文件里。
-
-2、执行以下命令
-
-```
-docker stop xiaozhi-esp32-server
-docker rm xiaozhi-esp32-server
-docker rmi ccr.ccs.tencentyun.com/xinnan/xiaozhi-esp32-server:latest
-```
+## [跳转到版本升级操作](#版本升级操作)
 
 3.按本教程重新来一遍
 
 # 方式二：借助docker环境运行部署
+
+## 1.克隆项目
 
 这个方法的原理，其实是和第一种方式类似。区别在于，第一种方式只要下载一个配置文件，而本方式要下载项目源码。
 
@@ -131,15 +61,11 @@ docker rmi ccr.ccs.tencentyun.com/xinnan/xiaozhi-esp32-server:latest
 点击它，下载本项目源码压缩包。下载到你电脑后，解压它，此时它的名字可能叫`xiaozhi-esp32-server-main`
 你需要把它重命名成`xiaozhi-esp32-server`，好了请记住这个目录，我们暂且称它为`项目目录`。
 
-下载源码后，需要下载模型文件。 默认使用`SenseVoiceSmall`模型，进行语音转文字。因为模型较大，需要独立下载，下载后把`model.pt`
-文件放在`model/SenseVoiceSmall`
-目录下。下面两个下载路线任选一个。
+## 2.[跳转到下载语音识别模型文件](#模型文件)
 
-- 线路一：阿里魔塔下载[SenseVoiceSmall](https://modelscope.cn/models/iic/SenseVoiceSmall/resolve/master/model.pt)
-- 线路二：百度网盘下载[SenseVoiceSmall](https://pan.baidu.com/share/init?surl=QlgM58FHhYv1tFnUT_A8Sg&pwd=qvna) 提取码:
-  `qvna`
+## 3.[跳转到配置项目文件](#配置项目)
 
-下载模型后，需要按照`方式一：docker快速部署`修改配置文件`config.yaml`
+## 4.运行docker
 
 修改完配置后，打开命令行工具，`cd`进入到你的项目目录下，执行以下命令
 
@@ -150,22 +76,7 @@ docker run -d --name xiaozhi-esp32-server --restart always --security-opt seccom
   ccr.ccs.tencentyun.com/xinnan/xiaozhi-esp32-server:latest
 ```
 
-```
-docker logs -f xiaozhi-esp32-server
-```
-
-如果你能看到，类似以下日志,则是本项目服务启动成功的标志。
-
-```
-2025-xx-xx xx:51:59,492 - core.server - INFO - Server is running at ws://xx.xx.xx.xxx:8000
-2025-xx-xx xx:51:59,516 - websockets.server - INFO - server listening on 0.0.0.0:8000
-```
-
-接下来，你就可以开始 `编译esp32固件`了，请往下翻，翻到编译`esp32固件`相关章节。那么由于你是用docker部署，你要自己查看自己本机电脑的ip是多少。
-正常来说，假设你的ip是`192.168.1.25`，那么你的接口地址就是：`ws://192.168.1.25:8000`。这个信息很有用的，后面`编译esp32固件`
-需要用到。
-
-请注意，你的接口地址是`websocket`协议的地址，你可以使用`apifox`等工具调试。但是不能直接用浏览器打开访问，如果用浏览器打开，日志会显示错误，会让你怀疑是否部署成功了。
+## 5.[跳转到运行状态确认](#运行状态确认)
 
 后期，如果你修改了代码，想让新代码跑起来，可以用以下命令让docker容器重启：
 
@@ -219,16 +130,23 @@ pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 pip install -r requirements.txt
 ```
 
-## 3.下载语音识别模型
+## 3.[跳转到下载语音识别模型文件](#模型文件)
 
-默认使用`SenseVoiceSmall`模型，进行语音转文字。因为模型较大，需要独立下载，下载后把`model.pt`文件放在`model/SenseVoiceSmall`
-目录下。下面两个下载路线任选一个。
+## 4.[跳转到配置项目文件](#配置项目)
 
-- 线路一：阿里魔塔下载[SenseVoiceSmall](https://modelscope.cn/models/iic/SenseVoiceSmall/resolve/master/model.pt)
-- 线路二：百度网盘下载[SenseVoiceSmall](https://pan.baidu.com/share/init?surl=QlgM58FHhYv1tFnUT_A8Sg&pwd=qvna) 提取码:
-  `qvna`
+## 5.运行项目
 
-## 4.配置项目
+```
+# 确保在本项目的根目录下执行
+conda activate xiaozhi-esp32-server
+python app.py
+```
+
+## 6.[跳转到运行状态确认](#运行状态确认)
+
+# 汇总
+
+## 配置项目
 
 修改`config.yaml`文件，配置本项目所需的各种参数。默认的LLM使用的是`ChatGLMLLM`
 ，你需要配置密钥，因为他们的模型，虽然有免费的，但是仍要去[官网](https://bigmodel.cn/usercenter/proj-mgmt/apikeys)注册密钥，才能启动。
@@ -271,23 +189,54 @@ LLM:
 
 有些服务，比如如果你使用`Dify`、`豆包的TTS`，是需要密钥的，记得在配置文件加上哦！
 
-## 5.运行项目
+## 模型文件
 
-启动项目
+下载源码后，需要下载模型文件。 默认使用`SenseVoiceSmall`模型，进行语音转文字。因为模型较大，需要独立下载，下载后把`model.pt`
+文件放在`model/SenseVoiceSmall`
+目录下。下面两个下载路线任选一个。
+
+- 线路一：阿里魔塔下载[SenseVoiceSmall](https://modelscope.cn/models/iic/SenseVoiceSmall/resolve/master/model.pt)
+- 线路二：百度网盘下载[SenseVoiceSmall](https://pan.baidu.com/share/init?surl=QlgM58FHhYv1tFnUT_A8Sg&pwd=qvna) 提取码:
+  `qvna`
+
+
+## 运行状态确认
+
+如果首次执行，可能需要几分钟时间，你要耐心等待他完成拉取。正常拉取完成后，你可以在命令行执行以下命令查看服务是否启动成功
 
 ```
-# 确保在本项目的根目录下执行
-conda activate xiaozhi-esp32-server
-python app.py
+docker ps
 ```
 
-启动后，会看到类似以下日志
+如果你能看到`xiaozhi-server`，说明服务启动成功。那你还可以进一步执行以下命令，查看服务的日志
 
 ```
-2025-xx-xx xx:51:59,492 - core.server - INFO - Server is running at ws://192.168.1.25:8000
+docker logs -f xiaozhi-esp32-server
+```
+
+如果你能看到，类似以下日志,则是本项目服务启动成功的标志。
+
+```
+2025-xx-xx xx:51:59,492 - core.server - INFO - Server is running at ws://xx.xx.xx.xxx:8000
 2025-xx-xx xx:51:59,516 - websockets.server - INFO - server listening on 0.0.0.0:8000
 ```
 
-其中上面的`ws://192.168.1.25:8000`就是本项目提供的接口地址了，当然你自己的机器和我的是不一样的，记得要找到自己的地址。
+接下来，你就可以开始 `编译esp32固件`了，请往下翻，翻到编译`esp32固件`相关章节。那么由于你是用docker部署，你要自己查看自己本机电脑的ip是多少。
+正常来说，假设你的ip是`192.168.1.25`，那么你的接口地址就是：`ws://192.168.1.25:8000`。这个信息很有用的，后面`编译esp32固件`
+需要用到。
 
 请注意，你的接口地址是`websocket`协议的地址，你可以使用`apifox`等工具调试。但是不能直接用浏览器打开访问，如果用浏览器打开，日志会显示错误，会让你怀疑是否部署成功了。
+
+## 版本升级操作
+
+如果想升级版本，可以这么操作
+
+1、备份好`config.yaml`文件，一些关键的配置到时复制到新的`config.yaml`文件里。
+
+2、执行以下命令
+
+```
+docker stop xiaozhi-esp32-server
+docker rm xiaozhi-esp32-server
+docker rmi ccr.ccs.tencentyun.com/xinnan/xiaozhi-esp32-server:latest
+```

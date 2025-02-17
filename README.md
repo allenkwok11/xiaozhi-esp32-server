@@ -123,6 +123,8 @@ server:
 
 ### 一、[部署文档](./docs/Deployment.md)
 
+[精简版部署文档](./docs/Deployment-silm.md)
+
 本项目支持以下三种部署方式，您可根据实际需求选择：
 
 1. **[Docker 快速部署](./docs/Deployment.md#%E6%96%B9%E5%BC%8F%E4%B8%80docker%E5%BF%AB%E9%80%9F%E9%83%A8%E7%BD%B2)**  
