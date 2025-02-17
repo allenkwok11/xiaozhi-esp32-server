@@ -19,7 +19,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { API_BASE_URL } from '../config/api';
+import apiClient from '../utils/api';
 
 const router = useRouter();
 const username = ref('');
@@ -34,24 +34,16 @@ const handleLogin = async () => {
 
   isLoading.value = true;
   try {
-    const response = await fetch(`${API_BASE_URL}/api/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value
-      })
+    const response = await apiClient.post('/api/login', {
+      username: username.value,
+      password: password.value
     });
 
-    const data = await response.json();
+    const data = response.data;
     
     if (data.success) {
-      // 存储token和登录状态
-      localStorage.setItem('token', data.token);
+      localStorage.setItem('session_id', data.session_id);
       localStorage.setItem('isLoggedIn', 'true');
-      // 使用路由导航到panel页面
       router.push('/panel');
     } else {
       alert(data.message || '登录失败');

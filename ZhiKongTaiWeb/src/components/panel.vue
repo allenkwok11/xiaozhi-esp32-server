@@ -2,11 +2,46 @@
   <div class="app">
     <NavBar current-tab="device" @tab-change="handleTabChange"/>
     <main class="content">
-      <div class="breadcrumb">
-        <router-link to="/">首页</router-link> /
-        <span>设备管理</span>
+      <div class="page-header">
+        <div class="header-left">
+         
+          <div class="breadcrumb">
+            <router-link to="/">首页</router-link> /
+            <span>设备管理</span>
+          </div>
+        </div>
       </div>
-      
+      <button class="add-btn" @click="showBindDialog = true">
+            <i class="icon-plus"></i>添加设备
+      </button>
+      <!-- 绑定设备弹窗 -->
+      <div v-if="showBindDialog" class="dialog-overlay">
+        <div class="dialog">
+          <h3>绑定新设备</h3>
+          <div class="form-group">
+            <label>请输入6位认证码：</label>
+            <input 
+              type="text" 
+              v-model="authCode"
+              maxlength="6"
+              pattern="\d*"
+              placeholder="请输入6位数字认证码"
+              @input="handleAuthCodeInput"
+            />
+          </div>
+          <div class="dialog-buttons">
+            <button @click="showBindDialog = false">取消</button>
+            <button 
+              class="primary" 
+              @click="handleBindDevice"
+              :disabled="authCode.length !== 6 || isBinding"
+            >
+              {{ isBinding ? '绑定中...' : '确认绑定' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <template v-if="devices.length > 0">
         <div class="device-list">
           <DeviceCard
@@ -25,14 +60,7 @@
           />
         </div>
       </template>
-      <template v-else>
-        <div class="empty-state">
-          <div class="empty-message">
-            <i class="icon-info"></i>
-            <p>目前没有设备，请确认是否启用私有配置，并且和设备进行一次对话</p>
-          </div>
-        </div>
-      </template>
+     
     </main>
   </div>
 </template>
@@ -42,11 +70,77 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import NavBar from './NavBar.vue';
 import DeviceCard from './DeviceCard.vue';
-import { API_BASE_URL } from '../config/api';
+import apiClient from '../utils/api';
 
 const router = useRouter();
-const baseUrl = API_BASE_URL;
 const devices = ref([]);
+
+// 绑定设备相关的状态
+const showBindDialog = ref(false);
+const authCode = ref('');
+const isBinding = ref(false);
+
+// 处理认证码输入，只允许数字
+const handleAuthCodeInput = (event) => {
+  authCode.value = event.target.value.replace(/\D/g, '').slice(0, 6);
+};
+
+// 处理设备绑定
+const handleBindDevice = async () => {
+  if (authCode.value.length !== 6) {
+    alert('请输入6位数字认证码');
+    return;
+  }
+
+  isBinding.value = true;
+  try {
+    const response = await apiClient.post('/api/config/bind_device', {
+      auth_code: authCode.value
+    });
+
+    if (response.data.success) {
+      alert('设备绑定成功');
+      showBindDialog.value = false;
+      authCode.value = '';
+      // 刷新设备列表
+      loadDevices();
+    } else {
+      throw new Error(response.data.message);
+    }
+  } catch (error) {
+    alert(error.response?.data?.message || error.message || '绑定失败');
+  } finally {
+    isBinding.value = false;
+  }
+};
+
+// 将现有的加载设备方法提取出来
+const loadDevices = async () => {
+  try {
+    const response = await apiClient.get('/api/config/devices');
+    
+    if (response.data.success) {
+      const deviceArray = Object.entries(response.data.data).map(([id, config]) => ({
+        id,
+        config,
+        type: '面包板（WiFi）',
+        version: '0.9.9',
+        lastActivity: '3 天前',
+        note: ''
+      }));
+      devices.value = deviceArray;
+    } else {
+      throw new Error(response.data.message || '加载设备失败');
+    }
+  } catch (error) {
+    console.error('Error loading devices:', error);
+    // Show error message to user
+    const errorMessage = error.message || '加载设备失败，请检查网络连接';
+    alert(errorMessage);
+    
+    // If user is not logged in, redirect will be handled by api interceptor
+  }
+};
 
 const formatLastActivity = (timestamp) => {
   if (!timestamp) return '从未对话';
@@ -69,6 +163,14 @@ const formatLastActivity = (timestamp) => {
 };
 
 const handleRoleConfig = (device) => {
+  // 在跳转前保存完整的设备配置到 localStorage
+  localStorage.setItem(`deviceConfig_${device.id}`, JSON.stringify({
+    selected_module: device.config.selected_module || {},
+    prompt: device.config.prompt || '',
+    nickname: device.config.nickname || '小智'
+  }));
+  
+  // 跳转到角色配置页面
   router.push(`/role-setting/${device.id}`);
 };
 
@@ -82,20 +184,15 @@ const handleHistory = (device) => {
 
 const handleDelete = async (device) => {
   try {
-    const response = await fetch(`${baseUrl}/api/config/delete_device`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ device_id: device.id })
+    const response = await apiClient.post('/api/config/delete_device', {
+      device_id: device.id
     });
     
-    const data = await response.json();
-    if (data.success) {
+    if (response.data.success) {
       devices.value = devices.value.filter(d => d.id !== device.id);
       alert('设备已删除');
     } else {
-      throw new Error(data.message || '删除失败');
+      throw new Error(response.data.message || '删除失败');
     }
   } catch (error) {
     console.error('Error deleting device:', error);
@@ -110,23 +207,7 @@ const handleTabChange = (tab) => {
 };
 
 // Load devices on mount
-onMounted(async () => {
-  try {
-    const response = await fetch(`${baseUrl}/api/config/devices`);
-    const data = await response.json();
-    if (data.success) {
-      devices.value = data.data.map(device => ({
-        ...device,
-        type: '面包板（WiFi）',
-        version: '0.9.9',
-        lastActivity: '3 天前',
-        note: ''
-      }));
-    }
-  } catch (error) {
-    console.error('Error loading devices:', error);
-  }
-});
+onMounted(loadDevices);
 </script>
 
 <style scoped>
@@ -304,5 +385,116 @@ onMounted(async () => {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/%3E%3C/svg%3E");
   background-size: contain;
   opacity: 0.6;
+}
+
+.page-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  height: 36px;
+}
+
+.add-btn:hover {
+  background-color: #218838;
+}
+
+.icon-plus {
+  font-size: 16px;
+}
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.dialog h3 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.dialog .form-group {
+  margin-bottom: 20px;
+}
+
+.dialog label {
+  display: block;
+  margin-bottom: 8px;
+  color: #4a5568;
+}
+
+.dialog input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dialog-buttons button {
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dialog-buttons button.primary {
+  background-color: #28a745;
+  color: white;
+  border-color: #28a745;
+}
+
+.dialog-buttons button.primary:disabled {
+  background-color: #90be9c;
+  border-color: #90be9c;
+  cursor: not-allowed;
+}
+
+.breadcrumb {
+  margin-bottom: 0;
 }
 </style>

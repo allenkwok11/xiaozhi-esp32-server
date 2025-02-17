@@ -13,25 +13,32 @@ from manager.api.login import LoginHandler
 from manager.api.register import RegisterHandler
 from manager.api.user_manager import UserManager
 from manager.api.config import ConfigHandler
+from manager.session import SessionManager
+from functools import wraps
 
 logger = logging.getLogger(__name__)
+
+def auth_required(handler):
+    """鉴权装饰器"""
+    @wraps(handler)
+    async def wrapper(self, request):
+        session_id = request.cookies.get('session_id')
+        username = self.session_manager.validate_session(session_id)
+        if not username:
+            return web.json_response({'error': 'Unauthorized'}, status=401)
+        # 将用户名添加到请求对象
+        request['username'] = username
+        return await handler(self, request)
+    return wrapper
 
 class WebUI:
     def __init__(self):
         self.app = web.Application()
         self.user_manager = UserManager()
+        self.session_manager = SessionManager()
         
         # 添加静态文件路径
         self.static_path = os.path.join(root_dir, 'manager', 'static', 'webui')
-        
-        # 创建配置字典
-        self.config = {
-            'users': self.user_manager.get_users(),
-            'hash_password': self.user_manager.hash_password,
-            'save_user_data': self.user_manager.save_user_data,
-            'get_user': self.user_manager.get_user,
-            'update_user': self.user_manager.update_user
-        }
         
         self.setup_routes()
         self.setup_cors()
@@ -52,18 +59,21 @@ class WebUI:
 
     def setup_routes(self):
         """设置路由"""
-        login_handler = LoginHandler(self.config)
-        register_handler = RegisterHandler(self.config)
-        config_handler = ConfigHandler()
+        login_handler = LoginHandler(self.user_manager, self.session_manager)
+        register_handler = RegisterHandler(self.user_manager)
+        config_handler = ConfigHandler(self.session_manager)
         
-        # API 路由
+        # Public APIs
         self.app.router.add_post('/api/login', login_handler.handle_login)
         self.app.router.add_post('/api/register', register_handler.handle_register)
-        self.app.router.add_get('/api/config/devices', config_handler.get_private_configs)
-        self.app.router.add_post('/api/config/device', config_handler.save_device_config)
-        self.app.router.add_get('/api/config/module-options', config_handler.get_module_options)
-        self.app.router.add_post('/api/config/save_device_config', config_handler.save_device_config)
-        self.app.router.add_post('/api/config/delete_device', config_handler.delete_device_config)
+
+        # Protected APIs
+        self.app.router.add_get('/api/config/devices', self.auth_wrapper(config_handler.get_private_configs))
+
+        self.app.router.add_get('/api/config/module-options', self.auth_wrapper(config_handler.get_module_options))
+        self.app.router.add_post('/api/config/save_device_config', self.auth_wrapper(config_handler.save_device_config))
+        self.app.router.add_post('/api/config/delete_device', self.auth_wrapper(config_handler.delete_device_config))
+        self.app.router.add_post('/api/config/bind_device', self.auth_wrapper(config_handler.bind_device))
 
         # 添加静态文件服务
         self.app.router.add_static('/assets/', path=os.path.join(self.static_path, 'assets'))
@@ -76,6 +86,26 @@ class WebUI:
         if os.path.exists(index_file):
             return web.FileResponse(index_file)
         return web.Response(status=404, text='Not found')
+
+    def auth_wrapper(self, handler):
+        """包装处理器添加鉴权"""
+        @wraps(handler)
+        async def wrapper(request):
+            # 从请求头获取session_id
+            session_id = request.headers.get('Authorization')
+            if not session_id:
+                logger.warning("No session_id in Authorization header")
+                return web.json_response({'error': 'Unauthorized'}, status=401)
+
+            username = self.session_manager.validate_session(session_id)
+            if not username:
+                logger.warning(f"Invalid session_id: {session_id}")
+                return web.json_response({'error': 'Unauthorized'}, status=401)
+                
+            request['username'] = username
+            logger.debug(f"Auth success for user: {username}")
+            return await handler(request)
+        return wrapper
 
     def run(self, host='0.0.0.0', port=8002):
         """运行服务器"""

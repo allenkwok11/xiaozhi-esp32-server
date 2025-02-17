@@ -5,8 +5,9 @@ import datetime
 logger = logging.getLogger(__name__)
 
 class LoginHandler:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, user_manager, session_manager):
+        self.user_manager = user_manager
+        self.session_manager = session_manager
 
     async def handle_login(self, request):
         """处理登录请求"""
@@ -22,8 +23,8 @@ class LoginHandler:
                     'message': '用户名和密码不能为空'
                 })
 
-            stored_user = self.config['get_user'](username)
-            if not stored_user or stored_user['password'] != self.config['hash_password'](password):
+            stored_user = await self.user_manager.get_user(username)
+            if not stored_user or stored_user['password'] != self.user_manager.hash_password(password):
                 logger.warning(f"Failed login attempt for user {username} from {request.remote}")
                 return web.json_response({
                     'success': False, 
@@ -31,14 +32,16 @@ class LoginHandler:
                 })
 
             # 更新最后登录时间
-            self.config['update_user'](username, {
+            await self.user_manager.update_user(username, {
                 'last_login': datetime.datetime.now().isoformat()
             })
 
-            logger.info(f"Successful login for user {username} from {request.remote}")
+            # 创建会话并返回session_id
+            session_id = self.session_manager.create_session(username)
             return web.json_response({
                 'success': True, 
-                'message': '登录成功'
+                'message': '登录成功',
+                'session_id': session_id
             })
 
         except Exception as e:

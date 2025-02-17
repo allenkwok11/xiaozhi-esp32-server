@@ -16,7 +16,7 @@
     </div>
     
     <div class="device-actions">
-      <button class="action-btn primary" @click="$emit('configure')">配置角色</button>
+      <button class="action-btn primary" @click="handleConfigure">配置角色</button>
       <button class="action-btn" @click="$emit('voiceprint')">声纹识别</button>
       <button class="action-btn" @click="$emit('history')">历史对话</button>
       <div class="delete-container">
@@ -80,6 +80,18 @@ const handleDelete = () => {
   if (confirm('确认要删除此设备吗？\n\n警告：删除后设备所有配置将不可恢复！')) {
     emit('delete');
   }
+};
+
+const handleConfigure = () => {
+  // 保存设备配置到 localStorage，确保 RoleSetting 可以访问
+  if (props.deviceId && props.deviceConfig) {
+    localStorage.setItem(`deviceConfig_${props.deviceId}`, JSON.stringify({
+      selected_module: props.selectedModules,
+      prompt: props.deviceConfig.prompt || '',
+      nickname: props.deviceConfig.nickname || '小智'
+    }));
+  }
+  emit('configure');
 };
 </script>
 
