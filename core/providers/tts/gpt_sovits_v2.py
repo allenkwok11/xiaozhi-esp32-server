@@ -3,9 +3,10 @@ import uuid
 import json
 import base64
 import requests
+import logging
 from datetime import datetime
 from core.providers.tts.base import TTSProviderBase
-
+logger = logging.getLogger(__name__)
 
 class TTSProvider(TTSProviderBase):
     def __init__(self, config, delete_audio_file):
