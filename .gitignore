@@ -143,3 +143,4 @@ tmp
 .config.yaml
 .secrets.yaml
 .private_config.yaml
+docker-compose.yml
