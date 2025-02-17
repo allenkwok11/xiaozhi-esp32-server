@@ -3,39 +3,21 @@ FROM node:18 AS frontend-builder
 
 WORKDIR /app/ZhiKongTaiWeb
 
-# 配置npm使用淘宝源
-RUN npm config set registry https://registry.npmmirror.com
+RUN corepack enable && yarn config set registry https://registry.npmmirror.com
 
-COPY ZhiKongTaiWeb/package*.json ./
+COPY ZhiKongTaiWeb/package.json ZhiKongTaiWeb/yarn.lock ./
 
-# 安装axios依赖
-RUN npm install axios
-RUN npm install
+RUN mkdir node_modules && yarn install --frozen-lockfile
 
-COPY ZhiKongTaiWeb .
+COPY ZhiKongTaiWeb . 
+RUN yarn build
 
-RUN npm run build
-
-# 第二阶段：构建Python依赖
+# 第二阶段：构建 Python 依赖
 FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
 COPY requirements.txt .
-
-# 使用清华源加速apt安装
-RUN rm -rf /etc/apt/sources.list.d/* && \
-    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
-    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-backports main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-    echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
-    apt-get clean && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gcc \
-    libopus-dev \
-    ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
 
 # 安装Python依赖到虚拟环境
 RUN python -m venv /opt/venv
@@ -55,9 +37,7 @@ RUN rm -rf /etc/apt/sources.list.d/* && \
     echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
     apt-get clean && \
     apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libopus0 \
-    ffmpeg && \
+    apt-get install -y --no-install-recommends libopus0 ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
