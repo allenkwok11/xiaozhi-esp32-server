@@ -8,6 +8,8 @@ RUN npm config set registry https://registry.npmmirror.com
 
 COPY ZhiKongTaiWeb/package*.json ./
 
+# 安装axios依赖
+RUN npm install axios
 RUN npm install
 
 COPY ZhiKongTaiWeb .
