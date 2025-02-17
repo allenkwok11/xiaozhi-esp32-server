@@ -96,7 +96,7 @@ class ConnectionHandler:
             
             # Load private configuration if device_id is provided
             bUsePrivateConfig = self.config.get("use_private_config", False)
-            self.info(f"bUsePrivateConfig: {bUsePrivateConfig}, device_id: {device_id}")
+            self.logger.bind(tag=TAG).info(f"bUsePrivateConfig: {bUsePrivateConfig}, device_id: {device_id}")
             if bUsePrivateConfig and device_id:
                 try:
                     self.private_config = PrivateConfig(device_id, self.config, self.auth_code_gen)

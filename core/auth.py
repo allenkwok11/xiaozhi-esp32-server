@@ -1,6 +1,7 @@
 from config.logger import setup_logging
 
 TAG = __name__
+logger = setup_logging()
 
 
 class AuthenticationError(Exception):
