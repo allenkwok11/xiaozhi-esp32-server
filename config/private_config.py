@@ -99,6 +99,8 @@ class PrivateConfig:
                 }
                 if self.private_config.get('last_chat_time'):
                     device_config['last_chat_time'] = self.private_config['last_chat_time']
+                if self.private_config.get('owner'):
+                    device_config['owner'] = self.private_config['owner']
 
                 # Copy full module configurations from main config
                 for module_type, selected_name in selected_modules.items():
