@@ -94,7 +94,7 @@ class ConfigHandler:
             username = request['username']  # 从请求中获取用户名
 
             # 检查设备所有权
-            user_devices = self.user_manager.get_user_devices(username)
+            user_devices = await self.user_manager.get_user_devices(username)
             if device_id not in user_devices:
                 return web.json_response({
                     'success': False,

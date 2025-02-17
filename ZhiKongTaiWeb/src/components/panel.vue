@@ -163,6 +163,14 @@ const formatLastActivity = (timestamp) => {
 };
 
 const handleRoleConfig = (device) => {
+  // 在跳转前保存完整的设备配置到 localStorage
+  localStorage.setItem(`deviceConfig_${device.id}`, JSON.stringify({
+    selected_module: device.config.selected_module || {},
+    prompt: device.config.prompt || '',
+    nickname: device.config.nickname || '小智'
+  }));
+  
+  // 跳转到角色配置页面
   router.push(`/role-setting/${device.id}`);
 };
 
