@@ -1,12 +1,11 @@
 import time
-import json
-from datetime import datetime
 from tabulate import tabulate
-from typing import Dict, List
+from typing import Dict
 from core.utils.llm import create_instance as create_llm_instance
 from core.utils.tts import create_instance as create_tts_instance
-from core.utils.util import read_config, get_project_dir
+from core.utils.util import read_config
 import statistics
+from config.settings import get_config_file
 from concurrent.futures import ThreadPoolExecutor
 import inspect
 import os
@@ -18,7 +17,7 @@ logging.basicConfig(level=logging.WARNING)
 
 class PerformanceTester:
     def __init__(self):
-        self.config = read_config(get_project_dir() + "config.yaml")
+        self.config = read_config(get_config_file())
         # 从配置读取测试句子，如果不存在则使用默认
         self.test_sentences = self.config.get("module_test", {}).get(
             "test_sentences", 
