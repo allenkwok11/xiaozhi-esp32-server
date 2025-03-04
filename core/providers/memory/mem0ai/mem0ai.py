@@ -49,20 +49,24 @@ class MemoryProvider(MemoryProviderBase):
             # Format each memory entry with its update time up to minutes
             memories = []
             for entry in results['results']:
-                # Split timestamp and get date + time up to minutes
-                timestamp = entry.get('updated_at', '').split('.')[0]  # Remove milliseconds
+                timestamp = entry.get('updated_at', '')
                 if timestamp:
                     try:
                         # Parse and reformat the timestamp
-                        dt = timestamp.replace('T', ' ').split(':')  # Split time components
-                        formatted_time = f"{dt[0]}:{dt[1]}:{dt[2]}"  # Keep only HH:MM:SS
+                        dt = timestamp.split('.')[0]  # Remove milliseconds
+                        formatted_time = dt.replace('T', ' ')
                     except:
                         formatted_time = timestamp
                 memory = entry.get('memory', '')
                 if timestamp and memory:
-                    memories.append(f"[{formatted_time}] {memory}")
-                    
-            memories_str = "\n".join(f"- {memory}" for memory in memories)
+                    # Store tuple of (timestamp, formatted_string) for sorting
+                    memories.append((timestamp, f"[{formatted_time}] {memory}"))
+            
+            # Sort by timestamp in descending order (newest first)
+            memories.sort(key=lambda x: x[0], reverse=True)
+            
+            # Extract only the formatted strings
+            memories_str = "\n".join(f"- {memory[1]}" for memory in memories)
             logger.bind(tag=TAG).debug(f"Query results: {memories_str}")
             return memories_str
         except Exception as e:
