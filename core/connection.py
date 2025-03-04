@@ -203,23 +203,11 @@ class ConnectionHandler:
         return not self.is_device_verified
 
 
-    def async_run(self, coro):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            return loop.run_until_complete(coro)
-        finally:
-            loop.close()
-
     def chat(self, query):
         if self.isNeedAuth():
             self.llm_finish_task = True
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(self._check_and_broadcast_auth_code())
-            finally:
-                loop.close()
+            future = asyncio.run_coroutine_threadsafe(self._check_and_broadcast_auth_code(), self.loop)
+            future.result()
             return True
 
         self.dialogue.put(Message(role="user", content=query))
@@ -228,7 +216,8 @@ class ConnectionHandler:
         try:
             start_time = time.time()
             # 使用带记忆的对话
-            memory_str = self.async_run(self.memory.query_memory(query))
+            future = asyncio.run_coroutine_threadsafe(self.memory.query_memory(query), self.loop)
+            memory_str = future.result()
             
             self.logger.bind(tag=TAG).info(f"记忆内容: {memory_str}")
             llm_responses = self.llm.response(
