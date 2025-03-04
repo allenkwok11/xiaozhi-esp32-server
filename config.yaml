@@ -80,7 +80,14 @@ selected_module:
   LLM: ChatGLMLLM
   # TTS将根据配置名称对应的type调用实际的TTS适配器
   TTS: EdgeTTS
+  Memory: mem0ai
 
+Memory:
+  mem0ai:
+    type: mem0ai
+    # https://app.mem0.ai/dashboard/api-keys，注册可获得试用credits
+    api_key: 你的mem0ai api key
+    
 ASR:
   FunASR:
     type: fun_local

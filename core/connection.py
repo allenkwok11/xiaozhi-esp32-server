@@ -27,7 +27,7 @@ class TTSException(RuntimeError):
 
 
 class ConnectionHandler:
-    def __init__(self, config: Dict[str, Any], _vad, _asr, _llm, _tts, _music):
+    def __init__(self, config: Dict[str, Any], _vad, _asr, _llm, _tts, _music, _memory):
         self.config = config
         self.logger = setup_logging()
         self.auth = AuthMiddleware(config)
@@ -54,7 +54,7 @@ class ConnectionHandler:
         self.asr = _asr
         self.llm = _llm
         self.tts = _tts
-        self.dialogue = None
+        self.memory = _memory
 
         # vad相关变量
         self.client_audio_buffer = bytes()
@@ -101,6 +101,7 @@ class ConnectionHandler:
             await self.auth.authenticate(self.headers)
 
             device_id = self.headers.get("device-id", None)
+            self.memory.set_role_id(device_id)
 
             # Load private configuration if device_id is provided
             bUsePrivateConfig = self.config.get("use_private_config", False)
@@ -163,6 +164,8 @@ class ConnectionHandler:
             self.logger.bind(tag=TAG).error(f"Connection error: {str(e)}-{stack_trace}")
             await ws.close()
             return
+        finally:
+            await self.memory.save_memory(self.dialogue.dialogue)
 
     async def _route_message(self, message):
         """消息路由"""
@@ -201,15 +204,12 @@ class ConnectionHandler:
             return False
         return not self.is_device_verified
 
+
     def chat(self, query):
         if self.isNeedAuth():
             self.llm_finish_task = True
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(self._check_and_broadcast_auth_code())
-            finally:
-                loop.close()
+            future = asyncio.run_coroutine_threadsafe(self._check_and_broadcast_auth_code(), self.loop)
+            future.result()
             return True
 
         self.dialogue.put(Message(role="user", content=query))
@@ -217,7 +217,15 @@ class ConnectionHandler:
         processed_chars = 0  # 跟踪已处理的字符位置
         try:
             start_time = time.time()
-            llm_responses = self.llm.response(self.session_id, self.dialogue.get_llm_dialogue())
+            # 使用带记忆的对话
+            future = asyncio.run_coroutine_threadsafe(self.memory.query_memory(query), self.loop)
+            memory_str = future.result()
+            
+            self.logger.bind(tag=TAG).info(f"记忆内容: {memory_str}")
+            llm_responses = self.llm.response(
+                self.session_id, 
+                self.dialogue.get_llm_dialogue_with_memory(memory_str)
+            )
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"LLM 处理出错 {query}: {e}")
             return None
