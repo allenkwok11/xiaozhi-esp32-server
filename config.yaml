@@ -129,7 +129,7 @@ LLM:
     # 可在这里找到你的api key https://bigmodel.cn/usercenter/proj-mgmt/apikeys
     model_name: glm-4-flash
     url: https://open.bigmodel.cn/api/paas/v4/
-    api_key: f04500d80a234c9085be2b4020dce25f.gnnnWr3BRLuqeDHr
+    api_key: 你的ChatGLMLLM api key
   OllamaLLM:
     # 定义LLM API类型
     type: ollama
@@ -245,8 +245,8 @@ TTS:
     seed: null
     channels: 1
     rate: 44100
-    api_key: "xxx"
-    api_url: "http://192.168.101.242:10000/tts-fishspeech/v1/tts"
+    api_key: "你的api_key"
+    api_url: "http://127.0.0.1:8080/v1/tts"
   GPT_SOVITS_V2:
     # 定义TTS API类型
     #启动tts方法：
