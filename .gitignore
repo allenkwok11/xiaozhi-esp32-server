@@ -144,9 +144,10 @@ cython_debug/
 model.pt
 tmp
 .DS_Store
+main/xiaozhi-server/data
+main/manager-web/node_modules
 .config.yaml
 .secrets.yaml
 .private_config.yaml
 .env.development
-docker-compose.yml
-web/vue/node_modules
+
