@@ -1,3 +1,5 @@
+本文档是开发类文档，如需部署小智服务端，[点击这里查看部署教程](../../README.md#%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F-)
+
 # xiaozhi
 
 ## Project setup
@@ -11,14 +13,17 @@ npm install
 ```
 
 ### Compiles and hot-reloads for development
+
 ```
 npm run serve
 ```
 
 ### Compiles and minifies for production
+
 ```
 npm run build
 ```
 
 ### Customize configuration
+
 See [Configuration Reference](https://cli.vuejs.org/config/).

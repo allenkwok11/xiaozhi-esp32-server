@@ -8,6 +8,8 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 ```
 2、编译docker镜像
 ```
+#进入xiaozhi-server目录
+cd main/xiaozhi-server/
 # 普通编译
 docker build -t xiaozhi-esp32-server:local -f ./Dockerfile-pip .
 ```

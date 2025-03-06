@@ -343,3 +343,11 @@ music:
     - ".wav"
     - ".p3"
   refresh_time: 300 # 刷新音乐列表的时间间隔，单位为秒
+
+# 以下配置在小于等于0.0.9版本中的docker容器中可用
+# 0.0.9以后的新版本源码部署已经无法奏效
+manager:
+  enabled: false
+  ip: 0.0.0.0
+  port: 8002
+use_private_config: false
