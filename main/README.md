@@ -20,3 +20,4 @@ xiaozhi-esp32-server
 
 [manager前后端接口协议](https://app.apifox.com/invite/project?token=H_8qhgfjUeaAL0wybghgU)
 
+[前端页面设计图](https://codesign.qq.com/app/s/526108506410828)
