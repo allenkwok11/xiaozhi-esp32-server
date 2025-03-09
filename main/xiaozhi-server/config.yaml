@@ -65,21 +65,45 @@ CMD_exit:
 
 # 具体处理时选择的模块(The module selected for specific processing)
 selected_module:
-  ASR: FunASR
+  # 语音活动检测模块，默认使用SileroVAD模型
   VAD: SileroVAD
+  # 语音识别模块，默认使用FunASR本地模型
+  ASR: FunASR
   # 将根据配置名称对应的type调用实际的LLM适配器
   LLM: ChatGLMLLM
   # TTS将根据配置名称对应的type调用实际的TTS适配器
   TTS: EdgeTTS
-  Memory: mem0ai
+  # 记忆模块，默认使用本地压缩记忆，如果想使用超长记忆，推荐使用mem0ai
+  Memory: nomem
+  # 意图识别模块，默认不开启。开启后，可以播放音乐、控制音量、识别退出指令
+  # 如果意图识别设置成 function_call，建议使用：DoubaoLLM，推荐把的model_name设置为：doubao-pro-32k-functioncall-241028
+  Intent: nointent
 
+# 意图识别，是用于理解用户意图的模块，例如：播放音乐
+Intent:
+  # 不使用意图识别
+  nointent:
+    type: nointent
+  # 意图识别使用大模型，优点：通用性强，缺点：增加串行前置意图识别模块，会增加处理时间
+  intent_llm:
+    type: intent_llm
+  # 意图识别使用function_call，缺点：需要所选择的LLM支持function_call，优点：按需调用工具、速度快
+  function_call:
+    type: function_call
+    
 Memory:
   mem0ai:
     type: mem0ai
     # https://app.mem0.ai/dashboard/api-keys
     # 每月有1000次免费调用
     api_key: 你的mem0ai api key
-    
+  nomem:
+    # 不想使用记忆功能，可以使用nomem 
+    type: nomem
+  mem_local_short:
+    # 本地记忆功能，通过selected_module的llm总结，数据保存在本地，不会上传到服务器 
+    type: mem_local_short
+
 ASR:
   FunASR:
     type: fun_local
@@ -106,6 +130,13 @@ LLM:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model_name: qwen-turbo
     api_key: 你的deepseek web key
+  DoubaoLLM:
+    # 定义LLM API类型
+    type: openai
+    # 可在这里开通 https://console.volcengine.com/ark/region:ark+cn-beijing/model/detail?Id=doubao-pro-32k&projectName=undefined
+    base_url: https://ark.cn-beijing.volces.com/api/v3
+    model_name: doubao-pro-32k-functioncall-241028
+    api_key: 你的doubao web key
   DeepSeekLLM:
     # 定义LLM API类型
     type: openai
@@ -383,18 +414,6 @@ module_test:
 
 # 本地音乐播放配置
 music:
-  music_commands:
-    - "来一首歌"
-    - "唱一首歌"
-    - "播放音乐"
-    - "来点音乐"
-    - "背景音乐"
-    - "放首歌"
-    - "播放歌曲"
-    - "来点背景音乐"
-    - "我想听歌"
-    - "我要听歌"
-    - "放点音乐"
   music_dir: "./music"  # 音乐文件存放路径，将从该目录及子目录下搜索音乐文件
   music_ext: # 音乐文件类型，p3格式效率最高
     - ".mp3"
