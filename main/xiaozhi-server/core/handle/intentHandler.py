@@ -67,7 +67,7 @@ def handle_llm_function_call(conn, function_call_data):
             except Exception as e:
                 logger.bind(tag=TAG).error(f"处理音乐意图错误: {e}")
         else:
-            return ActionResponse(action=Action.NOTFOUND, result="没有找到对应的函数", response="")
+            return ActionResponse(action=Action.NOTFOUND, result="没有找到对应的函数", response="没有找到对应的函数处理相对于的功能呢，你可以需要添加预设的对应函数处理呢")
     except Exception as e:
         logger.bind(tag=TAG).error(f"处理function call错误: {e}")
 
@@ -92,8 +92,6 @@ async def handle_user_intent(conn, text):
     if conn.use_function_call_mode:
         # 使用支持function calling的聊天方法,不再进行意图分析
         return False
-
-    logger.bind(tag=TAG).info(f"分析用户意图: {text}")
 
     # 使用LLM进行意图分析
     intent = await analyze_intent_with_llm(conn, text)
@@ -122,13 +120,10 @@ async def analyze_intent_with_llm(conn, text):
         logger.bind(tag=TAG).warning("意图识别服务未初始化")
         return None
 
-    # 创建对话历史记录
+    # 对话历史记录
     dialogue = conn.dialogue
-    dialogue.put(Message(role="user", content=text))
-
     try:
-        intent_result = await conn.intent.detect_intent(dialogue.dialogue)
-        logger.bind(tag=TAG).info(f"意图识别结果: {intent_result}")
+        intent_result = await conn.intent.detect_intent(dialogue.dialogue, text)
 
         # 尝试解析JSON结果
         try:

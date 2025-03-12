@@ -37,7 +37,8 @@ class IntentProvider(IntentProviderBase):
         )
         return prompt
     
-    async def detect_intent(self, dialogue_history: List[Dict]) -> str:
+    async def detect_intent(self, dialogue_history: List[Dict], text:str) -> str:
+        logger.bind(tag=TAG).info(f"分析用户意图: {text}")
         if not self.llm:
             raise ValueError("LLM provider not set")
 
@@ -48,14 +49,13 @@ class IntentProvider(IntentProviderBase):
                 msgStr += f"User: {msg.content}\n"
             elif msg.role== "assistant":
                 msgStr += f"Assistant: {msg.content}\n"
-
+        msgStr += f"User: {text}\n"
         user_prompt = f"请分析用户的意图：\n{msgStr}"
-        
         # 使用LLM进行意图识别
         intent = self.llm.response_no_stream(
             system_prompt=self.promot,
             user_prompt=user_prompt
         )
-  
-        logger.bind(tag=TAG).info(f"Detected intent: {intent}")
-        return intent.strip()
+        intent_result = intent.strip()
+        logger.bind(tag=TAG).info(f"意图识别结果: {intent_result}")
+        return intent_result
