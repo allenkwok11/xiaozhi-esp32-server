@@ -73,5 +73,36 @@ export default {
                     this.bindDevice(deviceCode, callback);
                 });
             }).send();
-    }
+    },
+    // 获取验证码
+    getCaptcha(uuid, callback) {
+    
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/captcha?uuid=${uuid}`)
+            .method('GET')
+            .type('blob')
+            .header({
+                  'Content-Type': 'image/gif',
+                  'Pragma': 'No-cache', 
+                  'Cache-Control': 'no-cache'
+            })
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail((err) => {  // 添加错误参数
+            
+            }).send()
+    },
+    // 注册账号
+    register(registerForm, callback) {
+        RequestService.sendRequest().url(`${getServiceUrl()}/api/v1/user/register`).method('POST')
+            .data(registerForm)
+            .success((res) => {
+                RequestService.clearRequestTime()
+                callback(res)
+            })
+            .fail(() => {
+            }).send()
+    },
 }
