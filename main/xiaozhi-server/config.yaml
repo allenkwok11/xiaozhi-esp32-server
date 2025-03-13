@@ -72,14 +72,14 @@ selected_module:
   # 将根据配置名称对应的type调用实际的LLM适配器
   LLM: ChatGLMLLM
   # TTS将根据配置名称对应的type调用实际的TTS适配器
-  TTS: FishSpeech
+  TTS: EdgeTTS
   # 记忆模块，默认不开启记忆；如果想使用超长记忆，推荐使用mem0ai；如果注重隐私，请使用本地的mem_local_short
   Memory: nomem
   # 意图识别模块，默认不开启。开启后，可以播放音乐、控制音量、识别退出指令
   # 意图识别使用intent_llm，优点：通用性强，缺点：增加串行前置意图识别模块，会增加处理时间
   # 意图识别使用function_call，缺点：需要所选择的LLM支持function_call，优点：按需调用工具、速度快
   # 如果意图识别设置成 function_call，建议把LLM设置成：DoubaoLLM，使用的具体model_name是：doubao-pro-32k-functioncall-241028
-  Intent: function_call
+  Intent: nointent
 
 # 意图识别，是用于理解用户意图的模块，例如：播放音乐
 Intent:
@@ -157,7 +157,7 @@ LLM:
     # 可在这里找到你的api key https://bigmodel.cn/usercenter/proj-mgmt/apikeys
     model_name: glm-4-flash
     url: https://open.bigmodel.cn/api/paas/v4/
-    api_key: f04500d80a234c9085be2b4020dce25f.gnnnWr3BRLuqeDHr
+    api_key: 你的chat-glm web key
   OllamaLLM:
     # 定义LLM API类型
     type: ollama
@@ -208,8 +208,8 @@ LLM:
       k2: "v2"
 
 TTS_SET:
-  TTS_STREAM: true  #是否启动流响应 true/false，默认false
-  MAX_WORKERS: 5    #并发请求tts的数量，这个调太大，本地tts会变慢
+  TTS_STREAM: false  #是否启动流响应 true/false，默认false
+  MAX_WORKERS: 4    #并发请求tts的数量，这个调太大，本地tts会变慢
 
 TTS:
   # 当前支持的type为edge、doubao，可自行适配
@@ -283,8 +283,8 @@ TTS:
     seed: null
     channels: 1
     rate: 44100
-    api_key: "xxxx"
-    api_url: "http://192.168.101.242:10000/tts-fishspeech/v1/tts"
+    api_key: "你的api_key"
+    api_url: "http://127.0.0.1:8080/v1/tts"
   GPT_SOVITS_V2:
     # 定义TTS API类型
     #启动tts方法：
