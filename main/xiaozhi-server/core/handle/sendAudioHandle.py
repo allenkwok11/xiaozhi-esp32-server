@@ -9,7 +9,8 @@ from core.utils.util import remove_punctuation_and_length, get_string_no_punctua
 TAG = __name__
 logger = setup_logging()
 
-async def sendAudioMessageStream(conn, audios_queue, text, text_index=0):
+
+async def sendAudioMessageStream(conn, audios_queue, text, text_index=0, llm_finish_task=False):
     # 发送句子开始消息
     if text_index == conn.tts_first_text_index:
         logger.bind(tag=TAG).info(f"发送第一段语音: {text}")
@@ -18,8 +19,10 @@ async def sendAudioMessageStream(conn, audios_queue, text, text_index=0):
     # 初始化流控参数
     frame_duration = 60  # 毫秒
     start_time = time.time()  # 使用高精度计时器
+    # 初始化流控参数
+    frame_duration = 60  # 毫秒
+    start_time_chunk = time.perf_counter()  # 使用高精度计时器
     play_position = 0  # 已播放的时长（毫秒）
-    time_out_stop = False
     while True:
         try:
             start_get_queue = time.time()
@@ -45,13 +48,21 @@ async def sendAudioMessageStream(conn, audios_queue, text, text_index=0):
                 break
 
             if audio_opus_datas:
-                queue_duration = time.time() - start_get_queue
-                last_duration = conn.tts_duration - queue_duration
-                if last_duration <= 0:
-                    last_duration = 0
-                conn.tts_duration = duration + last_duration
                 for opus_packet in audio_opus_datas:
+                    if conn.client_abort:
+                        return
+                    # 计算当前包的预期发送时间
+                    # 计算当前包的预期发送时间
+                    expected_time = start_time_chunk + (play_position / 1000)
+                    current_time = time.perf_counter()
+
+                    # 等待直到预期时间
+                    delay = expected_time - current_time
+                    if delay > 0:
+                        await asyncio.sleep(delay)
+                    logger.bind(tag=TAG).info(f'发送数据长度：{len(opus_packet)}')
                     await conn.websocket.send(opus_packet)
+                    play_position += frame_duration  # 更新播放位置
                 start_time = time.time()  # 更新获取数据的时间
         except Exception as e:
             logger.bind(tag=TAG).error(f"发生错误: {e}")
@@ -60,11 +71,16 @@ async def sendAudioMessageStream(conn, audios_queue, text, text_index=0):
 
     print(f'{text_index}-{conn.tts_last_text_index}')
     # 发送结束消息（如果是最后一个文本）
+    logger.bind(tag=TAG).info(f"{conn.llm_finish_task},{text_index},{conn.tts_last_text_index}")
     if conn.llm_finish_task and text_index == conn.tts_last_text_index:
-        if conn.tts_duration and conn.tts_duration > 0:
-            await asyncio.sleep(conn.tts_duration)
+        expected_time = start_time_chunk + (play_position / 1000)
+        current_time = time.perf_counter()
+        # 等待直到预期时间
+        delay = expected_time - current_time
+        if delay > 0:
+            await asyncio.sleep(delay)
         await send_tts_message(conn, 'stop', None)
-        if await isLLMWantToFinish(text):
+        if conn.close_after_chat or "拜拜" in text or "再见" in text:
             await conn.close()
 
 

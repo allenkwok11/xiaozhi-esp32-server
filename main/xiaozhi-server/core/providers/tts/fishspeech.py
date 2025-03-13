@@ -230,7 +230,7 @@ class TTSProvider(TTSProviderBase):
                                 if (len(audio_raw) % 1920) > 0:
                                     duration += 60
                                 duration = duration / 1000.0
-                                logger.bind(tag=TAG).info(f'发送数据长度：{len(audio_raw)}')
+                                # logger.bind(tag=TAG).info(f'发送数据长度：{len(audio_raw)}')
                                 opus_datas = self.wav_to_opus_data_audio_raw(audio_raw)
                                 queue.put({
                                     "data": opus_datas,
@@ -248,7 +248,7 @@ class TTSProvider(TTSProviderBase):
                             duration += 60
                         duration = duration / 1000.0
                         # 把 audio 转成 opus
-                        logger.bind(tag=TAG).info(f'发送数据长度：{len(audio_raw)}')
+                        # logger.bind(tag=TAG).info(f'发送数据长度：{len(audio_raw)}')
                         opus_datas = self.wav_to_opus_data_audio_raw(audio_raw)
                         queue.put({
                             "data": opus_datas,
