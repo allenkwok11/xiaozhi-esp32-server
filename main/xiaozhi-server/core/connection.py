@@ -257,7 +257,7 @@ class ConnectionHandler:
             current_text = full_text[processed_chars:]  # 从未处理的位置开始
 
             # 查找最后一个有效标点
-            punctuations = ("。", "？", "！", "；", "：", ".", "?", "!", ";", ":"," ")
+            punctuations = ("。", "？", "！", "；", "：", ".", "?", "!", ";", ":", " ")
             last_punct_pos = -1
             for punct in punctuations:
                 pos = current_text.rfind(punct)
@@ -328,7 +328,7 @@ class ConnectionHandler:
 
         response_message = []
         processed_chars = 0  # 跟踪已处理的字符位置
-   
+
         try:
             start_time = time.time()
 
@@ -336,7 +336,7 @@ class ConnectionHandler:
             future = asyncio.run_coroutine_threadsafe(self.memory.query_memory(query), self.loop)
             memory_str = future.result()
 
-            #self.logger.bind(tag=TAG).info(f"对话记录: {self.dialogue.get_llm_dialogue_with_memory(memory_str)}")
+            # self.logger.bind(tag=TAG).info(f"对话记录: {self.dialogue.get_llm_dialogue_with_memory(memory_str)}")
 
             # 使用支持functions的streaming接口
             llm_responses = self.llm.response_with_functions(
@@ -359,8 +359,8 @@ class ConnectionHandler:
         content_arguments = ""
         for response in llm_responses:
             content, tools_call = response
-            if content is not None and len(content)>0:
-                if len(response_message)<=0 and content=="```":
+            if content is not None and len(content) > 0:
+                if len(response_message) <= 0 and content == "```":
                     tool_call_flag = True
 
             if tools_call is not None:
@@ -374,7 +374,7 @@ class ConnectionHandler:
 
             if content is not None and len(content) > 0:
                 if tool_call_flag:
-                    content_arguments+=content
+                    content_arguments += content
                 else:
                     response_message.append(content)
 
@@ -390,7 +390,7 @@ class ConnectionHandler:
                     current_text = full_text[processed_chars:]  # 从未处理的位置开始
 
                     # 查找最后一个有效标点
-                    punctuations = ("。", "？", "！", "；", "：")
+                    punctuations = ("。", "？", "！", "；", "：", ".", "?", "!", ";", ":", " ")
                     last_punct_pos = -1
                     for punct in punctuations:
                         pos = current_text.rfind(punct)
@@ -404,8 +404,17 @@ class ConnectionHandler:
                         if segment_text:
                             text_index += 1
                             self.recode_first_last_text(segment_text, text_index)
-                            future = self.executor.submit(self.speak_and_play, segment_text, text_index)
-                            self.tts_queue.put(future)
+                            if self.tts_stream:
+                                stream_queue = queue.Queue()
+                                self.executor.submit(self.speak_and_play_stream, segment_text, stream_queue)
+                                self.tts_queue_stream.put({
+                                    "text": segment_text,
+                                    "chunk_queque": stream_queue,
+                                    "text_index": text_index
+                                })
+                            else:
+                                future = self.executor.submit(self.speak_and_play, segment_text, text_index)
+                                self.tts_queue.put(future)
                             processed_chars += len(segment_text_raw)  # 更新已处理字符位置
 
         # 处理最后剩余的文本
@@ -415,12 +424,21 @@ class ConnectionHandler:
             segment_text = get_string_no_punctuation_or_emoji(remaining_text)
             if segment_text:
                 text_index += 1
-                self.recode_first_last_text(segment_text, text_index)
-                future = self.executor.submit(self.speak_and_play, segment_text, text_index)
+                if self.tts_stream:
+                    stream_queue = queue.Queue()
+                    self.executor.submit(self.speak_and_play_stream, segment_text, stream_queue, text_index)
+                    self.tts_queue_stream.put({
+                        "text": segment_text,
+                        "chunk_queque": stream_queue,
+                        "text_index": text_index
+                    })
+                else:
+                    self.recode_first_last_text(segment_text, text_index)
+                    future = self.executor.submit(self.speak_and_play, segment_text, text_index)
                 self.tts_queue.put(future)
 
         # 存储对话内容
-        if len(response_message)>0:
+        if len(response_message) > 0:
             self.dialogue.put(Message(role="assistant", content="".join(response_message)))
 
         # 处理function call
@@ -435,14 +453,15 @@ class ConnectionHandler:
                 else:
                     return []
                 function_arguments = json.loads(function_arguments)
-            self.logger.bind(tag=TAG).info(f"function_name={function_name}, function_id={function_id}, function_arguments={function_arguments}")
+            self.logger.bind(tag=TAG).info(
+                f"function_name={function_name}, function_id={function_id}, function_arguments={function_arguments}")
             function_call_data = {
                 "name": function_name,
                 "id": function_id,
                 "arguments": function_arguments
             }
             result = handle_llm_function_call(self, function_call_data)
-            self._handle_function_result(result, function_call_data, text_index+1)
+            self._handle_function_result(result, function_call_data, text_index + 1)
 
         self.llm_finish_task = True
         self.logger.bind(tag=TAG).debug(json.dumps(self.dialogue.get_llm_dialogue(), indent=4, ensure_ascii=False))
@@ -450,18 +469,25 @@ class ConnectionHandler:
         return True
 
     def _handle_function_result(self, result, function_call_data, text_index):
-        if result.action == Action.RESPONSE: # 直接回复前端
+        if result.action == Action.RESPONSE:  # 直接回复前端
             text = result.response
             self.recode_first_last_text(text, text_index)
-            future = self.executor.submit(self.speak_and_play, text, text_index)
-            self.tts_queue.put(future)
+            if self.tts_stream:
+                stream_queue = queue.Queue()
+                self.executor.submit(self.speak_and_play_stream, text, stream_queue, text_index)
+                self.tts_queue_stream.put({
+                    "text": text,
+                    "chunk_queque": stream_queue,
+                    "text_index": text_index
+                })
+            else:
+                future = self.executor.submit(self.speak_and_play, text, text_index)
+                self.tts_queue.put(future)
             self.dialogue.put(Message(role="assistant", content=text))
-        if result.action == Action.REQLLM: # 调用函数后再请求llm生成回复
+        if result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
             text = result.response
         if result.action == Action.NOTFOUND:
             text = result.response
-
-        
 
     def _tts_priority_thread(self):
         if self.tts_stream:
@@ -540,11 +566,16 @@ class ConnectionHandler:
             text = None
             try:
                 if self.tts_stream:
-                    chunk_queque, text, text_index = self.audio_play_queue.get()
-                    future = asyncio.run_coroutine_threadsafe(
-                        sendAudioMessageStream(self, chunk_queque, text, text_index),
-                        self.loop)
-                    future.result()
+                    data, text, text_index = self.audio_play_queue.get()
+                    if isinstance(data, list):
+                        future = asyncio.run_coroutine_threadsafe(sendAudioMessage(self, data, text, text_index),
+                                                                  self.loop)
+                        future.result()
+                    else:
+                        future = asyncio.run_coroutine_threadsafe(
+                            sendAudioMessageStream(self, data, text, text_index),
+                            self.loop)
+                        future.result()
                 else:
                     opus_datas, text, text_index = self.audio_play_queue.get()
                     future = asyncio.run_coroutine_threadsafe(sendAudioMessage(self, opus_datas, text, text_index),
