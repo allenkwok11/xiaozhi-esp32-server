@@ -27,7 +27,7 @@
             </div>
             <img src="@/assets/home/avatar.png" alt="" style="width: 21px;height: 21px;" />
             <div class="user-info">
-              {{ userInfo.mobile }}
+              {{ userInfo.username }}
             </div>
           </div>
         </div>
@@ -251,7 +251,7 @@ export default {
         label: '双皮奶'
       }],
       userInfo: {
-        mobile: '' // 初始化用户信息
+        username: '' // 初始化用户信息
       }
     };
   },
@@ -331,8 +331,8 @@ export default {
     }
   },
   mounted() {
-    this.fetchUserInfo(); // 组件加载时获取用户信息
-    this.getList(); // 初始化设备列表
+    // this.fetchUserInfo(); // 组件加载时获取用户信息
+    // this.getList(); // 初始化设备列表
   }
 }
 </script>

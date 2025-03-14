@@ -32,7 +32,7 @@ export default {
     },
     // 获取设备信息
     getHomeList(callback) {
-        RequestService.sendRequest().url(`${getServiceUrl()}/api/v1/user/device/bind`).method('GET')
+        RequestService.sendRequest().url(`${getServiceUrl()}/api/v1/device/bind`).method('GET')
             .success((res) => {
                 RequestService.clearRequestTime()
                 callback(res)
