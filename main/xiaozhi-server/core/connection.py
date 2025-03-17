@@ -20,7 +20,7 @@ from plugins_func.register import Action
 from config.private_config import PrivateConfig
 from core.auth import AuthMiddleware, AuthenticationError
 from core.utils.auth_code_gen import AuthCodeGenerator
-import plugins_func.loadplugins  
+import plugins_func.loadplugins
 
 TAG = __name__
 
@@ -30,7 +30,7 @@ class TTSException(RuntimeError):
 
 
 class ConnectionHandler:
-    def __init__(self, config: Dict[str, Any], _vad, _asr, _llm, _tts, _music, _memory, _intent):
+    def __init__(self, config: Dict[str, Any], _vad, _asr, _llm, _tts, _memory, _intent):
         self.config = config
         self.logger = setup_logging()
         self.auth = AuthMiddleware(config)
@@ -91,7 +91,6 @@ class ConnectionHandler:
         self.private_config = None
         self.auth_code_gen = AuthCodeGenerator.get_instance()
         self.is_device_verified = False  # 添加设备验证状态标志
-        self.music_handler = _music
         self.close_after_chat = False  # 是否在聊天结束后关闭连接
         self.use_function_call_mode = False
         if self.config["selected_module"]["Intent"] == 'function_call':
