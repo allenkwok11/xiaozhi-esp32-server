@@ -37,6 +37,11 @@ public class Result<T> implements Serializable {
     @Schema(description = "响应数据")
     private T data;
 
+    public Result<T> ok() {
+        this.setCode(0);
+        return this;
+    }
+
     public Result<T> ok(T data) {
         this.setData(data);
         return this;

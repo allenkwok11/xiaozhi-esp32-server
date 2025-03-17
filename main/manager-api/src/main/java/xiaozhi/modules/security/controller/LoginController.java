@@ -4,20 +4,20 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.TokenDTO;
+import xiaozhi.common.utils.HttpContextUtils;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.AssertUtils;
-import xiaozhi.modules.security.dao.SysUserTokenDao;
 import xiaozhi.modules.security.dto.LoginDTO;
 import xiaozhi.modules.security.password.PasswordUtils;
 import xiaozhi.modules.security.service.CaptchaService;
 import xiaozhi.modules.security.service.SysUserTokenService;
+import xiaozhi.modules.sys.dto.PasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
 import xiaozhi.modules.sys.service.SysUserService;
 
@@ -26,7 +26,6 @@ import java.io.IOException;
 /**
  * 登录控制层
  */
-@Tag(name = "登录管理")
 @AllArgsConstructor
 @RestController
 @RequestMapping("/user")
@@ -92,19 +91,23 @@ public class LoginController {
 
     @GetMapping("/info")
     @Operation(summary = "用户信息获取")
-    public Result<SysUserDTO> info(@RequestHeader("Authorization")String authorization) {
+    public Result info(@RequestHeader("Authorization")String authorization) {
         logger.info("the authorization:{}", authorization);
 
-        String token;
-        if (StringUtils.isBlank(authorization) && authorization.contains("Bearer ")) {
-            throw new RenException(ErrorCode.UNAUTHORIZED);
-        }
-        token = authorization.replace("Bearer ", "");
-        if (StringUtils.isBlank(token)) {
-            throw new RenException(ErrorCode.UNAUTHORIZED);
-        }
+        String token = HttpContextUtils.getToken(authorization);
         SysUserDTO sysUserDTO = sysUserTokenService.getUserByToken(token);
-        Result result = new Result<SysUserDTO>();
+        Result<SysUserDTO> result = new Result<>();
         return result.ok(sysUserDTO);
+    }
+
+    @PutMapping("/change-password")
+    @Operation(summary = "修改用户密码")
+    public Result<?> changePassword(@RequestHeader("Authorization")String authorization,
+                                    @RequestBody PasswordDTO passwordDTO) {
+
+        String token = HttpContextUtils.getToken(authorization);
+        sysUserTokenService.changePassword(token, passwordDTO);
+
+        return new Result<>().ok();
     }
 }

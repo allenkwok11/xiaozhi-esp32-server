@@ -8,6 +8,8 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import xiaozhi.common.exception.ErrorCode;
+import xiaozhi.common.exception.RenException;
 
 import java.util.Date;
 import java.util.Enumeration;
@@ -41,6 +43,17 @@ public class HttpContextUtils {
         return token;
     }
 
+    public static String getToken(String authorization) {
+        String token;
+        if (StringUtils.isBlank(authorization) && authorization.contains("Bearer ")) {
+            throw new RenException(ErrorCode.UNAUTHORIZED);
+        }
+        token = authorization.replace("Bearer ", "");
+        if (StringUtils.isBlank(token)) {
+            throw new RenException(ErrorCode.TOKEN_NOT_EMPTY);
+        }
+        return token;
+    }
     public static Map<String, String> getParameterMap(HttpServletRequest request) {
         Enumeration<String> parameters = request.getParameterNames();
 
