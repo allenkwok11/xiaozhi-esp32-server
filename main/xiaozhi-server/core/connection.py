@@ -5,13 +5,15 @@ import time
 import queue
 import asyncio
 import traceback
-from config.logger import setup_logging
+
 import threading
 import websockets
 from typing import Dict, Any
+import plugins_func.loadplugins
+from config.logger import setup_logging
 from core.utils.dialogue import Message, Dialogue
 from core.handle.textHandle import handleTextMessage
-from core.utils.util import get_string_no_punctuation_or_emoji, extract_json_from_string
+from core.utils.util import get_string_no_punctuation_or_emoji, extract_json_from_string, get_ip_info
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from core.handle.sendAudioHandle import sendAudioMessage
 from core.handle.receiveAudioHandle import handleAudioMessage
@@ -20,7 +22,6 @@ from plugins_func.register import Action
 from config.private_config import PrivateConfig
 from core.auth import AuthMiddleware, AuthenticationError
 from core.utils.auth_code_gen import AuthCodeGenerator
-import plugins_func.loadplugins
 
 TAG = __name__
 
@@ -37,6 +38,8 @@ class ConnectionHandler:
 
         self.websocket = None
         self.headers = None
+        self.client_ip = None
+        self.client_ip_info = {}
         self.session_id = None
         self.prompt = None
         self.welcome_msg = None
@@ -95,16 +98,14 @@ class ConnectionHandler:
         self.use_function_call_mode = False
         if self.config["selected_module"]["Intent"] == 'function_call':
             self.use_function_call_mode = True
-        
-        self.func_handler = FunctionHandler(self.config)
 
     async def handle_connection(self, ws):
         try:
             # 获取并验证headers
             self.headers = dict(ws.request.headers)
             # 获取客户端ip地址
-            client_ip = ws.remote_address[0]
-            self.logger.bind(tag=TAG).info(f"{client_ip} conn - Headers: {self.headers}")
+            self.client_ip = ws.remote_address[0]
+            self.logger.bind(tag=TAG).info(f"{self.client_ip} conn - Headers: {self.headers}")
 
             # 进行认证
             await self.auth.authenticate(self.headers)
@@ -148,6 +149,7 @@ class ConnectionHandler:
             self.welcome_msg["session_id"] = self.session_id
             await self.websocket.send(json.dumps(self.welcome_msg))
 
+            # 异步初始化
             await self.loop.run_in_executor(None, self._initialize_components)
 
             # tts 消化线程
@@ -188,7 +190,13 @@ class ConnectionHandler:
         self.prompt = self.config["prompt"]
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
+
+        self.client_ip_info = get_ip_info(self.client_ip)
+        self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
+        self.prompt = self.prompt + f"\n我在:{self.client_ip_info}"
         self.dialogue.put(Message(role="system", content=self.prompt))
+
+        self.func_handler = FunctionHandler(self.config)
     
     def change_system_prompt(self, prompt):
         self.prompt = prompt
