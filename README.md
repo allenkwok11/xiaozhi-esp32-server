@@ -57,6 +57,13 @@
          </picture>
         </a>
     </td>
+    <td>
+        <a href="https://www.bilibili.com/video/BV1kgA2eYEQ9" target="_blank">
+         <picture>
+           <img alt="成本最低配置" src="docs/images/demo4.png" />
+         </picture>
+        </a>
+    </td>
   </tr>
   <tr>
     <td>
@@ -74,9 +81,16 @@
         </a>
     </td>
     <td>
-        <a href="https://www.bilibili.com/video/BV1kgA2eYEQ9" target="_blank">
+        <a href="https://www.bilibili.com/video/BV1Z8XuYZEAS" target="_blank">
          <picture>
-           <img alt="成本最低配置" src="docs/images/demo4.png" />
+           <img alt="天气插件" src="docs/images/demo8.png" />
+         </picture>
+        </a>
+    </td>
+    <td>
+        <a href="https://www.bilibili.com/video/BV178XuYfEpi" target="_blank">
+         <picture>
+           <img alt="IOT指令控制设备" src="docs/images/demo9.png" />
          </picture>
         </a>
     </td>
@@ -143,12 +157,13 @@ server:
   支持 EdgeTTS（默认）、火山引擎豆包 TTS 等多种 TTS 接口，满足语音合成需求。
 - **记忆功能**  
   支持超长记忆、本地总结记忆、无记忆三种模式，满足不同场景需求。
+- **IOT功能**  
+  支持管理注册设备IOT功能，支持基于对话上下文语境下的智能物联网控制。
 
 ### 正在开发 🚧
 
 - 多种心情模式
 - 智控台webui
-- iot功能
 
 想了解具体开发进度，[请点击这里](https://github.com/users/xinnan-tech/projects/3)
 
