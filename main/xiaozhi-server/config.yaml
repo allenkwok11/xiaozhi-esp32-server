@@ -53,6 +53,14 @@ prompt: |
   请注意，要像一个人一样说话，请不要回复表情符号、代码、和xml标签。
   现在我正在和你进行语音聊天，我们开始吧。
   如果用户希望结束对话，请在最后说“拜拜”或“再见”。
+  #--  hass 相关function的配置格式  请将你家需要控制的设备以下列格式追加在prompt里--
+  #  下面是我家智能设备，可以通过homeassistant控制
+  # 房间,设备别名,设备id
+  # 书房,吸顶灯,light.649e3159aa36_light
+  # 书房,homepod,media_player.shu_fang
+  # 书房,灯带,light.plug_158df955a6167a
+  # 书房,窗帘,cover.curtain_158d000710f507
+
 # 使用完声音文件后删除文件(Delete the sound file when you are done using it)
 delete_audio: true
 
@@ -101,6 +109,10 @@ Intent:
     functions:
       - change_role
       - get_weather
+      - play_music
+      #- hass_play_music
+      #- hass_get_state
+      #- hass_set_state
 
 # 插件的基础配置
 plugins:
