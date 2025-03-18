@@ -104,8 +104,6 @@ public class SysUserTokenServiceImpl extends BaseServiceImpl<SysUserTokenDao, Sy
 
     @Override
     public void changePassword(Long userId, PasswordDTO passwordDTO) {
-
-
         // 修改密码
         sysUserService.changePassword(userId, passwordDTO);
 

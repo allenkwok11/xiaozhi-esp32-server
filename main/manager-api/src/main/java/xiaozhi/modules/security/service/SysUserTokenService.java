@@ -30,6 +30,12 @@ public interface SysUserTokenService extends BaseService<SysUserTokenEntity> {
      */
     void logout(Long userId);
 
+    /**
+     * 修改密码
+     *
+     * @param userId
+     * @param passwordDTO
+     */
     void changePassword(Long userId, PasswordDTO passwordDTO);
 
 }
