@@ -10,13 +10,14 @@ import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.TokenDTO;
-import xiaozhi.common.utils.HttpContextUtils;
+import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.AssertUtils;
 import xiaozhi.modules.security.dto.LoginDTO;
 import xiaozhi.modules.security.password.PasswordUtils;
 import xiaozhi.modules.security.service.CaptchaService;
 import xiaozhi.modules.security.service.SysUserTokenService;
+import xiaozhi.modules.security.user.SecurityUser;
 import xiaozhi.modules.sys.dto.PasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
 import xiaozhi.modules.sys.service.SysUserService;
@@ -35,7 +36,6 @@ public class LoginController {
     private final SysUserTokenService sysUserTokenService;
     private final CaptchaService captchaService;
 
-    private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
     @GetMapping("/captcha")
     @Operation(summary = "验证码")
@@ -78,36 +78,31 @@ public class LoginController {
         }
         // 按照用户名获取用户
         SysUserDTO userDTO = sysUserService.getByUsername(login.getUsername());
-        if (userDTO != null){
+        if (userDTO != null) {
             throw new RenException("此手机号码已经注册过");
         }
         userDTO = new SysUserDTO();
         userDTO.setUsername(login.getUsername());
         userDTO.setPassword(login.getPassword());
         sysUserService.save(userDTO);
-        return new Result<Void>();
+        return new Result<>();
 
     }
 
     @GetMapping("/info")
     @Operation(summary = "用户信息获取")
-    public Result info(@RequestHeader("Authorization")String authorization) {
-        logger.info("the authorization:{}", authorization);
-
-        String token = HttpContextUtils.getToken(authorization);
-        SysUserDTO sysUserDTO = sysUserTokenService.getUserByToken(token);
-        Result<SysUserDTO> result = new Result<>();
-        return result.ok(sysUserDTO);
+    public Result<UserDetail> info() {
+        UserDetail user = SecurityUser.getUser();
+        Result<UserDetail> result = new Result<>();
+        result.setData(user);
+        return result;
     }
 
     @PutMapping("/change-password")
     @Operation(summary = "修改用户密码")
-    public Result<?> changePassword(@RequestHeader("Authorization")String authorization,
-                                    @RequestBody PasswordDTO passwordDTO) {
-
-        String token = HttpContextUtils.getToken(authorization);
-        sysUserTokenService.changePassword(token, passwordDTO);
-
-        return new Result<>().ok();
+    public Result<?> changePassword(@RequestBody PasswordDTO passwordDTO) {
+        Long userId = SecurityUser.getUserId();
+        sysUserTokenService.changePassword(userId, passwordDTO);
+        return new Result<>();
     }
 }

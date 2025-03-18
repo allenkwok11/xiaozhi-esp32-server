@@ -1,6 +1,5 @@
 package xiaozhi.common.utils;
 
-import xiaozhi.common.constant.Constant;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
@@ -32,17 +31,6 @@ public class HttpContextUtils {
         return ((ServletRequestAttributes) requestAttributes).getRequest();
     }
 
-    public static String getToken() {
-        HttpServletRequest httpRequest = getHttpServletRequest();
-        String token = httpRequest.getHeader(Constant.TOKEN_HEADER);
-
-        //如果header中不存在token，则从参数中获取token
-        if (StringUtils.isBlank(token)) {
-            token = httpRequest.getParameter(Constant.TOKEN_HEADER);
-        }
-        return token;
-    }
-
     public static String getToken(String authorization) {
         String token;
         if (StringUtils.isBlank(authorization) && authorization.contains("Bearer ")) {
@@ -54,6 +42,7 @@ public class HttpContextUtils {
         }
         return token;
     }
+
     public static Map<String, String> getParameterMap(HttpServletRequest request) {
         Enumeration<String> parameters = request.getParameterNames();
 

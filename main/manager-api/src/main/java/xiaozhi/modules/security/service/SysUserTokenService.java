@@ -1,14 +1,11 @@
 package xiaozhi.modules.security.service;
 
-import xiaozhi.common.page.PageData;
 import xiaozhi.common.page.TokenDTO;
 import xiaozhi.common.service.BaseService;
 import xiaozhi.common.utils.Result;
 import xiaozhi.modules.security.entity.SysUserTokenEntity;
 import xiaozhi.modules.sys.dto.PasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
-
-import java.util.Map;
 
 /**
  * 用户Token
@@ -33,6 +30,6 @@ public interface SysUserTokenService extends BaseService<SysUserTokenEntity> {
      */
     void logout(Long userId);
 
-    void changePassword(String token, PasswordDTO passwordDTO);
+    void changePassword(Long userId, PasswordDTO passwordDTO);
 
 }
