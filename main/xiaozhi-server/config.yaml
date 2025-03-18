@@ -186,7 +186,7 @@ LLM:
     # 使用的对话模式 可以选择工作流 workflows/run 对话模式 chat-messages  文本生成 completion-messages
     # 使用workflows进行返回的时候输入参数为 query 返回参数的名字要设置为 answer
     # 文本生成的默认输入参数也是query
-    mode: workflows/run
+    mode: chat-messages
   GeminiLLM:
     type: gemini
     # 谷歌Gemini API，需要先在Google Cloud控制台创建API密钥并获取api_key
