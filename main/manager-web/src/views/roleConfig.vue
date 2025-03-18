@@ -22,20 +22,8 @@
             </el-form-item>
             <el-form-item label="角色模版：">
               <div style="display: flex;gap: 8px;">
-                <div class="template-item">
-                  台湾女友
-                </div>
-                <div class="template-item">
-                  土豆子
-                </div>
-                <div class="template-item">
-                  英语老师
-                </div>
-                <div class="template-item">
-                  好奇小男孩
-                </div>
-                <div class="template-item">
-                  汪汪队队长
+                <div v-for="template in templates" :key="template" class="template-item" @click="selectTemplate(template)">
+                  {{ template }}
                 </div>
               </div>
             </el-form-item>
@@ -76,70 +64,10 @@
                 </div>
               </div>
             </el-form-item>
-            <el-form-item label="大语言模型(LLM)：" class="lh-form-item">
-              <div style="display: flex;gap: 8px;">
-                <div class="input-46" style="width: 100%;">
-                  <el-select v-model="form.model" placeholder="请选择" style="width: 100%;">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-                    </el-option>
-                  </el-select>
-                </div>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="语音转文本模型(ASR)：" class="lh-form-item">
-              <div style="display: flex;gap: 8px;">
-                <div class="input-46" style="width: 100%;">
-                  <el-select v-model="form.asr" placeholder="请选择" style="width: 100%;">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-                    </el-option>
-                  </el-select>
-                </div>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="语音活动检测模型(VAD)：" class="lh-form-item">
-              <div style="display: flex;gap: 8px;">
-                <div class="input-46" style="width: 100%;">
-                  <el-select v-model="form.vad" placeholder="请选择" style="width: 100%;">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-                    </el-option>
-                  </el-select>
-                </div>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="语音生成模型(TTS)：" class="lh-form-item">
-              <div style="display: flex;gap: 8px;">
-                <div class="input-46" style="width: 100%;">
-                  <el-select v-model="form.tts" placeholder="请选择" style="width: 100%;">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-                    </el-option>
-                  </el-select>
-                </div>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="意图分类模型(Intent)：" class="lh-form-item">
-              <div style="display: flex;gap: 8px;">
-                <div class="input-46" style="width: 100%;">
-                  <el-select v-model="form.intent" placeholder="请选择" style="width: 100%;">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-                    </el-option>
-                  </el-select>
-                </div>
-              </div>
-            </el-form-item>
-
-            <el-form-item label="记忆增强模型(Memory)：" class="lh-form-item">
-              <div style="display: flex;gap: 8px;">
-                <div class="input-46" style="width: 100%;">
-                  <el-select v-model="form.memory" placeholder="请选择" style="width: 100%;">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-                    </el-option>
-                  </el-select>
-                </div>
-              </div>
+            <el-form-item v-for="model in models" :key="model.label" :label="model.label" class="model-item">
+              <el-select v-model="form.model[model.key]" filterable placeholder="请选择" class="select-field">
+                <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value"/>
+              </el-select>
             </el-form-item>
             <el-form-item label="" class="lh-form-item" style="margin-top: -25px;">
               <div style="color: #979db1;text-align: left;">除了“Qwen
@@ -191,13 +119,20 @@ export default {
           intent:""
         }
       },
-      options: [{
-        value: '选项1',
-        label: '黄金糕'
-      }, {
-        value: '选项2',
-        label: '双皮奶'
-      }]
+    options: [
+      { value: '选项1', label: '黄金糕' },
+      { value: '选项2', label: '双皮奶' }
+    ],
+      models: [
+      { label: '大语言模型(LLM)', key: 'llm' },
+      { label: '语音转文本模型(ASR)', key: 'asr' },
+      { label: '语音活动检测模型(VAD)', key: 'vad' },
+      { label: '语音生成模型(TTS)', key: 'tts' },
+      { label: '意图分类模型(Intent)', key: 'intent' },
+      { label: '记忆增强模型(Memory)', key: 'memory' }
+    ],
+      templates: ['台湾女友', '土豆子', '英语老师', '好奇小男孩', '汪汪队队长']
+
     }
   },
   methods: {
@@ -222,6 +157,11 @@ export default {
         this.$message.success('配置已重置')
       }).catch(() => {
       })
+    },
+    // 处理选择模板的逻辑
+    selectTemplate(template) {
+      this.form.name = template;
+      this.$message.success(`已选择模板：${template}`);
     }
   }
 }
@@ -253,6 +193,14 @@ export default {
   padding-bottom: 2px;
 }
 
+.select-field{
+  width: 100%;
+  max-width: 720px;
+  border: 1px solid #e4e6ef;
+  background: #f6f8fb;
+  border-radius: 8px;
+  height: 36px !important;
+}
 
 .audio-box {
   flex: 1;
@@ -283,7 +231,7 @@ export default {
 
 .template-item {
   height: 37px;
-  width: 80px;
+  width: 76px;
   border-radius: 8px;
   background: #e6ebff;
   line-height: 37px;
@@ -291,6 +239,12 @@ export default {
   font-size: 11px;
   text-align: center;
   color: #5778ff;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.template-item:hover {
+  background-color: #d0d8ff;
 }
 
 .prompt-bottom {
