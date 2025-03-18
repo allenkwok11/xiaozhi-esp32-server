@@ -9,7 +9,7 @@ logger = setup_logging()
 class LLMProvider(LLMProviderBase):
     def __init__(self, config):
         self.api_key = config["api_key"]
-        self.mode = config.get("mode", "workflows/run")
+        self.mode = config.get("mode", "chat-messages")
         self.base_url = config.get("base_url", "https://api.dify.ai/v1").rstrip('/')
         self.session_conversation_map = {}  # 存储session_id和conversation_id的映射
 
