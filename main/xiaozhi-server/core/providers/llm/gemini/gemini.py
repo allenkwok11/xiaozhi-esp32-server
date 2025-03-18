@@ -85,22 +85,48 @@ class LLMProvider(LLMProviderBase):
                 "Content-Type": "application/json",
             }
 
-            # 发送POST请求,经测试手动 request 无法使用 stream 模式，但是文本消息其实也很快，stream 与否也无所谓
+            # 发送POST请求,经测试手动 request 无法使用 stream 模式
             if self.proxies:
+                logger.bind(tag=TAG).info(f"Gemini response mode ")
                 response = requests.post(url, headers=headers, json=request_body, stream=False, proxies=self.proxies)
+                try:
+                    data = response.json()  # 直接解析JSON
+                    if 'candidates' in data and data['candidates']:
+                        yield data['candidates'][0]['content']['parts'][0]['text']
+                    else:
+                        yield "未找到候选回复。"
+                except json.JSONDecodeError as e:
+                    yield f"JSON解码错误：{e}"
+                except Exception as e:
+                    yield f"发生错误：{e}"
             else:
-                response = requests.post(url, headers=headers, json=request_body, stream=False)
-            response.raise_for_status()
-            try:
-                data = response.json()  # 直接解析JSON
-                if 'candidates' in data and data['candidates']:
-                    yield data['candidates'][0]['content']['parts'][0]['text']
-                else:
-                    yield "未找到候选回复。"
-            except json.JSONDecodeError as e:
-                yield f"JSON解码错误：{e}"
-            except Exception as e:
-                yield f"发生错误：{e}"
+                logger.bind(tag=TAG).info(f"Gemini stream mode ")
+                chat = self.model.start_chat(history=chat_history)
+
+                # 发送消息并获取流式响应
+                response = chat.send_message(
+                    current_msg,
+                    stream=True,
+                    generation_config=self.generation_config
+                )
+                # 处理流式响应
+                for chunk in response:
+                    if hasattr(chunk, 'text') and chunk.text:
+                        yield chunk.text
+
+        except Exception as e:
+            error_msg = str(e)
+            logger.bind(tag=TAG).error(f"Gemini响应生成错误: {error_msg}")
+
+            # 针对不同错误返回友好提示
+            if "Rate limit" in error_msg:
+                yield "【Gemini服务请求太频繁,请稍后再试】"
+            elif "Invalid API key" in error_msg:
+                yield "【Gemini API key无效】"
+            else:
+                yield f"【Gemini服务响应异常: {error_msg}】"
+
+
 
 
         except requests.exceptions.RequestException as e:
