@@ -1,7 +1,7 @@
 <template>
   <div class="device-item">
     <div style="display: flex;justify-content: space-between;">
-      <div style="font-weight: 700;font-size: 24px;text-align: left;color: #3d4566;">
+      <div style="font-weight: 700;font-size: 18px;text-align: left;color: #3d4566;">
          {{ device.agentName }}
       </div>
       <div>
@@ -58,7 +58,7 @@ export default {
 .device-name {
   margin: 7px 0 10px;
   font-weight: 400;
-  font-size: 10px;
+  font-size: 11px;
   color: #3d4566;
   text-align: left;
 }

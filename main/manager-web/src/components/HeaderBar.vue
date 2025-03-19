@@ -62,7 +62,7 @@ export default {
       })
     },
 
-     // 处理搜索
+    // 处理搜索
     handleSearch() {
       const searchValue = this.serach.trim();
       let filteredDevices;

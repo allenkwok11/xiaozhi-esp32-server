@@ -159,36 +159,52 @@ export default {
                 });
             }).send();
     },
+    // 获取智能体列表
+    getAgentList(callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/agent`)
+            .method('GET')
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail(() => {
+                RequestService.reAjaxFun(() => {
+                    this.getAgentList(callback);
+                });
+            }).send();
+        },
 
-       // 获取智能体列表
-        getAgentList(callback) {
-            RequestService.sendRequest()
-                .url(`${getServiceUrl()}/api/v1/user/agent`)
-                .method('GET')
-                .success((res) => {
-                    RequestService.clearRequestTime();
-                    callback(res);
+    getUserInfo(callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/info`)
+            .method('GET')
+            .success((res) => {
+                RequestService.clearRequestTime()
+                callback(res)
+            })
+            .fail((err) => {
+                console.error('接口请求失败:', err)
+                RequestService.reAjaxFun(() => {
+                    this.getUserInfo(callback)
                 })
-                .fail(() => {
-                    RequestService.reAjaxFun(() => {
-                        this.getAgentList(callback);
-                    });
-                }).send();
-        },
-        getUserInfo(callback) {
-            RequestService.sendRequest()
-                .url(`${getServiceUrl()}/api/v1/user/info`)
-                .method('GET')
-                .success((res) => {
-                    RequestService.clearRequestTime()
-                    callback(res)
-                })
-                .fail((err) => {
-                    console.error('接口请求失败:', err)
-                    RequestService.reAjaxFun(() => {
-                        this.getUserInfo(callback)
-                    })
-                }).send()
-        },
+            }).send()
+    },
+    // 添加智能体
+    addAgent(agentName, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/agent`)
+            .method('POST')
+            .data({ name: agentName })
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail(() => {
+                RequestService.reAjaxFun(() => {
+                    this.addAgent(agentName, callback);
+                });
+            }).send();
+    },
 
 }

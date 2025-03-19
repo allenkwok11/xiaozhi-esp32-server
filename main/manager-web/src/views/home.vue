@@ -71,9 +71,10 @@ export default {
       // 点击配置角色后跳转到角色配置页
       this.$router.push('/role-config')
     },
-    handleWisdomBodyAdded(name) {
-      console.log('新增智慧体名称：', name)
-      this.addDeviceDialogVisible = false
+    handleWisdomBodyAdded(res) {
+      console.log('新增智能体响应：', res);
+      this.fetchAgentList();
+      this.addDeviceDialogVisible = false;
     },
     handleDeviceManage() {
       this.$router.push('/device-management');
