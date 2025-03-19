@@ -159,7 +159,6 @@ export default {
                 });
             }).send();
     },
-
     // 获取智能体列表
     getAgentList(callback) {
         RequestService.sendRequest()
