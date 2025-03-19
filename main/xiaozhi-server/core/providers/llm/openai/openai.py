@@ -7,7 +7,10 @@ class LLMProvider(LLMProviderBase):
     def __init__(self, config):
         self.model_name = config.get("model_name")
         self.api_key = config.get("api_key")
-        self.url = config.get("url")
+        if 'base_url' in config:
+            self.base_url = config.get("base_url")
+        else:
+            self.base_url = config.get("url")
         self.top_p = config.get("top_p")
         self.top_k = config.get("top_k")
         self.temperature = config.get("temperature")
@@ -15,7 +18,7 @@ class LLMProvider(LLMProviderBase):
         self.frequency_penalty = config.get("frequency_penalty")
         
         check_model_key("LLM", self.api_key)
-        self.client = openai.OpenAI(api_key=self.api_key, base_url=self.url)
+        self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
 
     def response(self, session_id, dialogue):
         try:
