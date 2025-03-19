@@ -18,20 +18,6 @@ export default {
                 })
             }).send()
     },
-    // 获取用户信息
-    getUserInfo(callback) {
-        RequestService.sendRequest().url(`${getServiceUrl()}/api/v1/user/info`)
-            .method('GET')
-            .success((res) => {
-                RequestService.clearRequestTime()
-                callback(res)
-            })
-            .fail(() => {
-                RequestService.reAjaxFun(() => {
-                    this.getUserInfo()
-                })
-            }).send()
-    },
     // 获取设备信息
     getHomeList(callback) {
         RequestService.sendRequest().url(`${getServiceUrl()}/api/v1/user/device/bind`)
@@ -173,5 +159,36 @@ export default {
                 });
             }).send();
     },
+
+       // 获取智能体列表
+        getAgentList(callback) {
+            RequestService.sendRequest()
+                .url(`${getServiceUrl()}/api/v1/user/agent`)
+                .method('GET')
+                .success((res) => {
+                    RequestService.clearRequestTime();
+                    callback(res);
+                })
+                .fail(() => {
+                    RequestService.reAjaxFun(() => {
+                        this.getAgentList(callback);
+                    });
+                }).send();
+        },
+        getUserInfo(callback) {
+            RequestService.sendRequest()
+                .url(`${getServiceUrl()}/api/v1/user/info`)
+                .method('GET')
+                .success((res) => {
+                    RequestService.clearRequestTime()
+                    callback(res)
+                })
+                .fail((err) => {
+                    console.error('接口请求失败:', err)
+                    RequestService.reAjaxFun(() => {
+                        this.getUserInfo(callback)
+                    })
+                }).send()
+        },
 
 }
