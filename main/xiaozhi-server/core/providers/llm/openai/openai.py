@@ -11,6 +11,12 @@ class LLMProvider(LLMProviderBase):
             self.base_url = config.get("base_url")
         else:
             self.base_url = config.get("url")
+        self.top_p = config.get("top_p")
+        self.top_k = config.get("top_k")
+        self.temperature = config.get("temperature")
+        self.max_tokens = config.get("max_tokens")
+        self.frequency_penalty = config.get("frequency_penalty")
+        
         check_model_key("LLM", self.api_key)
         self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
 
@@ -19,7 +25,12 @@ class LLMProvider(LLMProviderBase):
             responses = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=dialogue,
-                stream=True
+                stream=True,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                top_p=self.top_p,
+                top_k=self.top_k,
+                frequency_penalty=self.frequency_penalty
             )
             
             is_active = True
@@ -51,6 +62,11 @@ class LLMProvider(LLMProviderBase):
                 messages=dialogue,
                 stream=True,
                 tools=functions,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                top_p=self.top_p,
+                top_k=self.top_k,
+                frequency_penalty=self.frequency_penalty
             )
             
             for chunk in stream:
