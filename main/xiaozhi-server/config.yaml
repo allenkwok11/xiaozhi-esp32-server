@@ -131,6 +131,13 @@ ASR:
     access_token: 你的火山引擎语音合成服务access_token
     cluster: volcengine_input_common
     output_dir: tmp/
+  GizwitsASR:
+    type: volcengine
+    # 火山引擎作为基座，可以完全使用企业级火山引擎语音识别大模型服务，识别率更准确
+    # 获取API Key地址：https://agentrouter.gizwitsapi.com/panel/token
+    base_host: bytedance.gizwitsapi.com
+    access_token: "你的机智云API key"
+    output_dir: tmp/
 VAD:
   SileroVAD:
     threshold: 0.5
@@ -399,6 +406,15 @@ TTS:
     voice: "zh_female_wanwanxiaohe_moon_bigtts"
     output_dir: tmp/
     access_token: "你的302API密钥"
+  GizwitsTTS:
+    type: doubao
+    # 火山引擎作为基座，可以完全使用企业级火山引擎语音合成服务
+    # 获取API Key地址：https://agentrouter.gizwitsapi.com/panel/token
+    api_url: https://bytedance.gizwitsapi.com/api/v1/tts
+    authorization: "Bearer "
+    voice: "zh_female_wanwanxiaohe_moon_bigtts"
+    output_file: tmp/
+    access_token: "你的机智云API key"
   ACGNTTS:
     #在线网址：https://acgn.ttson.cn/
     #token购买：www.ttson.cn
