@@ -2,7 +2,7 @@
   <div class="welcome">
     <HeaderBar />
     <el-main style="padding: 20px; display: flex; flex-direction: column;">
-      <el-card class="user-card" shadow="always">
+      <el-card class="user-card" shadow="always" >
       <div class="user-search-operate" style="display: flex; align-items: center; margin-bottom: 20px;">
         <el-input placeholder="请输入手机号码查询" v-model="searchPhone" style="width: 300px; margin-right: 10px" />
         <el-button @click="handleSearch">查询</el-button>
@@ -30,6 +30,17 @@
       </el-table>
       </el-card>
 
+      <div class="pagination-container">
+        <el-pagination
+          @current-change="handleCurrentChange"
+          :current-page="currentPage"
+          :page-sizes="[5, 10, 15]"
+          :page-size="pageSize"
+          layout="prev, pager, next"
+          :total="total"
+        />
+      </div>
+
       <div style="font-size: 12px; font-weight: 400; margin-top: auto; padding-top: 30px; color: #979db1;">
         ©2025 xiaozhi-esp32-server
       </div>
@@ -50,7 +61,10 @@ export default {
         { userId: '123456', phone: '13800138000', status: '正常', deviceCount: 9 },
         { userId: '123456', phone: '13800138000', status: '正常', deviceCount: 7 },
         { userId: '123456', phone: '13800138000', status: '禁用', deviceCount: 7 }
-      ]
+      ],
+      currentPage: 1,
+      pageSize: 4,
+      total: 20
     };
   },
   methods: {
@@ -77,7 +91,11 @@ export default {
     },
     deleteUser(row) {
       console.log('删除用户：', row);
-    }
+    },
+    handleCurrentChange(page) {
+      this.currentPage = page;
+      console.log('当前页码：', page);
+    },
   }
 };
 </script>
@@ -117,4 +135,11 @@ export default {
   padding: 20px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 </style>

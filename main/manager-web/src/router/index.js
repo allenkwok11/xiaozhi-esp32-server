@@ -54,8 +54,15 @@ const routes = [
     component: function () {
       return import('../views/UserManagement.vue')
     }
+  },
+  {
+   path: '/model-config',
+   name: 'ModelConfig',
+   component: function () {
+     return import('../views/ModelConfig.vue')
+   }
+  },
 
-  }
 ]
 
 const router = new VueRouter({

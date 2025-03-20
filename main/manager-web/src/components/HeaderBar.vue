@@ -11,7 +11,7 @@
         <div class="equipment-management2" @click="goUserManagement">
           用户管理
         </div>
-        <div class="equipment-management2">
+        <div class="equipment-management2" @click="goModelConfig">
           模型配置
         </div>
       </div>
@@ -55,6 +55,9 @@ export default {
     },
     goUserManagement() {
       this.$router.push('/user-management')
+    },
+    goModelConfig() {
+      this.$router.push('/model-config')
     },
     // 获取用户信息
     fetchUserInfo() {
@@ -160,3 +163,4 @@ export default {
   color: #3d4566;
 }
 </style>
+
