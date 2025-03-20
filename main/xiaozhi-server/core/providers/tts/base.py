@@ -5,6 +5,7 @@ import numpy as np
 import opuslib_next
 from pydub import AudioSegment
 from abc import ABC, abstractmethod
+from core.utils.tts import MarkdownCleaner
 
 TAG = __name__
 logger = setup_logging()
@@ -23,6 +24,7 @@ class TTSProviderBase(ABC):
         tmp_file = self.generate_filename()
         try:
             max_repeat_time = 5
+            text = MarkdownCleaner.clean_markdown(text)
             while not os.path.exists(tmp_file) and max_repeat_time > 0:
                 asyncio.run(self.text_to_speak(text, tmp_file))
                 if not os.path.exists(tmp_file):
