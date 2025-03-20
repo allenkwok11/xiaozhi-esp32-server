@@ -248,7 +248,8 @@ TTS:
     # 火山引擎语音合成服务，需要先在火山引擎控制台创建应用并获取appid和access_token
     # 山引擎语音一定要购买花钱，起步价30元，就有100并发了。如果用免费的只有2个并发，会经常报tts错误
     # 购买服务后，购买免费的音色后，可能要等半小时左右，才能使用。
-    # 地址：https://console.volcengine.com/speech/service/8
+    # 普通音色在这里开通：https://console.volcengine.com/speech/service/8
+    # 湾湾小何音色在这里开通：https://console.volcengine.com/speech/service/10007，开通后将下面的voice设置成zh_female_wanwanxiaohe_moon_bigtts
     api_url: https://openspeech.bytedance.com/api/v1/tts
     voice: BV001_streaming
     output_dir: tmp/
