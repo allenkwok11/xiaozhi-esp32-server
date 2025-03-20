@@ -1,6 +1,10 @@
 import openai
+from config.logger import setup_logging
 from core.utils.util import check_model_key
 from core.providers.llm.base import LLMProviderBase
+
+TAG = __name__
+logger = setup_logging()
 
 
 class LLMProvider(LLMProviderBase):
@@ -11,12 +15,8 @@ class LLMProvider(LLMProviderBase):
             self.base_url = config.get("base_url")
         else:
             self.base_url = config.get("url")
-        self.top_p = config.get("top_p")
-        self.top_k = config.get("top_k")
-        self.temperature = config.get("temperature")
-        self.max_tokens = config.get("max_tokens")
-        self.frequency_penalty = config.get("frequency_penalty")
-        
+        self.max_tokens = config.get("max_tokens", 500)
+
         check_model_key("LLM", self.api_key)
         self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
 
@@ -26,13 +26,9 @@ class LLMProvider(LLMProviderBase):
                 model=self.model_name,
                 messages=dialogue,
                 stream=True,
-                temperature=self.temperature,
                 max_tokens=self.max_tokens,
-                top_p=self.top_p,
-                top_k=self.top_k,
-                frequency_penalty=self.frequency_penalty
             )
-            
+
             is_active = True
             for chunk in responses:
                 try:
@@ -61,17 +57,12 @@ class LLMProvider(LLMProviderBase):
                 model=self.model_name,
                 messages=dialogue,
                 stream=True,
-                tools=functions,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                top_p=self.top_p,
-                top_k=self.top_k,
-                frequency_penalty=self.frequency_penalty
+                tools=functions
             )
-            
+
             for chunk in stream:
                 yield chunk.choices[0].delta.content, chunk.choices[0].delta.tool_calls
-                
+
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"Error in function call streaming: {e}")
             yield {"type": "content", "content": f"【OpenAI服务响应异常: {e}】"}

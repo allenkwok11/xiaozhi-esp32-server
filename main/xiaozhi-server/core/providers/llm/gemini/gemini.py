@@ -87,7 +87,6 @@ class LLMProvider(LLMProviderBase):
 
             # 发送POST请求,经测试手动 request 无法使用 stream 模式
             if self.proxies:
-                logger.bind(tag=TAG).info(f"Gemini response mode ")
                 response = requests.post(url, headers=headers, json=request_body, stream=False, proxies=self.proxies)
                 try:
                     data = response.json()  # 直接解析JSON
