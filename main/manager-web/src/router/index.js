@@ -39,12 +39,20 @@ const routes = [
       return import('../views/register.vue')
     }
   },
-      // 新增设备管理页面路由
+  // 设备管理页面路由
   {
     path: '/device-management',
     name: 'DeviceManagement',
     component: function () {
       return import('../views/DeviceManagement.vue')
+    }
+  },
+  // 添加用户管理路由
+  {
+    path: '/user-management',
+    name: 'UserManagement',
+    component: function () {
+      return import('../views/UserManagement.vue')
     }
 
   }

@@ -8,13 +8,11 @@
           <img src="@/assets/home/equipment.png" alt="" style="width: 12px;height: 10px;" />
           智能体管理
         </div>
-        <div class="console">
-          <i class="el-icon-s-grid" style="font-size: 10px;color: #979db1;" />
-          控制台
+        <div class="equipment-management2" @click="goUserManagement">
+          用户管理
         </div>
         <div class="equipment-management2">
-          设备管理
-          <img src="@/assets/home/close.png" alt="" style="width: 6px;height: 6px;" />
+          模型配置
         </div>
       </div>
       <div style="display: flex;align-items: center;gap: 7px; margin-top: 2px;">
@@ -54,6 +52,9 @@ export default {
     goHome() {
       // 跳转到首页
       this.$router.push('/')
+    },
+    goUserManagement() {
+      this.$router.push('/user-management')
     },
     // 获取用户信息
     fetchUserInfo() {
@@ -108,17 +109,17 @@ export default {
 }
 
 .equipment-management2 {
-  width: 87px;
-  height: 22px;
-  border-radius: 11px;
+  width: 82px;
+  height: 24px;
+  border-radius: 12px;
   background: #fff;
   display: flex;
   justify-content: center;
-  font-size: 9px;
-  font-weight: 400;
+  font-size: 10px;
+  font-weight: 500;
   gap: 7px;
   color: #3d4566;
-  margin-left: 2px;
+  margin-left: 1px;
   align-items: center;
 }
 
@@ -157,19 +158,5 @@ export default {
   letter-spacing: -0.02px;
   text-align: left;
   color: #3d4566;
-}
-.console {
-  width: 90px;
-  height: 22px;
-  border-radius: 11px;
-  background: radial-gradient(50% 50% at 50% 50%, #fff 0%, #e8f0ff 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  color: #979db1;
-  font-weight: 400;
-  gap: 7px;
-  margin-left: 15px;
 }
 </style>
