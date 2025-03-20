@@ -177,18 +177,8 @@ class TTSProvider(TTSProviderBase):
 
     async def text_to_speak_stream(self, text, queue: queue.Queue, text_index=0):
         try:
-            # Prepare reference data
-            byte_audios = [audio_to_bytes(ref_audio) for ref_audio in self.reference_audio]
-            ref_texts = [read_ref_text(ref_text) for ref_text in self.reference_text]
-
             data = {
                 "text": text,
-                "references": [
-                    ServeReferenceAudio(
-                        audio=audio if audio else b"", text=text
-                    )
-                    for text, audio in zip(ref_texts, byte_audios)
-                ],
                 "reference_id": self.reference_id,
                 "normalize": self.normalize,
                 "format": self.format,
@@ -201,6 +191,18 @@ class TTSProvider(TTSProviderBase):
                 "use_memory_cache": self.use_memory_cache,
                 "seed": self.seed,
             }
+
+            # Prepare reference data
+            if self.reference_audio and self.reference_text:
+                byte_audios = [audio_to_bytes(ref_audio) for ref_audio in self.reference_audio]
+                ref_texts = [read_ref_text(ref_text) for ref_text in self.reference_text]
+                data["references"] = [
+                    ServeReferenceAudio(
+                        audio=audio if audio else b"", text=text
+                    )
+                    for text, audio in zip(ref_texts, byte_audios)
+                ],
+                data["reference_id"] = None
 
             pydantic_data = ServeTTSRequest(**data)
             audio_buff = None
@@ -224,7 +226,7 @@ class TTSProvider(TTSProviderBase):
                         if len(chunk_total) % 2 == 0 and chunk_total[-2:] == b'\x00\x00':
                             audio = self._get_audio_from_tts(chunk_total)
                             audio_raw = audio_raw + audio.raw_data
-                            #长度凑够2贞开始发送，60ms*4=240ms
+                            # 长度凑够2贞开始发送，60ms*4=240ms
                             if len(audio_raw) >= 7680:
                                 duration = 60 * len(audio_raw) // 1920
                                 if (len(audio_raw) % 1920) > 0:

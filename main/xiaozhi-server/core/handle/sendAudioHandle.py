@@ -51,15 +51,6 @@ async def sendAudioMessageStream(conn, audios_queue, text, text_index=0, llm_fin
                 for opus_packet in audio_opus_datas:
                     if conn.client_abort:
                         return
-                    # 计算当前包的预期发送时间
-                    # 计算当前包的预期发送时间
-                    expected_time = start_time_chunk + (play_position / 1000)
-                    current_time = time.perf_counter()
-
-                    # 等待直到预期时间
-                    delay = expected_time - current_time
-                    if delay > 0:
-                        await asyncio.sleep(delay)
                     logger.bind(tag=TAG).info(f'发送数据长度：{len(opus_packet)}')
                     await conn.websocket.send(opus_packet)
                     play_position += frame_duration  # 更新播放位置
@@ -70,15 +61,15 @@ async def sendAudioMessageStream(conn, audios_queue, text, text_index=0, llm_fin
     await send_tts_message(conn, "sentence_end", text)
 
     print(f'{text_index}-{conn.tts_last_text_index}')
+    expected_time = start_time_chunk + (play_position / 1000)
+    current_time = time.perf_counter()
+    # 等待直到预期时间
+    delay = expected_time - current_time
+    if delay > 0:
+        await asyncio.sleep(delay)
     # 发送结束消息（如果是最后一个文本）
     logger.bind(tag=TAG).info(f"{conn.llm_finish_task},{text_index},{conn.tts_last_text_index}")
     if conn.llm_finish_task and text_index == conn.tts_last_text_index:
-        expected_time = start_time_chunk + (play_position / 1000)
-        current_time = time.perf_counter()
-        # 等待直到预期时间
-        delay = expected_time - current_time
-        if delay > 0:
-            await asyncio.sleep(delay)
         await send_tts_message(conn, 'stop', None)
         if conn.close_after_chat or "拜拜" in text or "再见" in text:
             await conn.close()
