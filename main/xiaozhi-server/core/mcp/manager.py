@@ -1,5 +1,5 @@
 """MCP服务管理器"""
-import json
+import os, json
 from typing import Dict, Any, List
 from .MCPClient import MCPClient
 from config.logger import setup_logging
@@ -16,9 +16,12 @@ class MCPManager:
         初始化MCP管理器
         """
         self.conn = conn
-        self.config_path = get_project_dir() + 'data/.mcp_server_settings.json'
-        self.client: Dict[str, MCPClient] = {}
         self.logger = setup_logging()
+        self.config_path = get_project_dir() + 'data/.mcp_server_settings.json'
+        if os.path.exists(self.config_path) == False:
+            self.config_path = ""
+            self.logger.bind(tag=TAG).warning(f"请检查mcp服务配置文件：data/.mcp_server_settings.json")
+        self.client: Dict[str, MCPClient] = {}
         self.tools = []
 
     def load_config(self) -> Dict[str, Any]:
@@ -26,6 +29,9 @@ class MCPManager:
         Returns:
             Dict[str, Any]: 服务配置字典
         """
+        if len(self.config_path) == 0:
+            return {}
+        
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
                 config = json.load(f)

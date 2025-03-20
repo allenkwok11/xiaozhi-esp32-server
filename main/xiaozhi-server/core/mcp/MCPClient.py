@@ -1,4 +1,4 @@
-import asyncio
+from datetime import timedelta
 from typing import Optional
 from contextlib import AsyncExitStack
 import os, shutil
@@ -26,8 +26,10 @@ class MCPClient:
             if self.config["command"] == "npx"
             else self.config["command"]
         )
-
-        env={**os.environ, **self.config["env"]}
+        
+        env={**os.environ}
+        if self.config.get("env"):
+            env.update(self.config["env"])
         
         server_params = StdioServerParameters(
             command=command,
@@ -37,7 +39,8 @@ class MCPClient:
         
         stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
         self.stdio, self.write = stdio_transport
-        self.session = await self.exit_stack.enter_async_context(ClientSession(self.stdio, self.write))
+        time_out_delta =  timedelta(seconds=10)
+        self.session = await self.exit_stack.enter_async_context(ClientSession(read_stream=self.stdio, write_stream=self.write, read_timeout_seconds=time_out_delta))
         
         await self.session.initialize()
         
@@ -61,7 +64,21 @@ class MCPClient:
     
     async def call_tool(self, tool_name: str, tool_args: dict):
         self.logger.bind(tag=TAG).info(f"MCPClient Calling tool {tool_name} with args: {tool_args}")
-        response = await self.session.call_tool(tool_name, tool_args)
+        try:
+            response = await self.session.call_tool(tool_name, tool_args)
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"Error calling tool {tool_name}: {e}")
+            from types import SimpleNamespace
+            error_content = SimpleNamespace(
+                type='text',
+                text=f"Error calling tool {tool_name}: {e}"
+            )
+            error_response = SimpleNamespace(
+                content=[error_content],
+                isError=True
+            )
+            return error_response
+        self.logger.bind(tag=TAG).info(f"MCPClient Response from tool {tool_name}: {response}")
         return response
 
     async def cleanup(self):

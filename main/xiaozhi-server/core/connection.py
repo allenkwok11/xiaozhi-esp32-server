@@ -322,9 +322,6 @@ class ConnectionHandler:
 
         # Define intent functions
         functions = self.func_handler.get_functions()
-        mcpfuncs = self.mcp_manager.get_all_tools()    # MCP工具
-        functions.extend(mcpfuncs)
-        print("functions with mcp", functions)
         response_message = []
         processed_chars = 0  # 跟踪已处理的字符位置
 
@@ -482,11 +479,17 @@ class ConnectionHandler:
                 args_dict
             ), self.loop).result()
             # meta=None content=[TextContent(type='text', text='北京当前天气:\n温度: 21°C\n天气: 晴\n湿度: 6%\n风向: 西北 风\n风力等级: 5级', annotations=None)] isError=False
-            self.logger.bind(tag=TAG).info(f"tool_result:{tool_result}")
-            if tool_result is not None:
-                if tool_result.content is not None:
-                    print(tool_result.content)
-                    return ActionResponse(action=Action.REQLLM, result=tool_result.content[0].text, response="")
+            content_text = ""
+            if tool_result is not None and tool_result.content is not None:
+                for content in tool_result.content:
+                    content_type = content.type
+                    if content_type == "text":
+                        content_text = content.text
+                    elif content_type == "image":
+                        pass
+            
+            if len(content_text) > 0:
+                return ActionResponse(action=Action.REQLLM, result=content_text, response="")
             
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"MCP工具调用错误: {e}")
