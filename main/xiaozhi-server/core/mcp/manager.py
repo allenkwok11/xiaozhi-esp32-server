@@ -80,14 +80,15 @@ class MCPManager:
         """执行工具调用
         Args:
             tool_name: 工具名称
-            arguments: 工具参数
+            arguments: 工具参数 
         Returns:
             Any: 工具执行结果
         Raises:
             ValueError: 工具未找到时抛出
         """
+        self.logger.bind(tag=TAG).info(f"Executing tool {tool_name} with arguments: {arguments}")
         for client in self.client.values():
-            if any(tool_name == tool["name"] for tool in client.tools):
+            if client.has_tool(tool_name):
                 return await client.call_tool(tool_name, arguments)
             
         raise ValueError(f"Tool {tool_name} not found in any MCP server")

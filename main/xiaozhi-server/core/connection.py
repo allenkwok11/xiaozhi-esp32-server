@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from core.handle.sendAudioHandle import sendAudioMessage
 from core.handle.receiveAudioHandle import handleAudioMessage
 from core.handle.functionHandler import FunctionHandler
-from plugins_func.register import Action
+from plugins_func.register import Action, ActionResponse
 from config.private_config import PrivateConfig
 from core.auth import AuthMiddleware, AuthenticationError
 from core.utils.auth_code_gen import AuthCodeGenerator
@@ -196,9 +196,9 @@ class ConnectionHandler:
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
 
-        self.client_ip_info = get_ip_info(self.client_ip)
-        self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
-        self.prompt = self.prompt + f"\n我在:{self.client_ip_info}"
+        #self.client_ip_info = get_ip_info(self.client_ip)
+        #self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
+        #self.prompt = self.prompt + f"\n我在:{self.client_ip_info}"
         self.dialogue.put(Message(role="system", content=self.prompt))
 
         self.func_handler = FunctionHandler(self.config)
@@ -436,24 +436,14 @@ class ConnectionHandler:
                     "id": function_id,
                     "arguments": function_arguments
                 }
-                #result = self.func_handler.handle_llm_function_call(self, function_call_data)
-                #self._handle_function_result(result, function_call_data, text_index+1)
 
                 # 处理MCP工具调用
                 if self.mcp_manager.is_mcp_tool(function_name):
-                    try:
-                        tool_result = asyncio.create_task(self.mcp_manager.execute_tool(
-                            function_name,
-                            function_arguments
-                        ))
-                        self._handle_mcp_tool_result(tool_result, function_call_data, text_index+1)
-                    except Exception as e:
-                        self.logger.bind(tag=TAG).error(f"MCP工具调用错误: {e}")
-                        response_message.append(f"MCP工具调用失败: {str(e)}")
+                    result = self._handle_mcp_tool_call(function_call_data)
                 else:
                     # 处理系统函数
                     result = self.func_handler.handle_llm_function_call(self, function_call_data)
-                    self._handle_function_result(result, function_call_data, text_index+1)
+                self._handle_function_result(result, function_call_data, text_index+1)
 
         # 处理最后剩余的文本
         full_text = "".join(response_message)
@@ -474,6 +464,36 @@ class ConnectionHandler:
         self.logger.bind(tag=TAG).debug(json.dumps(self.dialogue.get_llm_dialogue(), indent=4, ensure_ascii=False))
 
         return True
+
+    def _handle_mcp_tool_call(self, function_call_data):
+        function_arguments = function_call_data["arguments"]
+        function_name = function_call_data["name"]
+        try:
+            args_dict = function_arguments
+            if isinstance(function_arguments, str):
+                try:
+                    args_dict = json.loads(function_arguments)
+                except json.JSONDecodeError:
+                    self.logger.bind(tag=TAG).error(f"无法解析 function_arguments: {function_arguments}")
+                    return ActionResponse(action=Action.REQLLM, result="参数解析失败", response="")
+                    
+            tool_result = asyncio.run_coroutine_threadsafe(self.mcp_manager.execute_tool(
+                function_name,
+                args_dict
+            ), self.loop).result()
+            # meta=None content=[TextContent(type='text', text='北京当前天气:\n温度: 21°C\n天气: 晴\n湿度: 6%\n风向: 西北 风\n风力等级: 5级', annotations=None)] isError=False
+            self.logger.bind(tag=TAG).info(f"tool_result:{tool_result}")
+            if tool_result is not None:
+                if tool_result.content is not None:
+                    print(tool_result.content)
+                    return ActionResponse(action=Action.REQLLM, result=tool_result.content[0].text, response="")
+            
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"MCP工具调用错误: {e}")
+            return ActionResponse(action=Action.REQLLM, result="工具调用出错", response="")
+
+        return ActionResponse(action=Action.REQLLM, result="工具调用出错", response="")
+            
 
     def _handle_function_result(self, result, function_call_data, text_index):
         if result.action == Action.RESPONSE:  # 直接回复前端
