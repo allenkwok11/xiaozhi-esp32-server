@@ -5,8 +5,8 @@
       <el-main style="padding: 20px;display: flex;flex-direction: column;">
         <div>
           <!-- 首页内容 -->
-          <div class="add-agent">
-            <div class="add-agent-bg">
+          <div class="add-device">
+            <div class="add-device-bg">
               <div class="hellow-text" style="margin-top: 30px;">
                 您好，小智
               </div>
@@ -19,9 +19,9 @@
               <div class="hi-hint">
                 Hello, Let's have a wonderful day!
               </div>
-              <div class="add-agent-btn" @click="showAddDialog">
+              <div class="add-device-btn" @click="showAddDialog">
                 <div class="left-add">
-                  添加智能体
+                  添加设备
                 </div>
                 <div style="width: 23px;height: 13px;background: #5778ff;margin-left: -10px;" />
                 <div class="right-add">
@@ -34,18 +34,68 @@
           <div class="breadcrumbs">
             <el-breadcrumb separator="/">
               <el-breadcrumb-item>控制台</el-breadcrumb-item>
-              <el-breadcrumb-item>智能体</el-breadcrumb-item>
+              <el-breadcrumb-item><router-link to="/home">智能体</router-link></el-breadcrumb-item>
+              <el-breadcrumb-item>设备管理</el-breadcrumb-item>
             </el-breadcrumb>
           </div>
-          <!-- 智能体列表-->
-          <div style="display: flex;flex-wrap: wrap;margin-top: 20px;gap: 20px;justify-content: flex-start;box-sizing: border-box;">
-            <AgentItem v-for="(item,index) in agents" :key="index" :agent="item" @configure="goToRoleConfig" @device="goToDevice" @del="handleAgentDel" />
+          <!-- 设备列表-->
+          <el-card class="box-card" shadow="hover" style="margin-top: 20px;">
+            <div slot="header" class="clearfix" style="text-align: left;">
+              <span>设备列表</span>
+            </div>
+            <div style="display: flex;flex-direction: column;align-items: end;padding: 0 20px;gap: 10px;">
+              <el-table :data="devices" style="width: 100%">
+                <el-table-column prop="device_type" label="设备型号">
+                </el-table-column>
+                <el-table-column prop="app_version" label="固件版本" width="180">
+                </el-table-column>
+                <el-table-column prop="mac_address" label="MAC地址">
+                </el-table-column>
+                <el-table-column prop="bind_time" label="绑定时间">
+                </el-table-column>
+                <el-table-column prop="recent_chat_time" label="最近对话">
+                </el-table-column>
+                <el-table-column prop="desc" label="备注">
+                  <template slot-scope="scope">
+                    <div v-if="scope.row.isEdit">
+                      <el-input
+                        placeholder="请输入内容"
+                        v-model="scope.row.desc"
+                        @blur="handleEditSave(scope.row)"
+                        clearable>
+                      </el-input>
+                    </div>
+                    <div v-else>
+                      {{ scope.row.desc }}
+                      <i class="el-icon-edit" style="color:#1890ff;cursor: pointer;" @click="handleEdit(scope.row)"></i>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="OTA升级" width="100" align="center">
+                  <template slot-scope="scope">
+                    <el-switch v-model="scope.row.ota_upgrade" :active-value="1" :inactive-value="0" active-color="#13ce66" inactive-color="#ff4949">
+                    </el-switch>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="80" align="center">
+                  <template slot-scope="scope">
+                    <el-button size="mini" type="danger">解绑</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <el-pagination
+                :page-size="10"
+                :pager-count="5"
+                layout="prev, pager, next"
+                :total="150">
+              </el-pagination>
           </div>
+          </el-card>
         </div>
         <!-- 底部 -->
         <Footer :visible="true" />
         <!-- 添加设备对话框 -->
-        <AddAgentDialog :visible.sync="addAgentDialogVisible" @added="handleAgentAdded" />
+        <AddDeviceDialog :visible.sync="addDeviceDialogVisible" @added="handleDeviceAdded" />
       </el-main>
   </div>
 
@@ -54,74 +104,50 @@
 <script>
 import {getUUID, goToPage, showDanger, showSuccess} from '@/utils'
 import Api from '@/apis/api';
-import AgentItem from '@/components/AgentItem.vue'
-import AddAgentDialog from '@/components/AddAgentDialog.vue'
+import AddDeviceDialog from '@/components/AddDeviceDialog.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import Footer from '@/components/Footer.vue'
 export default {
-  name: 'HomePage',
-  components: { AgentItem, AddAgentDialog, HeaderBar, Footer },
+  name: 'DevicePage',
+  components: { AddDeviceDialog, HeaderBar, Footer },
   data() {
     return {
-      addAgentDialogVisible: false,
-      agents: [],
+      addDeviceDialogVisible: false,
+      devices: [],
+      agentId: this.$route.query.agentId
     }
   },
-
   mounted() {
-    // 获取智能体列表
-    this.fetchAgentList();
+    this.getDeviceList();
   },
-
   methods: {
-    fetchAgentList() {
-      // 获取智能体列表
-      Api.agent.getAgentList(({data}) => {
+    // 获取设备列表
+    getDeviceList() {
+      Api.device.getDeviceList(this.agentId, ({data}) => {
         if (data.code === 0) {
-          this.agents = data.data
+          this.devices = data.data[0].list.map((item)=>{item.isEdit=false;return item;})
         } else {
           showDanger(data.msg)
         }
       })
     },
     showAddDialog() {
-      this.addAgentDialogVisible = true
+      this.addDeviceDialogVisible = true
     },
-    goToRoleConfig(agentId, agentName) {
+    goToRoleConfig() {
       // 点击配置角色后跳转到角色配置页
-      this.$router.push({path:'/role-config', query: {agentId: agentId, agentName: agentName}})
+      this.$router.push('/role-config')
     },
-
-    goToDevice(agentId) {
-      // 点击设备后跳转到设备页
-      this.$router.push({path:'/device', query: {agentId: agentId}})
+    handleDeviceAdded(deviceCode) {
+      // 根据需要处理添加设备后逻辑，比如刷新设备列表等
+      console.log('设备验证码：', deviceCode)
     },
-    handleAgentAdded(agentName) {
-      // 添加智能体
-      Api.agent.addAgent(agentName, ({data}) => {
-        if (data.status === 200) {
-          showSuccess('添加成功')
-          this.getAgentList()
-        } else {
-          showDanger(data.msg)
-        }
-      })
+    handleEdit(row) {
+      row.isEdit=true
     },
-    handleAgentDel(agetnId){
-      // 删除智能体
-      Api.agent.delAgent(agetnId, (data) => {
-        if (data.status === 200) {
-          showSuccess('删除成功')
-          this.getAgentList()
-        } else {
-          showDanger(data.msg)
-        }
-      })
+    handleEditSave(row) {
+      row.isEdit=false
     },
-    // 搜索更新智能体列表
-    handleSearchResult(filteredList) {
-      this.devices = filteredList; // 更新设备列表
-    }
   }
 }
 </script>
@@ -147,7 +173,7 @@ export default {
   -o-background-size: cover;
   /* 兼容老版本Opera浏览器 */
 }
-.add-agent {
+.add-device {
   height: 195px;
   border-radius: 15px;
   position: relative;
@@ -159,7 +185,7 @@ export default {
       #d3d3fe 100%
   );
 }
-.add-agent-bg {
+.add-device-bg {
   width: 100%;
   height: 100%;
   text-align: left;
@@ -192,7 +218,7 @@ export default {
   }
 }
 
-.add-agent-btn {
+.add-device-btn {
   display: flex;
   align-items: center;
   margin-left: 75px;
