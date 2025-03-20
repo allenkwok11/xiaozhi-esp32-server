@@ -22,6 +22,7 @@ from plugins_func.register import Action
 from config.private_config import PrivateConfig
 from core.auth import AuthMiddleware, AuthenticationError
 from core.utils.auth_code_gen import AuthCodeGenerator
+from core.mcp.manager import MCPManager
 
 TAG = __name__
 
@@ -98,6 +99,8 @@ class ConnectionHandler:
         self.use_function_call_mode = False
         if self.config["selected_module"]["Intent"] == 'function_call':
             self.use_function_call_mode = True
+        
+        self.mcp_manager = MCPManager(self)
 
     async def handle_connection(self, ws):
         try:
@@ -151,6 +154,8 @@ class ConnectionHandler:
 
             # 异步初始化
             await self.loop.run_in_executor(None, self._initialize_components)
+			# 初始化MCP服务
+            await self.mcp_manager.initialize_servers()
 
             # tts 消化线程
             tts_priority = threading.Thread(target=self._tts_priority_thread, daemon=True)
@@ -317,7 +322,9 @@ class ConnectionHandler:
 
         # Define intent functions
         functions = self.func_handler.get_functions()
-
+        mcpfuncs = self.mcp_manager.get_all_tools()    # MCP工具
+        functions.extend(mcpfuncs)
+        print("functions with mcp", functions)
         response_message = []
         processed_chars = 0  # 跟踪已处理的字符位置
 
@@ -429,8 +436,24 @@ class ConnectionHandler:
                     "id": function_id,
                     "arguments": function_arguments
                 }
-                result = self.func_handler.handle_llm_function_call(self, function_call_data)
-                self._handle_function_result(result, function_call_data, text_index + 1)
+                #result = self.func_handler.handle_llm_function_call(self, function_call_data)
+                #self._handle_function_result(result, function_call_data, text_index+1)
+
+                # 处理MCP工具调用
+                if self.mcp_manager.is_mcp_tool(function_name):
+                    try:
+                        tool_result = asyncio.create_task(self.mcp_manager.execute_tool(
+                            function_name,
+                            function_arguments
+                        ))
+                        self._handle_mcp_tool_result(tool_result, function_call_data, text_index+1)
+                    except Exception as e:
+                        self.logger.bind(tag=TAG).error(f"MCP工具调用错误: {e}")
+                        response_message.append(f"MCP工具调用失败: {str(e)}")
+                else:
+                    # 处理系统函数
+                    result = self.func_handler.handle_llm_function_call(self, function_call_data)
+                    self._handle_function_result(result, function_call_data, text_index+1)
 
         # 处理最后剩余的文本
         full_text = "".join(response_message)
@@ -565,6 +588,8 @@ class ConnectionHandler:
 
     async def close(self):
         """资源清理方法"""
+        # 清理MCP资源
+        await self.mcp_manager.cleanup_all()
 
         # 清理其他资源
         self.stop_event.set()
