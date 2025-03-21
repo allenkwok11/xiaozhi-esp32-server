@@ -2,7 +2,7 @@
   <div class="welcome">
     <HeaderBar />
     <div class="model-tabs-container">
-      <el-tabs v-model="activeTab" class="model-tabs">
+      <el-tabs v-model="activeTab" class="model-tabs" >
         <el-tab-pane label="语音活动检测模型(VAD)" name="vad"></el-tab-pane>
         <el-tab-pane label="语音识别(ASR)" name="asr"></el-tab-pane>
         <el-tab-pane label="大语言模型(LLM)" name="llm"></el-tab-pane>
@@ -11,11 +11,13 @@
         <el-tab-pane label="记忆模型(Memory)" name="memory"></el-tab-pane>
       </el-tabs>
       <div class="import-export-btn">
+        <el-button v-if="activeTab === 'tts'" type="primary" @click="ttsDialogVisible = true" style="margin-right: 10px;">模型设置</el-button>
         <el-button size="small" @click="handleImportExport">导入导出配置</el-button>
       </div>
     </div>
 
     <el-main style="padding: 20px; display: flex; flex-direction: column;">
+
       <el-card class="model-card" shadow="always">
         <div class="model-search-operate" style="display: flex; align-items: center; margin-bottom: 20px;">
           <el-input placeholder="请输入模型名称查询" v-model="search" style="width: 300px; margin-right: 10px" />
@@ -37,7 +39,7 @@
           <el-table-column label="供应商名称" prop="supplier"></el-table-column>
           <el-table-column label="操作">
             <template slot-scope="scope">
-              <el-button size="mini" @click="editModel(scope.row)">修改</el-button>
+              <el-button size="mini" @click="editModel(scope.row)" style="margin-right: 10px;">修改</el-button>
               <el-button size="mini" type="danger" @click="deleteModel(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -58,19 +60,26 @@
       <div style="font-size: 12px; font-weight: 400; margin-top: auto; padding-top: 30px; color: #979db1;">
         ©2025 xiaozhi-esp32-server
       </div>
+        <ModelEditDialog :visible="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
+        <TtsModel :visible.sync="ttsDialogVisible" />
     </el-main>
   </div>
 </template>
 
 <script>
 import HeaderBar from "@/components/HeaderBar.vue";
+import ModelEditDialog from "@/components/ModelEditDialog.vue";
+import TtsModel from "@/components/TtsModel.vue";
 
 export default {
-  components: { HeaderBar },
+  components: { HeaderBar, ModelEditDialog, TtsModel },
   data() {
     return {
       activeTab: 'vad',
       search: '',
+      editDialogVisible: false,
+      editModelData: {},
+      ttsDialogVisible: false,
       modelList: [
         { code: 'AILLM', candidateName: '阿里百炼', isApplied: true, supplier: 'openai' },
         { code: 'DoubaoLLM', candidateName: '豆包大模型', isApplied: true, supplier: 'openai' },
@@ -97,7 +106,12 @@ export default {
     },
     // 修改
     editModel(model) {
-      console.log('修改：', model);
+      this.editModelData = {
+        code: model.code,
+        name: model.candidateName,
+        supplier: model.supplier,
+      };
+      this.editDialogVisible = true;
     },
     // 删除
     deleteModel(model) {
@@ -110,7 +124,11 @@ export default {
     // 导入导出
     handleImportExport() {
       console.log('导入导出');
-    }
+    },
+    handleModelSave(formData) {
+      // 处理保存
+      console.log('保存的模型数据：', formData);
+    },
   }
 };
 </script>
