@@ -14,12 +14,12 @@ import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.common.utils.MessageUtils;
-import xiaozhi.modules.security.controller.LoginController;
 import xiaozhi.modules.security.entity.SysUserTokenEntity;
 import xiaozhi.modules.security.service.ShiroService;
 import xiaozhi.modules.sys.entity.SysUserEntity;
 import xiaozhi.modules.sys.enums.SuperAdminEnum;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -48,7 +48,7 @@ public class Oauth2Realm extends AuthorizingRealm {
         UserDetail user = (UserDetail) principals.getPrimaryPrincipal();
 
         //用户权限列表
-        Set<String> permsSet = shiroService.getUserPermissions(user);
+        Set<String> permsSet = new HashSet<>();
 
         if (user.getSuperAdmin() == SuperAdminEnum.YES.value()) {
             permsSet.add("sys:role:superAdmin");
@@ -82,8 +82,6 @@ public class Oauth2Realm extends AuthorizingRealm {
         //转换成UserDetail对象
         UserDetail userDetail = ConvertUtils.sourceToTarget(userEntity, UserDetail.class);
 
-        //获取用户对应的部门数据权限
-        userDetail.setDeptIdList(null);
         userDetail.setToken(accessToken);
 
         //账号锁定
