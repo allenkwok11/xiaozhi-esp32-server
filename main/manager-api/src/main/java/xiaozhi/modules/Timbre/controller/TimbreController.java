@@ -26,7 +26,7 @@ public class TimbreController {
     @GetMapping
     @Operation(summary = "分页查找")
 //    @RequiresPermissions("sys:role:normal")
-    public Result<PageData<TimbreDetailsVO>> page(@RequestParam TimbrePageDTO dto) {
+    public Result<PageData<TimbreDetailsVO>> page(@ModelAttribute TimbrePageDTO dto) {
         PageData<TimbreDetailsVO> page = timbreService.page(dto);
         return new Result<PageData<TimbreDetailsVO>>().ok(page);
     }

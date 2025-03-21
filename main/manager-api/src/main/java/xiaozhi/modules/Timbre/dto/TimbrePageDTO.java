@@ -19,8 +19,8 @@ public class TimbrePageDTO {
     private String name;
 
     @Schema(description = "页数")
-    private Long page;
+    private String page;
 
     @Schema(description = "显示列数")
-    private Long limit;
+    private String limit;
 }

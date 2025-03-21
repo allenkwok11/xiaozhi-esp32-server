@@ -1,13 +1,17 @@
 package xiaozhi.modules.Timbre.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 音色详情展示VO
  * @author zjy
  * @since 2025-3-21
  */
-public class TimbreDetailsVO {
+@Data
+public class TimbreDetailsVO implements Serializable {
     @Schema(description = "音色id")
     private Long id;
 
