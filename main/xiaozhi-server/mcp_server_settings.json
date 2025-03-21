@@ -11,6 +11,10 @@
     "puppeteer": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "windows-cli": {
+      "command": "npx",
+      "args": ["-y", "@simonb97/server-win-cli"]
     }
   }
 }
