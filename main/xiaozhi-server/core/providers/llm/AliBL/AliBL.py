@@ -11,7 +11,7 @@ class LLMProvider(LLMProviderBase):
         self.api_key = config["api_key"]
         self.app_id = config["app_id"]
         self.base_url = config.get("base_url")
-        self.is_No_prompt = config.get("is_No_prompt")
+        self.is_No_prompt = config.get("is_no_prompt")
         self.memory_id = config.get("ali_memory_id")
 
     def response(self, session_id, dialogue):
