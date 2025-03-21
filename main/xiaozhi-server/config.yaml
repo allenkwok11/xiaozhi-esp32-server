@@ -165,6 +165,18 @@ LLM:
     top_p: 1         
     top_k: 50        
     frequency_penalty: 0  # 频率惩罚
+  AliAppLLM:
+    # 定义LLM API类型
+    type: AliBL
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    app_id: 你的app_id
+    # 可在这里找到你的 api_key https://bailian.console.aliyun.com/?apiKey=1#/api-key
+    api_key: 你的api_key
+    # 是否不使用本地prompt：true|false (默不用请在百练应用中设置prompt) 
+    is_no_prompt: true
+    # Ali_memory_id：false（不使用）|你的memory_id（请在百练应用中设置中获取）
+    # Tips！：Ali_memory未实现多用户存储记忆(记忆按id调用)
+    ali_memory_id: false
   DoubaoLLM:
     # 定义LLM API类型
     type: openai
