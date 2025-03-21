@@ -1,11 +1,11 @@
-package xiaozhi.modules.Timbre.service;
+package xiaozhi.modules.timbre.service;
 
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.BaseService;
-import xiaozhi.modules.Timbre.dto.TimbreDataDTO;
-import xiaozhi.modules.Timbre.dto.TimbrePageDTO;
-import xiaozhi.modules.Timbre.entity.TimbreEntity;
-import xiaozhi.modules.Timbre.vo.TimbreDetailsVO;
+import xiaozhi.modules.timbre.dto.TimbreDataDTO;
+import xiaozhi.modules.timbre.dto.TimbrePageDTO;
+import xiaozhi.modules.timbre.entity.TimbreEntity;
+import xiaozhi.modules.timbre.vo.TimbreDetailsVO;
 
 
 /**

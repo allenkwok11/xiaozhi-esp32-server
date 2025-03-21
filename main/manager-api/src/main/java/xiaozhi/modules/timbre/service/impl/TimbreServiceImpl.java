@@ -1,4 +1,4 @@
-package xiaozhi.modules.Timbre.service.impl;
+package xiaozhi.modules.timbre.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -9,12 +9,12 @@ import xiaozhi.common.constant.Constant;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.utils.ConvertUtils;
-import xiaozhi.modules.Timbre.dao.TimbreDao;
-import xiaozhi.modules.Timbre.dto.TimbreDataDTO;
-import xiaozhi.modules.Timbre.dto.TimbrePageDTO;
-import xiaozhi.modules.Timbre.service.TimbreService;
-import xiaozhi.modules.Timbre.entity.TimbreEntity;
-import xiaozhi.modules.Timbre.vo.TimbreDetailsVO;
+import xiaozhi.modules.timbre.dao.TimbreDao;
+import xiaozhi.modules.timbre.dto.TimbreDataDTO;
+import xiaozhi.modules.timbre.dto.TimbrePageDTO;
+import xiaozhi.modules.timbre.service.TimbreService;
+import xiaozhi.modules.timbre.entity.TimbreEntity;
+import xiaozhi.modules.timbre.vo.TimbreDetailsVO;
 
 import java.util.Arrays;
 import java.util.HashMap;

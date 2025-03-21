@@ -1,19 +1,23 @@
-package xiaozhi.modules.Timbre.vo;
+package xiaozhi.modules.timbre.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import xiaozhi.common.entity.BaseEntity;
 
-import java.io.Serializable;
+import java.util.Date;
 
 /**
- * 音色详情展示VO
+ * 音色表实体类
  * @author zjy
  * @since 2025-3-21
  */
 @Data
-public class TimbreDetailsVO implements Serializable {
-    @Schema(description = "音色id")
-    private Long id;
+@EqualsAndHashCode(callSuper = false)
+@TableName("ai_tts_voice")
+@Schema(description = "音色信息")
+public class TimbreEntity extends BaseEntity {
 
     @Schema(description = "语言")
     private String languages;
@@ -36,4 +40,9 @@ public class TimbreDetailsVO implements Serializable {
     @Schema(description = "音频播放地址")
     private String voiceDemo;
 
+    @Schema(description = "更新者")
+    private Long updater;
+
+    @Schema(description = "更新时间")
+    private Date updateDate;
 }

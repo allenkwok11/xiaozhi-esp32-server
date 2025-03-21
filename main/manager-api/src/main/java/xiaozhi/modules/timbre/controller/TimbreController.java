@@ -1,20 +1,26 @@
-package xiaozhi.modules.Timbre.controller;
+package xiaozhi.modules.timbre.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.web.bind.annotation.*;
+import xiaozhi.common.constant.Constant;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.ValidatorUtils;
-import xiaozhi.modules.Timbre.dto.TimbreDataDTO;
-import xiaozhi.modules.Timbre.dto.TimbrePageDTO;
-import xiaozhi.modules.Timbre.service.TimbreService;
-import xiaozhi.modules.Timbre.vo.TimbreDetailsVO;
+import xiaozhi.modules.timbre.dto.TimbreDataDTO;
+import xiaozhi.modules.timbre.dto.TimbrePageDTO;
+import xiaozhi.modules.timbre.service.TimbreService;
+import xiaozhi.modules.timbre.vo.TimbreDetailsVO;
+
+import java.util.Map;
 
 /**
  * 音色控制层
+ *
  * @author zjy
  * @since 2025-3-21
  */
@@ -27,38 +33,53 @@ public class TimbreController {
 
     @GetMapping
     @Operation(summary = "分页查找")
-    @RequiresPermissions("sys:ttsVoice:select")
-    public Result<PageData<TimbreDetailsVO>> page(@ModelAttribute TimbrePageDTO dto) {
+    @RequiresPermissions("sys:role:superAdmin")
+    @Parameters({
+            @Parameter(name = "ttsModelId", description = "对应 TTS 模型主键", required = true),
+            @Parameter(name = "name", description = "音色名称"),
+            @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
+            @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
+    })
+    public Result<PageData<TimbreDetailsVO>> page(
+            @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
+        TimbrePageDTO dto = new TimbrePageDTO();
+        dto.setTtsModelId((String) params.get("ttsModelId"));
+        dto.setName((String) params.get("name"));
+        dto.setLimit((String) params.get(Constant.LIMIT));
+        dto.setPage((String) params.get(Constant.PAGE));
+
         ValidatorUtils.validateEntity(dto);
         PageData<TimbreDetailsVO> page = timbreService.page(dto);
         return new Result<PageData<TimbreDetailsVO>>().ok(page);
     }
+
     @PostMapping
     @Operation(summary = "音色保存")
-    @RequiresPermissions("sys:ttsVoice:save")
+    @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> save(@RequestBody TimbreDataDTO dto) {
         ValidatorUtils.validateEntity(dto);
         timbreService.save(dto);
         return new Result<>();
     }
+
     @PutMapping("/{id}")
     @Operation(summary = "音色修改")
-    @RequiresPermissions("sys:ttsVoice:update")
+    @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> update(
             @PathVariable Long id,
             @RequestBody TimbreDataDTO dto) {
         ValidatorUtils.validateEntity(dto);
-        timbreService.update(id,dto);
+        timbreService.update(id, dto);
         return new Result<>();
     }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "音色删除")
-    @RequiresPermissions("sys:ttsVoice:delete")
+    @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@PathVariable Long id) {
         timbreService.delete(new Long[]{id});
         return new Result<>();
     }
-
 
 
 }
