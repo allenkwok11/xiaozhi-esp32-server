@@ -1,6 +1,7 @@
 package xiaozhi.modules.Timbre.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -13,6 +14,7 @@ import lombok.Data;
 public class TimbrePageDTO {
 
     @Schema(description = "对应 TTS 模型主键")
+    @NotBlank(message = "{timbre.ttsModelId.require}")
     private String ttsModelId;
 
     @Schema(description = "音色名称")
