@@ -51,8 +51,6 @@ def create_iot_function(device_name, method_name, method_info):
             # 生成结果信息
             result = f"{device_name}的{method_name}操作执行成功"
 
-            # 根据方法名尝试自动更新状态
-            await update_state_by_method(conn, device_name, method_name, params)
 
             # 处理响应中可能的占位符
             response = response_success
@@ -112,35 +110,6 @@ def create_iot_query_function(device_name, prop_name, prop_info):
             return ActionResponse(Action.ERROR, str(e), response)
 
     return wrap_async_function(iot_query_function)
-
-
-async def update_state_by_method(conn, device_name, method_name, params):
-    """根据方法和参数自动更新设备状态"""
-    try:
-        # 规则1: 方法名为TurnOn，设置power为True
-        if method_name == "TurnOn":
-            await set_iot_status(conn, device_name, "power", True)
-
-        # 规则2: 方法名为TurnOff，设置power为False
-        elif method_name == "TurnOff":
-            await set_iot_status(conn, device_name, "power", False)
-
-        # 规则3: Set开头的方法，尝试更新对应参数
-        elif method_name.startswith("Set"):
-            # 从参数中找到可能的状态值
-            for param_name, param_value in params.items():
-                # 尝试更新对应名称的属性
-                await set_iot_status(conn, device_name, param_name, param_value)
-
-        # 其他方法，尝试直接从参数更新状态
-        else:
-            for param_name, param_value in params.items():
-                # 检查设备是否有此属性
-                status = await get_iot_status(conn, device_name, param_name)
-                if status is not None:  # 属性存在
-                    await set_iot_status(conn, device_name, param_name, param_value)
-    except Exception as e:
-        logger.bind(tag=TAG).warning(f"自动更新状态失败: {e}")
 
 
 class IotDescriptor:
@@ -212,7 +181,7 @@ def register_device_type(descriptor):
                         },
                         "response_failure": {
                             "type": "string",
-                            "description": "查询失败时的友好回复，例如：'无法获取{device_name}的{prop_info['description']}'"
+                            "description": f"查询失败时的友好回复，例如：'无法获取{device_name}的{prop_info['description']}'"
                         }
                     },
                     "required": ["response_success", "response_failure"]
