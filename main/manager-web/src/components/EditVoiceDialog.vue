@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" width="700px" @close="handleClose" class="compact-dialog" :append-to-body="true">
+  <el-dialog :visible.sync="dialogVisible" width="900px" @close="handleClose" class="compact-dialog" :append-to-body="true">
     <el-form :model="voiceForm" :rules="rules" ref="voiceForm" label-width="80px">
       <el-row :gutter="20">
         <el-col :span="12">
@@ -30,7 +30,14 @@
         <el-input v-model="voiceForm.remark" type="textarea" :rows="2" placeholder="请输入内容" class="compact-textarea"
         ></el-input>
         <div class="audio-controls">
-          <span class="counter">000 / 001</span>
+           <div class="audio-player">
+      <audio
+        :src="audioUrl"
+        controls
+        preload="metadata"
+        class="custom-audio"
+      ></audio>
+    </div>
           <el-button type="primary" size="mini" class="preview-btn">生成试听</el-button>
         </div>
       </el-form-item>
@@ -62,6 +69,8 @@ export default {
     return {
       dialogVisible: this.showDialog,
       voiceForm: { ...this.voiceData },
+      audioUrl: 'http://music.163.com/song/media/outer/url?id=447925558.mp3',
+      generatedAudio: null,
       rules: {
         voiceCode: [{ required: true, message: '请输入音色编码', trigger: 'blur' }],
         voiceName: [{ required: true, message: '请输入音色名称', trigger: 'blur' }]
@@ -83,7 +92,7 @@ export default {
       this.$refs.voiceForm.validate(valid => {
         if (valid) this.$emit('save', this.voiceForm)
       })
-    }
+    },
   }
 }
 </script>
@@ -117,13 +126,10 @@ export default {
   .audio-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 16px;
     margin-top: 8px;
 
-    .counter {
-      color: #909399;
-      font-size: 12px;
-    }
 
     .preview-btn {
       padding: 7px 15px;

@@ -8,10 +8,10 @@
           <img src="@/assets/home/equipment.png" alt="" style="width: 12px;height: 10px;" />
           智能体管理
         </div>
-        <div class="equipment-management2" @click="goUserManagement">
+        <div class="equipment-management2" :class="{ 'active-tab': $route.path === '/user-management' }" @click="goUserManagement">
           用户管理
         </div>
-        <div class="equipment-management2" @click="goModelConfig">
+        <div class="equipment-management2" :class="{ 'active-tab': $route.path === '/model-config' }" @click="goModelConfig">
           模型配置
         </div>
       </div>
@@ -124,6 +124,12 @@ export default {
   color: #3d4566;
   margin-left: 1px;
   align-items: center;
+  transition: all 0.3s ease;
+}
+
+.equipment-management2.active-tab {
+  background: #5778ff !important;
+  color: #fff !important;
 }
 
 .header {

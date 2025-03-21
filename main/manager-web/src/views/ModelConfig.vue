@@ -60,7 +60,7 @@
       <div style="font-size: 12px; font-weight: 400; margin-top: auto; padding-top: 30px; color: #979db1;">
         ©2025 xiaozhi-esp32-server
       </div>
-        <ModelEditDialog :visible="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
+        <ModelEditDialog :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
         <TtsModel :visible.sync="ttsDialogVisible" />
     </el-main>
   </div>
