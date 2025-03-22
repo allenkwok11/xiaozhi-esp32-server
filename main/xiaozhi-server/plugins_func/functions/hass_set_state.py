@@ -1,76 +1,64 @@
-from plugins_func.register import register_function,ToolType, ActionResponse, Action
+from plugins_func.register import register_function, ToolType, ActionResponse, Action
+from plugins_func.functions.hass_init import initialize_hass_handler
 from config.logger import setup_logging
 import asyncio
 import requests
+
 TAG = __name__
 logger = setup_logging()
 
-HASS_CACHE = {}
-
-hass_set_state_function_desc ={
-            "type": "function",
-            "function": {
-                "name": "hass_set_state",
-                "description": "设置homeassistant里设备的状态,包括开、关,调整灯光亮度,调整播放器的音量,设备的暂停、继续、静音操作",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "state": {
-                                "type": "object",
-                                "properties": {
-                                    "type":{
-                                        "type":"string",
-                                        "description":"需要操作的动作,打开设备:turn_on,关闭设备:turn_off,增加亮度:brightness_up,降低亮度:brightness_down,设置亮度:brightness_value,增加>音量:,volume_up降低音量:volume_down,设置音量:volume_set,设备暂停:pause,设备继续:continue,静音/取消静音:volume_mute"
-                                    },
-                                    "input":{
-                                        "type":"int",
-                                        "description": "只有在设置音量,设置亮度时候才需要,有效值为1-100,对应音量和亮度的1%-100%"
-                                    },
-                                    "is_muted":{
-                                        "type":"string",
-                                        "description": "只有在设置静音操作时才需要,设置静音的时候该值为true,取消静音时该值为false"
-                                    }
-                                },
-                                "required": ["type"]
-                            },
-                            "entity_id": {
+hass_set_state_function_desc = {
+    "type": "function",
+    "function": {
+        "name": "hass_set_state",
+        "description": "设置homeassistant里设备的状态,包括开、关,调整灯光亮度,调整播放器的音量,设备的暂停、继续、静音操作",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
                             "type": "string",
-                            "description": "需要操作的设备id,homeassistant里的entity_id"
-                            }
+                            "description": "需要操作的动作,打开设备:turn_on,关闭设备:turn_off,增加亮度:brightness_up,降低亮度:brightness_down,设置亮度:brightness_value,增加>音量:,volume_up降低音量:volume_down,设置音量:volume_set,设备暂停:pause,设备继续:continue,静音/取消静音:volume_mute"
                         },
-                        "required": ["state", "entity_id"]
-                    }
+                        "input": {
+                            "type": "int",
+                            "description": "只有在设置音量,设置亮度时候才需要,有效值为1-100,对应音量和亮度的1%-100%"
+                        },
+                        "is_muted": {
+                            "type": "string",
+                            "description": "只有在设置静音操作时才需要,设置静音的时候该值为true,取消静音时该值为false"
+                        }
+                    },
+                    "required": ["type"]
+                },
+                "entity_id": {
+                    "type": "string",
+                    "description": "需要操作的设备id,homeassistant里的entity_id"
                 }
-            }
-
+            },
+            "required": ["state", "entity_id"]
+        }
+    }
+}
 
 
 @register_function('hass_set_state', hass_set_state_function_desc, ToolType.SYSTEM_CTL)
 def hass_set_state(conn, entity_id='', state={}):
     try:
-
-      future = asyncio.run_coroutine_threadsafe(              
-        handle_hass_set_state(conn, entity_id, state),
-        conn.loop
-      )
-      ha_response = future.result()
-      return ActionResponse(action=Action.REQLLM, result="执行成功", response=ha_response)
+        future = asyncio.run_coroutine_threadsafe(
+            handle_hass_set_state(conn, entity_id, state),
+            conn.loop
+        )
+        ha_response = future.result()
+        return ActionResponse(action=Action.REQLLM, result="执行成功", response=ha_response)
     except Exception as e:
-      logger.bind(tag=TAG).error(f"处理设置属性意图错误: {e}")
-def initialize_hass_handler(conn):
-    config = conn.config
-    global HASS_CACHE
-    if HASS_CACHE == {}:
-        logger.bind(tag=TAG).info(f"实例化HASS:")
-        if "HomeAssistant" in config["LLM"]:
-            HASS_CACHE['base_url'] = config["LLM"]['HomeAssistant']['base_url']
-            HASS_CACHE['api_key'] = config["LLM"]['HomeAssistant']['api_key']
-        else:
-            logger.bind(tag=TAG).error(f"使用前请在config文件中配置: LLM.HomeAssistant.base_url LLM.HomeAssistant.api_key")
+        logger.bind(tag=TAG).error(f"处理设置属性意图错误: {e}")
+
 
 async def handle_hass_set_state(conn, entity_id, state):
-    initialize_hass_handler(conn)
-    global HASS_CACHE
+    HASS_CACHE = initialize_hass_handler(conn)
     api_key = HASS_CACHE['api_key']
     base_url = HASS_CACHE['base_url']
     '''
@@ -92,7 +80,6 @@ async def handle_hass_set_state(conn, entity_id, state):
             action = "start"
         else:
             action = "turn_on"
-        action = 'turn_on'
     elif state['type'] == 'turn_off':
         description = "设备已关闭"
         if domain == 'cover':
@@ -114,7 +101,7 @@ async def handle_hass_set_state(conn, entity_id, state):
     elif state['type'] == 'brightness_value':
         description = f"亮度已调整到{state['input']}"
         action = 'turn_on'
-        arg = 'brightness_pct' 
+        arg = 'brightness_pct'
         value = state['input']
     elif state['type'] == 'volume_up':
         description = "音量已调大"
@@ -150,7 +137,7 @@ async def handle_hass_set_state(conn, entity_id, state):
     else:
         return f"{domain} {state.type}功能尚未支持"
 
-    if arg == '': 
+    if arg == '':
         data = {
             "entity_id": entity_id,
         }
@@ -163,11 +150,10 @@ async def handle_hass_set_state(conn, entity_id, state):
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
-    } 
+    }
     response = requests.post(url, headers=headers, json=data)
     logger.bind(tag=TAG).info(f"设置状态:url:{url},return_code:{response.status_code}")
     if response.status_code == 200:
         return description
     else:
         return f"设置失败，错误码: {response.status_code}"
-
