@@ -5,17 +5,18 @@
         <img alt="" src="@/assets/xiaozhi-logo.png" style="width: 42px;height: 42px;"/>
         <img alt="" src="@/assets/xiaozhi-ai.png" style="width: 58px;height: 12px;"/>
         <div class="ml-20 menu-btn active" @click="goHome">
-          <img alt="" src="@/assets/home/equipment.png" style="width: 12px;height: 10px;"/>
+          <!-- <img alt="" src="@/assets/home/equipment.png" style="width: 12px;height: 10px;"/> -->
+          <i class="el-icon-cpu"></i>
           智能体
         </div>
         <div class="menu-btn">
           <i class="el-icon-s-grid" style="font-size: 10px;color: #979db1;"/>
           控制台
         </div>
-        <div class="menu-btn">
+        <!-- <div class="menu-btn">
           设备管理
           <img alt="" src="@/assets/home/close.png" style="width: 6px;height: 6px;"/>
-        </div>
+        </div> -->
       </div>
       <div style="display: flex;align-items: center;gap: 7px; margin-top: 2px;">
         <div class="serach-box">
@@ -109,7 +110,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 4px;
   font-weight: 500;
   font-size: 14px;
   cursor: pointer;

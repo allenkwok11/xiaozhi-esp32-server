@@ -12,17 +12,10 @@ const routes = [
     }
   },
   {
-    path: '/device',
-    name: 'RoleConfig',
+    path: '/register',
+    name: 'Register',
     component: function () {
-      return import('../views/device.vue')
-    }
-  },
-  {
-    path: '/role-config',
-    name: 'RoleConfig',
-    component: function () {
-      return import('../views/roleConfig.vue')
+      return import('../views/register.vue')
     }
   },
   {
@@ -40,20 +33,18 @@ const routes = [
     }
   },
   {
-    path: '/register',
-    name: 'Register',
+    path: '/role-config',
+    name: 'RoleConfig',
     component: function () {
-      return import('../views/register.vue')
+      return import('../views/roleConfig.vue')
     }
   },
-      // 新增设备管理页面路由
   {
-    path: '/device-management',
-    name: 'DeviceManagement',
+    path: '/device',
+    name: 'Device',
     component: function () {
-      return import('../views/DeviceManagement.vue')
+      return import('../views/device.vue')
     }
-
   }
 ]
 

@@ -53,13 +53,6 @@ export default {
 </script>
 
 <style scoped>
-
-.input-46 {
-  border: 1px solid #e4e6ef;
-  background: #f6f8fb;
-  border-radius: 10px;
-}
-
 .dialog-btn {
   cursor: pointer;
   flex: 1;
