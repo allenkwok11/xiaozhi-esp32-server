@@ -2,10 +2,10 @@
   <el-header class="header">
     <div style="display: flex;justify-content: space-between;margin-top: 6px; ">
       <div style="display: flex;align-items: center;gap: 10px;">
-        <img src="@/assets/xiaozhi-logo.png" alt="" style="width: 42px;height: 42px;" />
-        <img src="@/assets/xiaozhi-ai.png" alt="" style="width: 58px;height: 12px;" />
+        <img alt="" src="@/assets/xiaozhi-logo.png" style="width: 42px;height: 42px;"/>
+        <img alt="" src="@/assets/xiaozhi-ai.png" style="width: 58px;height: 12px;"/>
         <div class="equipment-management" @click="goHome">
-          <img src="@/assets/home/equipment.png" alt="" style="width: 12px;height: 10px;" />
+          <img alt="" src="@/assets/home/equipment.png" style="width: 12px;height: 10px;"/>
           智能体管理
         </div>
         <div class="equipment-management2" :class="{ 'active-tab': $route.path === '/user-management' }" @click="goUserManagement">
@@ -17,14 +17,22 @@
       </div>
       <div style="display: flex;align-items: center;gap: 7px; margin-top: 2px;">
         <div class="serach-box">
-          <el-input placeholder="输入名称搜索.." v-model="serach" style="border: none; background: transparent;" @keyup.enter.native="handleSearch" />
-          <img src="@/assets/home/search.png" alt=""
-               style="width: 14px;height: 14px;margin-right: 11px;cursor: pointer;" @click="handleSearch" />
+          <el-input v-model="serach" placeholder="输入名称搜索.." style="border: none; background: transparent;"
+                    @keyup.enter.native="handleSearch"/>
+          <img alt="" src="@/assets/home/search.png"
+               style="width: 14px;height: 14px;margin-right: 11px;cursor: pointer;" @click="handleSearch"/>
         </div>
-        <img src="@/assets/home/avatar.png" alt="" style="width: 21px;height: 21px;" />
-        <div class="user-info">
-           {{ userInfo.mobile || '加载中...' }}
-        </div>
+        <img alt="" src="@/assets/home/avatar.png" style="width: 21px;height: 21px;"/>
+        <el-dropdown trigger="click">
+          <span class="el-dropdown-link">
+             {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item icon="el-icon-plus" @click.native="">个人中心</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-circle-plus" @click.native="">修改密码</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="">退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
       </div>
     </div>
   </el-header>
@@ -41,6 +49,7 @@ export default {
     return {
       serach: '',
       userInfo: {
+        username: '',
         mobile: ''
       }
     }
@@ -75,7 +84,7 @@ export default {
         // 当搜索内容为空时，显示原始完整列表
         filteredDevices = this.$parent.originalDevices;
       } else {
-         // 过滤逻辑
+        // 过滤逻辑
         filteredDevices = this.devices.filter(device => {
           return device.agentName.includes(searchValue) ||
               device.ttsModelName.includes(searchValue) ||
@@ -168,5 +177,5 @@ export default {
   text-align: left;
   color: #3d4566;
 }
-</style>
 
+</style>
