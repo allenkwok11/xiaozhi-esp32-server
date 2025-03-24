@@ -51,10 +51,10 @@
               <div class="textarea-box">
                 <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容"
                           v-model="form.langCode" maxlength="1000"/>
-                <div class="prompt-bottom">
+                <div class="prompt-bottom" @click="clearMemory">
                   <div style="display: flex;gap: 8px;align-items: center;">
                     <div style="color: #979db1;font-size: 11px;">当前记忆（每次对话后重新生成）</div>
-                    <div class="clear-btn" @click="clearMemory">
+                    <div class="clear-btn">
                       <i class="el-icon-delete-solid" style="font-size: 11px;"/>
                       清除
                     </div>
@@ -139,28 +139,28 @@ export default {
   methods: {
     saveConfig() {
         const configData = {
-          agentCode: this.form.agentCode,
-          agentName: this.form.agentName,
-          asrModelId: this.form.model.asrModelId,
-          vadModelId: this.form.model.vadModelId,
-          llmModelId: this.form.model.llmModelId,
-          ttsModelId: this.form.model.ttsModelId,
-          ttsVoiceId: this.form.ttsVoiceId,
-          memModelId: this.form.model.memModelId,
-          intentModelId: this.form.model.intentModelId,
-          systemPrompt: this.form.systemPrompt,
-          langCode: this.form.langCode,
-          language: this.form.language,
-          sort: this.form.sort
+            agentCode: this.form.agentCode,
+            agentName: this.form.agentName,
+            asrModelId: this.form.model.asrModelId,
+            vadModelId: this.form.model.vadModelId,
+            llmModelId: this.form.model.llmModelId,
+            ttsModelId: this.form.model.ttsModelId,
+            ttsVoiceId: this.form.ttsVoiceId,
+            memModelId: this.form.model.memModelId,
+            intentModelId: this.form.model.intentModelId,
+            systemPrompt: this.form.systemPrompt,
+            langCode: this.form.langCode,
+            language: this.form.language,
+            sort: this.form.sort
         };
         import('@/apis/module/user').then(({ default: userApi }) => {
-          userApi.updateAgentConfig(this.$route.query.agentId, configData, ({data}) => {
-            if (data.code === 0) {
-              this.$message.success('配置保存成功');
-            } else {
-              this.$message.error(data.msg || '配置保存失败');
-            }
-          });
+            userApi.updateAgentConfig(this.$route.query.agentId, configData, ({data}) => {
+                if (data.code === 0) {
+                    this.$message.success('配置保存成功');
+                } else {
+                    this.$message.error(data.msg || '配置保存失败');
+                }
+            });
         });
     },
     resetConfig() {
