@@ -221,5 +221,22 @@ export default {
                 });
             }).send();
     },
+    // 智能体配置
+    updateAgentConfig(agentId, configData, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/agent/${agentId}`)
+            .method('PUT')
+            .data(configData)
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail((err) => {
+                console.error('保存配置失败:', err);
+                RequestService.reAjaxFun(() => {
+                    this.updateAgentConfig(agentId, configData, callback);
+                });
+            }).send();
+    },
 
 }
