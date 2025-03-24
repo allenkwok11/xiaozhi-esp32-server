@@ -208,6 +208,9 @@ class ConnectionHandler:
             self.prompt = self.prompt + f"\nuser location:{self.client_ip_info}"
             self.dialogue.update_system_message(self.prompt)
 
+        """加载MCP工具"""
+        asyncio.run_coroutine_threadsafe(self.mcp_manager.initialize_servers(), self.loop)
+
     def change_system_prompt(self, prompt):
         self.prompt = prompt
         # 找到原来的role==system，替换原来的系统提示
