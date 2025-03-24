@@ -4,9 +4,10 @@ import {getServiceUrl} from '../api'
 
 export default {
     //设备列表
-    getDeviceList(agent_id, callback) {
+    getDeviceList(agent_id, page, callback) {
         RequestService.sendRequest().url(`${getServiceUrl()}/api/v1/user/agent/device/bind/${agent_id}`)
             .method('GET')
+            .data(page)
             .success((res) => {
                 RequestService.clearRequestTime()
                 callback(res)
@@ -16,11 +17,11 @@ export default {
             }).send()
     },
     //绑定设备
-    bindDevice(agent_id, code, callback) {
+    bindDevice(agentId, deviceCode, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/user/agent/device/bind/${agent_id}`)
+            .url(`${getServiceUrl()}/api/v1/user/agent/device/bind/${agentId}`)
             .method('POST')
-            .data({code})
+            .data({deviceCode})
             .success((res) => {
                 RequestService.clearRequestTime();
                 callback(res);
@@ -28,14 +29,14 @@ export default {
             .fail((err) => {
                 console.error('绑定设备失败:', err);
                 RequestService.reAjaxFun(() => {
-                    this.addDevice(name, callback);
+                    this.addDevice(agentId, deviceCode, callback);
                 });
             }).send();
     },
     // 解绑设备
-    unbindDevice(device_id, callback) {
+    unbindDevice(deviceId, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/user/device/unbind/${device_id}`)
+            .url(`${getServiceUrl()}/api/v1/user/agent/device/unbind/${deviceId}`)
             .method('PUT')
             .success((res) => {
                 RequestService.clearRequestTime();
@@ -43,7 +44,7 @@ export default {
             })
             .fail(() => {
                 RequestService.reAjaxFun(() => {
-                  this.unbindDevice(device_id, callback);
+                  this.unbindDevice(deviceId, callback);
                 });
               }).send()
     },

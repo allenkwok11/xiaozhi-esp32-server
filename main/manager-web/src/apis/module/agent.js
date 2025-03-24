@@ -16,20 +16,17 @@ export default {
             }).send()
     },
     //添加智能体
-    addAgent(name, callback) {
+    addAgent(agentName, callback) {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/api/v1/user/agent`)
             .method('POST')
-            .data({name})
+            .data({agentName})
             .success((res) => {
                 RequestService.clearRequestTime();
                 callback(res);
             })
             .fail((err) => {
                 console.error('添加智能体失败:', err);
-                RequestService.reAjaxFun(() => {
-                    this.addAgent(name, callback);
-                });
             }).send();
     },
     //获取智能体配置

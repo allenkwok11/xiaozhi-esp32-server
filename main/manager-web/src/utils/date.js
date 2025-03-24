@@ -39,10 +39,13 @@ function formatDateTool(date, fmt) {
   const o = {
     'M+': date.getMonth() + 1,
     'd+': date.getDate(),
-    'h+': date.getHours(),
+    'H+': date.getHours(),
+    'h+': date.getHours() > 12 ? date.getHours() - 12 : date.getHours(),
     'm+': date.getMinutes(),
     's+': date.getSeconds()
   }
+  // 12小时制
+  const is_12Hours = fmt.indexOf('hh') > -1;
   for (const k in o) {
     if (new RegExp(`(${k})`).test(fmt)) {
       const str = o[k] + ''
@@ -52,6 +55,8 @@ function formatDateTool(date, fmt) {
       )
     }
   }
+  // 12小时制
+  fmt = is_12Hours ? date.getHours() > 12 ? fmt + " PM" : fmt + " AM" : fmt
   return fmt
 }
 

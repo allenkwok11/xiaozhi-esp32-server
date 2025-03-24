@@ -46,12 +46,13 @@ export default {
         this.$message.error('请输入智能体名称');
         return;
       }
-      userApi.addAgent(this.agentName, (res) => {
-        this.$message.success('添加成功');
-        this.$emit('confirm', res);
+      this.$emit('confirm',this.agentName)
+      // userApi.addAgent(this.agentName, (res) => {
+      //   this.$message.success('添加成功');
+      //   this.$emit('confirm', res);
         this.$emit('update:visible', false);
         this.agentName = "";
-      });
+      // });
     },
     cancel() {
       this.$emit('update:visible', false)

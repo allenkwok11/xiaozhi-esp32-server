@@ -1,7 +1,7 @@
 <template>
   <div class="welcome">
       <!-- 公共头部 -->
-      <HeaderBar :devices="devices" @search-result="handleSearchResult" />
+      <HeaderBar :devices="agents" @search-result="handleSearchResult" />
       <el-main style="padding: 20px;display: flex;flex-direction: column;">
         <div>
           <!-- 首页内容 -->
@@ -45,7 +45,7 @@
         <!-- 底部 -->
         <Footer :visible="true" />
         <!-- 添加设备对话框 -->
-        <AddAgentDialog :visible.sync="addAgentDialogVisible" @added="handleAgentAdded" />
+        <AddAgentDialog :visible.sync="addAgentDialogVisible" @confirm="handleAgentAdded" />
       </el-main>
   </div>
 
@@ -120,7 +120,7 @@ export default {
     },
     // 搜索更新智能体列表
     handleSearchResult(filteredList) {
-      this.devices = filteredList; // 更新设备列表
+      this.agents = filteredList; // 更新设备列表
     }
   }
 }

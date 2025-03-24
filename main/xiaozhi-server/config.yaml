@@ -510,6 +510,11 @@ music:
     - ".p3"
   refresh_time: 300 # 刷新音乐列表的时间间隔，单位为秒
 
+# 远程配置
+remote_config:
+  enabled: true
+  url: http://192.168.5.11:8002/user/agent/loadAgentConfig/
+
 # 以下配置在小于等于0.0.9版本中的docker容器中可用
 # 0.0.9以后的新版本源码部署已经无法奏效
 manager:

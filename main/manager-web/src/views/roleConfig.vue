@@ -119,19 +119,19 @@ export default {
           intent:""
         }
       },
-    options: [
-      { value: '选项1', label: '黄金糕' },
-      { value: '选项2', label: '双皮奶' }
-    ],
+      options: [
+        { value: '选项1', label: '黄金糕' },
+        { value: '选项2', label: '双皮奶' }
+      ],
       models: [
-      { label: '大语言模型(LLM)', key: 'llm' },
-      { label: '语音转文本模型(ASR)', key: 'asr' },
-      { label: '语音活动检测模型(VAD)', key: 'vad' },
-      { label: '语音生成模型(TTS)', key: 'tts' },
-      { label: '意图分类模型(Intent)', key: 'intent' },
-      { label: '记忆增强模型(Memory)', key: 'memory' }
-    ],
-      templates: ['台湾女友', '土豆子', '英语老师', '好奇小男孩', '汪汪队队长']
+        { label: '大语言模型(LLM)', key: 'llm' },
+        { label: '语音转文本模型(ASR)', key: 'asr' },
+        { label: '语音活动检测模型(VAD)', key: 'vad' },
+        { label: '语音生成模型(TTS)', key: 'tts' },
+        { label: '意图分类模型(Intent)', key: 'intent' },
+        { label: '记忆增强模型(Memory)', key: 'memory' }
+      ],
+      templates: ['通用男声','通用女声','阳光男生','奶气萌娃']
 
     }
   },

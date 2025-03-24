@@ -40,8 +40,12 @@ export default {
   },
   methods: {
     confirm() {
+      if (!this.deviceCode.trim()) {
+        this.$message.error('请输入设备验证码');
+        return;
+      }
+      this.$emit('confirm',this.deviceCode)
       this.$emit('update:visible', false)
-      this.$emit('added', this.deviceCode)
       this.deviceCode = ""
     },
     cancel() {
