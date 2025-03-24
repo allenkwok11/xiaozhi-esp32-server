@@ -39,13 +39,6 @@ spring:
           min-idle: 5       # 连接池中的最小空闲连接
   main:
     allow-bean-definition-overriding: true
-  sql:
-    init:
-      mode: always
-      # 启动时自动执行创建表的sql，对应sql文件必须存在
-      schema-locations:
-        - classpath:db/changelog/202503141335.sql
-        - classpath:db/changelog/202503141346.sql
 knife4j:
   enable: true
   basic:

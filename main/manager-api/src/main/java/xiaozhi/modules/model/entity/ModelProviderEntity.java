@@ -1,6 +1,8 @@
 package xiaozhi.modules.model.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,8 +15,9 @@ import java.util.Date;
 @Schema(description = "模型供应器表")
 public class ModelProviderEntity {
 
+    @TableId(type = IdType.ASSIGN_UUID)
     @Schema(description = "主键")
-    private Long id;
+    private String id;
 
     @Schema(description = "模型类型(Memory/ASR/VAD/LLM/TTS)")
     private String modelType;

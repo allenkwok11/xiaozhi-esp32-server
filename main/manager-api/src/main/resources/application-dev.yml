@@ -11,11 +11,6 @@ jasypt:
   encryptor:
     password: P9Hx718z8L
 spring:
-  sql:
-    init:
-      #初始化数据库默认数据，对应sql文件必须存在
-      data-locations:
-        - classpath:db/changelog/data.sql
   datasource:
     druid:
       #MySQL
