@@ -25,25 +25,31 @@
         <img alt="" src="@/assets/home/avatar.png" style="width: 21px;height: 21px;"/>
         <el-dropdown trigger="click">
           <span class="el-dropdown-link">
-             {{ userInfo.username }}<i class="el-icon-arrow-down el-icon--right"></i>
+             {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item icon="el-icon-plus" @click.native="">个人中心</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-circle-plus" @click.native="">修改密码</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-circle-plus" @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
             <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
     </div>
+
+    <!-- 修改密码弹窗 -->
+    <ChangePasswordDialog :visible.sync="isChangePasswordDialogVisible" />
   </el-header>
 </template>
 
 <script>
-import userApi from '@/apis/module/user'
-
+import userApi from '@/apis/module/user';
+import ChangePasswordDialog from './ChangePasswordDialog.vue'; // 引入修改密码弹窗组件
 
 export default {
   name: 'HeaderBar',
+  components: {
+    ChangePasswordDialog
+  },
   props: ['devices'],  // 接收父组件设备列表
   data() {
     return {
@@ -51,7 +57,8 @@ export default {
       userInfo: {
         username: '',
         mobile: ''
-      }
+      },
+      isChangePasswordDialogVisible: false // 控制修改密码弹窗的显示
     }
   },
   mounted() {
@@ -71,10 +78,7 @@ export default {
     // 获取用户信息
     fetchUserInfo() {
       userApi.getUserInfo(({data}) => {
-        this.userInfo = {
-          username: data.data.mobile, // 暂时先使用手机号作为用户名
-          mobile: data.data.mobile
-        }
+        this.userInfo = data.data
       })
     },
 
@@ -96,10 +100,13 @@ export default {
       }
 
       this.$emit('search-result', filteredDevices);
+    },
+
+    // 显示修改密码弹窗
+    showChangePasswordDialog() {
+      this.isChangePasswordDialogVisible = true;
     }
-
   }
-
 }
 </script>
 
