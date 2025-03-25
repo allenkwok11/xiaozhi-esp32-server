@@ -24,9 +24,9 @@
             type="selection"
             width="55">
             </el-table-column>
-          <el-table-column label="用户Id" prop="userId"></el-table-column>
-          <el-table-column label="手机号码" prop="phone"></el-table-column>
-          <el-table-column label="设备数量" prop="deviceCount"></el-table-column>
+          <el-table-column label="用户Id" prop="user_id"></el-table-column>
+          <el-table-column label="手机号码" prop="mobile"></el-table-column>
+          <el-table-column label="设备数量" prop="device_count"></el-table-column>
           <el-table-column label="状态" prop="status"></el-table-column>
           <el-table-column label="操作">
             <template slot-scope="scope">
@@ -72,6 +72,9 @@
 
 <script>
 import HeaderBar from "@/components/HeaderBar.vue";
+import Api from '@/apis/api';
+import adminApi from '@/apis/module/admin';
+
 
 export default {
   components: { HeaderBar },
@@ -88,6 +91,13 @@ export default {
       pageSize: 4,
       total: 20
     };
+  },
+  created() {
+    adminApi.getUserList(({data}) => {
+      //mock偶尔会返回-1导致出错，又会返回两个list，所以这里只取第一个
+      this.userList = data.data[0].list;
+      console.log('用户列表：', this.userList);
+    })
   },
   methods: {
     handleSearch() {
