@@ -184,14 +184,14 @@ class ConnectionHandler:
             await handleAudioMessage(self, message)
 
     def _initialize_components(self):
-        """加载插件"""
-        self.func_handler = FunctionHandler(self)
-
         """加载提示词"""
         self.prompt = self.config["prompt"]
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
         self.dialogue.put(Message(role="system", content=self.prompt))
+
+        """加载插件"""
+        self.func_handler = FunctionHandler(self)
 
         """加载记忆"""
         device_id = self.headers.get("device-id", None)
