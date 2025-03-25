@@ -17,7 +17,7 @@
       音色模型：{{ device.ttsVoiceName }}
     </div>
     <div style="display: flex;gap: 10px;align-items: center;">
-      <div class="settings-btn" @click="$emit('configure')">
+      <div class="settings-btn" @click="handleConfigure">
         配置角色
       </div>
       <div class="settings-btn">
@@ -48,6 +48,9 @@ export default {
   methods: {
     handleDelete() {
       this.$emit('delete', this.device.agentId)
+    },
+    handleConfigure() {
+      this.$router.push({ path: '/role-config', query: { agentId: this.device.agentId } });
     }
   }
 }

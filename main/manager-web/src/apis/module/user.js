@@ -112,22 +112,6 @@ export default {
                 });
             }).send();
     },
-    // 获取设备配置
-    getDeviceConfig(device_id, callback) {
-        RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/user/configDevice/${device_id}`)
-            .method('GET')
-            .success((res) => {
-                RequestService.clearRequestTime();
-                callback(res);
-            })
-            .fail((err) => {
-                console.error('获取配置失败:', err);
-                RequestService.reAjaxFun(() => {
-                    this.getDeviceConfig(device_id, callback);
-                });
-            }).send();
-    },
     // 获取所有模型名称
     getModelNames(callback) {
         RequestService.sendRequest()
@@ -218,6 +202,38 @@ export default {
             .fail(() => {
                 RequestService.reAjaxFun(() => {
                     this.deleteAgent(agentId, callback);
+                });
+            }).send();
+    },
+    // 获取智能体配置
+    getDeviceConfig(deviceId, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/agent/${deviceId}`)
+            .method('GET')
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail((err) => {
+                console.error('获取配置失败:', err);
+                RequestService.reAjaxFun(() => {
+                    this.getDeviceConfig(deviceId, callback);
+                });
+            }).send();
+    },
+    // 配置智能体
+    updateAgentConfig(agentId, configData, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/agent/${agentId}`)
+            .method('PUT')
+            .data(configData)
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail(() => {
+                RequestService.reAjaxFun(() => {
+                    this.updateAgentConfig(agentId, configData, callback);
                 });
             }).send();
     },
