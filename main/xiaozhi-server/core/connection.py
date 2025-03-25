@@ -196,7 +196,36 @@ class ConnectionHandler:
         """加载记忆"""
         device_id = self.headers.get("device-id", None)
         self.memory.init_memory(device_id, self.llm)
-        self.intent.set_llm(self.llm)
+        
+        """为意图识别设置LLM，优先使用专用LLM"""
+        # 检查是否配置了专用的意图识别LLM
+        intent_llm_name = self.config.get("IntentLLM", "")
+        
+        # 记录开始初始化意图识别LLM的时间
+        intent_llm_init_start = time.time()
+        
+        if intent_llm_name and intent_llm_name in self.config["LLM"]:
+            # 如果配置了专用LLM，则创建独立的LLM实例
+            from core.utils import llm as llm_utils
+            intent_llm_config = self.config["LLM"][intent_llm_name]
+            intent_llm_type = intent_llm_config.get("type", intent_llm_name)
+            intent_llm = llm_utils.create_instance(intent_llm_type, intent_llm_config)
+            self.logger.bind(tag=TAG).info(f"为意图识别创建了专用LLM: {intent_llm_name}, 类型: {intent_llm_type}")
+            
+            # 记录额外的模型信息
+            model_name = intent_llm_config.get("model_name", "未指定")
+            base_url = intent_llm_config.get("base_url", "未指定")
+            self.logger.bind(tag=TAG).info(f"意图识别LLM详细信息 - 模型名称: {model_name}, 服务地址: {base_url}")
+            
+            self.intent.set_llm(intent_llm)
+        else:
+            # 否则使用主LLM
+            self.intent.set_llm(self.llm)
+            self.logger.bind(tag=TAG).info("意图识别使用主LLM")
+            
+        # 记录意图识别LLM初始化耗时
+        intent_llm_init_time = time.time() - intent_llm_init_start
+        self.logger.bind(tag=TAG).info(f"意图识别LLM初始化完成，耗时: {intent_llm_init_time:.4f}秒")
 
         """加载位置信息"""
         self.client_ip_info = get_ip_info(self.client_ip)
@@ -310,7 +339,7 @@ class ConnectionHandler:
         self.logger.bind(tag=TAG).debug(json.dumps(self.dialogue.get_llm_dialogue(), indent=4, ensure_ascii=False))
         return True
 
-    def chat_with_function_calling(self, query, tool_call=False):
+    def chat_with_function_calling(self, query, tool_call=False, is_weather_query=False, is_news_query=False):
         self.logger.bind(tag=TAG).debug(f"Chat with function calling start: {query}")
         """Chat with function calling for intent detection using streaming"""
         if self.isNeedAuth():
@@ -326,7 +355,7 @@ class ConnectionHandler:
         functions = self.func_handler.get_functions()
 
         response_message = []
-        processed_chars = 0  # 跟踪已处理的字符位置
+        processed_chars = 0
 
         try:
             start_time = time.time()
@@ -335,14 +364,58 @@ class ConnectionHandler:
             future = asyncio.run_coroutine_threadsafe(self.memory.query_memory(query), self.loop)
             memory_str = future.result()
 
-            # self.logger.bind(tag=TAG).info(f"对话记录: {self.dialogue.get_llm_dialogue_with_memory(memory_str)}")
-
-            # 使用支持functions的streaming接口
-            llm_responses = self.llm.response_with_functions(
-                self.session_id,
-                self.dialogue.get_llm_dialogue_with_memory(memory_str),
-                functions=functions
-            )
+            # 为天气查询添加特殊处理
+            if is_weather_query:
+                self.logger.bind(tag=TAG).info(f"检测到天气查询，添加特殊指令")
+                # 获取对话历史
+                dialogue_with_memory = self.dialogue.get_llm_dialogue_with_memory(memory_str)
+                
+                # 找到最后一条tool消息（可能是天气数据）
+                for i in range(len(dialogue_with_memory) - 1, -1, -1):
+                    if dialogue_with_memory[i].get("role") == "tool" and "当前天气" in dialogue_with_memory[i].get("content", ""):
+                        # 添加特殊指令
+                        dialogue_with_memory.append({
+                            "role": "system",
+                            "content": "请根据上面的天气数据，以简洁友好的方式回答用户的天气查询。直接告诉用户当前天气状况、温度以及可能需要的建议，不要提及数据来源或解释你是如何获取这些信息的。"
+                        })
+                        self.logger.bind(tag=TAG).info(f"已添加天气查询特殊指令")
+                        break
+                        
+                # 使用支持functions的streaming接口并传入修改后的对话历史
+                llm_responses = self.llm.response_with_functions(
+                    self.session_id,
+                    dialogue_with_memory,
+                    functions=functions
+                )
+            # 为新闻查询添加特殊处理
+            elif is_news_query:
+                self.logger.bind(tag=TAG).info(f"检测到新闻查询，添加特殊指令")
+                # 获取对话历史
+                dialogue_with_memory = self.dialogue.get_llm_dialogue_with_memory(memory_str)
+                
+                # 找到最后一条tool消息（可能是新闻数据）
+                for i in range(len(dialogue_with_memory) - 1, -1, -1):
+                    if dialogue_with_memory[i].get("role") == "tool" and "新闻" in dialogue_with_memory[i].get("content", ""):
+                        # 添加特殊指令
+                        dialogue_with_memory.append({
+                            "role": "system",
+                            "content": "请根据上面的新闻数据，以简洁友好的方式回答用户的新闻查询。直接告诉用户新闻内容，不要提及数据来源或解释你是如何获取这些信息的。保持新闻播报的语气和风格。"
+                        })
+                        self.logger.bind(tag=TAG).info(f"已添加新闻查询特殊指令")
+                        break
+                        
+                # 使用支持functions的streaming接口并传入修改后的对话历史
+                llm_responses = self.llm.response_with_functions(
+                    self.session_id,
+                    dialogue_with_memory,
+                    functions=functions
+                )
+            else:
+                llm_responses = self.llm.response_with_functions(
+                    self.session_id,
+                    self.dialogue.get_llm_dialogue_with_memory(memory_str),
+                    functions=functions
+                )
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"LLM 处理出错 {query}: {e}")
             return None
@@ -460,36 +533,126 @@ class ConnectionHandler:
         return True
 
     def _handle_function_result(self, result, function_call_data, text_index):
+        self.logger.bind(tag=TAG).info(f"处理函数调用结果，动作类型: {result.action.name if result.action else 'None'}")
+        
+        # 检查是否有备用直接回复
+        direct_response = getattr(result, 'response', None)
+        
         if result.action == Action.RESPONSE:  # 直接回复前端
             text = result.response
+            self.logger.bind(tag=TAG).info(f"函数返回直接回复: {text[:100] if text else 'None'}...")
             self.recode_first_last_text(text, text_index)
             future = self.executor.submit(self.speak_and_play, text, text_index)
             self.tts_queue.put(future)
             self.dialogue.put(Message(role="assistant", content=text))
         elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
-
+            self.logger.bind(tag=TAG).info(f"处理REQLLM动作，需要进一步处理结果")
+            
             text = result.result
+            function_id = function_call_data["id"]
+            function_name = function_call_data["name"]
+            function_arguments = function_call_data["arguments"]
+            
             if text is not None and len(text) > 0:
-                function_id = function_call_data["id"]
-                function_name = function_call_data["name"]
-                function_arguments = function_call_data["arguments"]
-                self.dialogue.put(Message(role='assistant',
-                                          tool_calls=[{"id": function_id,
-                                                       "function": {"arguments": function_arguments,
+                self.logger.bind(tag=TAG).info(f"函数返回结果长度: {len(text)}, 前100字符: {text[:100]}...")
+                
+                # 特殊处理天气查询
+                if function_name == "get_weather":
+                    self.logger.bind(tag=TAG).info(f"检测到天气查询结果，使用特殊处理")
+                    
+                    # 记录工具调用到对话历史
+                    self.dialogue.put(Message(role='assistant',
+                                            tool_calls=[{"id": function_id,
+                                                        "function": {"arguments": function_arguments,
                                                                     "name": function_name},
-                                                       "type": 'function',
-                                                       "index": 0}]))
+                                                        "type": 'function',
+                                                        "index": 0}]))
+                    
+                    # 记录工具返回结果到对话历史
+                    self.dialogue.put(Message(role="tool", tool_call_id=function_id, content=text))
+                    
+                    try:
+                        # 使用天气数据生成回复
+                        self.chat_with_function_calling(text, tool_call=True, is_weather_query=True)
+                    except Exception as e:
+                        self.logger.bind(tag=TAG).error(f"处理天气查询数据失败: {e}")
+                        if direct_response:
+                            self.logger.bind(tag=TAG).info(f"使用备用直接回复: {direct_response}")
+                            self.recode_first_last_text(direct_response, text_index)
+                            future = self.executor.submit(self.speak_and_play, direct_response, text_index)
+                            self.tts_queue.put(future)
+                            self.dialogue.put(Message(role="assistant", content=direct_response))
+                # 特殊处理新闻查询
+                elif function_name == "get_news":
+                    self.logger.bind(tag=TAG).info(f"检测到新闻查询结果，使用特殊处理")
+                    
+                    # 记录工具调用到对话历史
+                    self.dialogue.put(Message(role='assistant',
+                                            tool_calls=[{"id": function_id,
+                                                        "function": {"arguments": function_arguments,
+                                                                    "name": function_name},
+                                                        "type": 'function',
+                                                        "index": 0}]))
+                    
+                    # 记录工具返回结果到对话历史
+                    self.dialogue.put(Message(role="tool", tool_call_id=function_id, content=text))
+                    
+                    try:
+                        # 使用新闻数据生成回复，设置is_news_query=True
+                        self.chat_with_function_calling(text, tool_call=True, is_news_query=True)
+                    except Exception as e:
+                        self.logger.bind(tag=TAG).error(f"处理新闻查询数据失败: {e}")
+                        if direct_response:
+                            self.logger.bind(tag=TAG).info(f"使用备用直接回复: {direct_response}")
+                            self.recode_first_last_text(direct_response, text_index)
+                            future = self.executor.submit(self.speak_and_play, direct_response, text_index)
+                            self.tts_queue.put(future)
+                            self.dialogue.put(Message(role="assistant", content=direct_response))
+                else:
+                    # 其他类型的函数调用
+                    self.dialogue.put(Message(role='assistant',
+                                            tool_calls=[{"id": function_id,
+                                                        "function": {"arguments": function_arguments,
+                                                                    "name": function_name},
+                                                        "type": 'function',
+                                                        "index": 0}]))
 
-                self.dialogue.put(Message(role="tool", tool_call_id=function_id, content=text))
-                self.chat_with_function_calling(text, tool_call=True)
+                    self.dialogue.put(Message(role="tool", tool_call_id=function_id, content=text))
+                    
+                    try:
+                        self.chat_with_function_calling(text, tool_call=True)
+                    except Exception as e:
+                        self.logger.bind(tag=TAG).error(f"处理函数调用结果失败: {e}")
+                        if direct_response:
+                            self.logger.bind(tag=TAG).info(f"使用备用直接回复: {direct_response}")
+                            self.recode_first_last_text(direct_response, text_index)
+                            future = self.executor.submit(self.speak_and_play, direct_response, text_index)
+                            self.tts_queue.put(future)
+                            self.dialogue.put(Message(role="assistant", content=direct_response))
+            else:
+                self.logger.bind(tag=TAG).warning(f"函数返回结果为空")
+                if direct_response:
+                    self.logger.bind(tag=TAG).info(f"使用备用直接回复: {direct_response}")
+                    self.recode_first_last_text(direct_response, text_index)
+                    future = self.executor.submit(self.speak_and_play, direct_response, text_index)
+                    self.tts_queue.put(future)
+                    self.dialogue.put(Message(role="assistant", content=direct_response))
+                else:
+                    error_text = f"抱歉，我无法获取{function_name}的结果，请稍后再试。"
+                    self.recode_first_last_text(error_text, text_index)
+                    future = self.executor.submit(self.speak_and_play, error_text, text_index)
+                    self.tts_queue.put(future)
+                    self.dialogue.put(Message(role="assistant", content=error_text))
         elif result.action == Action.NOTFOUND:
             text = result.result
+            self.logger.bind(tag=TAG).info(f"未找到对应函数: {text}")
             self.recode_first_last_text(text, text_index)
             future = self.executor.submit(self.speak_and_play, text, text_index)
             self.tts_queue.put(future)
             self.dialogue.put(Message(role="assistant", content=text))
         else:
             text = result.result
+            self.logger.bind(tag=TAG).info(f"其他动作类型，直接返回结果: {text[:100] if text else None}...")
             self.recode_first_last_text(text, text_index)
             future = self.executor.submit(self.speak_and_play, text, text_index)
             self.tts_queue.put(future)
