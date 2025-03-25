@@ -15,14 +15,11 @@ public class AdminPageUserDTO {
 
 
     @Schema(description = "手机号码")
-    @NotBlank(message = "")
     private String mobile;
 
     @Schema(description = "页数")
-    @NotBlank(message = "")
     private String page;
 
     @Schema(description = "显示列数")
-    @NotBlank(message = "")
     private String limit;
 }

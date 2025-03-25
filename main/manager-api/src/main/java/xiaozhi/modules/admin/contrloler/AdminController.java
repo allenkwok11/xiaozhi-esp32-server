@@ -44,7 +44,7 @@ public class AdminController {
         AdminPageUserDTO dto = new AdminPageUserDTO();
         dto.setMobile((String) params.get("mobile"));
         dto.setLimit((String) params.get(Constant.LIMIT));
-        dto.setPage((String) params.get(Constant.PAGE));
+        dto.setPage((String) params.get("pages"));
 
         ValidatorUtils.validateEntity(dto);
         PageData<AdminPageUserVO> page = sysUserService.page(dto);
@@ -54,10 +54,10 @@ public class AdminController {
     @PutMapping("/users/{id}")
     @Operation(summary = "重置密码")
     @RequiresPermissions("sys:role:superAdmin")
-    public Result<Void> update(
+    public Result<String> update(
             @PathVariable Long id) {
-        sysUserService.resetPassword(id);
-        return new Result<>();
+        String password = sysUserService.resetPassword(id);
+        return new Result<String>().ok(password);
     }
 
     @DeleteMapping("/users/{id}")

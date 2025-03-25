@@ -3,6 +3,7 @@ package xiaozhi.modules.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xiaozhi.common.constant.Constant;
@@ -141,11 +142,11 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         params.put(Constant.PAGE, dto.getPage());
         params.put(Constant.LIMIT,dto.getLimit());
         IPage<SysUserEntity> page = baseDao.selectPage(
-                getPage(params, "sort", true),
+                getPage(params, "id", true),
                 //定义查询条件
                 new QueryWrapper<SysUserEntity>()
-                        //必须按照ttsID查找
-                        .eq("username",dto.getMobile()));
+                        //必须按照手机号码查找
+                        .eq(StringUtils.isNotBlank(dto.getMobile()),"username",dto.getMobile()));
         List<AdminPageUserVO> list = page.getRecords().stream().map(user -> {
             AdminPageUserVO adminPageUserVO = new AdminPageUserVO();
             adminPageUserVO.setUserid(user.getId().toString());
