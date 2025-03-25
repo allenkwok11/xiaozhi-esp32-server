@@ -50,6 +50,7 @@ class FunctionHandler:
         self.function_registry.register_function("handle_exit_intent")
         self.function_registry.register_function("plugin_loader")
         self.function_registry.register_function("get_time")
+        self.function_registry.register_function("get_lunar")
         self.function_registry.register_function("raise_and_lower_the_volume")
 
     def register_config_functions(self):
