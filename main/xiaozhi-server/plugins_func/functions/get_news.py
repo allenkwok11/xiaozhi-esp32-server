@@ -128,13 +128,15 @@ def get_news(conn, category: str = None, detail: bool = False, lang: str = "zh_C
         # 如果detail为True，获取上一条新闻的详细内容
         if detail:
             if not hasattr(conn, 'last_news_link') or not conn.last_news_link or 'link' not in conn.last_news_link:
-                return ActionResponse(Action.REQLLM, "抱歉，没有找到最近查询的新闻，请先获取一条新闻。", None)
+                direct_response = "抱歉，没有找到最近查询的新闻，请先获取一条新闻。"
+                return ActionResponse(Action.REQLLM, "抱歉，没有找到最近查询的新闻，请先获取一条新闻。", direct_response)
             
             link = conn.last_news_link.get('link')
             title = conn.last_news_link.get('title', '未知标题')
             
             if link == '#':
-                return ActionResponse(Action.REQLLM, "抱歉，该新闻没有可用的链接获取详细内容。", None)
+                direct_response = "抱歉，该新闻没有可用的链接获取详细内容。"
+                return ActionResponse(Action.REQLLM, "抱歉，该新闻没有可用的链接获取详细内容。", direct_response)
             
             logger.bind(tag=TAG).debug(f"获取新闻详情: {title}, URL={link}")
             
@@ -142,7 +144,8 @@ def get_news(conn, category: str = None, detail: bool = False, lang: str = "zh_C
             detail_content = fetch_news_detail(link)
             
             if not detail_content or detail_content == "无法获取详细内容":
-                return ActionResponse(Action.REQLLM, f"抱歉，无法获取《{title}》的详细内容，可能是链接已失效或网站结构发生变化。", None)
+                direct_response = f"抱歉，无法获取《{title}》的详细内容，可能是链接已失效或网站结构发生变化。"
+                return ActionResponse(Action.REQLLM, f"抱歉，无法获取《{title}》的详细内容，可能是链接已失效或网站结构发生变化。", direct_response)
             
             # 构建详情报告
             detail_report = (
@@ -153,7 +156,10 @@ def get_news(conn, category: str = None, detail: bool = False, lang: str = "zh_C
                 f"不要提及这是总结，就像是在讲述一个完整的新闻故事)"
             )
             
-            return ActionResponse(Action.REQLLM, detail_report, None)
+            # 构造一个直接回复，简要概括新闻内容
+            direct_response = f"以下是《{title}》的详细内容：{detail_content[:200]}...(内容过长已省略)"
+            
+            return ActionResponse(Action.REQLLM, detail_report, direct_response)
         
         # 否则，获取新闻列表并随机选择一条
         # 从配置中获取RSS URL
@@ -174,7 +180,8 @@ def get_news(conn, category: str = None, detail: bool = False, lang: str = "zh_C
         news_items = fetch_news_from_rss(rss_url)
         
         if not news_items:
-            return ActionResponse(Action.REQLLM, "抱歉，未能获取到新闻信息，请稍后再试。", None)
+            direct_response = "抱歉，未能获取到新闻信息，请稍后再试。"
+            return ActionResponse(Action.REQLLM, "抱歉，未能获取到新闻信息，请稍后再试。", direct_response)
         
         # 随机选择一条新闻
         selected_news = random.choice(news_items)
@@ -198,8 +205,16 @@ def get_news(conn, category: str = None, detail: bool = False, lang: str = "zh_C
             f"如果用户询问更多详情，告知用户可以说'请详细介绍这条新闻'获取更多内容)"
         )
         
-        return ActionResponse(Action.REQLLM, news_report, None)
+        # 构造一个直接回复版本，简要播报新闻
+        direct_response = (
+            f"最新{mapped_category or ''}新闻：{selected_news['title']}。"
+            f"{selected_news['description'][:150]}..."
+            f"如果您想了解更多详情，可以说'请详细介绍这条新闻'。"
+        )
+        
+        return ActionResponse(Action.REQLLM, news_report, direct_response)
     
     except Exception as e:
         logger.bind(tag=TAG).error(f"获取新闻出错: {e}")
-        return ActionResponse(Action.REQLLM, "抱歉，获取新闻时发生错误，请稍后再试。", None)
+        direct_response = "抱歉，获取新闻时发生错误，请稍后再试。"
+        return ActionResponse(Action.REQLLM, "抱歉，获取新闻时发生错误，请稍后再试。", direct_response)
