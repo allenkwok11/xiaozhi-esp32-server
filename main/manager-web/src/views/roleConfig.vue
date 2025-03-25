@@ -225,6 +225,7 @@ export default {
 },
   mounted() {
     const agentId = this.$route.query.agentId;
+    console.log('agentId2222',agentId);
     if (agentId) {
       this.fetchAgentConfig(agentId);
     }

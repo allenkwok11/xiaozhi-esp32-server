@@ -25,7 +25,7 @@
         <img alt="" src="@/assets/home/avatar.png" style="width: 21px;height: 21px;"/>
         <el-dropdown trigger="click">
           <span class="el-dropdown-link">
-             {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
+             {{ userInfo.mobile || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item icon="el-icon-plus" @click.native="">个人中心</el-dropdown-item>
