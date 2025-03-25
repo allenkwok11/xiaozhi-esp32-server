@@ -257,4 +257,20 @@ export default {
                 });
             }).send();
     },
+    // 获取已绑设备
+    getAgentBindDevices(agentId, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/agent/device/bind/${agentId}`)
+            .method('GET')
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail((err) => {
+                console.error('获取设备列表失败:', err);
+                RequestService.reAjaxFun(() => {
+                    this.getAgentBindDevices(agentId, callback);
+                });
+            }).send();
+    },
 }
