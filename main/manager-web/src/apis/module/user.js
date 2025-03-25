@@ -43,9 +43,9 @@ export default {
             })
             .fail(() => {
                 RequestService.reAjaxFun(() => {
-                  this.unbindDevice(device_id, callback);
+                    this.unbindDevice(device_id, callback);
                 });
-              }).send()
+            }).send()
     },
     // 绑定设备
     bindDevice(deviceCode, callback) {
@@ -71,9 +71,9 @@ export default {
             .method('GET')
             .type('blob')
             .header({
-                  'Content-Type': 'image/gif',
-                  'Pragma': 'No-cache',
-                  'Cache-Control': 'no-cache'
+                'Content-Type': 'image/gif',
+                'Pragma': 'No-cache',
+                'Cache-Control': 'no-cache'
             })
             .success((res) => {
                 RequestService.clearRequestTime();
@@ -157,7 +157,7 @@ export default {
                     this.getAgentList(callback);
                 });
             }).send();
-        },
+    },
 
     getUserInfo(callback) {
         RequestService.sendRequest()
@@ -179,7 +179,7 @@ export default {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/api/v1/user/agent`)
             .method('POST')
-            .data({ name: agentName })
+            .data({name: agentName})
             .success((res) => {
                 RequestService.clearRequestTime();
                 callback(res);
@@ -204,6 +204,26 @@ export default {
                     this.deleteAgent(agentId, callback);
                 });
             }).send();
+    },
+    // API接口代码修改
+    changePassword(oldPassword, newPassword, successCallback, errorCallback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/change-password`)  // 修改URL
+            .method('PUT')  // 修改方法为PUT
+            .data({
+                old_password: oldPassword,  // 修改参数名
+                new_password: newPassword   // 修改参数名
+            })
+            .success((res) => {
+                RequestService.clearRequestTime();
+                successCallback(res);
+            })
+            .fail((error) => {
+                RequestService.reAjaxFun(() => {
+                    this.changePassword(oldPassword, newPassword, successCallback, errorCallback);
+                });
+            })
+            .send();
     },
     // 获取智能体配置
     getDeviceConfig(deviceId, callback) {
@@ -237,5 +257,4 @@ export default {
                 });
             }).send();
     },
-
 }
