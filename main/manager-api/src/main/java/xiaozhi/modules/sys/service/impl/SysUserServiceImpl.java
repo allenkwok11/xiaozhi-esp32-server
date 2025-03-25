@@ -1,23 +1,31 @@
 package xiaozhi.modules.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.exception.RenException;
+import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.modules.security.password.PasswordUtils;
 import xiaozhi.modules.sys.dao.SysUserDao;
+import xiaozhi.modules.sys.dto.AdminPageUserDTO;
 import xiaozhi.modules.sys.dto.PasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
 import xiaozhi.modules.sys.entity.SysUserEntity;
 import xiaozhi.modules.sys.enums.SuperAdminEnum;
 import xiaozhi.modules.sys.service.SysUserService;
+import xiaozhi.modules.sys.vo.AdminPageUserVO;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,6 +120,27 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         return baseDao.selectCount(queryWrapper);
     }
 
+    @Override
+    public PageData<AdminPageUserVO> page(AdminPageUserDTO dto) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put(Constant.PAGE, dto.getPage());
+        params.put(Constant.LIMIT,dto.getLimit());
+        IPage<SysUserEntity> page = baseDao.selectPage(
+                getPage(params, "sort", true),
+                //定义查询条件
+                new QueryWrapper<SysUserEntity>()
+                        //必须按照ttsID查找
+                        .eq("username",dto.getMobile()));
+        List<AdminPageUserVO> list = page.getRecords().stream().map(user -> {
+            AdminPageUserVO adminPageUserVO = new AdminPageUserVO();
+            adminPageUserVO.setUserid(user.getId().toString());
+            adminPageUserVO.setMobile(user.getUsername());
+            //TODO 2. 等设备功能写好，获取对应数据
+            adminPageUserVO.setDeviceCount("0");
+            return adminPageUserVO;
+        }).toList();
+        return new PageData<>(list, page.getTotal());
+    }
 
     private boolean isStrongPassword(String password) {
         // 弱密码的正则表达式
