@@ -32,14 +32,14 @@ public class AdminController {
     private final SysUserService sysUserService;
 
     @GetMapping("/users")
-    @Operation(summary = "分页查找")
+    @Operation(summary = "分页查找用户")
     @RequiresPermissions("sys:role:superAdmin")
     @Parameters({
             @Parameter(name = "mobile", description = "用户手机号码", required = true),
             @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
             @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
     })
-    public Result<PageData<AdminPageUserVO>> page(
+    public Result<PageData<AdminPageUserVO>> pageUser(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
         AdminPageUserDTO dto = new AdminPageUserDTO();
         dto.setMobile((String) params.get("mobile"));
@@ -56,6 +56,29 @@ public class AdminController {
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> update(
             @PathVariable Long id) {
+        sysUserService.resetPassword(id);
         return new Result<>();
+    }
+
+    @DeleteMapping("/users/{id}")
+    @Operation(summary = "用户删除")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<Void> delete(@PathVariable Long id) {
+        sysUserService.delete(new Long[]{id});
+        return new Result<>();
+    }
+
+    @GetMapping("/device/all")
+    @Operation(summary = "分页查找设备")
+    @RequiresPermissions("sys:role:superAdmin")
+    @Parameters({
+            @Parameter(name = "keywords", description = "用户手机号码", required = true),
+            @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
+            @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
+    })
+    public Result<Void> pageDevice(
+            @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
+        //TODO 等设备功能模块写好
+        return new Result<Void>().error(600,"等设备功能模块写好");
     }
 }
