@@ -88,6 +88,9 @@ selected_module:
   # 默认免费的ChatGLMLLM就已经支持function_call，但是如果像追求稳定建议把LLM设置成：DoubaoLLM，使用的具体model_name是：doubao-pro-32k-functioncall-241028
   Intent: intent_llm
 
+# 意图识别专用LLM配置，如果设置，则意图识别会使用这个模型而不是主LLM
+IntentLLM: XinferenceSmallLLM #ChatGLMLLM #XinferenceSmallLLM # 设置为空字符串""或不设置则使用主LLM
+
 # 意图识别，是用于理解用户意图的模块，例如：播放音乐
 Intent:
   # 不使用意图识别
@@ -181,6 +184,18 @@ VAD:
 LLM:
   # 所有openai类型均可以修改超参，以AliLLM为例
   # 当前支持的type为openai、dify、ollama，可自行适配
+  XinferenceLLM:
+    # 定义LLM API类型
+    type: xinference
+    # Xinference服务地址和模型名称
+    model_name: qwen2.5:72b-AWQ  # 使用的模型名称，需要预先在Xinference启动对应模型
+    base_url: http://localhost:9997  # Xinference服务地址
+  XinferenceSmallLLM:
+    # 定义轻量级LLM API类型，用于意图识别
+    type: xinference
+    # Xinference服务地址和模型名称
+    model_name: qwen2.5:3b-AWQ  # 使用的小模型名称，用于意图识别
+    base_url: http://localhost:9997  # Xinference服务地址
   AliLLM:
     # 定义LLM API类型
     type: openai
