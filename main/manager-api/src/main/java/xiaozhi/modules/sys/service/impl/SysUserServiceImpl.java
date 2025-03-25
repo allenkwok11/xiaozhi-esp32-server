@@ -3,7 +3,6 @@ package xiaozhi.modules.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xiaozhi.common.constant.Constant;
@@ -22,10 +21,7 @@ import xiaozhi.modules.sys.enums.SuperAdminEnum;
 import xiaozhi.modules.sys.service.SysUserService;
 import xiaozhi.modules.sys.vo.AdminPageUserVO;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,6 +87,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void changePassword(Long userId, PasswordDTO passwordDTO) {
         SysUserEntity sysUserEntity = sysUserDao.selectById(userId);
 
@@ -113,6 +110,24 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         sysUserEntity.setPassword(password);
 
         updateById(sysUserEntity);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changePasswordDirectly(Long userId, String password) {
+        SysUserEntity sysUserEntity = new SysUserEntity();
+        sysUserEntity.setId(userId);
+        sysUserEntity.setPassword(PasswordUtils.encode(password));
+        updateById(sysUserEntity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String resetPassword(Long userId) {
+        String password = generatePassword();
+        changePasswordDirectly(userId,password);
+        return password;
     }
 
     private Long getUserCount() {
@@ -148,5 +163,20 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         Pattern pattern = Pattern.compile(weakPasswordRegex);
         Matcher matcher = pattern.matcher(password);
         return matcher.matches();
+    }
+
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+    private static final Random random = new Random();
+    /**
+     * 生成随机密码
+     * @return 随机生成的密码
+     */
+    private String generatePassword(){
+        StringBuilder password = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            int randomIndex = random.nextInt(CHARACTERS.length());
+            password.append(CHARACTERS.charAt(randomIndex));
+        }
+        return password.toString();
     }
 }
