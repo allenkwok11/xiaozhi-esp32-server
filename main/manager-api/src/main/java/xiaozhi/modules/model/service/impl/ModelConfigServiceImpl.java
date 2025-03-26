@@ -86,7 +86,7 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
 
         // 再更新供应器提供的模型
         ModelConfigEntity modelConfigEntity = ConvertUtils.sourceToTarget(modelConfigBodyDTO, ModelConfigEntity.class);
-        modelConfigEntity.setId(Long.getLong(id));
+        modelConfigEntity.setId(id);
         modelConfigEntity.setModelType(modelType);
         modelConfigDao.updateById(modelConfigEntity);
         return ConvertUtils.sourceToTarget(modelConfigEntity, ModelConfigDTO.class);
@@ -117,7 +117,7 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
             return null;
         }
         ModelConfigEntity modelConfigEntity = modelConfigEntities.get(0);
-        Long id = modelConfigEntity.getId();
+        Long id = Long.valueOf(modelConfigEntity.getId());
 
        return timbreService.getVoiceNames(String.valueOf(id), voiceName);
     }
