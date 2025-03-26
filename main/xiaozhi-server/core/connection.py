@@ -9,7 +9,7 @@ import traceback
 import threading
 import websockets
 from typing import Dict, Any
-import plugins_func.loadplugins
+from plugins_func.loadplugins import auto_import_modules
 from config.logger import setup_logging
 from core.utils.dialogue import Message, Dialogue
 from core.handle.textHandle import handleTextMessage
@@ -24,6 +24,8 @@ from core.auth import AuthMiddleware, AuthenticationError
 from core.utils.auth_code_gen import AuthCodeGenerator
 
 TAG = __name__
+
+auto_import_modules('plugins_func.functions')
 
 
 class TTSException(RuntimeError):
@@ -109,11 +111,15 @@ class ConnectionHandler:
 
             # 进行认证
             await self.auth.authenticate(self.headers)
-
             device_id = self.headers.get("device-id", None)
-            self.memory.init_memory(device_id, self.llm)
-            self.intent.set_llm(self.llm)
 
+            # 认证通过,继续处理
+            self.websocket = ws
+            self.session_id = str(uuid.uuid4())
+
+            self.welcome_msg = self.config["xiaozhi"]
+            self.welcome_msg["session_id"] = self.session_id
+            await self.websocket.send(json.dumps(self.welcome_msg))
             # Load private configuration if device_id is provided
             bUsePrivateConfig = self.config.get("use_private_config", False)
             self.logger.bind(tag=TAG).info(f"bUsePrivateConfig: {bUsePrivateConfig}, device_id: {device_id}")
@@ -141,43 +147,32 @@ class ConnectionHandler:
                     self.private_config = None
                     raise
 
-            # 认证通过,继续处理
-            self.websocket = ws
-            self.session_id = str(uuid.uuid4())
-
-            self.welcome_msg = self.config["xiaozhi"]
-            self.welcome_msg["session_id"] = self.session_id
-            await self.websocket.send(json.dumps(self.welcome_msg))
-
             # 异步初始化
-            await self.loop.run_in_executor(None, self._initialize_components)
-
+            self.executor.submit(self._initialize_components)
             # tts 消化线程
-            tts_priority = threading.Thread(target=self._tts_priority_thread, daemon=True)
-            tts_priority.start()
+            self.tts_priority_thread = threading.Thread(target=self._tts_priority_thread, daemon=True)
+            self.tts_priority_thread.start()
 
             # 音频播放 消化线程
-            audio_play_priority = threading.Thread(target=self._audio_play_priority_thread, daemon=True)
-            audio_play_priority.start()
+            self.audio_play_priority_thread = threading.Thread(target=self._audio_play_priority_thread, daemon=True)
+            self.audio_play_priority_thread.start()
 
             try:
                 async for message in self.websocket:
                     await self._route_message(message)
             except websockets.exceptions.ConnectionClosed:
                 self.logger.bind(tag=TAG).info("客户端断开连接")
-                await self.close()
 
         except AuthenticationError as e:
             self.logger.bind(tag=TAG).error(f"Authentication failed: {str(e)}")
-            await ws.close()
             return
         except Exception as e:
             stack_trace = traceback.format_exc()
             self.logger.bind(tag=TAG).error(f"Connection error: {str(e)}-{stack_trace}")
-            await ws.close()
             return
         finally:
             await self.memory.save_memory(self.dialogue.dialogue)
+            await self.close(ws)
 
     async def _route_message(self, message):
         """消息路由"""
@@ -187,16 +182,26 @@ class ConnectionHandler:
             await handleAudioMessage(self, message)
 
     def _initialize_components(self):
+        """加载提示词"""
         self.prompt = self.config["prompt"]
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
-
-        self.client_ip_info = get_ip_info(self.client_ip)
-        self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
-        self.prompt = self.prompt + f"\n我在:{self.client_ip_info}"
         self.dialogue.put(Message(role="system", content=self.prompt))
 
-        self.func_handler = FunctionHandler(self.config)
+        """加载插件"""
+        self.func_handler = FunctionHandler(self)
+
+        """加载记忆"""
+        device_id = self.headers.get("device-id", None)
+        self.memory.init_memory(device_id, self.llm)
+        self.intent.set_llm(self.llm)
+
+        """加载位置信息"""
+        self.client_ip_info = get_ip_info(self.client_ip)
+        if self.client_ip_info is not None and "city" in self.client_ip_info:
+            self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
+            self.prompt = self.prompt + f"\nuser location:{self.client_ip_info}"
+            self.dialogue.update_system_message(self.prompt)
 
     def change_system_prompt(self, prompt):
         self.prompt = prompt
@@ -316,7 +321,9 @@ class ConnectionHandler:
             self.dialogue.put(Message(role="user", content=query))
 
         # Define intent functions
-        functions = self.func_handler.get_functions()
+        functions = None
+        if hasattr(self, 'func_handler'):
+            functions = self.func_handler.get_functions()
 
         response_message = []
         processed_chars = 0  # 跟踪已处理的字符位置
@@ -492,7 +499,12 @@ class ConnectionHandler:
         while not self.stop_event.is_set():
             text = None
             try:
-                future = self.tts_queue.get()
+                try:
+                    future = self.tts_queue.get(timeout=1)
+                except queue.Empty:
+                    if self.stop_event.is_set():
+                        break
+                    continue
                 if future is None:
                     continue
                 text = None
@@ -533,7 +545,12 @@ class ConnectionHandler:
         while not self.stop_event.is_set():
             text = None
             try:
-                opus_datas, text, text_index = self.audio_play_queue.get()
+                try:
+                    opus_datas, text, text_index = self.audio_play_queue.get(timeout=1)
+                except queue.Empty:
+                    if self.stop_event.is_set():
+                        break
+                    continue
                 future = asyncio.run_coroutine_threadsafe(sendAudioMessage(self, opus_datas, text, text_index),
                                                           self.loop)
                 future.result()
@@ -563,15 +580,40 @@ class ConnectionHandler:
             self.tts_first_text_index = text_index
         self.tts_last_text_index = text_index
 
-    async def close(self):
+    async def close(self, ws=None):
         """资源清理方法"""
 
-        # 清理其他资源
-        self.stop_event.set()
-        self.executor.shutdown(wait=False)
-        if self.websocket:
+        # 触发停止事件并清理资源
+        if self.stop_event:
+            self.stop_event.set()
+        
+        # 立即关闭线程池
+        if self.executor:
+            self.executor.shutdown(wait=False, cancel_futures=True)
+            self.executor = None
+        
+        # 清空任务队列
+        self._clear_queues()
+        
+        if ws:
+            await ws.close()
+        elif self.websocket:
             await self.websocket.close()
         self.logger.bind(tag=TAG).info("连接资源已释放")
+
+    def _clear_queues(self):
+        # 清空所有任务队列
+        for q in [self.tts_queue, self.audio_play_queue]:
+            if not q:
+                continue
+            while not q.empty():
+                try:
+                    q.get_nowait()
+                except queue.Empty:
+                    continue
+            q.queue.clear()
+            # 添加毒丸信号到队列，确保线程退出
+            # q.queue.put(None)
 
     def reset_vad_states(self):
         self.client_audio_buffer = bytes()

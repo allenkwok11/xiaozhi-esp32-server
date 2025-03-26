@@ -3,6 +3,7 @@ import agent from './module/agent.js'
 import device from './module/device.js'
 import user from './module/user.js'
 import ota from './module/ota.js'
+import admin from './module/admin.js'
 
 /**
  * 接口地址
@@ -29,5 +30,6 @@ export default {
     user,
     agent,
     device,
-    ota
+    ota,
+    admin
 }

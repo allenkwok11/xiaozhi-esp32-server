@@ -26,9 +26,9 @@ export default {
             .method('GET')
             .type('blob')
             .header({
-                  'Content-Type': 'image/gif',
-                  'Pragma': 'No-cache',
-                  'Cache-Control': 'no-cache'
+                'Content-Type': 'image/gif',
+                'Pragma': 'No-cache',
+                'Cache-Control': 'no-cache'
             })
             .success((res) => {
                 RequestService.clearRequestTime();

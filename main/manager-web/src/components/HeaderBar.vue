@@ -13,6 +13,12 @@
           <i class="el-icon-s-grid" style="font-size: 10px;color: #979db1;"/>
           控制台
         </div>
+        <div ref="menu-code_user" class="menu-btn" @click="goToPage('/user-management')">
+          用户管理
+        </div>
+        <div ref="menu-code_model" class="menu-btn" @click="goToPage('/model-config')">
+          模型配置
+        </div>
         <div ref="menu-code_ota" class="menu-btn" @click="goToPage('/ota')">
           <i class="el-icon-lightning"></i>
           OTA管理
@@ -28,7 +34,7 @@
         <img alt="" src="@/assets/home/avatar.png" style="width: 21px;height: 21px;"/>
         <el-dropdown trigger="click">
           <span class="el-dropdown-link">
-             {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
+             {{ userInfo.mobile || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item icon="el-icon-user" @click.native="">个人中心</el-dropdown-item>
@@ -38,15 +44,21 @@
         </el-dropdown>
       </div>
     </div>
+
+    <!-- 修改密码弹窗 -->
+    <ChangePasswordDialog :visible.sync="isChangePasswordDialogVisible" />
   </el-header>
 </template>
 
 <script>
-import userApi from '@/apis/module/user'
-
+import userApi from '@/apis/module/user';
+import ChangePasswordDialog from './ChangePasswordDialog.vue'; // 引入修改密码弹窗组件
 
 export default {
   name: 'HeaderBar',
+  components: {
+    ChangePasswordDialog
+  },
   props: ['devices'],  // 接收父组件设备列表
   data() {
     return {
@@ -55,7 +67,7 @@ export default {
         username: '',
         mobile: ''
       },
-
+      isChangePasswordDialogVisible: false // 控制修改密码弹窗的显示
     }
   },
   watch: {
@@ -111,10 +123,13 @@ export default {
       }
 
       this.$emit('search-result', filteredDevices);
+    },
+
+    // 显示修改密码弹窗
+    showChangePasswordDialog() {
+      this.isChangePasswordDialogVisible = true;
     }
-
   }
-
 }
 </script>
 

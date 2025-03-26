@@ -64,7 +64,29 @@ const routes = [
     component: function () {
       return import('../views/ota.vue')
     }
-  }
+  },
+  // 添加用户管理路由
+  {
+    path: '/user-management',
+    name: 'UserManagement',
+    meta: {
+      menuCode: 'user',
+    },
+    component: function () {
+      return import('../views/UserManagement.vue')
+    }
+  },
+  {
+   path: '/model-config',
+   name: 'ModelConfig',
+   meta: {
+     menuCode: 'model',
+   },
+   component: function () {
+     return import('../views/ModelConfig.vue')
+   }
+  },
+
 ]
 
 const router = new VueRouter({
