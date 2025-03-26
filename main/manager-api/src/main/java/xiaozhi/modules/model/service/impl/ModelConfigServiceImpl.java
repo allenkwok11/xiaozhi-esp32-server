@@ -117,8 +117,8 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
             return null;
         }
         ModelConfigEntity modelConfigEntity = modelConfigEntities.get(0);
-        Long id = Long.valueOf(modelConfigEntity.getId());
+        String id = modelConfigEntity.getId();
 
-       return timbreService.getVoiceNames(String.valueOf(id), voiceName);
+       return timbreService.getVoiceNames(id, voiceName);
     }
 }
