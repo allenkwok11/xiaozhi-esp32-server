@@ -85,6 +85,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     public void delete(Long[] ids) {
         //删除用户
         baseDao.deleteBatchIds(Arrays.asList(ids));
+        //TODO 除了要删除用户还要删除用户关联的设备，对话，智能体。等此3个功能完善在添加
     }
 
     @Override
