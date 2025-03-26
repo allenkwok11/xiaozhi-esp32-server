@@ -2,6 +2,7 @@
 import agent from './module/agent.js'
 import device from './module/device.js'
 import user from './module/user.js'
+import ota from './module/ota.js'
 
 /**
  * 接口地址
@@ -11,7 +12,7 @@ import user from './module/user.js'
  */
 // const DEV_API_SERVICE = 'https://m1.apifoxmock.com/m1/5931378-5618560-default'
 // 8002开发完成完成后使用这个
-const DEV_API_SERVICE = '/xiaozhi-esp32-api'
+const DEV_API_SERVICE = '/xiaozhi-esp32-api/api/v1'
 
 /**
  * 根据开发环境返回接口url
@@ -27,5 +28,6 @@ export default {
     getServiceUrl,
     user,
     agent,
-    device
+    device,
+    ota
 }

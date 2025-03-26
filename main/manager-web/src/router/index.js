@@ -28,6 +28,9 @@ const routes = [
   {
     path: '/home',
     name: 'home',
+    meta: {
+      menuCode: 'agent',
+    },
     component: function () {
       return import('../views/home.vue')
     }
@@ -35,6 +38,9 @@ const routes = [
   {
     path: '/role-config',
     name: 'RoleConfig',
+    meta: {
+      menuCode: 'agent',
+    },
     component: function () {
       return import('../views/roleConfig.vue')
     }
@@ -42,8 +48,21 @@ const routes = [
   {
     path: '/device',
     name: 'Device',
+    meta: {
+      menuCode: 'agent',
+    },
     component: function () {
       return import('../views/device.vue')
+    }
+  },
+  {
+    path: '/ota',
+    name: 'Ota',
+    meta: {
+      menuCode: 'ota',
+    },
+    component: function () {
+      return import('../views/ota.vue')
     }
   }
 ]

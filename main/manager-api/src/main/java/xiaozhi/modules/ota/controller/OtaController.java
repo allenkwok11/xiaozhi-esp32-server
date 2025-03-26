@@ -1,26 +1,33 @@
-package xiaozhi.modules.device.controller;
+package xiaozhi.modules.ota.controller;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.controller.BaseController;
 import xiaozhi.common.redis.RedisUtils;
+import xiaozhi.common.user.UserDetail;
+import xiaozhi.common.utils.Result;
+import xiaozhi.modules.agent.domain.Agent;
 import xiaozhi.modules.device.constant.DeviceConstant;
 import xiaozhi.modules.device.domain.Device;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.device.utils.CodeGeneratorUtil;
 import xiaozhi.modules.device.vo.DeviceOtaVO;
-import xiaozhi.modules.sys.service.SysParamsService;
+import xiaozhi.modules.ota.domain.Ota;
+import xiaozhi.modules.ota.service.OtaService;
+import xiaozhi.modules.security.user.SecurityUser;
 
 import java.util.Date;
 
@@ -31,10 +38,9 @@ import java.util.Date;
 @RequestMapping("/ota")
 public class OtaController extends BaseController {
     private final DeviceService deviceService;
-    private final SysParamsService sysParamsService;
+    private final OtaService otaService;
     @Resource
     private RedisUtils redisUtils;
-    private final String OTA_PARAM_CODE = "OTA";
 
     @CrossOrigin(originPatterns = "*", methods = {RequestMethod.GET, RequestMethod.POST})
     @RequestMapping(path = "/", method = {RequestMethod.POST, RequestMethod.GET}, produces = "application/json")
@@ -66,16 +72,77 @@ public class OtaController extends BaseController {
 
         if (ObjectUtils.isNull(device) || device.getAutoUpdate() == 1) {
             //{"version":"1.0.0","url":"http://https://youxlife.oss-cn-zhangjiakou.aliyuncs.com/v1.4.5.bin"}
-            String value = sysParamsService.getValue(OTA_PARAM_CODE);
-            if (StringUtils.isBlank(value)) {
+            String board = ObjectUtils.isNull(device)?headers.getFirst("user-agent").split("/")[0]:device.getBoard();
+            Ota ota = otaService.getOne(new UpdateWrapper<Ota>().eq("board", board).eq("is_enabled", 1));
+            if (ObjectUtils.isNull(ota)) {
                 log.warn("OTA升级信息未配置");
             } else {
-                JSONObject object = new JSONObject(value);
-                otaVO.setFirmware(new DeviceOtaVO.Firmware(object.getStr("version"), object.getStr("url")));
+                otaVO.setFirmware(new DeviceOtaVO.Firmware(ota.getAppVersion(), ota.getUrl()));
             }
         }
 
         otaVO.setServer_time(new DeviceOtaVO.ServerTime(new Date().getTime(), 8 * 60));
         return JSONUtil.toJsonStr(otaVO);
+    }
+
+    @GetMapping("/sys/getOtalist")
+    @Operation(summary = "设备OTA列表")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<Page<Ota>> getOtalist(@RequestParam Integer pageNo, @RequestParam Integer pageSize) {
+        UserDetail user = SecurityUser.getUser();
+        Page page = new Page<Ota>(pageNo, pageSize);
+        page = otaService.page(page);
+        return new Result<Page<Ota>>().ok(page);
+    }
+
+    @PostMapping("/sys/save")
+    @Operation(summary = "添加设备OTA")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<Ota> save(@RequestBody Ota ota) {
+        UserDetail user = SecurityUser.getUser();
+        ota.setCreator(user.getId());
+        ota.setCreateDate(new Date());
+        boolean bool = otaService.save(ota);
+        if (!bool) {
+            return new Result().error("设备OTA添加失败");
+        }
+        return new Result<Ota>().ok(null);
+    }
+
+    @PostMapping("/sys/update")
+    @Operation(summary = "更新设备OTA")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<Ota> update(@RequestBody Ota ota) {
+        UserDetail user = SecurityUser.getUser();
+        boolean bool = otaService.update(
+                new UpdateWrapper<Ota>().eq("id", ota.getId())
+                        .set("board", ota.getBoard().trim().toLowerCase())
+                        .set("app_version", ota.getAppVersion())
+                        .set("url", ota.getUrl())
+                        .set("is_enabled", ota.getIsEnabled())
+                        .set("updater", user.getId())
+                        .set("update_date", new Date())
+        );
+        if (!bool) {
+            return new Result().error("设备OTA更新失败");
+        }
+        return new Result<Ota>().ok(null);
+    }
+
+    @PostMapping("/sys/toggleEnabled")
+    @Operation(summary = "切换设备OTA可用状态")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<Ota> toggleEnabled(@RequestBody Ota ota) {
+        UserDetail user = SecurityUser.getUser();
+        boolean bool = otaService.update(
+                new UpdateWrapper<Ota>().eq("id", ota.getId())
+                        .set("is_enabled", ota.getIsEnabled())
+                        .set("updater", user.getId())
+                        .set("update_date", new Date())
+        );
+        if (!bool) {
+            return new Result().error("切换设备OTA可用状态失败");
+        }
+        return new Result<Ota>().ok(null);
     }
 }

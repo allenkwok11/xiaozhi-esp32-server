@@ -9,8 +9,8 @@ export function checkUserLogin(fn) {
     let token = localStorage.getItem(Constant.STORAGE_KEY.TOKEN)
     let userType = localStorage.getItem(Constant.STORAGE_KEY.USER_TYPE)
     if (isNull(token) || isNull(userType)) {
-        goToPage('console', true)
-        return
+        goToPage('/login', true)
+        return false
     }
     if (fn) {
         fn()

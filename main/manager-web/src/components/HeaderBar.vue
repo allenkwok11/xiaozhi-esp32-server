@@ -4,19 +4,19 @@
       <div style="display: flex;align-items: center;gap: 10px;">
         <img alt="" src="@/assets/xiaozhi-logo.png" style="width: 42px;height: 42px;"/>
         <img alt="" src="@/assets/xiaozhi-ai.png" style="width: 58px;height: 12px;"/>
-        <div class="ml-20 menu-btn active" @click="goHome">
+        <div ref="menu-code_agent" class="ml-20 menu-btn" @click="goToPage('/home')">
           <!-- <img alt="" src="@/assets/home/equipment.png" style="width: 12px;height: 10px;"/> -->
           <i class="el-icon-cpu"></i>
           智能体
         </div>
-        <div class="menu-btn">
+        <div ref="menu-code_console" class="menu-btn">
           <i class="el-icon-s-grid" style="font-size: 10px;color: #979db1;"/>
           控制台
         </div>
-        <!-- <div class="menu-btn">
-          设备管理
-          <img alt="" src="@/assets/home/close.png" style="width: 6px;height: 6px;"/>
-        </div> -->
+        <div ref="menu-code_ota" class="menu-btn" @click="goToPage('/ota')">
+          <i class="el-icon-lightning"></i>
+          OTA管理
+        </div>
       </div>
       <div style="display: flex;align-items: center;gap: 7px; margin-top: 2px;">
         <div class="serach-box">
@@ -33,7 +33,7 @@
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item icon="el-icon-user" @click.native="">个人中心</el-dropdown-item>
             <el-dropdown-item icon="el-icon-key" @click.native="">修改密码</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-connection" @click.native="">退出登录</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-connection" @click.native="handleLogout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -54,16 +54,37 @@ export default {
       userInfo: {
         username: '',
         mobile: ''
-      }
+      },
+
+    }
+  },
+  watch: {
+    '$route.meta.menuCode': {
+      handler(to, from) {
+        const meta = this.$route.meta;
+        if(meta && meta.menuCode){
+          this.$nextTick(() => {
+            const menu = this.$refs[`menu-code_`+ meta.menuCode]
+            menu && menu.classList.add('active')
+          })
+        }
+      },
+      immediate: true,
+      deep: true
     }
   },
   mounted() {
     this.fetchUserInfo()
   },
   methods: {
-    goHome() {
+    handleLogout() {
+      // 退出登录
+        this.$store.commit('setToken','')
+        this.$router.push('/login')
+    },
+    goToPage(path) {
       // 跳转到首页
-      this.$router.push('/home')
+      this.$router.replace(path)
     },
     // 获取用户信息
     fetchUserInfo() {

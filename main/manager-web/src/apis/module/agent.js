@@ -5,7 +5,7 @@ import {getServiceUrl} from '../api'
 export default {
     //智能体列表
     getAgentList(callback) {
-        RequestService.sendRequest().url(`${getServiceUrl()}/api/v1/user/agent`)
+        RequestService.sendRequest().url(`${getServiceUrl()}/user/agent`)
             .method('GET')
             .success((res) => {
                 RequestService.clearRequestTime()
@@ -18,7 +18,7 @@ export default {
     //添加智能体
     addAgent(agentName, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/user/agent`)
+            .url(`${getServiceUrl()}/user/agent`)
             .method('POST')
             .data({agentName})
             .success((res) => {
@@ -30,9 +30,9 @@ export default {
             }).send();
     },
     //获取智能体配置
-    getAgentConfig(agent_id, callback) {
+    getAgentConfig(agentId, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/user/agent/${agent_id}`)
+            .url(`${getServiceUrl()}/user/agent/${agentId}`)
             .method('GET')
             .success((res) => {
                 RequestService.clearRequestTime();
@@ -40,15 +40,15 @@ export default {
             })
             .fail((err) => {
                 console.error('获取智能体配置失败:', err);
-                RequestService.reAjaxFun(() => {
-                    this.getAgentConfig(agent_id, callback);
-                });
+                // RequestService.reAjaxFun(() => {
+                //     this.getAgentConfig(agent_id, callback);
+                // });
             }).send();
     },
     //配置智能体
-    saveAgentConfig(agent_id, configData, callback) {
+    saveAgentConfig(agentId, configData, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/user/agent/${agent_id}`)
+            .url(`${getServiceUrl()}/user/agent/${agentId}`)
             .method('PUT')
             .data(configData)
             .success((res) => {
@@ -57,15 +57,15 @@ export default {
             })
             .fail((err) => {
                 console.error('保存智能体配置失败:', err);
-                RequestService.reAjaxFun(() => {
-                    this.saveAgentConfig(device_id, configData, callback);
-                });
+                // RequestService.reAjaxFun(() => {
+                //     this.saveAgentConfig(device_id, configData, callback);
+                // });
             }).send();
     },
     //删除智能体
-    delAgent(agent_id, callback) {
+    delAgent(agentId, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/user/agent/${agent_id}`)
+            .url(`${getServiceUrl()}/user/agent/${agentId}`)
             .method('DELETE')
             .success((res) => {
                 RequestService.clearRequestTime();
@@ -73,9 +73,9 @@ export default {
             })
             .fail((err) => {
                 console.error('删除智能体失败:', err);
-                RequestService.reAjaxFun(() => {
-                    this.deleteAgent(agent_id, callback);
-                });
+                // RequestService.reAjaxFun(() => {
+                //     this.deleteAgent(agent_id, callback);
+                // });
             }).send();
     },
 }

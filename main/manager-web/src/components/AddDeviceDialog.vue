@@ -1,16 +1,15 @@
 <template>
-  <el-dialog :visible.sync="visible" width="400px" center >
+  <el-dialog :visible.sync="visible" width="400px" center :close-on-click-modal="false" :close-on-press-escape="false">
     <div style="margin: 0 10px 10px;display: flex;align-items: center;gap: 10px;font-weight: 700;font-size: 20px;text-align: left;color: #3d4566;">
       <div style="width: 40px;height: 40px;border-radius: 50%;background: #5778ff;display: flex;align-items: center;justify-content: center;">
-        <img src="@/assets/home/equipment.png" alt="" style="width: 18px;height: 15px;" />
+        <i class="el-icon-cpu" style="color: #fff;"></i>
       </div>
       添加设备
     </div>
     <div style="height: 1px;background: #e8f0ff;" />
     <div style="margin: 22px 15px;">
       <div style="font-weight: 400;font-size: 14px;text-align: left;color: #3d4566;">
-        <div style="color: red;display: inline-block;">*</div>
-        <span style="font-size: 11px"> 验证码：</span>
+        <div style="color: red;display: inline-block;">*</div>验证码：
       </div>
       <div class="input-46" style="margin-top: 12px;">
         <el-input placeholder="请输入设备播报的6位数验证码.." v-model="deviceCode" />

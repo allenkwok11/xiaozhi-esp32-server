@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.controller.BaseController;
 import xiaozhi.common.redis.RedisUtils;
@@ -48,21 +49,22 @@ public class UserAgentController extends BaseController {
 
     @PostMapping
     @Operation(summary = "添加智能体")
+    @RequiresPermissions("sys:role:normal")
     public Result<Agent> addAgent(@RequestBody Agent agent) {
         UserDetail user = SecurityUser.getUser();
-        if(StringUtils.isBlank(agent.getAgentName())){
+        if (StringUtils.isBlank(agent.getAgentName())) {
             log.error("智能体名称不能为空");
         }
         Agent oldAgent = agentService.getOne(new QueryWrapper<Agent>().eq("agent_name", agent.getAgentName()));
-        if(ObjectUtils.isNull(oldAgent)){
+        if (ObjectUtils.isNull(oldAgent)) {
             AgentTemplate agentTemplate = agentTemplateService.getOne(new QueryWrapper<AgentTemplate>().eq("is_default", 1));
-            if(ObjectUtils.isNull(agentTemplate)){
+            if (ObjectUtils.isNull(agentTemplate)) {
 
-            }else{
+            } else {
                 try {
                     oldAgent = new Agent();
                     BeanUtils.copyProperties(oldAgent, agentTemplate);
-                    oldAgent.setId(UUID.randomUUID().toString().replace("-",""));
+                    oldAgent.setId(UUID.randomUUID().toString().replace("-", ""));
                     oldAgent.setAgentName(agent.getAgentName());
                     oldAgent.setUserId(user.getId());
                     oldAgent.setCreator(user.getId());
@@ -72,17 +74,33 @@ public class UserAgentController extends BaseController {
                     log.error("对象赋值异常", e);
                 }
             }
-        }else{
+        } else {
 
         }
         return new Result<Agent>().ok(agent);
     }
 
+    @DeleteMapping("/{agentId}")
+    @Operation(summary = "删除智能体")
+    @RequiresPermissions("sys:role:normal")
+    public Result<Agent> delAgent(@PathVariable String agentId) {
+        UserDetail user = SecurityUser.getUser();
+        if (StringUtils.isBlank(agentId)) {
+            log.error("智能体ID不能为空");
+        }
+        boolean bool = agentService.removeById(agentId);
+        if (!bool) {
+            return new Result<Agent>().error("删除失败");
+        }
+        return new Result<Agent>().ok(null);
+    }
+
     @GetMapping
     @Operation(summary = "智能体列表")
+    @RequiresPermissions("sys:role:normal")
     public Result<List<AgentVO>> agentList() {
         UserDetail user = SecurityUser.getUser();
-        List<Agent> agents = agentService.list(new QueryWrapper<Agent>().eq("user_id",user.getId()));
+        List<Agent> agents = agentService.list(new QueryWrapper<Agent>().eq("user_id", user.getId()));
         List<AgentVO> list = new ArrayList<>();
         this.convertAgetVOList(list, agents);
         return new Result<List<AgentVO>>().ok(list);
@@ -90,19 +108,18 @@ public class UserAgentController extends BaseController {
 
     @GetMapping("/loadAgentConfig/{deviceId}")
     @Operation(summary = "下载智能体配置")
-//    public Result<AgentConfigVO> loadAgentConfig(@PathVariable String deviceId){
-    public Result<JSONObject> loadAgentConfig(@PathVariable String deviceId){
+    public Result<JSONObject> loadAgentConfig(@PathVariable String deviceId) {
         Device device = deviceService.getOne(new QueryWrapper<Device>().eq("mac_address", deviceId.toUpperCase()));
-        if(ObjectUtils.isNull(device)){
+        if (ObjectUtils.isNull(device)) {
             return new Result<JSONObject>().error("设备不存在");
         }
         Agent agent = agentService.getOne(new QueryWrapper<Agent>().eq("id", device.getAgentId()));
-        if(ObjectUtils.isNull(agent)){
+        if (ObjectUtils.isNull(agent)) {
             return new Result<JSONObject>().error("智能体不存在");
         }
         AgentConfigVO agentConfigVO = new AgentConfigVO();
 //        return new Result<AgentConfigVO>().ok(agentConfigVO);
-        String json =  "{\n" +
+        String json = "{\n" +
                 "    \"ASR\": {\n" +
                 "        \"FunASR\": {\n" +
                 "            \"model_dir\": \"models/SenseVoiceSmall\",\n" +
@@ -160,9 +177,9 @@ public class UserAgentController extends BaseController {
      * @param agentVOList 转换后的AgentVO对象列表
      * @param agentList   原始的Agent对象列表
      */
-    private void convertAgetVOList(List<AgentVO> agentVOList, List<Agent> agentList){
+    private void convertAgetVOList(List<AgentVO> agentVOList, List<Agent> agentList) {
         // 遍历Agent对象列表
-        for(Agent agent : agentList) {
+        for (Agent agent : agentList) {
             // 创建一个新的AgentVO对象
             AgentVO agentVO = new AgentVO();
             // 将当前Agent对象的属性值转换并设置到AgentVO对象中
@@ -171,17 +188,18 @@ public class UserAgentController extends BaseController {
             agentVOList.add(agentVO);
         }
     }
-    private void convertAgentVO(AgentVO agentVO, Agent agent){
+
+    private void convertAgentVO(AgentVO agentVO, Agent agent) {
         try {
             BeanUtils.copyProperties(agentVO, agent);
             agentVO.setTtsModelName("未知");
             TtsVoice ttsVoice = ttsVoiceService.getOne(new QueryWrapper<TtsVoice>().eq("id", agent.getTtsVoiceId()));
-            if(ObjectUtils.isNotNull(ttsVoice)){
+            if (ObjectUtils.isNotNull(ttsVoice)) {
                 agentVO.setTtsModelName(ttsVoice.getName());
             }
             agentVO.setLlmModelName("未知");
             ModelConfig modelConfig = modelConfigService.getOne(new QueryWrapper<ModelConfig>().eq("id", agent.getLlmModelId()));
-            if(ObjectUtils.isNotNull(modelConfig)){
+            if (ObjectUtils.isNotNull(modelConfig)) {
                 agentVO.setLlmModelName(modelConfig.getModelName());
             }
             agentVO.setLastConnectedAt("今天");
@@ -189,7 +207,7 @@ public class UserAgentController extends BaseController {
             long deviceCount = deviceService.count(new QueryWrapper<Device>().eq("agent_id", agent.getId()));
             agentVO.setDeviceCount(deviceCount);
         } catch (Exception e) {
-            log.error("[convertAgentVO]对象转换报错",e);
+            log.error("[convertAgentVO]对象转换报错", e);
         }
     }
 }

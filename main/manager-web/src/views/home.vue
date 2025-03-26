@@ -99,9 +99,9 @@ export default {
     handleAgentAdded(agentName) {
       // 添加智能体
       Api.agent.addAgent(agentName, ({data}) => {
-        if (data.status === 200) {
+        if (data.code === 0) {
           showSuccess('添加成功')
-          this.getAgentList()
+          this.fetchAgentList();
         } else {
           showDanger(data.msg)
         }
@@ -112,7 +112,7 @@ export default {
       Api.agent.delAgent(agetnId, (data) => {
         if (data.status === 200) {
           showSuccess('删除成功')
-          this.getAgentList()
+          this.fetchAgentList();
         } else {
           showDanger(data.msg)
         }

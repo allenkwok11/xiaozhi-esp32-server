@@ -26,7 +26,7 @@
           <el-table-column label="最近对话" prop="recent_chat_time" width="100"></el-table-column>
           <el-table-column label="备注" width="220">
             <template slot-scope="scope">
-              <el-input v-if="scope.row.isEdit" v-model="scope.row.alias" size="small" @blur="stopEditRemark(scope.$index)"></el-input>
+              <el-input :ref="'alias_input_'+scope.$index" v-if="scope.row.isEdit" v-model="scope.row.alias" size="small" class="input-pd0" @blur="stopEditRemark(scope.$index, scope.row)"></el-input>
               <span v-else>
                 {{ scope.row.alias }}
               </span>
@@ -35,7 +35,7 @@
           </el-table-column>
           <el-table-column label="OTA升级" width="100" align="center">
             <template slot-scope="scope">
-              <el-switch v-model="scope.row.autoUpdate" size="mini" :active-value="1" :inactive-value="0" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+              <el-switch v-model="scope.row.autoUpdate" size="mini" :active-value="1" :inactive-value="0" active-color="#13ce66" inactive-color="#ff4949" @change="handleToggleEnabled(scope.row.id, $event)"></el-switch>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="80" align="center">
@@ -64,7 +64,6 @@ import Api from '@/apis/api';
 import AddDeviceDialog from '@/components/AddDeviceDialog.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
 import Footer from '@/components/Footer.vue'
-import api from '@/apis/api';
 
 export default {
   name: 'DevicePage',
@@ -74,6 +73,7 @@ export default {
       addDeviceDialogVisible: false,
       devices: [],
       agentId: this.$route.query.agentId,
+      oldVal: '',
       page: {
         pageNo: 1,
         pageSize: 10,
@@ -101,10 +101,16 @@ export default {
       this.addDeviceDialogVisible = true;
     },
     startEditRemark(index, row) {
+      this.oldVal = row.alias;
       this.devices[index].isEdit = true;
+      this.$nextTick(()=>{
+        this.$refs['alias_input_'+index].focus();
+      })
     },
-    stopEditRemark(index) {
+    stopEditRemark(index, row) {
       this.devices[index].isEdit = false;
+      if(this.oldVal === row.alias) return;
+      this.handleSetAlias(row.id, row.alias);
     },
     handleUnbind(deviceId) {
       // 解绑逻辑
@@ -119,7 +125,7 @@ export default {
       })
     },
     handleDeviceBind(deviceCode) {
-      // 根据需要处理添加设备后逻辑，比如刷新设备列表等
+      // 绑定逻辑
       console.log('设备验证码：', deviceCode)
       Api.device.bindDevice(this.agentId, deviceCode, ({data}) => {
         if (data.code === 0) {
@@ -127,6 +133,28 @@ export default {
           this.showBindDialog = false;
         } else {
           showDanger(data.msg);
+        }
+      })
+    },
+    handleSetAlias(id, alias) {
+      // 设置备注逻辑
+      Api.device.setAlias(id, alias, ({data}) => {
+        if (data.code === 0) {
+          showSuccess('更新成功')
+          this.fetchDeviceList()
+        } else {
+          showDanger(data.msg)
+        }
+      })
+    },
+    handleToggleEnabled(id, autoUpdate) {
+      // 更新OTA升级状态
+      Api.device.toggleAutoUpdate(id, autoUpdate, ({data}) => {
+        if (data.code === 0) {
+          showSuccess('更新成功')
+          this.fetchDeviceList()
+        } else {
+          showDanger(data.msg)
         }
       })
     },
@@ -194,6 +222,10 @@ export default {
   cursor: pointer;
   font-size: 14px;
   vertical-align: middle;
+}
+
+.input-pd0 /deep/ .el-input__inner {
+  padding: 0 2px;
 }
 
 </style>
