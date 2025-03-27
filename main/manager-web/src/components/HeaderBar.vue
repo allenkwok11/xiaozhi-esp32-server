@@ -14,9 +14,11 @@
           控制台
         </div>
         <div ref="menu-code_user" class="menu-btn" @click="goToPage('/user-management')">
+          <i class="el-icon-user"></i>
           用户管理
         </div>
         <div ref="menu-code_model" class="menu-btn" @click="goToPage('/model-config')">
+          <i class="el-icon-news"></i>
           模型配置
         </div>
         <div ref="menu-code_ota" class="menu-btn" @click="goToPage('/ota')">
@@ -34,7 +36,7 @@
         <img alt="" src="@/assets/home/avatar.png" style="width: 21px;height: 21px;"/>
         <el-dropdown trigger="click">
           <span class="el-dropdown-link">
-             {{ userInfo.mobile || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
+             {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item icon="el-icon-user" @click.native="">个人中心</el-dropdown-item>

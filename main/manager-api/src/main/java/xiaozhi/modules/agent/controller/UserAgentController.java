@@ -2,6 +2,7 @@ package xiaozhi.modules.agent.controller;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -80,6 +81,40 @@ public class UserAgentController extends BaseController {
         return new Result<Agent>().ok(agent);
     }
 
+    @PutMapping("{agentId}")
+    @Operation(summary = "更新智能体")
+    @RequiresPermissions("sys:role:normal")
+    public Result<Agent> updateAgent(@PathVariable String agentId, @RequestBody Agent agent) {
+        UserDetail user = SecurityUser.getUser();
+        if (StringUtils.isBlank(agentId)) {
+            log.error("智能体ID不能为空");
+            return new Result<Agent>().error("更新失败,智能体ID不能为空");
+        }
+        Agent oldAgent = agentService.getById(agentId);
+        if (ObjectUtils.isNull(oldAgent)) {
+            log.error("智能体不存在");
+            return new Result<Agent>().error("更新失败，智能体不存在");
+        } else {
+            UpdateWrapper<Agent> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("id", agentId);
+            updateWrapper.set("agent_code", agent.getAgentCode());
+            updateWrapper.set("asr_model_id", agent.getAsrModelId());
+            updateWrapper.set("intent_model_id", agent.getIntentModelId());
+            updateWrapper.set("llm_model_id", agent.getLlmModelId());
+            updateWrapper.set("memory_model_id", agent.getMemoryModelId());
+            updateWrapper.set("system_prompt", agent.getSystemPrompt());
+            updateWrapper.set("tts_voice_id", agent.getTtsVoiceId());
+            updateWrapper.set("tts_model_id", agent.getTtsModelId());
+            updateWrapper.set("vad_model_id", agent.getVadModelId());
+            updateWrapper.set("updater", user.getId());
+            updateWrapper.set("updated_at", new Date());
+            boolean bool = agentService.update(updateWrapper);
+            if (!bool)
+                return new Result<Agent>().error("更新失败");
+        }
+        return new Result<Agent>().ok(agent);
+    }
+
     @DeleteMapping("/{agentId}")
     @Operation(summary = "删除智能体")
     @RequiresPermissions("sys:role:normal")
@@ -113,7 +148,7 @@ public class UserAgentController extends BaseController {
         UserDetail user = SecurityUser.getUser();
         List<Agent> agents = agentService.list(new QueryWrapper<Agent>().eq("user_id", user.getId()));
         List<AgentVO> list = new ArrayList<>();
-        this.convertAgetVOList(list, agents);
+        this.convertAgentVOList(list, agents);
         return new Result<List<AgentVO>>().ok(list);
     }
 
@@ -129,6 +164,7 @@ public class UserAgentController extends BaseController {
             return new Result<JSONObject>().error("智能体不存在");
         }
         AgentConfigVO agentConfigVO = new AgentConfigVO();
+        agentConfigVO.setPrompt(agent.getSystemPrompt());
 //        return new Result<AgentConfigVO>().ok(agentConfigVO);
         String json = "{\n" +
                 "    \"ASR\": {\n" +
@@ -188,7 +224,7 @@ public class UserAgentController extends BaseController {
      * @param agentVOList 转换后的AgentVO对象列表
      * @param agentList   原始的Agent对象列表
      */
-    private void convertAgetVOList(List<AgentVO> agentVOList, List<Agent> agentList) {
+    private void convertAgentVOList(List<AgentVO> agentVOList, List<Agent> agentList) {
         // 遍历Agent对象列表
         for (Agent agent : agentList) {
             // 创建一个新的AgentVO对象

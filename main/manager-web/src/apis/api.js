@@ -3,6 +3,7 @@ import agent from './module/agent.js'
 import device from './module/device.js'
 import user from './module/user.js'
 import ota from './module/ota.js'
+import model from './module/model.js'
 import admin from './module/admin.js'
 
 /**
@@ -31,5 +32,6 @@ export default {
     agent,
     device,
     ota,
+    model,
     admin
 }

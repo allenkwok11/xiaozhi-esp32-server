@@ -36,11 +36,11 @@
         <!-- 分页 -->
         <el-pagination background :current-page="page.pageNo" :page-size="page.pageSize" :pager-count="5" layout="prev, pager, next" :total="page.total" style="margin-top: 4px;text-align: right;"></el-pagination>
       </div>
-      <!-- 底部 -->
-      <Footer :visible="true" />
-      <!-- 添加设备OTA对话框 -->
-      <AddDeviceOtaDialog :visible.sync="addDeviceOtaDialogVisible" :data="otaData" @confirmSave="handleSaveDeviceOta" @confirmUpdate="handleUpdateDeviceOta" />
     </el-main>
+    <!-- 底部 -->
+    <Footer :visible="true" />
+    <!-- 添加设备OTA对话框 -->
+    <AddDeviceOtaDialog :visible.sync="addDeviceOtaDialogVisible" :data="otaData" @confirmSave="handleSaveDeviceOta" @confirmUpdate="handleUpdateDeviceOta" />
   </div>
 </template>
 

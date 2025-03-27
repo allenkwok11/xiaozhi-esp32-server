@@ -73,7 +73,7 @@ const routes = [
       menuCode: 'user',
     },
     component: function () {
-      return import('../views/UserManagement.vue')
+      return import('../views/userManagement.vue')
     }
   },
   {
@@ -83,7 +83,7 @@ const routes = [
      menuCode: 'model',
    },
    component: function () {
-     return import('../views/ModelConfig.vue')
+     return import('../views/modelConfig.vue')
    }
   },
 

@@ -10,4 +10,17 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface ModelProviderService extends IService<ModelProvider> {
 
+////    List<String> getModelNames(String modelType, String modelName);
+//
+//    List<ModelProviderDTO> getListByModelType(String modelType);
+//
+//    ModelProviderDTO add(ModelProviderEntity modelProviderEntity);
+//
+//    ModelProviderDTO edit(ModelProviderEntity modelProviderEntity);
+//
+//    void delete();
+//
+//    List<ModelProviderDTO> getList(String modelType, String provideCode);
+//
+//    List<String> getFieldList(String modelType, String provideCode);
 }

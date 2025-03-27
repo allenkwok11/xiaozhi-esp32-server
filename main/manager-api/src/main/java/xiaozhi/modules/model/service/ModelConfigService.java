@@ -10,4 +10,15 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface ModelConfigService extends IService<ModelConfig> {
 
+//    List<String> getModelCodeList(String modelType, String modelName);
+//
+//    PageData<ModelConfigDTO> getPageList(String modelType, String modelName, Integer page, Integer limit);
+//
+//    ModelConfigDTO add(String modelType, String provideCode, ModelConfigBodyDTO modelConfigBodyDTO);
+//
+//    ModelConfigDTO edit(String modelType, String provideCode, String id, ModelConfigBodyDTO modelConfigBodyDTO);
+//
+//    void delete(String modelType, String provideCode, String id);
+//
+//    List<String> getVoiceList(String modelName, String voiceName);
 }

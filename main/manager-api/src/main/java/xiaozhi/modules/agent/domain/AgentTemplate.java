@@ -59,7 +59,7 @@ public class AgentTemplate implements Serializable {
     /**
      * 记忆模型标识
      */
-    private String memModelId;
+    private String memoryModelId;
 
     /**
      * 意图模型标识

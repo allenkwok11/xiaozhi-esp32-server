@@ -198,6 +198,7 @@ export default {
   margin-left: 75px;
   margin-top: 15px;
   cursor: pointer;
+  width: fit-content;
 
   .left-add {
     width: 105px;

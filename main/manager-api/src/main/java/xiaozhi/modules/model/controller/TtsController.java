@@ -3,17 +3,13 @@ package xiaozhi.modules.model.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.controller.BaseController;
-import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.utils.Result;
-import xiaozhi.modules.model.domain.ModelConfig;
 import xiaozhi.modules.model.domain.TtsVoice;
 import xiaozhi.modules.model.service.ModelConfigService;
 import xiaozhi.modules.model.service.TtsVoiceService;
@@ -24,18 +20,21 @@ import java.util.List;
 @Tag(name = "模型数据管理")
 @AllArgsConstructor
 @RestController
-@RequestMapping("/model/")
-public class ModelController extends BaseController {
+@RequestMapping("/tts")
+public class TtsController extends BaseController {
     private final TtsVoiceService ttsVoiceService;
     private final ModelConfigService modelConfigService;
 
-
-    @GetMapping("/list")
-    @Operation(summary = "模型配置列表")
+    @GetMapping("/voice")
+    @Operation(summary = "音色列表")
     @RequiresPermissions("sys:role:normal")
-    public Result<List<ModelConfig>> getModelList() {
-        List<ModelConfig> list = modelConfigService.list(new QueryWrapper<ModelConfig>().eq("is_enabled", 1));
-        return new Result<List<ModelConfig>>().ok(list);
+    public Result<List<TtsVoice>> getTtsList(@RequestParam(required = false) String ttsModelId) {
+        QueryWrapper<TtsVoice> queryWrapper = new QueryWrapper<>();
+        if (StringUtils.isNotBlank(ttsModelId)) {
+            queryWrapper.eq("ttsModelId", ttsModelId);
+        }
+        List<TtsVoice> list = ttsVoiceService.list(queryWrapper);
+        return new Result<List<TtsVoice>>().ok(list);
     }
 
 

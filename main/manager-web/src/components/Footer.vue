@@ -23,8 +23,7 @@ export default {
 .message {
   font-size: 14px;
   font-weight: 400;
-  margin-top: auto;
-  padding-top: 30px;
+  padding: 20px;
   color: #979db1;
 }
 </style>

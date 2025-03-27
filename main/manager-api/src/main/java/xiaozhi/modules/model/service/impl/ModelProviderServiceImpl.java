@@ -15,6 +15,45 @@ import org.springframework.stereotype.Service;
 public class ModelProviderServiceImpl extends ServiceImpl<ModelProviderMapper, ModelProvider>
     implements ModelProviderService{
 
+//    private final ModelProviderDao modelProviderDao;
+//
+//    @Override
+//    public List<ModelProviderDTO> getListByModelType(String modelType) {
+//
+//        QueryWrapper<ModelProviderEntity> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.eq("model_type", StringUtils.isBlank(modelType) ? "" : modelType);
+//        List<ModelProviderEntity> providerEntities = modelProviderDao.selectList(queryWrapper);
+//        return ConvertUtils.sourceToTarget(providerEntities, ModelProviderDTO.class);
+//    }
+//
+//    @Override
+//    public ModelProviderDTO add(ModelProviderEntity modelProviderEntity) {
+//        return null;
+//    }
+//
+//    @Override
+//    public ModelProviderDTO edit(ModelProviderEntity modelProviderEntity) {
+//        return null;
+//    }
+//
+//    @Override
+//    public void delete() {
+//
+//    }
+//
+//    @Override
+//    public List<ModelProviderDTO> getList(String modelType, String provideCode) {
+//        QueryWrapper<ModelProviderEntity> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.eq("model_type", StringUtils.isBlank(modelType) ? "" : modelType);
+//        queryWrapper.eq("provide_code", StringUtils.isBlank(provideCode) ? "" : provideCode);
+//        List<ModelProviderEntity> providerEntities = modelProviderDao.selectList(queryWrapper);
+//        return ConvertUtils.sourceToTarget(providerEntities, ModelProviderDTO.class);
+//    }
+//
+//    @Override
+//    public List<String> getFieldList(String modelType, String provideCode) {
+//        return modelProviderDao.getFieldList(modelType, provideCode);
+//    }
 }
 
 

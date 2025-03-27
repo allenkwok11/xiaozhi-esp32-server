@@ -14,7 +14,7 @@
             <result property="llmModelId" column="llm_model_id" />
             <result property="ttsModelId" column="tts_model_id" />
             <result property="ttsVoiceId" column="tts_voice_id" />
-            <result property="memModelId" column="mem_model_id" />
+            <result property="memoryModelId" column="memory_model_id" />
             <result property="intentModelId" column="intent_model_id" />
             <result property="systemPrompt" column="system_prompt" />
             <result property="langCode" column="lang_code" />
@@ -28,7 +28,7 @@
 
     <sql id="Base_Column_List">
         id,user_id,agent_code,agent_name,asr_model_id,vad_model_id,
-        llm_model_id,tts_model_id,tts_voice_id,mem_model_id,intent_model_id,
+        llm_model_id,tts_model_id,tts_voice_id,memory_model_id,intent_model_id,
         system_prompt,lang_code,language,sort,creator,
         created_at,updater,updated_at
     </sql>

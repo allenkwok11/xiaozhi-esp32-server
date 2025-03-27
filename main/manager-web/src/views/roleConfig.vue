@@ -37,8 +37,8 @@
               <div style="display: flex;gap: 8px;align-items: center;">
                 <div style="flex:1;">
                   <el-select v-model="form.ttsVoiceId" placeholder="请选择" style="width: 100%;">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label"
-                               :value="item.value">
+                    <el-option v-for="item in ttsVoices" :key="item.id" :label="item.name"
+                               :value="item.id">
                     </el-option>
                   </el-select>
                 </div>
@@ -65,8 +65,8 @@
               <template slot="label">
                 <div style="line-height: 20px;">{{model.label}}</div>
               </template>
-              <el-select v-model="form.model[model.key]" filterable placeholder="请选择" style="width: 100%;">
-                <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value"/>
+              <el-select v-model="form[model.key+'ModelId']" filterable placeholder="请选择" style="width: 100%;" disabled>
+                <el-option v-for="item in model.list" :key="item.id" :label="item.modelName" :value="item.id"/>
               </el-select>
             </el-form-item>
             <el-form-item label="" class="lh-form-item" style="margin-top: -25px;">
@@ -98,6 +98,7 @@
 import Api from '@/apis/api';
 import HeaderBar from "@/components/HeaderBar.vue";
 import Footer from "@/components/Footer.vue";
+import {getUUID, goToPage, showDanger, showSuccess} from '@/utils'
 
 export default {
   name: 'RoleConfigPage',
@@ -105,41 +106,37 @@ export default {
   data() {
     return {
       agentId: this.$route.query.agentId,
-      agentName: this.$route.query.agentName,
       form: {
         agentCode:"",
         agentName:"",
         asrModelId:"",
         intentModelId:"",
         llmModelId:"",
-        memModelId:"",
+        memoryModelId:"",
         systemPrompt:"",
         ttsModelId:"",
         ttsVoiceId:"",
         vadModelId:"",
         model:{}
       },
-      options: [
-        { value: '选项1', label: '黄金糕' },
-        { value: '选项2', label: '双皮奶' }
+      ttsVoices: [],
+      models: [
+        { label: '大语言模型(LLM)', key: 'llm', list: [] },
+        { label: '语音转文本模型(ASR)', key: 'asr', list: [] },
+        { label: '语音活动检测模型(VAD)', key: 'vad', list: [] },
+        { label: '语音生成模型(TTS)', key: 'tts', list: [] },
+        { label: '意图分类模型(Intent)', key: 'intent', list: [] },
+        { label: '记忆增强模型(Memory)', key: 'memory', list: [] }
       ],
-      models: [],
-      //[
-      //   { label: '大语言模型(LLM)', key: 'llm' },
-      //   { label: '语音转文本模型(ASR)', key: 'asr' },
-      //   { label: '语音活动检测模型(VAD)', key: 'vad' },
-      //   { label: '语音生成模型(TTS)', key: 'tts' },
-      //   { label: '意图分类模型(Intent)', key: 'intent' },
-      //   { label: '记忆增强模型(Memory)', key: 'memory' }
-      // ],
-      templates: ['通用男声','通用女声','阳光男生','奶气萌娃']
-
+      templates: []
     }
   },
   mounted() {
     // 获取智能体列表
     this.fetchAgentTemplateList();
     this.handleGetConfig();
+    this.fetchModelList();
+    this.getTtsVoicelList();
   },
   methods: {
     fetchAgentTemplateList() {
@@ -147,6 +144,30 @@ export default {
       Api.agent.getAgentTemplateList(({data}) => {
         if (data.code === 0) {
           this.templates = data.data
+        } else {
+          showDanger(data.msg)
+        }
+      })
+    },
+    fetchModelList() {
+      // 获取模型配置列表
+      Api.model.getModelList(({data}) => {
+        if (data.code === 0) {
+          let models = data.data;
+          this.models.map(model => {
+            model.list = models.filter(item => item.modelType.toLowerCase() === model.key)
+          })
+          console.log("models", this.models)
+        } else {
+          showDanger(data.msg)
+        }
+      })
+    },
+    getTtsVoicelList(ttsModelId) {
+      // 获取智能体列表
+      Api.model.getTtsVoiceList(ttsModelId || '',({data}) => {
+        if (data.code === 0) {
+          this.ttsVoices = data.data
         } else {
           showDanger(data.msg)
         }
@@ -163,7 +184,13 @@ export default {
     },
     saveConfig() {
       // 此处写保存配置逻辑
-      this.$message.success('配置已保存')
+      Api.agent.saveAgentConfig(this.agentId, this.form, ({data}) => {
+        if (data.code === 0) {
+          showSuccess('保存成功')
+        } else {
+          showDanger(data.msg)
+        }
+      })
     },
     resetConfig() {
       this.$confirm('确定要重置配置吗？', '提示', {
@@ -185,8 +212,18 @@ export default {
     },
     // 处理选择模板的逻辑
     selectTemplate(template) {
-      this.form.name = template;
-      this.$message.success(`已选择模板：${template}`);
+      Object.assign(this.form,{
+        agentCode: template.agentCode,
+        llmModelId: template.llmModelId,
+        asrModelId: template.asrModelId,
+        vadModelId: template.vadModelId,
+        ttsModelId: template.ttsModelId,
+        ttsVoiceId: template.ttsVoiceId,
+        intentModelId: template.intentModelId,
+        memoryModelId: template.memoryModelId,
+        systemPrompt: template.systemPrompt
+      })
+      this.$message.success(`已选择模板：${template.agentName}`);
     }
   }
 }

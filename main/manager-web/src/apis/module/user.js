@@ -18,7 +18,8 @@ export default {
                 //     this.login(loginForm, callback)
                 // })
             }).send()
-    },    // 获取验证码
+    },    
+    // 获取验证码
     getCaptcha(uuid, callback) {
 
         RequestService.sendRequest()
@@ -97,5 +98,25 @@ export default {
                 //     this.getUserInfo(callback)
                 // })
             }).send()
+    },
+    // 修改用户密码
+    changePassword(oldPassword, newPassword, successCallback, errorCallback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/user/change-password`)  // 修改URL
+            .method('PUT')  // 修改方法为PUT
+            .data({
+                old_password: oldPassword,  // 修改参数名
+                new_password: newPassword   // 修改参数名
+            })
+            .success((res) => {
+                RequestService.clearRequestTime();
+                successCallback(res);
+            })
+            .fail((error) => {
+                // RequestService.reAjaxFun(() => {
+                //     this.changePassword(oldPassword, newPassword, successCallback, errorCallback);
+                // });
+            })
+            .send();
     },
 }
