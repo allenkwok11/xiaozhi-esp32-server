@@ -31,7 +31,7 @@
           </el-table-column>
           <el-table-column label="操作" width="80">
             <template slot-scope="scope">
-              <el-button size="mini" type="text" @click="handleUnbind(scope.row)" style="color: #ff4949">
+              <el-button size="mini" type="text" @click="handleUnbind(scope.row.device_id)" style="color: #ff4949">
                 解绑
               </el-button>
             </template>
@@ -59,7 +59,7 @@
 <script>
 import HeaderBar from "@/components/HeaderBar.vue";
 import AddDeviceDialog from "@/components/AddDeviceDialog.vue";
-
+import { userApi } from '@/apis/module/user';
 export default {
   components: {HeaderBar, AddDeviceDialog },
   data() {
@@ -69,6 +69,7 @@ export default {
       pageSize: 5,
       deviceList: [],
       loading: false,
+      userApi: null,
     };
   },
   computed: {
@@ -80,9 +81,12 @@ export default {
   },
   mounted() {
     const agentId = this.$route.query.agentId;
-    if (agentId) {
-      this.fetchBindDevices(agentId);
-    }
+    import('@/apis/module/user').then(({ default: userApi }) => {
+      this.userApi = userApi;
+      if (agentId) {
+        this.fetchBindDevices(agentId);
+      }
+    });
   },
   methods: {
     handleAddDevice() {
@@ -94,8 +98,25 @@ export default {
     stopEditRemark(index) {
       this.deviceList[index].isEdit = false;
     },
-    handleUnbind(device) {
-      console.log('解绑设备', device);
+    handleUnbind(device_id) {
+      if (!this.userApi) {
+        this.$message.error('功能模块加载失败');
+        return;
+      }
+      this.$confirm('确认要解绑该设备吗？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.userApi.unbindDevice(device_id, ({ data }) => {
+          if (data.code === 0) {
+            this.$message.success('设备解绑成功');
+            this.fetchBindDevices(this.$route.query.agentId);
+          } else {
+            this.$message.error(data.msg || '设备解绑失败');
+          }
+        });
+      });
     },
     handleDeviceAdded(deviceCode) {
       console.log('添加的智能体名称：', deviceCode);
@@ -113,7 +134,7 @@ export default {
             this.loading = false;
             if (data.code === 0) {
               this.deviceList = data.data[0]?.list.map(device => ({
-                id: device.id,
+                device_id: device.id,
                 model: device.device_type,
                 firmwareVersion: device.app_version,
                 macAddress: device.mac_address,
