@@ -20,7 +20,7 @@
       最近对话：{{ agent.lastConnectedAt }}
     </div>
     <div style="display: flex;justify-content: space-between;align-items: center;gap: 10px;">
-      <div class="settings-btn" @click="$emit('configure', agent.id, agent.agentName)">
+      <div class="settings-btn" @click="$emit('configure', agent.id)">
         配置角色
       </div>
       <div class="settings-btn" @click="$emit('asr', agent.id)">

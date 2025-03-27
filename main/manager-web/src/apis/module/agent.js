@@ -78,4 +78,16 @@ export default {
                 // });
             }).send();
     },
+    //智能体模板列表
+    getAgentTemplateList(callback) {
+        RequestService.sendRequest().url(`${getServiceUrl()}/user/agent/template`)
+            .method('GET')
+            .success((res) => {
+                RequestService.clearRequestTime()
+                callback(res)
+            })
+            .fail((err) => {
+                console.error('获取智能体模板列表失败:', err);
+            }).send()
+    },
 }

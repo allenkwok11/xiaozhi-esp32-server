@@ -18,25 +18,25 @@
               style="width: 37px;height: 37px;background: #5778ff;border-radius: 50%;display: flex;align-items: center;justify-content: center;">
             <img src="@/assets/home/setting-user.png" alt="" style="width: 19px;height: 19px;"/>
           </div>
-          {{ agentName }} ({{ agentId }})
+          {{ form.agentName }} ({{ agentId }})
         </div>
         <div style="height: 1px;background: #e8f0ff;"/>
         <div style="padding: 16px 24px;max-width: 792px;">
         <el-form ref="form" :model="form" label-width="100px">
             <el-form-item label="角色模版：">
               <div style="display: flex;gap: 8px;flex-wrap: wrap;">
-                <div v-for="template in templates" :key="template" class="template-item" @click="selectTemplate(template)">
-                  {{ template }}
+                <div v-for="template in templates" :key="template.id" class="template-item" @click="selectTemplate(template)">
+                  {{ template.agentName }}
                 </div>
               </div>
             </el-form-item>
             <el-form-item label="助手昵称：">
-              <el-input v-model="form.name"/>
+              <el-input v-model="form.agentCode"/>
             </el-form-item>
             <el-form-item label="角色音色：">
               <div style="display: flex;gap: 8px;align-items: center;">
                 <div style="flex:1;">
-                  <el-select v-model="form.timbre" placeholder="请选择" style="width: 100%;">
+                  <el-select v-model="form.ttsVoiceId" placeholder="请选择" style="width: 100%;">
                     <el-option v-for="item in options" :key="item.value" :label="item.label"
                                :value="item.value">
                     </el-option>
@@ -49,10 +49,10 @@
               </div>
             </el-form-item>
             <el-form-item label="角色介绍：">
-              <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容" v-model="form.introduction" maxlength="2000" show-word-limit/>
+              <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容" v-model="form.systemPrompt" maxlength="2000" show-word-limit/>
             </el-form-item>
             <el-form-item label="记忆体：">
-              <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容" v-model="form.prompt" maxlength="1000" show-word-limit/>
+              <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容" v-model="form.systemPrompt" maxlength="1000" show-word-limit/>
                 <div style="display: flex;gap: 8px;align-items: center;">
                   <div style="color: #979db1;font-size: 11px;">当前记忆（每次对话后重新生成）</div>
                   <div class="clear-btn">
@@ -95,6 +95,7 @@
 </template>
 
 <script>
+import Api from '@/apis/api';
 import HeaderBar from "@/components/HeaderBar.vue";
 import Footer from "@/components/Footer.vue";
 
@@ -106,39 +107,58 @@ export default {
       agentId: this.$route.query.agentId,
       agentName: this.$route.query.agentName,
       form: {
-        name: "",
-        timbre: "",
-        introduction: "",
-        prompt: "",
-        model: {
-          tts: "",
-          vad: "",
-          asr: "",
-          llm: "",
-          memory:"",
-          intent:""
-        }
+        agentCode:"",
+        agentName:"",
+        asrModelId:"",
+        intentModelId:"",
+        llmModelId:"",
+        memModelId:"",
+        systemPrompt:"",
+        ttsModelId:"",
+        ttsVoiceId:"",
+        vadModelId:"",
+        model:{}
       },
       options: [
         { value: '选项1', label: '黄金糕' },
         { value: '选项2', label: '双皮奶' }
       ],
-      models: [
-        { label: '大语言模型(LLM)', key: 'llm' },
-        { label: '语音转文本模型(ASR)', key: 'asr' },
-        { label: '语音活动检测模型(VAD)', key: 'vad' },
-        { label: '语音生成模型(TTS)', key: 'tts' },
-        { label: '意图分类模型(Intent)', key: 'intent' },
-        { label: '记忆增强模型(Memory)', key: 'memory' }
-      ],
+      models: [],
+      //[
+      //   { label: '大语言模型(LLM)', key: 'llm' },
+      //   { label: '语音转文本模型(ASR)', key: 'asr' },
+      //   { label: '语音活动检测模型(VAD)', key: 'vad' },
+      //   { label: '语音生成模型(TTS)', key: 'tts' },
+      //   { label: '意图分类模型(Intent)', key: 'intent' },
+      //   { label: '记忆增强模型(Memory)', key: 'memory' }
+      // ],
       templates: ['通用男声','通用女声','阳光男生','奶气萌娃']
 
     }
   },
+  mounted() {
+    // 获取智能体列表
+    this.fetchAgentTemplateList();
+    this.handleGetConfig();
+  },
   methods: {
+    fetchAgentTemplateList() {
+      // 获取智能体列表
+      Api.agent.getAgentTemplateList(({data}) => {
+        if (data.code === 0) {
+          this.templates = data.data
+        } else {
+          showDanger(data.msg)
+        }
+      })
+    },
     handleGetConfig(){
-      api.agent.getAgentConfig(this.agentId, ({data}) => {
-        this.form = data
+      Api.agent.getAgentConfig(this.agentId, ({data}) => {
+        if (data.code === 0) {
+          this.form = data.data
+        } else {
+          showDanger(data.msg)
+        }
       })
     },
     saveConfig() {

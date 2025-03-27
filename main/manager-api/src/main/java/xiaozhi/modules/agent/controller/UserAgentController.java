@@ -95,6 +95,17 @@ public class UserAgentController extends BaseController {
         return new Result<Agent>().ok(null);
     }
 
+    @GetMapping("/{agentId}")
+    @Operation(summary = "获取智能体信息")
+    @RequiresPermissions("sys:role:normal")
+    public Result<Agent> getAgent(@PathVariable String agentId) {
+        if (StringUtils.isBlank(agentId)) {
+            log.error("智能体ID不能为空");
+        }
+        Agent agent = agentService.getById(agentId);
+        return new Result<Agent>().ok(agent);
+    }
+
     @GetMapping
     @Operation(summary = "智能体列表")
     @RequiresPermissions("sys:role:normal")

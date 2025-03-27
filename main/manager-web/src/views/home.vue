@@ -87,9 +87,9 @@ export default {
     showAddDialog() {
       this.addAgentDialogVisible = true
     },
-    goToRoleConfig(agentId, agentName) {
+    goToRoleConfig(agentId) {
       // 点击配置角色后跳转到角色配置页
-      this.$router.push({path:'/role-config', query: {agentId: agentId, agentName: agentName}})
+      this.$router.push({path:'/role-config', query: {agentId: agentId}})
     },
 
     goToDevice(agentId) {
