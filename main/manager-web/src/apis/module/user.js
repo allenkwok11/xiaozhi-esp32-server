@@ -186,6 +186,7 @@ export default {
     },
     // 已绑设备
      getAgentBindDevices(agentId, callback) {
+        console.log("77777777777777777777777")
          RequestService.sendRequest()
              .url(`${getServiceUrl()}/api/v1/user/agent/device/bind/${agentId}`)
              .method('GET')
@@ -202,19 +203,36 @@ export default {
      },
     // 解绑设备
     unbindDevice(device_id, callback) {
-      RequestService.sendRequest()
-        .url(`${getServiceUrl()}/api/v1/user/device/unbind/${device_id}`)
-        .method('PUT')
-        .success((res) => {
-          RequestService.clearRequestTime();
-          callback(res);
-        })
-        .fail((err) => {
-          console.error('解绑设备失败:', err);
-          RequestService.reAjaxFun(() => {
-            this.unbindDevice(device_id, callback);
-          });
-        })
-        .send();
-    }
+          RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/device/unbind/${device_id}`)
+            .method('PUT')
+            .success((res) => {
+              RequestService.clearRequestTime();
+              callback(res);
+            })
+            .fail((err) => {
+              console.error('解绑设备失败:', err);
+              RequestService.reAjaxFun(() => {
+                this.unbindDevice(device_id, callback);
+              });
+            }).send();
+    },
+    // 绑定设备
+    bindDevice(agentId, code, callback) {
+        console.log("32323234343434344340000")
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/user/agent/device/bind/${agentId}`)
+            .method('POST')
+            .data({ code })
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail((err) => {
+                // console.error('绑定设备失败:', err);
+                // RequestService.reAjaxFun(() => {
+                //     this.bindDevice(agentId, code, callback);
+                // });
+            }).send();
+    },
 }

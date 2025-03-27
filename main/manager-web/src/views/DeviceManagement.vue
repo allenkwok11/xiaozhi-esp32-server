@@ -51,7 +51,7 @@
       <div style="font-size: 12px; font-weight: 400; margin-top: auto; padding-top: 30px; color: #979db1;">
         ©2025 xiaozhi-esp32-server
       </div>
-      <AddDeviceDialog :visible.sync="addDeviceDialogVisible" @added="handleDeviceAdded" />
+      <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId" @refresh="fetchBindDevices(currentAgentId)"  />
     </el-main>
   </div>
 </template>
@@ -59,12 +59,12 @@
 <script>
 import HeaderBar from "@/components/HeaderBar.vue";
 import AddDeviceDialog from "@/components/AddDeviceDialog.vue";
-import { userApi } from '@/apis/module/user';
 export default {
   components: {HeaderBar, AddDeviceDialog },
   data() {
     return {
       addDeviceDialogVisible: false,
+      currentAgentId: this.$route.query.agentId || '',
       currentPage: 1,
       pageSize: 5,
       deviceList: [],
@@ -118,9 +118,6 @@ export default {
         });
       });
     },
-    handleDeviceAdded(deviceCode) {
-      console.log('添加的智能体名称：', deviceCode);
-    },
     handleSizeChange(val) {
       this.pageSize = val;
     },
@@ -133,7 +130,7 @@ export default {
           userApi.getAgentBindDevices(agentId, ({ data }) => {
             this.loading = false;
             if (data.code === 0) {
-              this.deviceList = data.data[0]?.list.map(device => ({
+              this.deviceList = data.data[0].list.map(device => ({
                 device_id: device.id,
                 model: device.device_type,
                 firmwareVersion: device.app_version,
