@@ -39,8 +39,8 @@ export default {
   },
   methods: {
     confirm() {
-      if (!this.deviceCode.trim()) {
-        this.$message.error('请输入设备验证码');
+      if (!/^\d{6}$/.test(this.deviceCode)) {
+        this.$message.error('请输入6位数字设备验证码');
         return;
       }
       this.$emit('confirm',this.deviceCode)
