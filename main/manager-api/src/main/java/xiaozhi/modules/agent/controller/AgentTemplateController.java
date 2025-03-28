@@ -39,7 +39,7 @@ public class AgentTemplateController extends BaseController {
 
     @PostMapping
     @Operation(summary = "添加智能体模板")
-    @RequiresPermissions("sys:role:normal")
+    @RequiresPermissions("sys:role:superAdmin")
     public Result<AgentTemplate> addTemplate(@RequestBody AgentTemplate agentTemplate) {
         UserDetail user = SecurityUser.getUser();
         if (StringUtils.isBlank(agentTemplate.getAgentName())) {
@@ -60,7 +60,7 @@ public class AgentTemplateController extends BaseController {
 
     @DeleteMapping("/{templateId}")
     @Operation(summary = "删除智能体模板")
-    @RequiresPermissions("sys:role:normal")
+    @RequiresPermissions("sys:role:superAdmin")
     public Result<AgentTemplate> delTemplate(@PathVariable String templateId) {
         UserDetail user = SecurityUser.getUser();
         if (StringUtils.isBlank(templateId)) {
