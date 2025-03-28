@@ -23,13 +23,8 @@ class IntentProviderBase(ABC):
         self.llm = llm
         # 获取模型名称和类型信息
         model_name = getattr(llm, 'model_name', str(llm.__class__.__name__))
-        model_type = getattr(llm, 'type', 'unknown')
         # 记录更详细的日志
-        logger.bind(tag=TAG).info(f"意图识别设置LLM: {model_name}, 类型: {model_type}")
-        # 尝试获取模型基础URL
-        base_url = getattr(llm, 'base_url', 'N/A')
-        if base_url != 'N/A':
-            logger.bind(tag=TAG).debug(f"意图识别LLM基础URL: {base_url}")
+        logger.bind(tag=TAG).info(f"意图识别设置LLM: {model_name}")
 
     @abstractmethod
     async def detect_intent(self, conn, dialogue_history: List[Dict], text: str) -> str:
