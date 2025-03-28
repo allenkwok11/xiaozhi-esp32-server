@@ -194,7 +194,31 @@ class ConnectionHandler:
         """加载记忆"""
         device_id = self.headers.get("device-id", None)
         self.memory.init_memory(device_id, self.llm)
-        self.intent.set_llm(self.llm)
+        
+        """为意图识别设置LLM，优先使用专用LLM"""
+        # 检查是否配置了专用的意图识别LLM
+        intent_llm_name = self.config["Intent"]["intent_llm"]["llm"]
+        
+        # 记录开始初始化意图识别LLM的时间
+        intent_llm_init_start = time.time()
+        
+        if not self.use_function_call_mode and intent_llm_name and intent_llm_name in self.config["LLM"]:
+            # 如果配置了专用LLM，则创建独立的LLM实例
+            from core.utils import llm as llm_utils
+            intent_llm_config = self.config["LLM"][intent_llm_name]
+            intent_llm_type = intent_llm_config.get("type", intent_llm_name)
+            intent_llm = llm_utils.create_instance(intent_llm_type, intent_llm_config)
+            self.logger.bind(tag=TAG).info(f"为意图识别创建了专用LLM: {intent_llm_name}, 类型: {intent_llm_type}")
+            
+            self.intent.set_llm(intent_llm)
+        else:
+            # 否则使用主LLM
+            self.intent.set_llm(self.llm)
+            self.logger.bind(tag=TAG).info("意图识别使用主LLM")
+            
+        # 记录意图识别LLM初始化耗时
+        intent_llm_init_time = time.time() - intent_llm_init_start
+        self.logger.bind(tag=TAG).info(f"意图识别LLM初始化完成，耗时: {intent_llm_init_time:.4f}秒")
 
         """加载位置信息"""
         self.client_ip_info = get_ip_info(self.client_ip)
@@ -358,6 +382,9 @@ class ConnectionHandler:
         content_arguments = ""
         for response in llm_responses:
             content, tools_call = response
+            if "content" in response:
+                content = response["content"]
+                tools_call = None
             if content is not None and len(content) > 0:
                 if len(response_message) <= 0 and (content == "```" or "<tool_call>" in content):
                     tool_call_flag = True
