@@ -1,4 +1,4 @@
-package xiaozhi.modules.agentTemplate.controller;
+package xiaozhi.modules.agent.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -16,8 +16,6 @@ import xiaozhi.common.utils.Result;
 import xiaozhi.modules.agent.domain.AgentTemplate;
 import xiaozhi.modules.agent.service.AgentTemplateService;
 import xiaozhi.modules.agent.vo.AgentTemplateVO;
-import xiaozhi.modules.device.domain.Device;
-import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.model.domain.ModelConfig;
 import xiaozhi.modules.model.domain.TtsVoice;
 import xiaozhi.modules.model.service.ModelConfigService;
@@ -34,11 +32,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/user/agent/template")
-public class UserAgentTemplateController extends BaseController {
+public class AgentTemplateController extends BaseController {
     private final AgentTemplateService agentTemplateService;
     private final ModelConfigService modelConfigService;
     private final TtsVoiceService ttsVoiceService;
-    private final DeviceService deviceService;
 
     @PostMapping
     @Operation(summary = "添加智能体模板")
@@ -80,7 +77,7 @@ public class UserAgentTemplateController extends BaseController {
     @Operation(summary = "智能体模板模板列表")
     @RequiresPermissions("sys:role:normal")
     public Result<List<AgentTemplate>> templateList() {
-        List<AgentTemplate> list = agentTemplateService.list();
+        List<AgentTemplate> list = agentTemplateService.list(new QueryWrapper<AgentTemplate>().orderByAsc("sort"));
         return new Result<List<AgentTemplate>>().ok(list);
     }
 

@@ -33,6 +33,7 @@ public class TtsController extends BaseController {
         if (StringUtils.isNotBlank(ttsModelId)) {
             queryWrapper.eq("ttsModelId", ttsModelId);
         }
+        queryWrapper.orderByAsc("sort");
         List<TtsVoice> list = ttsVoiceService.list(queryWrapper);
         return new Result<List<TtsVoice>>().ok(list);
     }

@@ -10,7 +10,11 @@
           智能体
         </div>
         <div ref="menu-code_console" class="menu-btn">
-          <i class="el-icon-s-grid" style="font-size: 10px;color: #979db1;"/>
+          <i class="el-icon-microphone" style="color: #979db1;"/>
+          声音复刻
+        </div>
+        <div ref="menu-code_console" class="menu-btn">
+          <i class="el-icon-s-grid" style="color: #979db1;"/>
           控制台
         </div>
         <div ref="menu-code_user" class="menu-btn" @click="goToPage('/user-management')">

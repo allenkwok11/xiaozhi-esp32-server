@@ -22,7 +22,6 @@ import xiaozhi.modules.device.constant.DeviceConstant;
 import xiaozhi.modules.device.domain.Device;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.device.vo.DeviceCodeVO;
-import xiaozhi.modules.ota.domain.Ota;
 import xiaozhi.modules.security.user.SecurityUser;
 
 import java.util.Date;
@@ -32,7 +31,7 @@ import java.util.Date;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/user/agent/device")
-public class UserDeviceController extends BaseController {
+public class DeviceController extends BaseController {
     private final AgentService agentService;
     private final DeviceService deviceService;
     private final RedisUtils redisUtils;

@@ -187,7 +187,7 @@ LLM:
     # 可在这里找到你的 api_key https://bailian.console.aliyun.com/?apiKey=1#/api-key
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model_name: qwen-turbo
-    api_key: 你的deepseek web key
+    api_key: 你的ali api key
     temperature: 0.7  # 温度值
     max_tokens: 500   # 最大生成token数
     top_p: 1         
@@ -536,7 +536,10 @@ wakeup_words:
   - "小滨小滨"
   - "小冰小冰"
 
+# 是否使用私有配置
+use_private_config: true
 # 远程配置
+# 数据格式：{"code": 0,"msg": "success","data": {"prompt": "我是小智","owner": "用户ID","ASR": {"FunASR": {}},"LLM": {"ChatGLMLLM": {}},"TTS": {"EdgeTTS": {}},"VAD": {"SileroVAD": {}},"Intent": {"function_call": {}},"Memory": {"nomem": {}},"selected_module": {"ASR": "FunASR","LLM": "ChatGLMLLM","TTS": "EdgeTTS","Intent": "function_call","Memory": "nomem","VAD": "SileroVAD"}}}
 remote_config:
   enabled: true
-  url: http://192.168.5.11:8002/user/agent/loadAgentConfig/
+  url: http://192.168.5.11:8002/xiaozhi-esp32-api/api/v1/user/agent/loadAgentConfig/

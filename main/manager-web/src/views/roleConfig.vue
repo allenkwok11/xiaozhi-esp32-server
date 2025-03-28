@@ -36,14 +36,14 @@
             <el-form-item label="角色音色：">
               <div style="display: flex;gap: 8px;align-items: center;">
                 <div style="flex:1;">
-                  <el-select v-model="form.ttsVoiceId" placeholder="请选择" style="width: 100%;">
+                  <el-select v-model="form.ttsVoiceId" placeholder="请选择" @change="handleTtsVoiceChange" style="width: 100%;">
                     <el-option v-for="item in ttsVoices" :key="item.id" :label="item.name"
                                :value="item.id">
                     </el-option>
                   </el-select>
                 </div>
                 <div class="audio-box">
-                  <audio src="http://music.163.com/song/media/outer/url?id=447925558.mp3" controls
+                  <audio :src="voiceDemo" controls
                          style="height: 100%;width: 100%;"/>
                 </div>
               </div>
@@ -52,7 +52,7 @@
               <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容" v-model="form.systemPrompt" maxlength="2000" show-word-limit/>
             </el-form-item>
             <el-form-item label="记忆体：">
-              <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容" v-model="form.systemPrompt" maxlength="1000" show-word-limit/>
+              <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容" v-model="form.prompt" maxlength="1000" show-word-limit/>
                 <div style="display: flex;gap: 8px;align-items: center;">
                   <div style="color: #979db1;font-size: 11px;">当前记忆（每次对话后重新生成）</div>
                   <div class="clear-btn">
@@ -120,6 +120,7 @@ export default {
         model:{}
       },
       ttsVoices: [],
+      voiceDemo: "",
       models: [
         { label: '大语言模型(LLM)', key: 'llm', list: [] },
         { label: '语音转文本模型(ASR)', key: 'asr', list: [] },
@@ -137,6 +138,9 @@ export default {
     this.handleGetConfig();
     this.fetchModelList();
     this.getTtsVoicelList();
+    setTimeout(() => {
+      this.handleTtsVoiceChange(this.form.ttsVoiceId)
+    }, 1500)
   },
   methods: {
     fetchAgentTemplateList() {
@@ -224,6 +228,13 @@ export default {
         systemPrompt: template.systemPrompt
       })
       this.$message.success(`已选择模板：${template.agentName}`);
+    },
+    handleTtsVoiceChange(ttsVoiceId) {
+      if(ttsVoiceId){
+        const _ttsVoice = this.ttsVoices.find(item => item.id === ttsVoiceId)
+        this.voiceDemo = _ttsVoice.voiceDemo
+        this.form.ttsModelId = _ttsVoice.ttsModelId
+      }
     }
   }
 }

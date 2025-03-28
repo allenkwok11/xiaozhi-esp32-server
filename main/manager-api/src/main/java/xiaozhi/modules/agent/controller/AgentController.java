@@ -1,6 +1,7 @@
 package xiaozhi.modules.agent.controller;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -20,7 +21,6 @@ import xiaozhi.modules.agent.domain.Agent;
 import xiaozhi.modules.agent.domain.AgentTemplate;
 import xiaozhi.modules.agent.service.AgentService;
 import xiaozhi.modules.agent.service.AgentTemplateService;
-import xiaozhi.modules.agent.vo.AgentConfigVO;
 import xiaozhi.modules.agent.vo.AgentVO;
 import xiaozhi.modules.device.domain.Device;
 import xiaozhi.modules.device.service.DeviceService;
@@ -40,7 +40,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/user/agent")
-public class UserAgentController extends BaseController {
+public class AgentController extends BaseController {
     private final AgentService agentService;
     private final AgentTemplateService agentTemplateService;
     private final ModelConfigService modelConfigService;
@@ -163,58 +163,85 @@ public class UserAgentController extends BaseController {
         if (ObjectUtils.isNull(agent)) {
             return new Result<JSONObject>().error("智能体不存在");
         }
-        AgentConfigVO agentConfigVO = new AgentConfigVO();
-        agentConfigVO.setPrompt(agent.getSystemPrompt());
-//        return new Result<AgentConfigVO>().ok(agentConfigVO);
-        String json = "{\n" +
-                "    \"ASR\": {\n" +
-                "        \"FunASR\": {\n" +
-                "            \"model_dir\": \"models/SenseVoiceSmall\",\n" +
-                "            \"output_dir\": \"tmp/\",\n" +
-                "            \"type\": \"fun_local\"\n" +
-                "        }\n" +
-                "    },\n" +
-                "    \"LLM\": {\n" +
-                "        \"ChatGLMLLM\": {\n" +
-                "            \"api_key\": \"0415dad4014847babc3e3f03024c50a3.qH7FgTy5Yawc85fl\",\n" +
-                "            \"model_name\": \"glm-4-flash\",\n" +
-                "            \"type\": \"openai\",\n" +
-                "            \"url\": \"https://open.bigmodel.cn/api/paas/v4/\"\n" +
-                "        }\n" +
-                "    },\n" +
-                "    \"TTS\": {\n" +
-                "        \"DoubaoTTS\": {\n" +
-                "            \"access_token\": \"hrnx22F9WutWBm7YJzE62r_Z1myUmHEL\",\n" +
-                "            \"api_url\": \"https://openspeech.bytedance.com/api/v1/tts\",\n" +
-                "            \"appid\": \"6295576095\",\n" +
-                "            \"authorization\": \"Bearer;\",\n" +
-                "            \"cluster\": \"volcano_tts\",\n" +
-                "            \"output_dir\": \"tmp/\",\n" +
-                "            \"type\": \"doubao\",\n" +
-                "            \"voice\": \"BV034_streaming\"\n" +
-                "        }\n" +
-                "    },\n" +
-                "    \"VAD\": {\n" +
-                "        \"SileroVAD\": {\n" +
-                "            \"min_silence_duration_ms\": 700,\n" +
-                "            \"model_dir\": \"models/snakers4_silero-vad\",\n" +
-                "            \"threshold\": 0.5\n" +
-                "        }\n" +
-                "    },\n" +
-                "    \"auth_code\": \"642365\",\n" +
-                "    \"prompt\": \"你是一个叫小优的女孩，来自优享生活公司的AI智能体，声音好听，习惯简短表达，爱用网络梗。\\n请注意，要像一个人一样说话，请不要回复表情符号、代码、和xml标签。\\n现在我正在和你进行语音聊天，我们开始吧。\\n如果用户希望结束对话，请在最后说“拜拜”或“再见”。\\n\",\n" +
-                "    \"selected_module\": {\n" +
-                "        \"ASR\": \"FunASR\",\n" +
-                "        \"Intent\": \"function_call\",\n" +
-                "        \"LLM\": \"ChatGLMLLM\",\n" +
-                "        \"Memory\": \"mem0ai\",\n" +
-                "        \"TTS\": \"DoubaoTTS\",\n" +
-                "        \"VAD\": \"SileroVAD\"\n" +
-                "    },\n" +
-                "    \"owner\":\"18600806164\"\n" +
-                "}";
 
-        return new Result<JSONObject>().ok(new JSONObject(json));
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("prompt", agent.getSystemPrompt().replace("{{assistant_name}}", agent.getAgentCode()));
+        jsonObject.set("owner", String.valueOf(agent.getUserId()));
+        ModelConfig asrModel = modelConfigService.getById(agent.getAsrModelId());
+        jsonObject.set("ASR", JSONUtil.parseObj(asrModel.getConfigJson()));
+        ModelConfig llmModel = modelConfigService.getById(agent.getLlmModelId());
+        jsonObject.set("LLM", JSONUtil.parseObj(llmModel.getConfigJson()));
+        ModelConfig ttsModel = modelConfigService.getById(agent.getTtsModelId());
+        JSONObject ttsJson = JSONUtil.parseObj(ttsModel.getConfigJson());
+        TtsVoice ttsVoice = ttsVoiceService.getById(agent.getTtsVoiceId());
+        ttsJson.getJSONObject(ttsModel.getModelCode()).set("voice", ttsVoice.getTtsVoice());
+        jsonObject.set("TTS", ttsJson);
+        ModelConfig vadModel = modelConfigService.getById(agent.getVadModelId());
+        jsonObject.set("VAD", JSONUtil.parseObj(vadModel.getConfigJson()));
+        ModelConfig intentModel = modelConfigService.getById(agent.getIntentModelId());
+        jsonObject.set("Intent", JSONUtil.parseObj(intentModel.getConfigJson()));
+        ModelConfig memoryModel = modelConfigService.getById(agent.getMemoryModelId());
+        jsonObject.set("Memory", JSONUtil.parseObj(memoryModel.getConfigJson()));
+        JSONObject module = new JSONObject();
+        module.set("ASR", asrModel.getModelCode());
+        module.set("LLM", llmModel.getModelCode());
+        module.set("TTS", ttsModel.getModelCode());
+        module.set("Intent", intentModel.getModelCode());
+        module.set("Memory", memoryModel.getModelCode());
+        module.set("VAD", vadModel.getModelCode());
+        jsonObject.set("selected_module", module);
+
+        return new Result<JSONObject>().ok(jsonObject);
+
+//        String json = "{\n" +
+//                "    \"ASR\": {\n" +
+//                "        \"FunASR\": {\n" +
+//                "            \"model_dir\": \"models/SenseVoiceSmall\",\n" +
+//                "            \"output_dir\": \"tmp/\",\n" +
+//                "            \"type\": \"fun_local\"\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"LLM\": {\n" +
+//                "        \"ChatGLMLLM\": {\n" +
+//                "            \"api_key\": \"0415dad4014847babc3e3f03024c50a3.qH7FgTy5Yawc85fl\",\n" +
+//                "            \"model_name\": \"glm-4-flash\",\n" +
+//                "            \"type\": \"openai\",\n" +
+//                "            \"url\": \"https://open.bigmodel.cn/api/paas/v4/\"\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"TTS\": {\n" +
+//                "        \"DoubaoTTS\": {\n" +
+//                "            \"access_token\": \"hrnx22F9WutWBm7YJzE62r_Z1myUmHEL\",\n" +
+//                "            \"api_url\": \"https://openspeech.bytedance.com/api/v1/tts\",\n" +
+//                "            \"appid\": \"6295576095\",\n" +
+//                "            \"authorization\": \"Bearer;\",\n" +
+//                "            \"cluster\": \"volcano_tts\",\n" +
+//                "            \"output_dir\": \"tmp/\",\n" +
+//                "            \"type\": \"doubao\",\n" +
+//                "            \"voice\": \"BV034_streaming\"\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"VAD\": {\n" +
+//                "        \"SileroVAD\": {\n" +
+//                "            \"min_silence_duration_ms\": 700,\n" +
+//                "            \"model_dir\": \"models/snakers4_silero-vad\",\n" +
+//                "            \"threshold\": 0.5\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"auth_code\": \"642365\",\n" +
+//                "    \"prompt\": \"你是一个叫小优的女孩，来自优享生活公司的AI智能体，声音好听，习惯简短表达，爱用网络梗。\\n请注意，要像一个人一样说话，请不要回复表情符号、代码、和xml标签。\\n现在我正在和你进行语音聊天，我们开始吧。\\n如果用户希望结束对话，请在最后说“拜拜”或“再见”。\\n\",\n" +
+//                "    \"selected_module\": {\n" +
+//                "        \"ASR\": \"FunASR\",\n" +
+//                "        \"Intent\": \"function_call\",\n" +
+//                "        \"LLM\": \"ChatGLMLLM\",\n" +
+//                "        \"Memory\": \"mem0ai\",\n" +
+//                "        \"TTS\": \"DoubaoTTS\",\n" +
+//                "        \"VAD\": \"SileroVAD\"\n" +
+//                "    },\n" +
+//                "    \"owner\":\"18600806164\"\n" +
+//                "}";
+//
+//        return new Result<JSONObject>().ok(new JSONObject(json));
     }
 
     /**

@@ -2,7 +2,6 @@ package xiaozhi.modules.ota.controller;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,7 +18,6 @@ import xiaozhi.common.controller.BaseController;
 import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.Result;
-import xiaozhi.modules.agent.domain.Agent;
 import xiaozhi.modules.device.constant.DeviceConstant;
 import xiaozhi.modules.device.domain.Device;
 import xiaozhi.modules.device.service.DeviceService;
@@ -53,7 +51,7 @@ public class OtaController extends BaseController {
         }
 
         DeviceOtaVO otaVO = new DeviceOtaVO();
-        Device device = deviceService.getOne(new UpdateWrapper<Device>().eq("mac_address", headers.getFirst("device-id").toUpperCase()).eq("id", headers.getFirst("client-Id").replace("-", "")));
+        Device device = deviceService.getOne(new UpdateWrapper<Device>().eq("mac_address", headers.getFirst("device-id").toUpperCase()).eq("id", headers.getFirst("client-Id").replace("-", "")), false);
         if (ObjectUtils.isNull(device)) {
             // 从 Redis 中获取设备信息
             Object redisValue = redisUtils.hGet(DeviceConstant.REDIS_KEY_PREFIX_DEVICE_ACTIVATION_MAC, headers.getFirst("device-id").toUpperCase());
@@ -69,14 +67,13 @@ public class OtaController extends BaseController {
             }
         }
 
-
+        //规范输出，赋值默认数据
+        otaVO.setFirmware(new DeviceOtaVO.Firmware("0.0.1", ""));
         if (ObjectUtils.isNull(device) || device.getAutoUpdate() == 1) {
             //{"version":"1.0.0","url":"http://https://youxlife.oss-cn-zhangjiakou.aliyuncs.com/v1.4.5.bin"}
-            String board = ObjectUtils.isNull(device)?headers.getFirst("user-agent").split("/")[0]:device.getBoard();
+            String board = ObjectUtils.isNull(device) ? headers.getFirst("user-agent").split("/")[0] : device.getBoard();
             Ota ota = otaService.getOne(new UpdateWrapper<Ota>().eq("board", board).eq("is_enabled", 1));
-            if (ObjectUtils.isNull(ota)) {
-                log.warn("OTA升级信息未配置");
-            } else {
+            if (ObjectUtils.isNotNull(ota)) {
                 otaVO.setFirmware(new DeviceOtaVO.Firmware(ota.getAppVersion(), ota.getUrl()));
             }
         }

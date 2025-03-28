@@ -49,7 +49,7 @@ public class ModelConfig implements Serializable {
     /**
      * 模型配置(JSON格式)
      */
-    private Object configJson;
+    private String configJson;
 
     /**
      * 官方文档链接
