@@ -197,12 +197,12 @@ class ConnectionHandler:
         
         """为意图识别设置LLM，优先使用专用LLM"""
         # 检查是否配置了专用的意图识别LLM
-        intent_llm_name = self.config.get("IntentLLM", "")
+        intent_llm_name = self.config["Intent"]["intent_llm"]["llm"]
         
         # 记录开始初始化意图识别LLM的时间
         intent_llm_init_start = time.time()
         
-        if intent_llm_name and intent_llm_name in self.config["LLM"]:
+        if not self.use_function_call_mode and intent_llm_name and intent_llm_name in self.config["LLM"]:
             # 如果配置了专用LLM，则创建独立的LLM实例
             from core.utils import llm as llm_utils
             intent_llm_config = self.config["LLM"][intent_llm_name]

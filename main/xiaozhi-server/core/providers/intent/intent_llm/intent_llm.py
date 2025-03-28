@@ -20,19 +20,6 @@ class IntentProvider(IntentProviderBase):
         self.intent_cache = {}  # 缓存意图识别结果
         self.cache_expiry = 600  # 缓存有效期10分钟
         self.cache_max_size = 100  # 最多缓存100个意图
-        self.common_patterns = {
-            "天气": '{\"function_call\": {\"name\": \"get_weather\", \"arguments\": {\"location\": null, \"lang\": \"zh_CN\"}}}',
-            "新闻": '{\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"category\": null, \"detail\": false, \"lang\": \"zh_CN\"}}}',
-            "财经新闻": '{\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"category\": \"财经\", \"detail\": false, \"lang\": \"zh_CN\"}}}',
-            "国际新闻": '{\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"category\": \"国际\", \"detail\": false, \"lang\": \"zh_CN\"}}}',
-            "社会新闻": '{\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"category\": \"社会\", \"detail\": false, \"lang\": \"zh_CN\"}}}',
-            "详细介绍": '{\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"detail\": true, \"lang\": \"zh_CN\"}}}',
-            "详情": '{\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"detail\": true, \"lang\": \"zh_CN\"}}}',
-            "再见": '{\"intent\": \"结束聊天\"}',
-            "结束": '{\"intent\": \"结束聊天\"}',
-            "拜拜": '{\"intent\": \"结束聊天\"}',
-            "播放音乐": '{\"function_call\": {\"name\": \"play_music\", \"arguments\": {\"song_name\": \"random\"}}}'
-        }
 
     def get_intent_system_prompt(self) -> str:
         """
@@ -42,60 +29,50 @@ class IntentProvider(IntentProviderBase):
         """
         intent_list = []
 
-        """
-        "continue_chat":    "1.继续聊天, 除了播放音乐和结束聊天的时候的选项, 比如日常的聊天和问候, 对话等",
-        "end_chat":         "2.结束聊天, 用户发来如再见之类的表示结束的话, 不想再进行对话的时候",
-        "play_music":       "3.播放音乐, 用户希望你可以播放音乐, 只用于播放音乐的意图",
-        "get_weather":      "4.查询天气, 用户希望查询某个地点的天气情况"
-        "get_news":         "5.查询新闻, 用户希望查询最新新闻或特定类型的新闻"
-        """
-        for key, value in self.intent_options.items():
-            if key == "play_music":
-                intent_list.append("3.播放音乐, 用户希望你可以播放音乐, 只用于播放音乐的意图")
-            elif key == "end_chat":
-                intent_list.append("2.结束聊天, 用户发来如再见之类的表示结束的话, 不想再进行对话的时候")
-            elif key == "continue_chat":
-                intent_list.append("1.继续聊天, 除了播放音乐和结束聊天的时候的选项, 比如日常的聊天和问候, 对话等")
-            elif key == "get_weather":
-                intent_list.append("4.查询天气, 用户希望查询某个地点的天气情况")
-            elif key == "get_news":
-                intent_list.append("5.查询新闻, 用户希望查询最新新闻或特定类型的新闻")
-            else:
-                intent_list.append(value)
-
         prompt = (
             "你是一个意图识别助手。请分析用户的最后一句话，判断用户意图属于以下哪一类：\n"
             "<start>"
             f"{', '.join(intent_list)}"
             "<end>\n"
             "处理步骤:"
-            "1. 思考意图类型"
-            "2. 继续聊天和结束聊天意图: 返回intent格式"
-            "3. 播放音乐意图: 分析歌名，生成function_call格式"
-            "4. 查询天气意图: 分析地点，生成function_call格式"
-            "5. 查询新闻意图: 分析新闻类别，生成function_call格式"
+            "1. 思考意图类型，生成function_call格式"
             "\n\n"
             "返回格式示例：\n"
-            "1. 继续聊天意图: {\"intent\": \"继续聊天\"}\n"
-            "2. 结束聊天意图: {\"intent\": \"结束聊天\"}\n"
-            "3. 播放音乐意图: {\"function_call\": {\"name\": \"play_music\", \"arguments\": {\"song_name\": \"音乐名称\"}}}\n"
-            "4. 查询天气意图: {\"function_call\": {\"name\": \"get_weather\", \"arguments\": {\"location\": \"地点名称\", \"lang\": \"zh_CN\"}}}\n"
-            "5. 查询新闻意图: {\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"category\": \"新闻类别\", \"detail\": false, \"lang\": \"zh_CN\"}}}\n"
+            "1. 播放音乐意图: {\"function_call\": {\"name\": \"play_music\", \"arguments\": {\"song_name\": \"音乐名称\"}}}\n"
+            "2. 查询天气意图: {\"function_call\": {\"name\": \"get_weather\", \"arguments\": {\"location\": \"地点名称\", \"lang\": \"zh_CN\"}}}\n"
+            "3. 查询新闻意图: {\"function_call\": {\"name\": \"get_news\", \"arguments\": {\"category\": \"新闻类别\", \"detail\": false, \"lang\": \"zh_CN\"}}}\n"
+            "4. 结束对话意图: {\"function_call\": {\"name\": \"handle_exit_intent\", \"arguments\": {\"say_goodbye\": \"goodbye\"}}}\n"
+            "5. 获取当天日期时间: {\"function_call\": {\"name\": \"get_time\"}}\n"
+            "6. 获取当前黄历意图: {\"function_call\": {\"name\": \"get_lunar\"}}\n"
+            "7. 继续聊天意图: {\"function_call\": {\"name\": \"continue_chat\"}}\n"
             "\n"
             "注意:\n"
             "- 播放音乐：无歌名时，song_name设为\"random\"\n"
             "- 查询天气：无地点时，location设为null\n"
             "- 查询新闻：无类别时，category设为null；查询详情时，detail设为true\n"
+            "- 如果没有明显的意图，应按照继续聊天意图处理\n"
             "- 只返回纯JSON，不要任何其他内容\n"
             "\n"
             "示例分析:\n"
             "```\n"
+            "用户: 你好小智\n"
+            "返回: {\"function_call\": {\"name\": \"continue_chat\"}}\n"
+            "```\n"
+            "```\n"
             "用户: 你今天怎么样?\n"
-            "返回: {\"intent\": \"继续聊天\"}\n"
+            "返回: {\"function_call\": {\"name\": \"continue_chat\"}}\n"
+            "```\n"
+            "```\n"
+            "用户: 现在是几号了?现在几点了？\n"
+            "返回: {\"function_call\": {\"name\": \"get_time\"}}\n"
+            "```\n"
+            "```\n"
+            "用户: 今天农历是多少？\n"
+            "返回: {\"function_call\": {\"name\": \"get_lunar\"}}\n"
             "```\n"
             "```\n"
             "用户: 我们明天再聊吧\n"
-            "返回: {\"intent\": \"结束聊天\"}\n"
+            "返回: {\"function_call\": {\"name\": \"handle_exit_intent\"}}\n"
             "```\n"
             "```\n"
             "用户: 播放中秋月\n"
@@ -140,25 +117,6 @@ class IntentProvider(IntentProviderBase):
             for key, _ in sorted_items[:len(sorted_items) - self.cache_max_size]:
                 del self.intent_cache[key]
 
-    def check_pattern_match(self, text):
-        """检查文本是否匹配常见模式，并提取关键信息"""
-        # 城市+天气的特殊模式匹配
-        city_weather_pattern = re.search(r'([^\s,，。？！]+)天气', text)
-        if city_weather_pattern:
-            city = city_weather_pattern.group(1)
-            # 排除可能的误匹配，如"今天天气"、"明天天气"、"现在天气"等
-            if city not in ["今天", "今日", "明天", "现在", "当前", "未来", "明日", "这两天", "近期"]:
-                logger.bind(tag=TAG).info(f"提取到城市名: {city}")
-                # 返回包含城市名的function_call
-                return f'{{\"function_call\": {{\"name\": \"get_weather\", \"arguments\": {{\"location\": \"{city}\", \"lang\": \"zh_CN\"}}}}}}'
-        
-        # 普通模式匹配
-        for pattern, intent in self.common_patterns.items():
-            if pattern in text:
-                return intent
-                
-        return None
-
     async def detect_intent(self, conn, dialogue_history: List[Dict], text: str) -> str:
         if not self.llm:
             raise ValueError("LLM provider not set")
@@ -169,13 +127,6 @@ class IntentProvider(IntentProviderBase):
         # 打印使用的模型信息
         model_info = getattr(self.llm, 'model_name', str(self.llm.__class__.__name__))
         logger.bind(tag=TAG).info(f"使用意图识别模型: {model_info}")
-            
-        # 先尝试简单的模式匹配
-        pattern_match = self.check_pattern_match(text)
-        if pattern_match:
-            pattern_time = time.time() - total_start_time
-            logger.bind(tag=TAG).info(f"模式匹配成功: {text} -> {pattern_match}, 耗时: {pattern_time:.4f}秒")
-            return pattern_match
             
         # 计算缓存键
         cache_key = hashlib.md5(text.encode()).hexdigest()
