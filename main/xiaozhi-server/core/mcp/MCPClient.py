@@ -39,7 +39,7 @@ class MCPClient:
         
         stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
         self.stdio, self.write = stdio_transport
-        time_out_delta =  timedelta(seconds=10)
+        time_out_delta =  timedelta(seconds=15)
         self.session = await self.exit_stack.enter_async_context(ClientSession(read_stream=self.stdio, write_stream=self.write, read_timeout_seconds=time_out_delta))
         
         await self.session.initialize()
