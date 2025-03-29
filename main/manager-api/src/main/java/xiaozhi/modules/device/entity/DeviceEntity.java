@@ -11,7 +11,7 @@ import java.util.Date;
 @Schema(description = "设备信息")
 public class DeviceEntity {
     @Schema(description = "设备ID")
-    private Long id;
+    private String id;
 
     @Schema(description = "关联用户ID")
     private Long userId;
