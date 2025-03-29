@@ -44,7 +44,7 @@
               <div style="cursor: pointer;" @click="goToRegister">新用户注册</div>
             </div>
           </div>
-          <div class="login-btn" @click="login">登陆</div>
+          <div class="login-btn" @keyup.enter="login" @click="login">登陆</div>
           <div style="font-size: 14px;color: #979db1;">
             登录即同意
             <div style="display: inline-block;color: #5778FF;cursor: pointer;">《用户协议》</div>
@@ -88,7 +88,7 @@ export default {
   methods: {
     fetchCaptcha() {
       if (this.$store.getters.getToken) {
-        goToPage('/home')
+        this.$router.push('/home')
       } else {
         this.captchaUuid = getUUID();
 
@@ -135,17 +135,17 @@ export default {
         // 将令牌存储到 Vuex 中
         this.$store.commit('setToken', JSON.stringify(data.data))
 
-        goToPage('/home')
+        // this.$router.push('/home')
       })
 
-      // 重新获取验证码
+      // 重新获取验证码(token判断逻辑，存在即跳转home页，否则刷新验证码)
       setTimeout(() => {
         this.fetchCaptcha();
       }, 1000);
     },
 
     goToRegister() {
-      goToPage('/register')
+      this.$router.push('/register')
     }
   }
 }

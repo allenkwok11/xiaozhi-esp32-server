@@ -1,59 +1,22 @@
 package xiaozhi.modules.model.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
-import xiaozhi.common.service.impl.BaseServiceImpl;
-import xiaozhi.common.utils.ConvertUtils;
-import xiaozhi.modules.model.dao.ModelProviderDao;
-import xiaozhi.modules.model.dto.ModelProviderDTO;
-import xiaozhi.modules.model.entity.ModelProviderEntity;
+import xiaozhi.modules.model.domain.ModelProvider;
+import xiaozhi.modules.model.mapper.ModelProviderMapper;
 import xiaozhi.modules.model.service.ModelProviderService;
 
-import java.util.List;
-
+/**
+ * @author chenerlei
+ * @description 针对表【ai_model_provider(模型配置表)】的数据库操作Service实现
+ * @createDate 2025-03-24 18:24:13
+ */
 @Service
-@AllArgsConstructor
-public class ModelProviderServiceImpl extends BaseServiceImpl<ModelProviderDao, ModelProviderEntity> implements ModelProviderService {
+public class ModelProviderServiceImpl extends ServiceImpl<ModelProviderMapper, ModelProvider>
+        implements ModelProviderService {
 
-    private final ModelProviderDao modelProviderDao;
-
-    @Override
-    public List<ModelProviderDTO> getListByModelType(String modelType) {
-
-        QueryWrapper<ModelProviderEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("model_type", StringUtils.isBlank(modelType) ? "" : modelType);
-        List<ModelProviderEntity> providerEntities = modelProviderDao.selectList(queryWrapper);
-        return ConvertUtils.sourceToTarget(providerEntities, ModelProviderDTO.class);
-    }
-
-    @Override
-    public ModelProviderDTO add(ModelProviderEntity modelProviderEntity) {
-        return null;
-    }
-
-    @Override
-    public ModelProviderDTO edit(ModelProviderEntity modelProviderEntity) {
-        return null;
-    }
-
-    @Override
-    public void delete() {
-
-    }
-
-    @Override
-    public List<ModelProviderDTO> getList(String modelType, String provideCode) {
-        QueryWrapper<ModelProviderEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("model_type", StringUtils.isBlank(modelType) ? "" : modelType);
-        queryWrapper.eq("provide_code", StringUtils.isBlank(provideCode) ? "" : provideCode);
-        List<ModelProviderEntity> providerEntities = modelProviderDao.selectList(queryWrapper);
-        return ConvertUtils.sourceToTarget(providerEntities, ModelProviderDTO.class);
-    }
-
-    @Override
-    public List<String> getFieldList(String modelType, String provideCode) {
-        return modelProviderDao.getFieldList(modelType, provideCode);
-    }
 }
+
+
+
+

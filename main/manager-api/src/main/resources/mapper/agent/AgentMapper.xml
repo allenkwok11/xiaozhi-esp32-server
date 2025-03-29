@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xiaozhi.modules.agent.mapper.AgentMapper">
+
+    <resultMap id="BaseResultMap" type="xiaozhi.modules.agent.domain.Agent">
+            <id property="id" column="id" />
+            <result property="userId" column="user_id" />
+            <result property="agentCode" column="agent_code" />
+            <result property="agentName" column="agent_name" />
+            <result property="asrModelId" column="asr_model_id" />
+            <result property="vadModelId" column="vad_model_id" />
+            <result property="llmModelId" column="llm_model_id" />
+            <result property="ttsModelId" column="tts_model_id" />
+            <result property="ttsVoiceId" column="tts_voice_id" />
+            <result property="memoryModelId" column="memory_model_id" />
+            <result property="intentModelId" column="intent_model_id" />
+            <result property="systemPrompt" column="system_prompt" />
+            <result property="langCode" column="lang_code" />
+            <result property="language" column="language" />
+            <result property="sort" column="sort" />
+            <result property="creator" column="creator" />
+            <result property="createdAt" column="created_at" />
+            <result property="updater" column="updater" />
+            <result property="updatedAt" column="updated_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,user_id,agent_code,agent_name,asr_model_id,vad_model_id,
+        llm_model_id,tts_model_id,tts_voice_id,memory_model_id,intent_model_id,
+        system_prompt,lang_code,language,sort,creator,
+        created_at,updater,updated_at
+    </sql>
+</mapper>

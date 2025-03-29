@@ -1,149 +1,287 @@
 package xiaozhi.modules.agent.controller;
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.web.bind.annotation.*;
-import xiaozhi.common.constant.Constant;
-import xiaozhi.common.page.PageData;
+import xiaozhi.common.controller.BaseController;
+import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.user.UserDetail;
-import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.common.utils.Result;
-import xiaozhi.modules.agent.dto.AgentCreateDTO;
-import xiaozhi.modules.agent.dto.AgentUpdateDTO;
-import xiaozhi.modules.agent.entity.AgentEntity;
+import xiaozhi.modules.agent.domain.Agent;
+import xiaozhi.modules.agent.domain.AgentTemplate;
 import xiaozhi.modules.agent.service.AgentService;
+import xiaozhi.modules.agent.service.AgentTemplateService;
+import xiaozhi.modules.agent.vo.AgentVO;
+import xiaozhi.modules.device.domain.Device;
+import xiaozhi.modules.device.service.DeviceService;
+import xiaozhi.modules.model.domain.ModelConfig;
+import xiaozhi.modules.model.domain.TtsVoice;
+import xiaozhi.modules.model.service.ModelConfigService;
+import xiaozhi.modules.model.service.TtsVoiceService;
 import xiaozhi.modules.security.user.SecurityUser;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
+@Slf4j
 @Tag(name = "智能体管理")
 @AllArgsConstructor
 @RestController
-@RequestMapping("/agent")
-public class AgentController {
+@RequestMapping("/user/agent")
+public class AgentController extends BaseController {
     private final AgentService agentService;
-    
-    @GetMapping("/list")
-    @Operation(summary = "获取用户智能体列表")
-    @RequiresPermissions("sys:role:normal")
-    public Result<List<AgentEntity>> getUserAgents() {
-        UserDetail user = SecurityUser.getUser();
-        List<AgentEntity> agents = agentService.getUserAgents(user.getId());
-        return new Result<List<AgentEntity>>().ok(agents);
-    }
-    
-    @GetMapping("/all")
-    @Operation(summary = "智能体列表（管理员）")
-    @RequiresPermissions("sys:role:superAdmin")
-    @Parameters({
-            @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
-            @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
-    })
-    public Result<PageData<AgentEntity>> adminAgentList(
-            @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
-        PageData<AgentEntity> page = agentService.adminAgentList(params);
-        return new Result<PageData<AgentEntity>>().ok(page);
-    }
-    
-    @GetMapping("/{id}")
-    @Operation(summary = "获取智能体详情")
-    @RequiresPermissions("sys:role:normal")
-    public Result<AgentEntity> getAgentById(@PathVariable("id") String id) {
-        AgentEntity agent = agentService.getAgentById(id);
-        return new Result<AgentEntity>().ok(agent);
-    }
-    
+    private final AgentTemplateService agentTemplateService;
+    private final ModelConfigService modelConfigService;
+    private final TtsVoiceService ttsVoiceService;
+    private final DeviceService deviceService;
+    private final RedisUtils redisUtils;
+
     @PostMapping
-    @Operation(summary = "创建智能体")
+    @Operation(summary = "添加智能体")
     @RequiresPermissions("sys:role:normal")
-    public Result<Void> save(@RequestBody @Valid AgentCreateDTO dto) {
-        AgentEntity entity = ConvertUtils.sourceToTarget(dto, AgentEntity.class);
-        
-        // 设置用户ID和创建者信息
+    public Result<Agent> addAgent(@RequestBody Agent agent) {
         UserDetail user = SecurityUser.getUser();
-        entity.setUserId(user.getId());
-        entity.setCreator(user.getId());
-        entity.setCreatedAt(new Date());
-        
-        // ID、智能体编码和排序会在Service层自动生成
-        agentService.insert(entity);
-        
-        return new Result<>();
+        if (StringUtils.isBlank(agent.getAgentName())) {
+            log.error("智能体名称不能为空");
+        }
+        Agent oldAgent = agentService.getOne(new QueryWrapper<Agent>().eq("agent_name", agent.getAgentName()));
+        if (ObjectUtils.isNull(oldAgent)) {
+            AgentTemplate agentTemplate = agentTemplateService.getOne(new QueryWrapper<AgentTemplate>().eq("is_default", 1));
+            if (ObjectUtils.isNull(agentTemplate)) {
+
+            } else {
+                try {
+                    oldAgent = new Agent();
+                    BeanUtils.copyProperties(oldAgent, agentTemplate);
+                    oldAgent.setId(UUID.randomUUID().toString().replace("-", ""));
+                    oldAgent.setAgentName(agent.getAgentName());
+                    oldAgent.setUserId(user.getId());
+                    oldAgent.setCreator(user.getId());
+                    oldAgent.setCreatedAt(new Date());
+                    agentService.save(oldAgent);
+                } catch (Exception e) {
+                    log.error("对象赋值异常", e);
+                }
+            }
+        } else {
+
+        }
+        return new Result<Agent>().ok(agent);
     }
-    
-    @PutMapping
+
+    @PutMapping("{agentId}")
     @Operation(summary = "更新智能体")
     @RequiresPermissions("sys:role:normal")
-    public Result<Void> update(@RequestBody @Valid AgentUpdateDTO dto) {
-        // 先查询现有实体
-        AgentEntity existingEntity = agentService.getAgentById(dto.getId());
-        if (existingEntity == null) {
-            return new Result<Void>().error("智能体不存在");
-        }
-        
-        // 只更新提供的非空字段
-        if (dto.getAgentName() != null) {
-            existingEntity.setAgentName(dto.getAgentName());
-        }
-        if (dto.getAgentCode() != null) {
-            existingEntity.setAgentCode(dto.getAgentCode());
-        }
-        if (dto.getAsrModelId() != null) {
-            existingEntity.setAsrModelId(dto.getAsrModelId());
-        }
-        if (dto.getVadModelId() != null) {
-            existingEntity.setVadModelId(dto.getVadModelId());
-        }
-        if (dto.getLlmModelId() != null) {
-            existingEntity.setLlmModelId(dto.getLlmModelId());
-        }
-        if (dto.getTtsModelId() != null) {
-            existingEntity.setTtsModelId(dto.getTtsModelId());
-        }
-        if (dto.getTtsVoiceId() != null) {
-            existingEntity.setTtsVoiceId(dto.getTtsVoiceId());
-        }
-        if (dto.getMemModelId() != null) {
-            existingEntity.setMemModelId(dto.getMemModelId());
-        }
-        if (dto.getIntentModelId() != null) {
-            existingEntity.setIntentModelId(dto.getIntentModelId());
-        }
-        if (dto.getSystemPrompt() != null) {
-            existingEntity.setSystemPrompt(dto.getSystemPrompt());
-        }
-        if (dto.getLangCode() != null) {
-            existingEntity.setLangCode(dto.getLangCode());
-        }
-        if (dto.getLanguage() != null) {
-            existingEntity.setLanguage(dto.getLanguage());
-        }
-        if (dto.getSort() != null) {
-            existingEntity.setSort(dto.getSort());
-        }
-        
-        // 设置更新者信息
+    public Result<Agent> updateAgent(@PathVariable String agentId, @RequestBody Agent agent) {
         UserDetail user = SecurityUser.getUser();
-        existingEntity.setUpdater(user.getId());
-        existingEntity.setUpdatedAt(new Date());
-        
-        agentService.updateById(existingEntity);
-        
-        return new Result<>();
+        if (StringUtils.isBlank(agentId)) {
+            log.error("智能体ID不能为空");
+            return new Result<Agent>().error("更新失败,智能体ID不能为空");
+        }
+        Agent oldAgent = agentService.getById(agentId);
+        if (ObjectUtils.isNull(oldAgent)) {
+            log.error("智能体不存在");
+            return new Result<Agent>().error("更新失败，智能体不存在");
+        } else {
+            UpdateWrapper<Agent> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("id", agentId);
+            updateWrapper.set("agent_code", agent.getAgentCode());
+            updateWrapper.set("asr_model_id", agent.getAsrModelId());
+            updateWrapper.set("intent_model_id", agent.getIntentModelId());
+            updateWrapper.set("llm_model_id", agent.getLlmModelId());
+            updateWrapper.set("memory_model_id", agent.getMemoryModelId());
+            updateWrapper.set("system_prompt", agent.getSystemPrompt());
+            updateWrapper.set("tts_voice_id", agent.getTtsVoiceId());
+            updateWrapper.set("tts_model_id", agent.getTtsModelId());
+            updateWrapper.set("vad_model_id", agent.getVadModelId());
+            updateWrapper.set("updater", user.getId());
+            updateWrapper.set("updated_at", new Date());
+            boolean bool = agentService.update(updateWrapper);
+            if (!bool)
+                return new Result<Agent>().error("更新失败");
+        }
+        return new Result<Agent>().ok(agent);
     }
-    
-    @DeleteMapping("/{id}")
+
+    @DeleteMapping("/{agentId}")
     @Operation(summary = "删除智能体")
     @RequiresPermissions("sys:role:normal")
-    public Result<Void> delete(@PathVariable String id) {
-        agentService.deleteById(id);
-        return new Result<>();
+    public Result<Agent> delAgent(@PathVariable String agentId) {
+        UserDetail user = SecurityUser.getUser();
+        if (StringUtils.isBlank(agentId)) {
+            log.error("智能体ID不能为空");
+        }
+        boolean bool = agentService.removeById(agentId);
+        if (!bool) {
+            return new Result<Agent>().error("删除失败");
+        }
+        return new Result<Agent>().ok(null);
     }
-} 
+
+    @GetMapping("/{agentId}")
+    @Operation(summary = "获取智能体信息")
+    @RequiresPermissions("sys:role:normal")
+    public Result<Agent> getAgent(@PathVariable String agentId) {
+        if (StringUtils.isBlank(agentId)) {
+            log.error("智能体ID不能为空");
+        }
+        Agent agent = agentService.getById(agentId);
+        return new Result<Agent>().ok(agent);
+    }
+
+    @GetMapping
+    @Operation(summary = "智能体列表")
+    @RequiresPermissions("sys:role:normal")
+    public Result<List<AgentVO>> agentList() {
+        UserDetail user = SecurityUser.getUser();
+        List<Agent> agents = agentService.list(new QueryWrapper<Agent>().eq("user_id", user.getId()));
+        List<AgentVO> list = new ArrayList<>();
+        this.convertAgentVOList(list, agents);
+        return new Result<List<AgentVO>>().ok(list);
+    }
+
+    @GetMapping("/loadAgentConfig/{deviceId}")
+    @Operation(summary = "下载智能体配置")
+    public Result<JSONObject> loadAgentConfig(@PathVariable String deviceId) {
+        Device device = deviceService.getOne(new QueryWrapper<Device>().eq("mac_address", deviceId.toUpperCase()));
+        if (ObjectUtils.isNull(device)) {
+            return new Result<JSONObject>().error("设备不存在");
+        }
+        Agent agent = agentService.getOne(new QueryWrapper<Agent>().eq("id", device.getAgentId()));
+        if (ObjectUtils.isNull(agent)) {
+            return new Result<JSONObject>().error("智能体不存在");
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("prompt", agent.getSystemPrompt().replace("{{assistant_name}}", agent.getAgentCode()));
+        jsonObject.set("owner", String.valueOf(agent.getUserId()));
+        ModelConfig asrModel = modelConfigService.getById(agent.getAsrModelId());
+        jsonObject.set("ASR", JSONUtil.parseObj(asrModel.getConfigJson()));
+        ModelConfig llmModel = modelConfigService.getById(agent.getLlmModelId());
+        jsonObject.set("LLM", JSONUtil.parseObj(llmModel.getConfigJson()));
+        ModelConfig ttsModel = modelConfigService.getById(agent.getTtsModelId());
+        JSONObject ttsJson = JSONUtil.parseObj(ttsModel.getConfigJson());
+        TtsVoice ttsVoice = ttsVoiceService.getById(agent.getTtsVoiceId());
+        ttsJson.getJSONObject(ttsModel.getModelCode()).set("voice", ttsVoice.getTtsVoice());
+        jsonObject.set("TTS", ttsJson);
+        ModelConfig vadModel = modelConfigService.getById(agent.getVadModelId());
+        jsonObject.set("VAD", JSONUtil.parseObj(vadModel.getConfigJson()));
+        ModelConfig intentModel = modelConfigService.getById(agent.getIntentModelId());
+        jsonObject.set("Intent", JSONUtil.parseObj(intentModel.getConfigJson()));
+        ModelConfig memoryModel = modelConfigService.getById(agent.getMemoryModelId());
+        jsonObject.set("Memory", JSONUtil.parseObj(memoryModel.getConfigJson()));
+        JSONObject module = new JSONObject();
+        module.set("ASR", asrModel.getModelCode());
+        module.set("LLM", llmModel.getModelCode());
+        module.set("TTS", ttsModel.getModelCode());
+        module.set("Intent", intentModel.getModelCode());
+        module.set("Memory", memoryModel.getModelCode());
+        module.set("VAD", vadModel.getModelCode());
+        jsonObject.set("selected_module", module);
+
+        return new Result<JSONObject>().ok(jsonObject);
+
+//        String json = "{\n" +
+//                "    \"ASR\": {\n" +
+//                "        \"FunASR\": {\n" +
+//                "            \"model_dir\": \"models/SenseVoiceSmall\",\n" +
+//                "            \"output_dir\": \"tmp/\",\n" +
+//                "            \"type\": \"fun_local\"\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"LLM\": {\n" +
+//                "        \"ChatGLMLLM\": {\n" +
+//                "            \"api_key\": \"0415dad4014847babc3e3f03024c50a3.qH7FgTy5Yawc85fl\",\n" +
+//                "            \"model_name\": \"glm-4-flash\",\n" +
+//                "            \"type\": \"openai\",\n" +
+//                "            \"url\": \"https://open.bigmodel.cn/api/paas/v4/\"\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"TTS\": {\n" +
+//                "        \"DoubaoTTS\": {\n" +
+//                "            \"access_token\": \"hrnx22F9WutWBm7YJzE62r_Z1myUmHEL\",\n" +
+//                "            \"api_url\": \"https://openspeech.bytedance.com/api/v1/tts\",\n" +
+//                "            \"appid\": \"6295576095\",\n" +
+//                "            \"authorization\": \"Bearer;\",\n" +
+//                "            \"cluster\": \"volcano_tts\",\n" +
+//                "            \"output_dir\": \"tmp/\",\n" +
+//                "            \"type\": \"doubao\",\n" +
+//                "            \"voice\": \"BV034_streaming\"\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"VAD\": {\n" +
+//                "        \"SileroVAD\": {\n" +
+//                "            \"min_silence_duration_ms\": 700,\n" +
+//                "            \"model_dir\": \"models/snakers4_silero-vad\",\n" +
+//                "            \"threshold\": 0.5\n" +
+//                "        }\n" +
+//                "    },\n" +
+//                "    \"auth_code\": \"642365\",\n" +
+//                "    \"prompt\": \"你是一个叫小优的女孩，来自优享生活公司的AI智能体，声音好听，习惯简短表达，爱用网络梗。\\n请注意，要像一个人一样说话，请不要回复表情符号、代码、和xml标签。\\n现在我正在和你进行语音聊天，我们开始吧。\\n如果用户希望结束对话，请在最后说“拜拜”或“再见”。\\n\",\n" +
+//                "    \"selected_module\": {\n" +
+//                "        \"ASR\": \"FunASR\",\n" +
+//                "        \"Intent\": \"function_call\",\n" +
+//                "        \"LLM\": \"ChatGLMLLM\",\n" +
+//                "        \"Memory\": \"mem0ai\",\n" +
+//                "        \"TTS\": \"DoubaoTTS\",\n" +
+//                "        \"VAD\": \"SileroVAD\"\n" +
+//                "    },\n" +
+//                "    \"owner\":\"18600806164\"\n" +
+//                "}";
+//
+//        return new Result<JSONObject>().ok(new JSONObject(json));
+    }
+
+    /**
+     * 将Agent对象列表转换为AgentVO对象列表
+     * 此方法遍历Agent对象列表，将每个Agent对象转换为AgentVO对象，并添加到AgentVO列表中
+     *
+     * @param agentVOList 转换后的AgentVO对象列表
+     * @param agentList   原始的Agent对象列表
+     */
+    private void convertAgentVOList(List<AgentVO> agentVOList, List<Agent> agentList) {
+        // 遍历Agent对象列表
+        for (Agent agent : agentList) {
+            // 创建一个新的AgentVO对象
+            AgentVO agentVO = new AgentVO();
+            // 将当前Agent对象的属性值转换并设置到AgentVO对象中
+            this.convertAgentVO(agentVO, agent);
+            // 将转换后的AgentVO对象添加到AgentVO列表中
+            agentVOList.add(agentVO);
+        }
+    }
+
+    private void convertAgentVO(AgentVO agentVO, Agent agent) {
+        try {
+            BeanUtils.copyProperties(agentVO, agent);
+            agentVO.setTtsModelName("未知");
+            TtsVoice ttsVoice = ttsVoiceService.getOne(new QueryWrapper<TtsVoice>().eq("id", agent.getTtsVoiceId()));
+            if (ObjectUtils.isNotNull(ttsVoice)) {
+                agentVO.setTtsModelName(ttsVoice.getName());
+            }
+            agentVO.setLlmModelName("未知");
+            ModelConfig modelConfig = modelConfigService.getOne(new QueryWrapper<ModelConfig>().eq("id", agent.getLlmModelId()));
+            if (ObjectUtils.isNotNull(modelConfig)) {
+                agentVO.setLlmModelName(modelConfig.getModelName());
+            }
+            agentVO.setLastConnectedAt("今天");
+            agentVO.setDeviceCount(0L);
+            long deviceCount = deviceService.count(new QueryWrapper<Device>().eq("agent_id", agent.getId()));
+            agentVO.setDeviceCount(deviceCount);
+        } catch (Exception e) {
+            log.error("[convertAgentVO]对象转换报错", e);
+        }
+    }
+}

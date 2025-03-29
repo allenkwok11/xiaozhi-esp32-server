@@ -1,25 +1,13 @@
 package xiaozhi.modules.agent.service;
 
-import xiaozhi.common.page.PageData;
-import xiaozhi.common.service.BaseService;
-import xiaozhi.modules.agent.entity.AgentEntity;
+import xiaozhi.modules.agent.domain.Agent;
+import com.baomidou.mybatisplus.extension.service.IService;
 
-import java.util.List;
-import java.util.Map;
+/**
+* @author chenerlei
+* @description 针对表【ai_agent(智能体配置表)】的数据库操作Service
+* @createDate 2025-03-22 11:48:18
+*/
+public interface AgentService extends IService<Agent> {
 
-public interface AgentService extends BaseService<AgentEntity> {
-    /**
-     * 根据用户ID获取智能体列表
-     */
-    List<AgentEntity> getUserAgents(Long userId);
-    
-    /**
-     * 管理员获取所有智能体列表（分页）
-     */
-    PageData<AgentEntity> adminAgentList(Map<String, Object> params);
-    
-    /**
-     * 获取智能体详情
-     */
-    AgentEntity getAgentById(String id);
-} 
+}

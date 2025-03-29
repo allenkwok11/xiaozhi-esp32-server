@@ -1,56 +1,58 @@
 <template>
   <el-header class="header">
-    <div class="header-container">
-      <!-- 左侧元素 -->
-      <div class="header-left">
-        <img alt="" src="@/assets/xiaozhi-logo.png" class="logo-img"/>
-        <img alt="" src="@/assets/xiaozhi-ai.png" class="brand-img"/>
-      </div>
-
-      <!-- 中间导航菜单 -->
-      <div class="header-center">
-        <div class="equipment-management" :class="{ 'active-tab': $route.path === '/home' }" @click="goHome">
-          <img alt="" src="@/assets/header/roboot.png" :style="{ filter: $route.path === '/home' ? 'brightness(0) invert(1)' : 'None' }"/>
-          智能体管理
+    <div style="display: flex;justify-content: space-between;margin-top: 6px;">
+      <div style="display: flex;align-items: center;gap: 10px;">
+        <img alt="" src="@/assets/xiaozhi-logo.png" style="width: 42px;height: 42px;"/>
+        <img alt="" src="@/assets/xiaozhi-ai.png" style="width: 58px;height: 12px;"/>
+        <div ref="menu-code_agent" class="ml-20 menu-btn" @click="goToPage('/home')">
+          <!-- <img alt="" src="@/assets/home/equipment.png" style="width: 12px;height: 10px;"/> -->
+          <i class="el-icon-cpu"></i>
+          智能体
         </div>
-        <div class="equipment-management" :class="{ 'active-tab': $route.path === '/user-management' }" @click="goUserManagement">
-          <img alt="" src="@/assets/header/user_management.png" :style="{ filter: $route.path === '/user-management' ? 'brightness(0) invert(1)' : 'None' }"/>
+        <div ref="menu-code_console" class="menu-btn">
+          <i class="el-icon-microphone" style="color: #979db1;"/>
+          声音复刻
+        </div>
+        <div ref="menu-code_console" class="menu-btn">
+          <i class="el-icon-s-grid" style="color: #979db1;"/>
+          控制台
+        </div>
+        <div ref="menu-code_user" class="menu-btn" @click="goToPage('/user-management')">
+          <i class="el-icon-user"></i>
           用户管理
         </div>
-        <div class="equipment-management" :class="{ 'active-tab': $route.path === '/model-config' }" @click="goModelConfig">
-          <img alt="" src="@/assets/header/model_config.png" :style="{ filter: $route.path === '/model-config' ? 'brightness(0) invert(1)' : 'None' }"/>
+        <div ref="menu-code_model" class="menu-btn" @click="goToPage('/model-config')">
+          <i class="el-icon-news"></i>
           模型配置
         </div>
-      </div>
-
-      <!-- 右侧元素 -->
-      <div class="header-right">
-        <div class="search-container">
-          <el-input
-            v-model="serach"
-            placeholder="输入名称搜索.."
-            class="custom-search-input"
-            @keyup.enter.native="handleSearch"
-          >
-            <i slot="suffix" class="el-icon-search search-icon" @click="handleSearch"></i>
-          </el-input>
+        <div ref="menu-code_ota" class="menu-btn" @click="goToPage('/ota')">
+          <i class="el-icon-lightning"></i>
+          OTA管理
         </div>
-        <img alt="" src="@/assets/home/avatar.png" class="avatar-img"/>
-        <el-dropdown trigger="click" class="user-dropdown">
+      </div>
+      <div style="display: flex;align-items: center;gap: 7px; margin-top: 2px;">
+        <div class="serach-box">
+          <el-input v-model="serach" placeholder="输入名称搜索.." style="border: none; background: transparent;"
+                    @keyup.enter.native="handleSearch"/>
+          <img alt="" src="@/assets/home/search.png"
+               style="width: 14px;height: 14px;margin-right: 11px;cursor: pointer;" @click="handleSearch"/>
+        </div>
+        <img alt="" src="@/assets/home/avatar.png" style="width: 21px;height: 21px;"/>
+        <el-dropdown trigger="click">
           <span class="el-dropdown-link">
-             {{ userInfo.mobile || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
+             {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item icon="el-icon-plus" @click.native="">个人中心</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-circle-plus" @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="">退出登录</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-user" @click.native="">个人中心</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-key" @click.native="">修改密码</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-connection" @click.native="handleLogout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
     </div>
 
     <!-- 修改密码弹窗 -->
-    <ChangePasswordDialog :visible.sync="isChangePasswordDialogVisible"/>
+    <ChangePasswordDialog :visible.sync="isChangePasswordDialogVisible" />
   </el-header>
 </template>
 
@@ -74,19 +76,33 @@ export default {
       isChangePasswordDialogVisible: false // 控制修改密码弹窗的显示
     }
   },
+  watch: {
+    '$route.meta.menuCode': {
+      handler(to, from) {
+        const meta = this.$route.meta;
+        if(meta && meta.menuCode){
+          this.$nextTick(() => {
+            const menu = this.$refs[`menu-code_`+ meta.menuCode]
+            menu && menu.classList.add('active')
+          })
+        }
+      },
+      immediate: true,
+      deep: true
+    }
+  },
   mounted() {
     this.fetchUserInfo()
   },
   methods: {
-    goHome() {
+    handleLogout() {
+      // 退出登录
+        this.$store.commit('setToken','')
+        this.$router.push('/login')
+    },
+    goToPage(path) {
       // 跳转到首页
-      this.$router.push('/')
-    },
-    goUserManagement() {
-      this.$router.push('/user-management')
-    },
-    goModelConfig() {
-      this.$router.push('/model-config')
+      this.$router.replace(path)
     },
     // 获取用户信息
     fetchUserInfo() {
@@ -124,168 +140,71 @@ export default {
 </script>
 
 <style scoped>
+.ml-20 {
+  margin-left: 20px;
+}
+
+.menu-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #fff;
+  color: #979db1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+.menu-btn.active {
+  background: #5778ff;
+  color: #fff;
+}
+
 .header {
   background: #f6fcfe66;
   border: 1px solid #fff;
   height: 53px !important;
-  min-width: 900px; /* 设置最小宽度防止过度压缩 */
-  overflow: hidden;
 }
 
-.header-container {
+.serach-box {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 100%;
-  padding: 0 10px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 120px;
-}
-
-.logo-img {
-  width: 42px;
-  height: 42px;
-}
-
-.brand-img {
-  width: 58px;
-  height: 12px;
-}
-
-.header-center {
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 300px;
-  justify-content: flex-end;
-}
-
-.equipment-management {
-  width: 82px;
-  height: 24px;
-  border-radius: 12px;
-  background: #deeafe;
-  display: flex;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 500;
-  gap: 7px;
-  color: #3d4566;
-  margin-left: 1px;
-  align-items: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  flex-shrink: 0; /* 防止导航按钮被压缩 */
-}
-
-.equipment-management.active-tab {
-  background: #5778ff !important;
-  color: #fff !important;
-}
-
-.equipment-management img {
-  width: 15px;
-  height: 13px;
-}
-
-.search-container {
-  margin-right: 15px;
-  min-width: 150px;
-  flex-grow: 1;
-  max-width: 220px;
-}
-
-.custom-search-input >>> .el-input__inner {
+  width: 220px;
   height: 30px;
   border-radius: 15px;
-  background-color: #e2e5f8;
+  background-color: #f6fcfe66;
   border: 1px solid #e4e6ef;
-  padding-left: 15px;
-  font-size: 12px;
+  align-items: center;
+  padding: 0 7px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-right: 15px;
+}
+
+.serach-box /deep/ .el-input__inner {
+  border-radius: 15px;
+  height: 100%;
   width: 100%;
+  border: 0;
+  background: transparent;
+  padding-left: 12px;
 }
 
-.search-icon {
+.user-info {
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.02px;
+  text-align: left;
+  color: #3d4566;
+}
+
+.el-dropdown-link {
   cursor: pointer;
-  color: #909399;
-  margin-right: 8px;
-  font-size: 14px;
-  line-height: 30px;
+  color: #5778ff;
 }
 
-.avatar-img {
-  width: 21px;
-  height: 21px;
-  flex-shrink: 0;
+.el-icon-arrow-down {
+  font-size: 12px;
 }
 
-.user-dropdown {
-  flex-shrink: 0;
-}
-
-/* 响应式调整 */
-@media (max-width: 1200px) {
-  .header-center {
-    gap: 14px;
-  }
-
-  .equipment-management {
-    width: 70px;
-    font-size: 9px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .search-container {
-    margin-right: 10px;
-    max-width: 150px;
-  }
-
-  .header-right {
-    gap: 5px;
-  }
-}
-
-@media (max-width: 900px) {
-  .header-left {
-    margin-right: auto;
-  }
-
-  .search-container {
-    max-width: 150px;
-  }
-}
-
-@media (max-width: 768px) {
-  .search-container {
-    max-width: 145px;
-  }
-
-  .custom-search-input >>> .el-input__inner {
-    padding-left: 10px;
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 600px) {
-  .search-container {
-    max-width: 120px;
-    min-width: 100px;
-  }
-}
 </style>

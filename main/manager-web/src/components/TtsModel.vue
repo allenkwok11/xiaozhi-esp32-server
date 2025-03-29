@@ -122,9 +122,10 @@ export default {
 }
 
 .model-menu {
-  border-right: 1px solid #ebeef5;
+  border: 1px solid #ebeef5;
   height: calc(100vh - 300px);
   background-color: #fafafa;
+  margin-right: 20px;
 }
 
 .search-operate {
