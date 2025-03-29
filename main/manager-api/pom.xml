@@ -167,12 +167,6 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- SLF4J + Log4j2 实现（可选） -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.20.0</version>
-        </dependency>
     </dependencies>
 
     <!-- 阿里云maven仓库 -->
