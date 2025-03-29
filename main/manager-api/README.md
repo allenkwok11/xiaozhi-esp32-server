@@ -67,13 +67,6 @@ spring:
         database: 0
 ```
 
-在`src/main/resources/application.yml`中配置Redis启用状态
-
-```
-renren:
-  redis:
-    open: true
-```
 
 # 测试启动
 

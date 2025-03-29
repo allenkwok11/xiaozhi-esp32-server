@@ -1,13 +1,19 @@
 package xiaozhi.modules.device.service;
 
-import xiaozhi.modules.device.domain.Device;
-import com.baomidou.mybatisplus.extension.service.IService;
+import xiaozhi.common.page.PageData;
+import xiaozhi.common.service.BaseService;
+import xiaozhi.modules.device.dto.DeviceHeaderDTO;
+import xiaozhi.modules.device.entity.DeviceEntity;
 
-/**
-* @author chenerlei
-* @description 针对表【ai_device(设备信息表)】的数据库操作Service
-* @createDate 2025-03-22 13:26:35
-*/
-public interface DeviceService extends IService<Device> {
+import java.util.List;
+import java.util.Map;
 
+public interface DeviceService extends BaseService<DeviceEntity> {
+    DeviceEntity bindDevice(Long userId, DeviceHeaderDTO deviceHeader);
+
+    List<DeviceEntity> getUserDevices(Long userId);
+
+    void unbindDevice(Long userId, Long deviceId);
+
+    PageData<DeviceEntity> adminDeviceList(Map<String, Object> params);
 }

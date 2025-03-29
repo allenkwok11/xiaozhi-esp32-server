@@ -1,6 +1,5 @@
-package xiaozhi.modules.agent.domain;
+package xiaozhi.modules.agent.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -14,7 +13,7 @@ import lombok.Data;
  */
 @TableName(value ="ai_agent_template")
 @Data
-public class AgentTemplate implements Serializable {
+public class AgentTemplateEntity implements Serializable {
     /**
      * 智能体唯一标识
      */

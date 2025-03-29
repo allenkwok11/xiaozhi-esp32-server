@@ -30,19 +30,3 @@ INSERT INTO `ai_tts_voice` VALUES ('9e8f7a6b5c4d3e2f1a0b9c8d7e6f5ad3', '896db62c
 INSERT INTO `ai_tts_voice` VALUES ('2b3c4d5e6f7a8b9c0d1e2f3a4b5c62a2', '896db62c9dd74976ab0e8c14bf924d9d', '阳光男生', 'BV056_streaming', '中文', 'https://lf3-speech.bytetos.com/obj/speech-tts-external/portal/Portal_Demo_BV056.mp3', NULL, 4, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('f7a38c03d5644e22b6d84f8923a74c51', '896db62c9dd74976ab0e8c14bf924d9d', '奶气萌娃', 'BV051_streaming', '中文', 'https://lf3-speech.bytetos.com/obj/speech-tts-external/portal/Portal_Demo_BV051.mp3', NULL, 5, NULL, NULL, NULL, NULL);
 
-
--- OTA升级信息表
-DROP TABLE IF EXISTS `ai_ota`;
-CREATE TABLE `ai_ota` (
-                          `id` VARCHAR(32) NOT NULL COMMENT '记录唯一标识',
-                          `board` VARCHAR(50) COMMENT '设备硬件型号',
-                          `app_version` VARCHAR(20) COMMENT '固件版本号',
-                          `url` VARCHAR(500) COMMENT '下载地址',
-                          `is_enabled` TINYINT(1) DEFAULT 0 COMMENT '是否启用',
-                          `creator` BIGINT COMMENT '创建者',
-                          `create_date` DATETIME COMMENT '创建时间',
-                          `updater` BIGINT COMMENT '更新者',
-                          `update_date` DATETIME COMMENT '更新时间',
-                          PRIMARY KEY (`id`),
-                          UNIQUE KEY `uni_ai_ota_board` (`board`) COMMENT '设备型号唯一索引，用于快速查找升级信息'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='OTA升级信息表';

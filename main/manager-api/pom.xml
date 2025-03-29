@@ -27,7 +27,6 @@
         <shiro.version>2.0.2</shiro.version>
         <captcha.version>1.6.2</captcha.version>
         <guava.version>33.0.0-jre</guava.version>
-        <easyexcel.version>3.3.2</easyexcel.version>
         <liquibase-core.version>4.20.0</liquibase-core.version>
     </properties>
 
