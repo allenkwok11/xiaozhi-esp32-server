@@ -3,6 +3,7 @@ package xiaozhi.modules.agent.entity;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -20,7 +21,7 @@ public class AgentTemplateEntity implements Serializable {
     /**
      * 智能体唯一标识
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_UUID)
     private String id;
 
     /**
@@ -61,7 +62,7 @@ public class AgentTemplateEntity implements Serializable {
     /**
      * 记忆模型标识
      */
-    private String memoryModelId;
+    private String memModelId;
 
     /**
      * 意图模型标识
@@ -87,11 +88,6 @@ public class AgentTemplateEntity implements Serializable {
      * 排序权重
      */
     private Integer sort;
-
-    /**
-     * 是否默认模板：1：是，0：不是
-     */
-    private Integer isDefault;
 
     /**
      * 创建者 ID

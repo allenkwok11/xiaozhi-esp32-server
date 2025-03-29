@@ -6,6 +6,7 @@ import lombok.Data;
 
 /**
  * 设备绑定的DTO
+ * 
  * @author zjy
  * @since 2025-3-28
  */

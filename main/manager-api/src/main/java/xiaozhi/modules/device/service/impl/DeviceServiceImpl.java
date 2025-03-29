@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import cn.hutool.core.util.RandomUtil;
@@ -22,8 +23,9 @@ import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.user.UserDetail;
+import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.modules.device.dao.DeviceDao;
-import xiaozhi.modules.device.dto.DeviceHeaderDTO;
+import xiaozhi.modules.device.dto.DeviceBindDTO;
 import xiaozhi.modules.device.dto.DeviceReportReqDTO;
 import xiaozhi.modules.device.dto.DeviceReportRespDTO;
 import xiaozhi.modules.device.entity.DeviceEntity;
@@ -167,23 +169,34 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
 
         return response;
     }
-  
+
     @Override
-    public void bindDevice(DeviceBindDTO dto) {
-        DeviceEntity deviceEntity = ConvertUtils.sourceToTarget(dto, DeviceEntity.class);
+    public DeviceEntity bindDevice(DeviceBindDTO dto) {
+        // 查看是否已经被绑定
+        DeviceEntity deviceEntity = baseDao
+                .selectOne(new LambdaQueryWrapper<DeviceEntity>().eq(DeviceEntity::getMacAddress, dto.getMacAddress()));
+        if (deviceEntity != null) {
+            throw new RenException("设备已绑定");
+        }
+        deviceEntity = ConvertUtils.sourceToTarget(dto, DeviceEntity.class);
         baseDao.insert(deviceEntity);
+        return deviceEntity;
     }
 
     @Override
-    public List<DeviceEntity> getUserDevices(Long userId) {
+    public List<DeviceEntity> getUserDevices(Long userId, String agentId) {
         QueryWrapper<DeviceEntity> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId);
+        wrapper.eq("agent_id", agentId);
         return baseDao.selectList(wrapper);
     }
 
     @Override
-    public void unbindDevice(Long userId, Long deviceId) {
-        baseDao.deleteById(deviceId);
+    public void unbindDevice(Long userId, String deviceId) {
+        UpdateWrapper<DeviceEntity> wrapper = new UpdateWrapper<>();
+        wrapper.eq("user_id", userId);
+        wrapper.eq("id", deviceId);
+        baseDao.delete(wrapper);
     }
 
     @Override

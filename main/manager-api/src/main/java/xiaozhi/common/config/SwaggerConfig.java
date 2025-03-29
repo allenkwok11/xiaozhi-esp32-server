@@ -16,10 +16,59 @@ import io.swagger.v3.oas.models.info.Info;
 public class SwaggerConfig {
 
     @Bean
+    public GroupedOpenApi deviceApi() {
+        return GroupedOpenApi.builder()
+                .group("device")
+                .pathsToMatch("/device/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi agentApi() {
+        return GroupedOpenApi.builder()
+                .group("agent")
+                .pathsToMatch("/agent/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi modelApi() {
+        return GroupedOpenApi.builder()
+                .group("models")
+                .pathsToMatch("/models/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi oatApi() {
+        return GroupedOpenApi.builder()
+                .group("ota")
+                .pathsToMatch("/ota/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi timbreApi() {
+        return GroupedOpenApi.builder()
+                .group("timbre")
+                .pathsToMatch("/timbre/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi sysApi() {
+        return GroupedOpenApi.builder()
+                .group("admin")
+                .pathsToMatch("/admin/**")
+                .build();
+    }
+
+    @Bean
     public GroupedOpenApi userApi() {
-        String[] paths = { "/**" };
-        return GroupedOpenApi.builder().group("xiaozhi")
-                .pathsToMatch(paths).build();
+        return GroupedOpenApi.builder()
+                .group("user")
+                .pathsToMatch("/user/**")
+                .build();
     }
 
     @Bean

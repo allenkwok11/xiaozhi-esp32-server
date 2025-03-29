@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import xiaozhi.common.page.PageData;
-import xiaozhi.modules.device.dto.DeviceHeaderDTO;
+import xiaozhi.modules.device.dto.DeviceBindDTO;
 import xiaozhi.modules.device.dto.DeviceReportReqDTO;
 import xiaozhi.modules.device.dto.DeviceReportRespDTO;
 import xiaozhi.modules.device.entity.DeviceEntity;
@@ -25,17 +25,17 @@ public interface DeviceService {
     /**
      * 绑定设备
      */
-    DeviceEntity bindDevice(Long userId, DeviceHeaderDTO deviceHeader);
+    DeviceEntity bindDevice(DeviceBindDTO deviceHeader);
 
     /**
      * 获取用户设备列表
      */
-    List<DeviceEntity> getUserDevices(Long userId);
+    List<DeviceEntity> getUserDevices(Long userId, String agentId);
 
     /**
      * 解绑设备
      */
-    void unbindDevice(Long userId, Long deviceId);
+    void unbindDevice(Long userId, String deviceId);
 
     /**
      * 管理员设备列表

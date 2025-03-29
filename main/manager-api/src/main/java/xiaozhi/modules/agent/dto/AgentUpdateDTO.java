@@ -3,7 +3,6 @@ package xiaozhi.modules.agent.dto;
 import java.io.Serializable;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -15,10 +14,6 @@ import lombok.Data;
 @Schema(description = "智能体更新对象")
 public class AgentUpdateDTO implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    @Schema(description = "智能体唯一标识", example = "a1b2c3d4e5f6", required = true)
-    @NotBlank(message = "智能体ID不能为空")
-    private String id;
 
     @Schema(description = "智能体编码", example = "AGT_1234567890", required = false)
     private String agentCode;

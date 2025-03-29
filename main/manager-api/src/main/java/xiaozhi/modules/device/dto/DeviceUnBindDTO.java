@@ -15,6 +15,6 @@ public class DeviceUnBindDTO implements Serializable {
 
     @Schema(description = "设备ID")
     @NotBlank(message = "设备ID不能为空")
-    private Long deviceId;
+    private String deviceId;
 
 }

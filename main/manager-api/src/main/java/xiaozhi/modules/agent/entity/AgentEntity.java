@@ -2,6 +2,8 @@ package xiaozhi.modules.agent.entity;
 
 import java.util.Date;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,6 +13,8 @@ import lombok.Data;
 @TableName("ai_agent")
 @Schema(description = "智能体信息")
 public class AgentEntity {
+
+    @TableId(type = IdType.ASSIGN_UUID)
     @Schema(description = "智能体唯一标识")
     private String id;
 

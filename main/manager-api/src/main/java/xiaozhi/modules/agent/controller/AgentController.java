@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -29,7 +31,9 @@ import xiaozhi.common.utils.Result;
 import xiaozhi.modules.agent.dto.AgentCreateDTO;
 import xiaozhi.modules.agent.dto.AgentUpdateDTO;
 import xiaozhi.modules.agent.entity.AgentEntity;
+import xiaozhi.modules.agent.entity.AgentTemplateEntity;
 import xiaozhi.modules.agent.service.AgentService;
+import xiaozhi.modules.agent.service.AgentTemplateService;
 import xiaozhi.modules.security.user.SecurityUser;
 
 @Tag(name = "智能体管理")
@@ -38,6 +42,7 @@ import xiaozhi.modules.security.user.SecurityUser;
 @RequestMapping("/agent")
 public class AgentController {
     private final AgentService agentService;
+    private final AgentTemplateService agentTemplateService;
 
     @GetMapping("/list")
     @Operation(summary = "获取用户智能体列表")
@@ -87,12 +92,12 @@ public class AgentController {
         return new Result<>();
     }
 
-    @PutMapping
+    @PutMapping("/{id}")
     @Operation(summary = "更新智能体")
     @RequiresPermissions("sys:role:normal")
-    public Result<Void> update(@RequestBody @Valid AgentUpdateDTO dto) {
+    public Result<Void> update(@PathVariable String id, @RequestBody @Valid AgentUpdateDTO dto) {
         // 先查询现有实体
-        AgentEntity existingEntity = agentService.getAgentById(dto.getId());
+        AgentEntity existingEntity = agentService.getAgentById(id);
         if (existingEntity == null) {
             return new Result<Void>().error("智能体不存在");
         }
@@ -154,5 +159,14 @@ public class AgentController {
     public Result<Void> delete(@PathVariable String id) {
         agentService.deleteById(id);
         return new Result<>();
+    }
+
+    @GetMapping("/template")
+    @Operation(summary = "智能体模板模板列表")
+    @RequiresPermissions("sys:role:normal")
+    public Result<List<AgentTemplateEntity>> templateList() {
+        List<AgentTemplateEntity> list = agentTemplateService
+                .list(new QueryWrapper<AgentTemplateEntity>().orderByAsc("sort"));
+        return new Result<List<AgentTemplateEntity>>().ok(list);
     }
 }
