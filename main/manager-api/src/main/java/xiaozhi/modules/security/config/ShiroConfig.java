@@ -65,6 +65,7 @@ public class ShiroConfig {
         perms：拥有对某个资源的权限才能访问
         role：拥有某个角色权限才能访问*/
         Map<String, String> filterMap = new LinkedHashMap<>();
+        filterMap.put("/ota/**", "anon");
         filterMap.put("/webjars/**", "anon");
         filterMap.put("/druid/**", "anon");
         filterMap.put("/v3/api-docs/**", "anon");
