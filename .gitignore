@@ -156,3 +156,6 @@ main/xiaozhi-server/models/SenseVoiceSmall/model.pt
 main/xiaozhi-server/models/sherpa-onnx*
 /main/xiaozhi-server/audio_ref/
 /audio_ref/
+/asr-models/iic/SenseVoiceSmall/
+/main/xiaozhi-server/asr-models/iic/SenseVoiceSmall/
+/models/SenseVoiceSmall/model.pt

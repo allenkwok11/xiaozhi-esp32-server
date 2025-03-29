@@ -7,6 +7,8 @@ import asyncio
 import difflib
 import traceback
 from pathlib import Path
+
+from core.providers.tts.dto.dto import TTSMessageDTO, MsgType
 from core.utils import p3
 from core.handle.sendAudioHandle import send_stt_message
 from plugins_func.register import register_function,ToolType, ActionResponse, Action
@@ -189,7 +191,12 @@ async def play_local_music(conn, specific_file=None):
             opus_packets, duration = p3.decode_opus_from_file(music_path)
         else:
             opus_packets, duration = conn.tts.audio_to_opus_data(music_path)
-        conn.audio_play_queue.put((opus_packets, selected_music, 0))
+        conn.tts.tts_audio_queue.put(
+            TTSMessageDTO(
+                u_id="", msg_type=MsgType.TTS_TEXT_RESPONSE, content=opus_packets,
+                tts_finish_text="", sentence_type=None, duration=0
+            )
+        )
 
     except Exception as e:
         logger.bind(tag=TAG).error(f"播放音乐失败: {str(e)}")

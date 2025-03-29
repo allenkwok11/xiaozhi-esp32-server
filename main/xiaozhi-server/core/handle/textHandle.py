@@ -28,6 +28,8 @@ async def handleTextMessage(conn, message):
             if msg_json["state"] == "start":
                 conn.client_have_voice = True
                 conn.client_voice_stop = False
+                # 打断，开启了行的对话，如果之前有tts存在，销毁掉重新建立tts
+                await conn.init_and_reset_tts()
             elif msg_json["state"] == "stop":
                 conn.client_have_voice = True
                 conn.client_voice_stop = True

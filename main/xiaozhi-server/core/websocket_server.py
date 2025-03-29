@@ -12,7 +12,7 @@ class WebSocketServer:
     def __init__(self, config: dict):
         self.config = config
         self.logger = setup_logging()
-        self._vad, self._asr, self._llm, self._tts, self._memory, self.intent = self._create_processing_instances()
+        self._vad, self._asr, self._llm, self._memory, self.intent = self._create_processing_instances()
         self.active_connections = set()  # 添加全局连接记录
 
     def _create_processing_instances(self):
@@ -40,14 +40,6 @@ class WebSocketServer:
                 else
                 self.config["LLM"][self.config["selected_module"]["LLM"]]['type'],
                 self.config["LLM"][self.config["selected_module"]["LLM"]],
-            ),
-            tts.create_instance(
-                self.config["selected_module"]["TTS"]
-                if not 'type' in self.config["TTS"][self.config["selected_module"]["TTS"]]
-                else
-                self.config["TTS"][self.config["selected_module"]["TTS"]]["type"],
-                self.config["TTS"][self.config["selected_module"]["TTS"]],
-                self.config["delete_audio"]
             ),
             memory.create_instance(memory_cls_name, memory_cfg),
             intent.create_instance(
@@ -78,7 +70,17 @@ class WebSocketServer:
     async def _handle_connection(self, websocket):
         """处理新连接，每次创建独立的ConnectionHandler"""
         # 创建ConnectionHandler时传入当前server实例
-        handler = ConnectionHandler(self.config, self._vad, self._asr, self._llm, self._tts, self._memory, self.intent)
+        # tts 变成链接的时候创建，避免并非问题
+        f_tts = tts.create_instance(
+            self.config["selected_module"]["TTS"]
+            if not 'type' in self.config["TTS"][self.config["selected_module"]["TTS"]]
+            else
+            self.config["TTS"][self.config["selected_module"]["TTS"]]["type"],
+            self.config["TTS"][self.config["selected_module"]["TTS"]],
+            self.config["delete_audio"]
+        )
+        await f_tts.open_audio_channels()
+        handler = ConnectionHandler(self.config, self._vad, self._asr, self._llm, f_tts, self._memory, self.intent)
         self.active_connections.add(handler)
         try:
             await handler.handle_connection(websocket)
