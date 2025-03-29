@@ -27,7 +27,6 @@
         <shiro.version>2.0.2</shiro.version>
         <captcha.version>1.6.2</captcha.version>
         <guava.version>33.0.0-jre</guava.version>
-        <easyexcel.version>3.3.2</easyexcel.version>
         <liquibase-core.version>4.20.0</liquibase-core.version>
     </properties>
 
@@ -167,6 +166,12 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <!-- SLF4J + Log4j2 实现（可选） -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.20.0</version>
         </dependency>
     </dependencies>
 

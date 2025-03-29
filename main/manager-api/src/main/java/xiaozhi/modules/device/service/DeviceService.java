@@ -1,6 +1,7 @@
 package xiaozhi.modules.device.service;
 
 import xiaozhi.common.page.PageData;
+import xiaozhi.common.service.BaseService;
 import xiaozhi.modules.device.dto.DeviceHeaderDTO;
 import xiaozhi.modules.device.dto.DeviceReportReqDTO;
 import xiaozhi.modules.device.dto.DeviceReportRespDTO;
@@ -19,11 +20,11 @@ public interface DeviceService {
     DeviceReportRespDTO checkDeviceActive(String macAddress, String deviceId, String clientId, DeviceReportReqDTO deviceReport);
 
     DeviceEntity bindDevice(Long userId, DeviceHeaderDTO deviceHeader);
-    
+
     List<DeviceEntity> getUserDevices(Long userId);
-    
+
     void unbindDevice(Long userId, Long deviceId);
-    
+
     PageData<DeviceEntity> adminDeviceList(Map<String, Object> params);
 
     Boolean deviceActivation(String activationCode);
