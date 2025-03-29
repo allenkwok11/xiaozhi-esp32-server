@@ -56,9 +56,9 @@ public class Oauth2Filter extends AuthenticatingFilter {
         String token = getRequestToken((HttpServletRequest) request);
 
         // TODO 调试接口，临时取消登录限制，需要 token 参数的除外
-        if (true) {
-            return true;
-        }
+//        if (true) {
+//            return true;
+//        }
 
         if (StringUtils.isBlank(token)) {
             logger.warn("onAccessDenied:token is empty");
