@@ -6,14 +6,14 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import xiaozhi.common.entity.BaseEntity;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @TableName("ai_device")
 @Schema(description = "设备信息")
-public class DeviceEntity {
-    @Schema(description = "设备ID")
-    private String id;
-
+public class DeviceEntity extends BaseEntity {
     @Schema(description = "关联用户ID")
     private Long userId;
 
@@ -40,12 +40,6 @@ public class DeviceEntity {
 
     @Schema(description = "排序")
     private Integer sort;
-
-    @Schema(description = "创建者")
-    private Long creator;
-
-    @Schema(description = "创建时间")
-    private Date createDate;
 
     @Schema(description = "更新者")
     private Long updater;

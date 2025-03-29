@@ -167,32 +167,28 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
 
         return response;
     }
-
+  
     @Override
-    public DeviceEntity bindDevice(Long userId, DeviceHeaderDTO deviceHeader) {
-        DeviceEntity device = new DeviceEntity();
-        device.setUserId(userId);
-        device.setMacAddress(deviceHeader.getDeviceId());
-        device.setCreateDate(new Date());
-        deviceDao.insert(device);
-        return device;
+    public void bindDevice(DeviceBindDTO dto) {
+        DeviceEntity deviceEntity = ConvertUtils.sourceToTarget(dto, DeviceEntity.class);
+        baseDao.insert(deviceEntity);
     }
 
     @Override
     public List<DeviceEntity> getUserDevices(Long userId) {
         QueryWrapper<DeviceEntity> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId);
-        return deviceDao.selectList(wrapper);
+        return baseDao.selectList(wrapper);
     }
 
     @Override
     public void unbindDevice(Long userId, Long deviceId) {
-        deviceDao.deleteById(deviceId);
+        baseDao.deleteById(deviceId);
     }
 
     @Override
     public PageData<DeviceEntity> adminDeviceList(Map<String, Object> params) {
-        IPage<DeviceEntity> page = deviceDao.selectPage(
+        IPage<DeviceEntity> page = baseDao.selectPage(
                 getPage(params, "sort", true),
                 new QueryWrapper<>());
         return new PageData<>(page.getRecords(), page.getTotal());

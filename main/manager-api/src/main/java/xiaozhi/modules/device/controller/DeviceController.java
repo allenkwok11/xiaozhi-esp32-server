@@ -14,23 +14,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import xiaozhi.common.constant.Constant;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.exception.ErrorCode;
-import xiaozhi.common.page.PageData;
 import xiaozhi.common.redis.RedisKeys;
 import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.user.UserDetail;
-import xiaozhi.common.utils.JsonUtils;
 import xiaozhi.common.utils.Result;
-import xiaozhi.modules.device.dto.DeviceHeaderDTO;
+import xiaozhi.modules.device.dto.DeviceBindDTO;
 import xiaozhi.modules.device.dto.DeviceUnBindDTO;
 import xiaozhi.modules.device.entity.DeviceEntity;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.security.user.SecurityUser;
+
+import java.util.List;
 
 @Tag(name = "设备管理")
 @AllArgsConstructor
@@ -38,21 +38,21 @@ import xiaozhi.modules.security.user.SecurityUser;
 @RequestMapping("/device")
 public class DeviceController {
     private final DeviceService deviceService;
+
     private final RedisUtils redisUtils;
 
     @PostMapping("/bind/{deviceCode}")
     @Operation(summary = "绑定设备")
     @RequiresPermissions("sys:role:normal")
-    public Result<DeviceEntity> bindDevice(@PathVariable String deviceCode) {
-        UserDetail user = SecurityUser.getUser();
-
-        String deviceHeaders = (String) redisUtils.get(RedisKeys.getDeviceCaptchaKey(deviceCode));
-        if (StringUtils.isBlank(deviceHeaders)) {
-            return new Result<DeviceEntity>().error(ErrorCode.DEVICE_CAPTCHA_ERROR);
+    public Result<Void> bindDevice(@PathVariable String agentId,@RequestBody String code) {
+        String macAddress = (String) redisUtils.get(RedisKeys.getDeviceCaptchaKey(code));
+        if (StringUtils.isBlank(macAddress)) {
+            return new Result<Void>().error(ErrorCode.DEVICE_CAPTCHA_ERROR);
         }
-        DeviceHeaderDTO deviceHeader = JsonUtils.parseObject(deviceHeaders.getBytes(), DeviceHeaderDTO.class);
-        DeviceEntity device = deviceService.bindDevice(user.getId(), deviceHeader);
-        return new Result<DeviceEntity>().ok(device);
+        Long user = SecurityUser.getUser().getId();
+        DeviceBindDTO deviceBindDTO = new DeviceBindDTO(macAddress,user,agentId);
+        deviceService.bindDevice(deviceBindDTO);
+        return new Result<>();
     }
 
     @GetMapping("/bind")
@@ -73,16 +73,5 @@ public class DeviceController {
         return new Result<Void>();
     }
 
-    @GetMapping("/all")
-    @Operation(summary = "设备列表（管理员）")
-    @RequiresPermissions("sys:role:superAdmin")
-    @Parameters({
-            @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
-            @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
-    })
-    public Result<PageData<DeviceEntity>> adminDeviceList(
-            @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
-        PageData<DeviceEntity> page = deviceService.adminDeviceList(params);
-        return new Result<PageData<DeviceEntity>>().ok(page);
-    }
+
 }
