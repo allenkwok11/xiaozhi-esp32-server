@@ -1,19 +1,20 @@
 package xiaozhi.modules.model.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import java.io.Serializable;
 import java.util.Date;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 @Data
 @Schema(description = "模型供应器/商")
 public class ModelProviderDTO implements Serializable {
-//
-//    @Schema(description = "主键")
-//    private Long id;
+    //
+    // @Schema(description = "主键")
+    // private Long id;
 
     @Schema(description = "模型类型(Memory/ASR/VAD/LLM/TTS)")
     private String modelType;

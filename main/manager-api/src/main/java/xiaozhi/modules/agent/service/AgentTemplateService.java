@@ -1,8 +1,8 @@
 package xiaozhi.modules.agent.service;
 
-import xiaozhi.modules.agent.entity.AgentTemplateEntity;
-
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import xiaozhi.modules.agent.entity.AgentTemplateEntity;
 
 /**
  * @author chenerlei

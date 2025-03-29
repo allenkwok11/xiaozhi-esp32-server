@@ -7,8 +7,7 @@ import lombok.Setter;
 
 @Data
 @Schema(description = "设备OTA检测版本返回体，包含激活码要求")
-public class DeviceReportRespDTO
-{
+public class DeviceReportRespDTO {
     @Schema(description = "服务器时间")
     private ServerTime serverTime;
 
@@ -38,8 +37,7 @@ public class DeviceReportRespDTO
 
     @Setter
     @Getter
-    public static class Activation
-    {
+    public static class Activation {
         @Schema(description = "激活码")
         private String code;
 
@@ -50,8 +48,7 @@ public class DeviceReportRespDTO
 
     @Getter
     @Setter
-    public static class ServerTime
-    {
+    public static class ServerTime {
         @Schema(description = "时间戳")
         private Long timestamp;
 

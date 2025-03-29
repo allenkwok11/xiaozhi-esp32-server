@@ -8,7 +8,6 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.List;
 
-
 @Setter
 @Getter
 @Schema(description = "设备固件信息上报求请求体")

@@ -15,6 +15,6 @@ import xiaozhi.modules.agent.service.AgentTemplateService;
  */
 @Service
 public class AgentTemplateServiceImpl extends ServiceImpl<AgentTemplateDao, AgentTemplateEntity>
-        implements AgentTemplateService {
+                implements AgentTemplateService {
 
 }

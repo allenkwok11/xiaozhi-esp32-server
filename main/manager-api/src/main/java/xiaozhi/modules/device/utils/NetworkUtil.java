@@ -1,22 +1,21 @@
 package xiaozhi.modules.device.utils;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 网络工具类
  */
-public class NetworkUtil
-{
+public class NetworkUtil {
     /**
-    * MAC地址正则表达式
-    */
+     * MAC地址正则表达式
+     */
     private static final Pattern macPattern = Pattern.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$");
 
     /**
-    * 判断MAC地址是否合法
-    */
+     * 判断MAC地址是否合法
+     */
     public static boolean isMacAddressValid(String mac) {
         if (StringUtils.isBlank(mac)) {
             return false;

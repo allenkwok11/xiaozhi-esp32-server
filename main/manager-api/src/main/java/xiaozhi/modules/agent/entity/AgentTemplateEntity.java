@@ -1,17 +1,20 @@
 package xiaozhi.modules.agent.entity;
 
+import java.io.Serializable;
+import java.util.Date;
+
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
+
 import lombok.Data;
 
 /**
  * 智能体配置模板表
+ * 
  * @TableName ai_agent_template
  */
-@TableName(value ="ai_agent_template")
+@TableName(value = "ai_agent_template")
 @Data
 public class AgentTemplateEntity implements Serializable {
     /**

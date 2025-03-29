@@ -1,31 +1,38 @@
 package xiaozhi.modules.device.controller;
 
+import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.utils.Result;
 import xiaozhi.modules.device.dto.DeviceReportReqDTO;
 import xiaozhi.modules.device.dto.DeviceReportRespDTO;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.device.utils.NetworkUtil;
 
-import java.nio.charset.StandardCharsets;
-
 @Tag(name = "设备管理", description = "OTA 相关接口")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/ota")
-public class OTAController
-{
+public class OTAController {
     private final DeviceService deviceService;
 
     @Operation(summary = "检查 OTA 版本和设备激活状态")
@@ -33,14 +40,9 @@ public class OTAController
     public ResponseEntity<String> checkOTAVersion(
             @RequestBody DeviceReportReqDTO deviceReportReqDTO,
 
-            @Parameter(name = "Device-Id", description = "设备唯一标识", required = true, in = ParameterIn.HEADER)
-            @RequestHeader("Device-Id")
-            String deviceId,
+            @Parameter(name = "Device-Id", description = "设备唯一标识", required = true, in = ParameterIn.HEADER) @RequestHeader("Device-Id") String deviceId,
 
-            @Parameter(name = "Client-Id", description = "客户端标识", required = true, in = ParameterIn.HEADER)
-            @RequestHeader("Client-Id")
-            String clientId
-    ) {
+            @Parameter(name = "Client-Id", description = "客户端标识", required = true, in = ParameterIn.HEADER) @RequestHeader("Client-Id") String clientId) {
         if (StringUtils.isAnyBlank(deviceId, clientId)) {
             return createResponse(DeviceReportRespDTO.createError("Device ID is required"));
         }

@@ -1,13 +1,23 @@
 package xiaozhi.modules.device.service.impl;
 
-import cn.hutool.core.util.RandomUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+
+import cn.hutool.core.util.RandomUtil;
 import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
@@ -20,10 +30,6 @@ import xiaozhi.modules.device.entity.DeviceEntity;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.security.user.SecurityUser;
 
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
 @Service
 public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> implements DeviceService {
 
@@ -35,8 +41,8 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
 
     // 添加构造函数来初始化 deviceMapper
     public DeviceServiceImpl(DeviceDao deviceDao,
-                             @Value("${app.fronted-url:http://localhost:8001}") String frontedUrl,
-                             RedisTemplate<String, Object> redisTemplate) {
+            @Value("${app.fronted-url:http://localhost:8001}") String frontedUrl,
+            RedisTemplate<String, Object> redisTemplate) {
         this.deviceDao = deviceDao;
         this.frontedUrl = frontedUrl;
         this.redisTemplate = redisTemplate;
@@ -104,22 +110,23 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
     }
 
     @Override
-    public DeviceReportRespDTO checkDeviceActive(String macAddress, String deviceId, String clientId, DeviceReportReqDTO deviceReport) {
+    public DeviceReportRespDTO checkDeviceActive(String macAddress, String deviceId, String clientId,
+            DeviceReportReqDTO deviceReport) {
         DeviceReportRespDTO response = new DeviceReportRespDTO();
         response.setServerTime(buildServerTime());
         // todo: 此处是固件信息，目前是针对固件上传上来的版本号再返回回去
-        //  在未来开发了固件更新功能，需要更换此处代码，
-        //  或写定时任务定期请求虾哥的OTA，获取最新的版本讯息保存到服务内
+        // 在未来开发了固件更新功能，需要更换此处代码，
+        // 或写定时任务定期请求虾哥的OTA，获取最新的版本讯息保存到服务内
         DeviceReportRespDTO.Firmware firmware = new DeviceReportRespDTO.Firmware();
         firmware.setVersion(deviceReport.getApplication().getVersion());
         firmware.setUrl("http://localhost:8002/xiaozhi-esp32-api/api/v1/ota/download");
         response.setFirmware(firmware);
 
         DeviceEntity deviceById = getDeviceById(deviceId);
-        if (deviceById != null) {    // 如果设备存在，则更新上次连接时间
+        if (deviceById != null) { // 如果设备存在，则更新上次连接时间
             deviceById.setLastConnectedAt(new Date());
             deviceDao.updateById(deviceById);
-        } else {                    // 如果设备不存在，则生成激活码
+        } else { // 如果设备不存在，则生成激活码
             String safeDeviceId = deviceId.replace(":", "_").toLowerCase();
             String dataKey = String.format("ota:activation:data:%s", safeDeviceId);
 
@@ -161,8 +168,6 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         return response;
     }
 
-
-
     @Override
     public DeviceEntity bindDevice(Long userId, DeviceHeaderDTO deviceHeader) {
         DeviceEntity device = new DeviceEntity();
@@ -189,13 +194,11 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
     public PageData<DeviceEntity> adminDeviceList(Map<String, Object> params) {
         IPage<DeviceEntity> page = deviceDao.selectPage(
                 getPage(params, "sort", true),
-                new QueryWrapper<>()
-        );
+                new QueryWrapper<>());
         return new PageData<>(page.getRecords(), page.getTotal());
     }
 
-    private DeviceReportRespDTO.ServerTime buildServerTime()
-    {
+    private DeviceReportRespDTO.ServerTime buildServerTime() {
         DeviceReportRespDTO.ServerTime serverTime = new DeviceReportRespDTO.ServerTime();
         TimeZone tz = TimeZone.getDefault();
         serverTime.setTimestamp(Instant.now().toEpochMilli());

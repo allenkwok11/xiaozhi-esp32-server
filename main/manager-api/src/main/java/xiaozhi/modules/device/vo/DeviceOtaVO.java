@@ -17,6 +17,7 @@ public class DeviceOtaVO {
 
         public Activation() {
         }
+
         public Activation(String code, String message) {
             this.code = code;
             this.message = message;
@@ -35,6 +36,7 @@ public class DeviceOtaVO {
 
         public ServerTime() {
         }
+
         public ServerTime(Long timestamp, Integer timezone_offset) {
             this.timestamp = timestamp;
             this.timezone_offset = timezone_offset;
@@ -45,8 +47,10 @@ public class DeviceOtaVO {
     public static class Firmware {
         private String version;
         private String url;
+
         public Firmware() {
         }
+
         public Firmware(String version, String url) {
             this.version = version;
             this.url = url;
