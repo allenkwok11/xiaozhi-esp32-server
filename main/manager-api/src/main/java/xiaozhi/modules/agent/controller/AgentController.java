@@ -1,13 +1,26 @@
 package xiaozhi.modules.agent.controller;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.user.UserDetail;
@@ -19,17 +32,13 @@ import xiaozhi.modules.agent.entity.AgentEntity;
 import xiaozhi.modules.agent.service.AgentService;
 import xiaozhi.modules.security.user.SecurityUser;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
 @Tag(name = "智能体管理")
 @AllArgsConstructor
 @RestController
 @RequestMapping("/agent")
 public class AgentController {
     private final AgentService agentService;
-    
+
     @GetMapping("/list")
     @Operation(summary = "获取用户智能体列表")
     @RequiresPermissions("sys:role:normal")
@@ -38,7 +47,7 @@ public class AgentController {
         List<AgentEntity> agents = agentService.getUserAgents(user.getId());
         return new Result<List<AgentEntity>>().ok(agents);
     }
-    
+
     @GetMapping("/all")
     @Operation(summary = "智能体列表（管理员）")
     @RequiresPermissions("sys:role:superAdmin")
@@ -51,7 +60,7 @@ public class AgentController {
         PageData<AgentEntity> page = agentService.adminAgentList(params);
         return new Result<PageData<AgentEntity>>().ok(page);
     }
-    
+
     @GetMapping("/{id}")
     @Operation(summary = "获取智能体详情")
     @RequiresPermissions("sys:role:normal")
@@ -59,25 +68,25 @@ public class AgentController {
         AgentEntity agent = agentService.getAgentById(id);
         return new Result<AgentEntity>().ok(agent);
     }
-    
+
     @PostMapping
     @Operation(summary = "创建智能体")
     @RequiresPermissions("sys:role:normal")
     public Result<Void> save(@RequestBody @Valid AgentCreateDTO dto) {
         AgentEntity entity = ConvertUtils.sourceToTarget(dto, AgentEntity.class);
-        
+
         // 设置用户ID和创建者信息
         UserDetail user = SecurityUser.getUser();
         entity.setUserId(user.getId());
         entity.setCreator(user.getId());
         entity.setCreatedAt(new Date());
-        
+
         // ID、智能体编码和排序会在Service层自动生成
         agentService.insert(entity);
-        
+
         return new Result<>();
     }
-    
+
     @PutMapping
     @Operation(summary = "更新智能体")
     @RequiresPermissions("sys:role:normal")
@@ -87,7 +96,7 @@ public class AgentController {
         if (existingEntity == null) {
             return new Result<Void>().error("智能体不存在");
         }
-        
+
         // 只更新提供的非空字段
         if (dto.getAgentName() != null) {
             existingEntity.setAgentName(dto.getAgentName());
@@ -128,17 +137,17 @@ public class AgentController {
         if (dto.getSort() != null) {
             existingEntity.setSort(dto.getSort());
         }
-        
+
         // 设置更新者信息
         UserDetail user = SecurityUser.getUser();
         existingEntity.setUpdater(user.getId());
         existingEntity.setUpdatedAt(new Date());
-        
+
         agentService.updateById(existingEntity);
-        
+
         return new Result<>();
     }
-    
+
     @DeleteMapping("/{id}")
     @Operation(summary = "删除智能体")
     @RequiresPermissions("sys:role:normal")
@@ -146,4 +155,4 @@ public class AgentController {
         agentService.deleteById(id);
         return new Result<>();
     }
-} 
+}

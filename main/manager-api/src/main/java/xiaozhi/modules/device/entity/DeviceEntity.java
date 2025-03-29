@@ -1,12 +1,13 @@
 package xiaozhi.modules.device.entity;
 
+import java.util.Date;
+
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import xiaozhi.common.entity.BaseEntity;
-
-import java.util.Date;
 
 @Data
 @EqualsAndHashCode(callSuper = false)

@@ -1,5 +1,18 @@
 package xiaozhi.modules.device.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
@@ -28,8 +41,7 @@ public class DeviceController {
 
     private final RedisUtils redisUtils;
 
-
-    @PostMapping("/bind/{agentId}")
+    @PostMapping("/bind/{deviceCode}")
     @Operation(summary = "绑定设备")
     @RequiresPermissions("sys:role:normal")
     public Result<Void> bindDevice(@PathVariable String agentId,@RequestBody String code) {
@@ -55,10 +67,10 @@ public class DeviceController {
     @PostMapping("/unbind")
     @Operation(summary = "解绑设备")
     @RequiresPermissions("sys:role:normal")
-    public Result unbindDevice(@RequestBody DeviceUnBindDTO unDeviveBind) {
+    public Result<Void> unbindDevice(@RequestBody DeviceUnBindDTO unDeviveBind) {
         UserDetail user = SecurityUser.getUser();
         deviceService.unbindDevice(user.getId(), unDeviveBind.getDeviceId());
-        return new Result();
+        return new Result<Void>();
     }
 
 

@@ -1,10 +1,11 @@
 package xiaozhi.common.config;
 
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Info;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
 
 /**
  * Swagger配置
@@ -16,7 +17,7 @@ public class SwaggerConfig {
 
     @Bean
     public GroupedOpenApi userApi() {
-        String[] paths = {"/**"};
+        String[] paths = { "/**" };
         return GroupedOpenApi.builder().group("xiaozhi")
                 .pathsToMatch(paths).build();
     }

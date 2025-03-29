@@ -1,13 +1,21 @@
 package xiaozhi.modules.admin.contrloler;
 
+import java.util.Map;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.web.bind.annotation.*;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.utils.Result;
@@ -15,8 +23,6 @@ import xiaozhi.common.validator.ValidatorUtils;
 import xiaozhi.modules.sys.dto.AdminPageUserDTO;
 import xiaozhi.modules.sys.service.SysUserService;
 import xiaozhi.modules.sys.vo.AdminPageUserVO;
-
-import java.util.Map;
 
 /**
  * 管理员控制层
@@ -64,7 +70,7 @@ public class AdminController {
     @Operation(summary = "用户删除")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@PathVariable Long id) {
-        sysUserService.delete(new Long[]{id});
+        sysUserService.delete(new Long[] { id });
         return new Result<>();
     }
 
@@ -78,7 +84,7 @@ public class AdminController {
     })
     public Result<Void> pageDevice(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
-        //TODO 等设备功能模块写好
-        return new Result<Void>().error(600,"等设备功能模块写好");
+        // TODO 等设备功能模块写好
+        return new Result<Void>().error(600, "等设备功能模块写好");
     }
 }
