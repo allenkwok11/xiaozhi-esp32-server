@@ -1,8 +1,6 @@
 import os
 import time
 import yaml
-import json
-import requests
 from config.logger import setup_logging
 from typing import Dict, Any, Optional
 from copy import deepcopy
@@ -24,14 +22,6 @@ class PrivateConfig:
 
     async def load_or_create(self):
         try:
-            # 优先通过远程获取配置
-            fetch_config_ = {}
-            remote_config = self.default_config['remote_config']
-            self.logger.bind(tag=TAG).info(f"remote config: {remote_config}")
-            if remote_config and remote_config['enabled']:
-                fetch_config_ = await self.fetch_config(remote_config['url'])
-
-            self.logger.bind(tag=TAG).info(f"fetch_config: {fetch_config_}")
             await self.lock_manager.acquire_lock(self.config_path)
             try:
                 if os.path.exists(self.config_path):
@@ -39,9 +29,6 @@ class PrivateConfig:
                         all_configs = yaml.safe_load(f) or {}
                 else:
                     all_configs = {}
-
-                if fetch_config_:
-                    all_configs[self.device_id] = fetch_config_
 
                 if self.device_id not in all_configs:
                     # Get selected module names
@@ -77,9 +64,9 @@ class PrivateConfig:
                     
                     all_configs[self.device_id] = device_config
                     
-                # Save updated configs
-                with open(self.config_path, 'w', encoding='utf-8') as f:
-                    yaml.dump(all_configs, f, allow_unicode=True)
+                    # Save updated configs
+                    with open(self.config_path, 'w', encoding='utf-8') as f:
+                        yaml.dump(all_configs, f, allow_unicode=True)
 
                 self.private_config = all_configs[self.device_id]
 
@@ -252,59 +239,3 @@ class PrivateConfig:
     def get_owner(self) -> Optional[str]:
         """获取设备当前所有者"""
         return self.private_config.get('owner')
-
-    async def fetch_config(self, fetch_url: str) -> Dict[str, Any]:
-        """通过HTTP请求远程获取配置"""
-        url = f"{fetch_url}{self.device_id}"
-        headers = {
-            'device_id': self.device_id
-        }
-        try:
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()  # 如果响应状态码不是200，会抛出异常
-            # 检查响应内容类型是否为JSON
-            if response.headers.get('Content-Type') != 'application/json':
-                self.logger.bind(tag=TAG).error("Invalid content type: expected application/json")
-                return {}
-
-            # 解析JSON数据
-            config_data = response.json()
-
-            # 验证返回的数据结构
-            if not isinstance(config_data, dict):
-                self.logger.bind(tag=TAG).error("Invalid data format: expected a dictionary")
-                return {}
-
-            if config_data['code'] != 0:
-                self.logger.bind(tag=TAG).error(f"Fetch config error: {config_data['msg']}")
-                return {}
-            
-            config_data_ = config_data['data']
-            if not isinstance(config_data_, dict):
-                self.logger.bind(tag=TAG).error("Invalid config data format: expected a dictionary")
-                return {}
-
-
-            # 检查必要的字段是否存在
-            required_fields = ['selected_module', 'prompt', 'LLM', 'TTS', 'ASR', 'VAD']
-            for field in required_fields:
-                if field not in config_data_:
-                    self.logger.bind(tag=TAG).error(f"Missing required field: {field}")
-                    return {}
-
-            # 检查每个模块的配置是否正确
-            for module in ['LLM', 'TTS', 'ASR', 'VAD']:
-                if not isinstance(config_data_[module], dict):
-                    self.logger.bind(tag=TAG).error(f"Invalid data format for {module}: expected a dictionary")
-                    return {}
-
-                selected_module = config_data_['selected_module'].get(module)
-                if selected_module not in config_data_[module]:
-                    self.logger.bind(tag=TAG).error(f"Selected {module} not found in config: {selected_module}")
-                    return {}
-
-            return config_data_
-
-        except requests.exceptions.RequestException as e:
-            self.logger.bind(tag=TAG).error(f"Error fetching config: {e}")
-            return {}

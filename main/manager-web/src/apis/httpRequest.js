@@ -109,7 +109,6 @@ function httpHandlerError(info, callBack) {
         if (info.data.code === 'success' || info.data.code === 0 || info.data.code === undefined) {
             return networkError
         }else if (info.data.code === 401) {
-            store.commit('setToken','')
             goToPage(Constant.PAGE.LOGIN, true)
             return true
         } else {

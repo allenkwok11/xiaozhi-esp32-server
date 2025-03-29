@@ -1,16 +1,9 @@
 <template>
   <div class="welcome">
     <HeaderBar />
-    <!-- 首页内容 -->
-    <el-main style="padding: 20px; display: flex; flex-direction: column;">
+
       <div class="operation-bar">
-        <!-- 面包屑-->
-        <div class="breadcrumbs">
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item>控制台</el-breadcrumb-item>
-            <el-breadcrumb-item>模型配置</el-breadcrumb-item>
-          </el-breadcrumb>
-        </div>
+
         <div class="right-operations">
           <el-button v-if="activeTab === 'tts'" type="primary" plain size="small" @click="ttsDialogVisible = true">
             语音设置
@@ -23,95 +16,96 @@
           </el-button>
         </div>
       </div>
-      <!-- 主体内容 -->
-      <div class="main-wrapper">
-        <div class="content-panel">
-          <!-- 左侧导航 -->
-          <el-menu :default-active="activeTab" class="nav-panel" @select="handleMenuSelect"
-                  style="background-size: cover; background-position: center;">
-            <el-menu-item index="vad">
-              语言活动检测
-            </el-menu-item>
-            <el-menu-item index="asr">
-              语音识别
-            </el-menu-item>
-            <el-menu-item index="llm">
-              大语言模型
-            </el-menu-item>
-            <el-menu-item index="intent">
-              意图识别
-            </el-menu-item>
-            <el-menu-item index="tts">
-              语音合成
-            </el-menu-item>
-            <el-menu-item index="memory">
-              记忆
-            </el-menu-item>
-          </el-menu>
+    <!-- 主体内容 -->
+    <div class="main-wrapper">
+      <div class="content-panel">
+        <!-- 左侧导航 -->
+        <el-menu :default-active="activeTab" class="nav-panel" @select="handleMenuSelect"
+                 style="background-size: cover; background-position: center;">
+          <el-menu-item index="vad">
+            <span class="menu-text">语言活动检测</span>
+          </el-menu-item>
+          <el-menu-item index="asr">
+            <span class="menu-text">语音识别</span>
+          </el-menu-item>
+          <el-menu-item index="llm">
+            <span class="menu-text">大语言模型</span>
+          </el-menu-item>
+          <el-menu-item index="intent">
+            <span class="menu-text">意图识别</span>
+          </el-menu-item>
+          <el-menu-item index="tts">
+            <span class="menu-text">语音合成</span>
+          </el-menu-item>
+          <el-menu-item index="memory">
+            <span class="menu-text">记忆</span>
+          </el-menu-item>
+        </el-menu>
 
-          <!-- 右侧内容 -->
-          <div class="content-area">
-            <div class="title-bar">
-              <div class="title-wrapper">
-              <h2 class="model-title">大语言模型（LLM）</h2>
-              <el-button type="primary" size="small" @click="addModel" class="add-btn">
-                添加
-              </el-button>
-              </div>
-              <div class="action-group">
-                <div class="search-group">
-                  <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable/>
-                  <el-button type="primary" size="small" class="search-btn" @click="handleSearch">
-                    查询
-                  </el-button>
-                </div>
-              </div>
+        <!-- 右侧内容 -->
+        <div class="content-area">
+          <div class="title-bar">
+            <div class="title-wrapper">
+            <h2 class="model-title">大语言模型（LLM）</h2>
+            <el-button type="primary" size="small" @click="addModel" class="add-btn">
+               添加
+            </el-button>
             </div>
-
-            <el-table :header-cell-style="{background: 'transparent'}" :data="modelList" border class="data-table" header-row-class-name="table-header" >
-              <el-table-column type="selection" width="55" align="center"></el-table-column>
-              <el-table-column label="模型名称" prop="candidateName" align="center"></el-table-column>
-              <el-table-column label="模型编码" prop="code" align="center"></el-table-column>
-              <el-table-column label="提供商" prop="supplier" align="center"></el-table-column>
-              <el-table-column label="是否启用" align="center" width="120">
-                <template slot-scope="scope">
-                  <el-switch v-model="scope.row.isApplied" class="custom-switch" :active-color="null" :inactive-color="null"/>
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" align="center" width="180">
-                <template slot-scope="scope">
-                  <el-button type="text" size="mini" @click="editModel(scope.row)" class="edit-btn">
-                    修改
-                  </el-button>
-                  <el-button type="text" size="mini" @click="deleteModel(scope.row)" class="delete-btn">
-                    删除
-                  </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-            
-            <div class="table-footer">
-              <div class="batch-actions">
-                <el-button size="mini" @click="selectAll">全选</el-button>
-                <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">
-                  删除
+            <div class="action-group">
+              <div class="search-group">
+                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable/>
+                <el-button type="primary" size="small" class="search-btn" @click="handleSearch">
+                  查询
                 </el-button>
-              </div>
-              <div class="pagination-container">
-              <el-pagination @current-change="handleCurrentChange" background :current-page="currentPage" :page-size="pageSize" layout="prev, pager, next" :total="total"/>
               </div>
             </div>
           </div>
-        </div>
 
-        <ModelEditDialog :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
-        <TtsModel :visible.sync="ttsDialogVisible" />
-        <AddModelDialog :visible.sync="addDialogVisible" :modelType="activeTab" @confirm="handleAddConfirm"/>
+          <el-table :header-cell-style="{background: 'transparent'}" :data="modelList" border class="data-table" header-row-class-name="table-header" >
+            <el-table-column type="selection" width="55" align="center"></el-table-column>
+            <el-table-column label="模型名称" prop="candidateName" align="center"></el-table-column>
+            <el-table-column label="模型编码" prop="code" align="center"></el-table-column>
+            <el-table-column label="提供商" prop="supplier" align="center"></el-table-column>
+            <el-table-column label="是否启用" align="center" width="120">
+              <template slot-scope="scope">
+                <el-switch v-model="scope.row.isApplied" class="custom-switch" :active-color="null" :inactive-color="null"/>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" width="180">
+              <template slot-scope="scope">
+                <el-button type="text" size="mini" @click="editModel(scope.row)" class="edit-btn">
+                  修改
+                </el-button>
+                <el-button type="text" size="mini" @click="deleteModel(scope.row)" class="delete-btn">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          
+          <div class="table-footer">
+            <div class="batch-actions">
+              <el-button size="mini" @click="selectAll">全选</el-button>
+              <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">
+                删除
+              </el-button>
+            </div>
+            <div class="pagination-container">
+            <el-pagination @current-change="handleCurrentChange" background :current-page="currentPage" :page-size="pageSize" layout="prev, pager, next" :total="total"/>
+            </div>
+          </div>
+        </div>
       </div>
-    </el-main>
-    <!-- 底部 -->
-    <Footer :visible="true" />
-  </div>
+
+      <ModelEditDialog :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
+      <TtsModel :visible.sync="ttsDialogVisible" />
+      <AddModelDialog :visible.sync="addDialogVisible" @confirm="handleAddConfirm"/>
+    </div>
+
+    <div class="copyright">
+        ©2025 xiaozhi-esp32-server
+      </div>
+    </div>
 </template>
 
 <script>
@@ -119,10 +113,9 @@ import HeaderBar from "@/components/HeaderBar.vue";
 import ModelEditDialog from "@/components/ModelEditDialog.vue";
 import TtsModel from "@/components/TtsModel.vue";
 import AddModelDialog from "@/components/AddModelDialog.vue";
-import Footer from '@/components/Footer.vue'
 
 export default {
-  components: { HeaderBar, ModelEditDialog, TtsModel, AddModelDialog,Footer },
+  components: { HeaderBar, ModelEditDialog, TtsModel, AddModelDialog },
   data() {
     return {
       addDialogVisible: false,
@@ -189,10 +182,6 @@ export default {
 </script>
 
 <style scoped>
-.breadcrumbs{
-  /* padding: 10px 0 0 5px; */
-}
-
 ::v-deep .el-table tr{
   background: transparent;
 }
@@ -210,7 +199,7 @@ export default {
 }
 
 .main-wrapper {
-  /* margin: 5px 24px; */
+  margin: 5px 60px;
   background-image: url("@/assets/home/background.png");
   border-radius: 15px;
   min-height: 600px;
@@ -220,9 +209,10 @@ export default {
 
 .operation-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  /* padding: 16px 24px; */
+  padding: 16px 24px;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .content-panel {
@@ -249,7 +239,7 @@ export default {
 
 .nav-panel .el-menu-item {
   height: 48px;
-  line-height: 48px;
+  line-height: 40px;
   border-radius: 4px;
   transition: all 0.3s;
   display: flex !important;
@@ -261,15 +251,19 @@ export default {
 }
 
 .nav-panel .el-menu-item.is-active {
-  background-image:linear-gradient(-45deg,#ecf5ff,#cfe4f9);
-  /* background: #ecf5ff; */
+  background: #ecf5ff;
   color: #409EFF;
   border-right: 3px solid #409EFF;
 }
 
-.nav-panel .el-menu-item:hover {
-  background-image:linear-gradient(-45deg,#ecf5ff,#cfe4f9);
+.menu-text {
+  font-size: 14px;
+  color: #606266;
+  text-align: right;
+  width: 100%;
+  padding-right: 8px;
 }
+
 
 .content-area {
   flex: 1;

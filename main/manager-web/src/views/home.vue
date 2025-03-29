@@ -1,12 +1,12 @@
 <template>
   <div class="welcome">
       <!-- 公共头部 -->
-      <HeaderBar :devices="agents" @search-result="handleSearchResult" />
+      <HeaderBar :devices="devices" @search-result="handleSearchResult" />
       <el-main style="padding: 20px;display: flex;flex-direction: column;">
         <div>
           <!-- 首页内容 -->
-          <div class="add-agent">
-            <div class="add-agent-bg">
+          <div class="add-device">
+            <div class="add-device-bg">
               <div class="hellow-text" style="margin-top: 30px;">
                 您好，小智
               </div>
@@ -19,7 +19,7 @@
               <div class="hi-hint">
                 Hello, Let's have a wonderful day!
               </div>
-              <div class="add-agent-btn" @click="showAddDialog">
+              <div class="add-device-btn" @click="showAddDialog">
                 <div class="left-add">
                   添加智能体
                 </div>
@@ -30,107 +30,99 @@
               </div>
             </div>
           </div>
-          <!-- 面包屑-->
-          <div class="breadcrumbs">
-            <el-breadcrumb separator="/">
-              <el-breadcrumb-item>控制台</el-breadcrumb-item>
-              <el-breadcrumb-item>智能体</el-breadcrumb-item>
-            </el-breadcrumb>
-          </div>
-          <!-- 智能体列表-->
           <div style="display: flex;flex-wrap: wrap;margin-top: 20px;gap: 20px;justify-content: flex-start;box-sizing: border-box;">
-            <AgentItem v-for="(item,index) in agents" :key="index" :agent="item" @configure="goToRoleConfig" @device="goToDevice" @del="handleAgentDel" />
+            <DeviceItem v-for="(item,index) in devices" :key="index" :device="item"
+                        @configure="goToRoleConfig"
+                        @deviceManage="handleDeviceManage"
+                        @delete="handleDeleteAgent"
+            />
           </div>
         </div>
-        <!-- 底部 -->
-        <Footer :visible="true" />
-        <!-- 添加设备对话框 -->
-        <AddAgentDialog :visible.sync="addAgentDialogVisible" @confirm="handleAgentAdded" />
+        <div style="font-size: 12px;font-weight: 400;margin-top: auto;padding-top: 30px;color: #979db1;">
+          ©2025 xiaozhi-esp32-server
+        </div>
+        <AddWisdomBodyDialog :visible.sync="addDeviceDialogVisible" @confirm="handleWisdomBodyAdded" />
       </el-main>
   </div>
 
 </template>
 
 <script>
-import {getUUID, goToPage, showDanger, showSuccess} from '@/utils'
-import Api from '@/apis/api';
-import AgentItem from '@/components/AgentItem.vue'
-import AddAgentDialog from '@/components/AddAgentDialog.vue'
+import DeviceItem from '@/components/DeviceItem.vue'
+import AddWisdomBodyDialog from '@/components/AddWisdomBodyDialog.vue'
 import HeaderBar from '@/components/HeaderBar.vue'
-import Footer from '@/components/Footer.vue'
+
 export default {
   name: 'HomePage',
-  components: { AgentItem, AddAgentDialog, HeaderBar, Footer },
+  components: { DeviceItem, AddWisdomBodyDialog, HeaderBar },
   data() {
     return {
-      addAgentDialogVisible: false,
-      agents: [],
+      addDeviceDialogVisible: false,
+      devices: [],
+      originalDevices: [],
     }
   },
 
   mounted() {
-    // 获取智能体列表
     this.fetchAgentList();
   },
 
   methods: {
-    fetchAgentList() {
-      // 获取智能体列表
-      Api.agent.getAgentList(({data}) => {
-        if (data.code === 0) {
-          this.agents = data.data
-        } else {
-          showDanger(data.msg)
-        }
-      })
-    },
     showAddDialog() {
-      this.addAgentDialogVisible = true
+      this.addDeviceDialogVisible = true
     },
-    goToRoleConfig(agentId) {
+    goToRoleConfig() {
       // 点击配置角色后跳转到角色配置页
-      this.$router.push({path:'/role-config', query: {agentId: agentId}})
+      this.$router.push('/role-config')
     },
-
-    goToDevice(agentId) {
-      // 点击设备后跳转到设备页
-      this.$router.push({path:'/device', query: {agentId: agentId}})
+    handleWisdomBodyAdded(res) {
+      console.log('新增智能体响应：', res);
+      this.fetchAgentList();
+      this.addDeviceDialogVisible = false;
     },
-    handleAgentAdded(agentName) {
-      // 添加智能体
-      Api.agent.addAgent(agentName, ({data}) => {
-        if (data.code === 0) {
-          showSuccess('添加成功')
-          this.fetchAgentList();
-        } else {
-          showDanger(data.msg)
-        }
-      })
+    handleDeviceManage() {
+      this.$router.push('/device-management');
     },
-    handleAgentDel(agetnId){
-      // 删除智能体
-      Api.agent.delAgent(agetnId, (data) => {
-        if (data.status === 200) {
-          showSuccess('删除成功')
-          this.fetchAgentList();
-        } else {
-          showDanger(data.msg)
-        }
-      })
+    // 获取智能体列表
+    fetchAgentList() {
+      import('@/apis/module/user').then(({ default: userApi }) => {
+        userApi.getAgentList(({data}) => {
+        this.originalDevices = data.data.map(item => ({
+          ...item,
+          agentId: item.id // 字段映射
+        }));
+        this.devices = this.originalDevices;
+        });
+      });
     },
     // 搜索更新智能体列表
     handleSearchResult(filteredList) {
-      this.agents = filteredList; // 更新设备列表
+      this.devices = filteredList; // 更新设备列表
+    },
+    // 删除智能体
+    handleDeleteAgent(agentId) {
+      this.$confirm('确定要删除该智能体吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        import('@/apis/module/user').then(({ default: userApi }) => {
+          userApi.deleteAgent(agentId, (res) => {
+            if (res.data.code === 0) {
+              this.$message.success('删除成功');
+              this.fetchAgentList(); // 刷新列表
+            } else {
+              this.$message.error(res.data.msg || '删除失败');
+            }
+          });
+        });
+      }).catch(() => {});
     }
   }
 }
 </script>
 
 <style scoped>
-.breadcrumbs{
-  padding: 10px 0 0 5px;
-}
-
 .welcome {
   min-width: 900px;
   min-height: 506px;
@@ -147,7 +139,7 @@ export default {
   -o-background-size: cover;
   /* 兼容老版本Opera浏览器 */
 }
-.add-agent {
+.add-device {
   height: 195px;
   border-radius: 15px;
   position: relative;
@@ -159,7 +151,7 @@ export default {
       #d3d3fe 100%
   );
 }
-.add-agent-bg {
+.add-device-bg {
   width: 100%;
   height: 100%;
   text-align: left;
@@ -192,13 +184,12 @@ export default {
   }
 }
 
-.add-agent-btn {
+.add-device-btn {
   display: flex;
   align-items: center;
   margin-left: 75px;
   margin-top: 15px;
   cursor: pointer;
-  width: fit-content;
 
   .left-add {
     width: 105px;
@@ -206,7 +197,7 @@ export default {
     border-radius: 17px;
     background: #5778ff;
     color: #fff;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
     text-align: center;
     line-height: 34px;

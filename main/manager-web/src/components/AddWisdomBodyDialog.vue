@@ -1,18 +1,18 @@
 <template>
-  <el-dialog :visible.sync="visible" width="400px" center :close-on-click-modal="false" :close-on-press-escape="false">
+  <el-dialog :visible.sync="visible" width="400px" center>
     <div style="margin: 0 10px 10px;display: flex;align-items: center;gap: 10px;font-weight: 700;font-size: 20px;text-align: left;color: #3d4566;">
       <div style="width: 40px;height: 40px;border-radius: 50%;background: #5778ff;display: flex;align-items: center;justify-content: center;">
-        <i class="el-icon-cpu" style="color: #fff;"></i>
+        <img src="@/assets/home/equipment.png" alt="" style="width: 18px;height: 15px;" />
       </div>
-      添加智能体
+      添加智慧体
     </div>
     <div style="height: 1px;background: #e8f0ff;" />
     <div style="margin: 22px 15px;">
       <div style="font-weight: 400;font-size: 14px;text-align: left;color: #3d4566;">
-        <div style="color: red;display: inline-block;">*</div>智能体名称：
+        <div style="color: red;display: inline-block;">*</div> 智慧体名称：
       </div>
-      <div style="margin-top: 12px;">
-        <el-input placeholder="请输入智能体名称.." v-model="agentName" />
+      <div class="input-46" style="margin-top: 12px;">
+        <el-input placeholder="请输入智慧体名称.." v-model="wisdomBodyName" />
       </div>
     </div>
     <div style="display: flex;margin: 15px 15px;gap: 7px;">
@@ -33,36 +33,42 @@ import userApi from '@/apis/module/user';
 
 
 export default {
-  name: 'AddAgentDialog',
+  name: 'AddWisdomBodyDialog',
   props: {
     visible: { type: Boolean, required: true }
   },
   data() {
-    return { agentName: "" }
+    return { wisdomBodyName: "" }
   },
   methods: {
     confirm() {
-      if (!this.agentName.trim()) {
-        this.$message.error('请输入智能体名称');
+      if (!this.wisdomBodyName.trim()) {
+        this.$message.error('请输入智慧体名称');
         return;
       }
-      this.$emit('confirm',this.agentName)
-      // userApi.addAgent(this.agentName, (res) => {
-      //   this.$message.success('添加成功');
-      //   this.$emit('confirm', res);
+      userApi.addAgent(this.wisdomBodyName, (res) => {
+        this.$message.success('添加成功');
+        this.$emit('confirm', res);
         this.$emit('update:visible', false);
-        this.agentName = "";
-      // });
+        this.wisdomBodyName = "";
+      });
     },
     cancel() {
       this.$emit('update:visible', false)
-      this.agentName = ""
+      this.wisdomBodyName = ""
     }
   }
 }
 </script>
 
 <style scoped>
+
+.input-46 {
+  border: 1px solid #e4e6ef;
+  background: #f6f8fb;
+  border-radius: 15px;
+}
+
 .dialog-btn {
   cursor: pointer;
   flex: 1;

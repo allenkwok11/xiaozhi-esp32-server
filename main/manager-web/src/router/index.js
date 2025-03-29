@@ -12,10 +12,10 @@ const routes = [
     }
   },
   {
-    path: '/register',
-    name: 'Register',
+    path: '/role-config',
+    name: 'RoleConfig',
     component: function () {
-      return import('../views/register.vue')
+      return import('../views/roleConfig.vue')
     }
   },
   {
@@ -28,62 +28,38 @@ const routes = [
   {
     path: '/home',
     name: 'home',
-    meta: {
-      menuCode: 'agent',
-    },
     component: function () {
       return import('../views/home.vue')
     }
   },
   {
-    path: '/role-config',
-    name: 'RoleConfig',
-    meta: {
-      menuCode: 'agent',
-    },
+    path: '/register',
+    name: 'Register',
     component: function () {
-      return import('../views/roleConfig.vue')
+      return import('../views/register.vue')
     }
   },
+  // 设备管理页面路由
   {
-    path: '/device',
-    name: 'Device',
-    meta: {
-      menuCode: 'agent',
-    },
+    path: '/device-management',
+    name: 'DeviceManagement',
     component: function () {
-      return import('../views/device.vue')
-    }
-  },
-  {
-    path: '/ota',
-    name: 'Ota',
-    meta: {
-      menuCode: 'ota',
-    },
-    component: function () {
-      return import('../views/ota.vue')
+      return import('../views/DeviceManagement.vue')
     }
   },
   // 添加用户管理路由
   {
     path: '/user-management',
     name: 'UserManagement',
-    meta: {
-      menuCode: 'user',
-    },
     component: function () {
-      return import('../views/userManagement.vue')
+      return import('../views/UserManagement.vue')
     }
   },
   {
    path: '/model-config',
    name: 'ModelConfig',
-   meta: {
-     menuCode: 'model',
-   },
    component: function () {
-     return import('../views/modelConfig.vue')
+     return import('../views/ModelConfig.vue')
    }
   },
 

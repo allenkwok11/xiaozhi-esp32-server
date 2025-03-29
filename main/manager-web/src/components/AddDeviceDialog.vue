@@ -1,15 +1,16 @@
 <template>
-  <el-dialog :visible.sync="visible" width="400px" center :close-on-click-modal="false" :close-on-press-escape="false">
+  <el-dialog :visible.sync="visible" width="400px" center >
     <div style="margin: 0 10px 10px;display: flex;align-items: center;gap: 10px;font-weight: 700;font-size: 20px;text-align: left;color: #3d4566;">
       <div style="width: 40px;height: 40px;border-radius: 50%;background: #5778ff;display: flex;align-items: center;justify-content: center;">
-        <i class="el-icon-cpu" style="color: #fff;"></i>
+        <img src="@/assets/home/equipment.png" alt="" style="width: 18px;height: 15px;" />
       </div>
       添加设备
     </div>
     <div style="height: 1px;background: #e8f0ff;" />
     <div style="margin: 22px 15px;">
       <div style="font-weight: 400;font-size: 14px;text-align: left;color: #3d4566;">
-        <div style="color: red;display: inline-block;">*</div>验证码：
+        <div style="color: red;display: inline-block;">*</div>
+        <span style="font-size: 11px"> 验证码：</span>
       </div>
       <div class="input-46" style="margin-top: 12px;">
         <el-input placeholder="请输入设备播报的6位数验证码.." v-model="deviceCode" />
@@ -32,20 +33,46 @@
 export default {
   name: 'AddDeviceDialog',
   props: {
-    visible: { type: Boolean, required: true }
+    visible: { type: Boolean, required: true },
+    agentId: { type: String, required: true }
   },
   data() {
-    return { deviceCode: "" }
+    return {
+      deviceCode: "",
+      loading: false,
+    }
   },
   methods: {
     confirm() {
       if (!/^\d{6}$/.test(this.deviceCode)) {
-        this.$message.error('请输入6位数字设备验证码');
+        this.$message.error('请输入6位数字验证码');
         return;
       }
-      this.$emit('confirm',this.deviceCode)
-      this.$emit('update:visible', false)
-      this.deviceCode = ""
+      this.loading = true;
+      import('@/apis/module/user').then(({ default: userApi }) => {
+        userApi.bindDevice(
+            this.agentId,
+            this.deviceCode, ({data}) => {
+              this.loading = false;
+              if (data.code === 0) {
+                this.$emit('refresh');
+                this.$message.success('设备绑定成功');
+                this.closeDialog();
+              } else {
+                this.$message.error(data.msg || '绑定失败');
+              }
+            }
+          );
+        }).catch((err) => {
+          this.loading = false;
+          console.error('API模块加载失败:', err);
+          this.$message.error('绑定服务不可用');
+        });
+    },
+    closeDialog() {
+      this.$emit('update:visible', false);
+      this.deviceCode = '';
+
     },
     cancel() {
       this.$emit('update:visible', false)
@@ -56,6 +83,13 @@ export default {
 </script>
 
 <style scoped>
+
+.input-46 {
+  border: 1px solid #e4e6ef;
+  background: #f6f8fb;
+  border-radius: 10px;
+}
+
 .dialog-btn {
   cursor: pointer;
   flex: 1;
