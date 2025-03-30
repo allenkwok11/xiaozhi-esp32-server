@@ -36,7 +36,7 @@ async def sendAudio(conn, audios):
     pre_buffer = min(3, len(audios))
     for i in range(pre_buffer):
         await conn.websocket.send(audios[i])
-        conn.logger.bind(tag=TAG).debug(f"预缓冲帧 {i}, 时间: {(time.perf_counter() - start_time) * 1000:.2f}ms")
+        # conn.logger.bind(tag=TAG).debug(f"预缓冲帧 {i}, 时间: {(time.perf_counter() - start_time) * 1000:.2f}ms")
 
     # 正常播放剩余帧
     for opus_packet in audios[pre_buffer:]:
@@ -51,7 +51,7 @@ async def sendAudio(conn, audios):
             await asyncio.sleep(delay)
 
         await conn.websocket.send(opus_packet)
-        conn.logger.bind(tag=TAG).debug(f"发送帧，位置: {play_position}ms, 实际间隔: {(time.perf_counter() - current_time) * 1000:.2f}ms")
+        # conn.logger.bind(tag=TAG).debug(f"发送帧，位置: {play_position}ms, 实际间隔: {(time.perf_counter() - current_time) * 1000:.2f}ms")
 
         play_position += frame_duration
 

@@ -102,6 +102,19 @@ class ConnectionHandler:
         if self.config["selected_module"]["Intent"] == 'function_call':
             self.use_function_call_mode = True
         
+        try:
+            # 加载插件
+            if self.use_function_call_mode:
+                self.func_handler = FunctionHandler(self)
+                self.logger.bind(tag=TAG).info("初始化FunctionHandler成功")
+            else:
+                self.func_handler = None
+                self.logger.bind(tag=TAG).info("未启用function_call模式，跳过FunctionHandler初始化")
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"初始化FunctionHandler失败: {str(e)}")
+            self.func_handler = None
+            self.use_function_call_mode = False
+
         self.mcp_manager = MCPManager(self)
 
     async def handle_connection(self, ws):
@@ -168,13 +181,23 @@ class ConnectionHandler:
 
         except AuthenticationError as e:
             self.logger.bind(tag=TAG).error(f"Authentication failed: {str(e)}")
+            await self.close(ws)
             return
         except Exception as e:
             stack_trace = traceback.format_exc()
             self.logger.bind(tag=TAG).error(f"Connection error: {str(e)}-{stack_trace}")
+            await self.close(ws)
             return
         finally:
+            self._save_and_close(ws)
+
+    async def _save_and_close(self, ws):
+        """保存记忆并关闭连接"""
+        try:
             await self.memory.save_memory(self.dialogue.dialogue)
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
+        finally:
             await self.close(ws)
 
     async def _route_message(self, message):
@@ -190,9 +213,6 @@ class ConnectionHandler:
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
         self.dialogue.put(Message(role="system", content=self.prompt))
-
-        """加载插件"""
-        self.func_handler = FunctionHandler(self)
 
         """加载记忆"""
         device_id = self.headers.get("device-id", None)
@@ -294,7 +314,7 @@ class ConnectionHandler:
                 break
 
             end_time = time.time()
-            self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
+            # self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
 
             # 合并当前全部文本并处理未分割部分
             full_text = "".join(response_message)
@@ -413,7 +433,7 @@ class ConnectionHandler:
                         break
 
                     end_time = time.time()
-                    self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
+                    # self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
 
                     # 处理文本分段和TTS逻辑
                     # 合并当前全部文本并处理未分割部分
