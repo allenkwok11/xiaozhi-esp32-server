@@ -46,15 +46,17 @@ def _handle_device_action(conn, func, success_message, error_message, *args, **k
         return ActionResponse(action=Action.RESPONSE, result=None, response=response)
 
 # 设备控制
+# TODO: 和自动注册的iot方法重复了，也许可以删掉这里手动定义的实现？
+# 另外观察到function_call准确率不够高，可能是llm的问题
 handle_device_function_desc = {
     "type": "function",
     "function": {
         "name": "handle_device",
         "description": (
             "用户想要获取或者设置设备的音量/亮度大小，或者用户觉得声音/亮度过高或过低，或者用户想提高或降低音量/亮度。"
-            "比如用户说现在亮度多少，参数为：device_type:Backlight,action:get。"
+            "比如用户说现在亮度多少，参数为：device_type:Screen,action:get。"
             "比如用户说设置音量为50，参数为：device_type:Speaker,action:set,value:50。"
-            "比如用户说亮度太高了，参数为：device_type:Backlight,action:lower。"
+            "比如用户说亮度太高了，参数为：device_type:Screen,action:lower。"
             "比如用户说调大音量，参数为：device_type:Speaker,action:raise。"
         ),
         "parameters": {
@@ -62,7 +64,7 @@ handle_device_function_desc = {
             "properties": {
                 "device_type": {
                     "type": "string",
-                    "description": "设备类型，可选值：Speaker(音量),Backlight(亮度)"
+                    "description": "设备类型，可选值：Speaker(音量),Screen(亮度)"
                 },
                 "action": {
                     "type": "string",
@@ -82,7 +84,7 @@ handle_device_function_desc = {
 def handle_device(conn, device_type: str, action: str, value: int = None):
     if device_type == "Speaker":
         method_name, property_name, device_name = "SetVolume", "volume", "音量"
-    elif device_type == "Backlight":
+    elif device_type == "Screen":
         method_name, property_name, device_name = "SetBrightness", "brightness", "亮度"
     else:
         raise Exception(f"未识别的设备类型: {device_type}")
