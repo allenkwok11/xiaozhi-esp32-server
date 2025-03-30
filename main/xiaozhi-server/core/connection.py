@@ -102,6 +102,19 @@ class ConnectionHandler:
         if self.config["selected_module"]["Intent"] == 'function_call':
             self.use_function_call_mode = True
         
+        try:
+            # 加载插件
+            if self.use_function_call_mode:
+                self.func_handler = FunctionHandler(self)
+                self.logger.bind(tag=TAG).info("初始化FunctionHandler成功")
+            else:
+                self.func_handler = None
+                self.logger.bind(tag=TAG).info("未启用function_call模式，跳过FunctionHandler初始化")
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"初始化FunctionHandler失败: {str(e)}")
+            self.func_handler = None
+            self.use_function_call_mode = False
+
         self.mcp_manager = MCPManager(self)
 
     async def handle_connection(self, ws):
@@ -190,9 +203,6 @@ class ConnectionHandler:
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
         self.dialogue.put(Message(role="system", content=self.prompt))
-
-        """加载插件"""
-        self.func_handler = FunctionHandler(self)
 
         """加载记忆"""
         device_id = self.headers.get("device-id", None)
