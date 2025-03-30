@@ -181,13 +181,23 @@ class ConnectionHandler:
 
         except AuthenticationError as e:
             self.logger.bind(tag=TAG).error(f"Authentication failed: {str(e)}")
+            await self.close(ws)
             return
         except Exception as e:
             stack_trace = traceback.format_exc()
             self.logger.bind(tag=TAG).error(f"Connection error: {str(e)}-{stack_trace}")
+            await self.close(ws)
             return
         finally:
+            self._save_and_close(ws)
+
+    async def _save_and_close(self, ws):
+        """保存记忆并关闭连接"""
+        try:
             await self.memory.save_memory(self.dialogue.dialogue)
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
+        finally:
             await self.close(ws)
 
     async def _route_message(self, message):
