@@ -11,7 +11,7 @@ import time
 logger = setup_logging()
 
 WAKEUP_CONFIG = {"dir": "config/assets/", "file_name": "wakeup_words", "create_time": time.time(), "refresh_time": 10,
-                 "words": ["很高兴见到你", "你好啊", "我们又见面了", "最近可好?", "很高兴再次和你谈话", "在干嘛"]}
+                 "words": ["很高兴见到你", "你好啊", "我们又见面了", "最近可好?", "很高兴再次和你谈话", "在干嘛"], "text": ""}
 
 
 async def handleHelloMessage(conn):
@@ -36,7 +36,10 @@ async def checkWakeupWords(conn, text):
             asyncio.create_task(wakeupWordsResponse(conn))
             return False
         opus_packets, duration = conn.tts.audio_to_opus_data(file)
-        conn.audio_play_queue.put((opus_packets, text, 0))
+        text_hello = WAKEUP_CONFIG["text"]
+        if not text_hello:
+            text_hello, _ = await conn.asr.speech_to_text(opus_packets, conn.session_id)
+        conn.audio_play_queue.put((opus_packets, text_hello, 0))
         if time.time() - WAKEUP_CONFIG["create_time"] > WAKEUP_CONFIG["refresh_time"]:
             asyncio.create_task(wakeupWordsResponse(conn))
         return True
@@ -62,6 +65,7 @@ async def wakeupWordsResponse(conn):
     wakeup_word = random.choice(WAKEUP_CONFIG["words"])
     result = conn.llm.response_no_stream(conn.config["prompt"], wakeup_word)
     tts_file = await asyncio.to_thread(conn.tts.to_tts, result)
+
     if tts_file is not None and os.path.exists(tts_file):
         file_type = os.path.splitext(tts_file)[1]
         if file_type:
@@ -72,3 +76,4 @@ async def wakeupWordsResponse(conn):
         """将文件挪到"wakeup_words.mp3"""
         shutil.move(tts_file, WAKEUP_CONFIG["dir"] + "my_" + WAKEUP_CONFIG["file_name"] + "." + file_type)
         WAKEUP_CONFIG["create_time"] = time.time()
+        WAKEUP_CONFIG["text"] = result
