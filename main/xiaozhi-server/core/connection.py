@@ -314,7 +314,7 @@ class ConnectionHandler:
                 break
 
             end_time = time.time()
-            self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
+            # self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
 
             # 合并当前全部文本并处理未分割部分
             full_text = "".join(response_message)
@@ -433,7 +433,7 @@ class ConnectionHandler:
                         break
 
                     end_time = time.time()
-                    self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
+                    # self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
 
                     # 处理文本分段和TTS逻辑
                     # 合并当前全部文本并处理未分割部分
