@@ -20,4 +20,7 @@ public class AdminPageUserVO {
 
     @Schema(description = "用户id")
     private String userid;
+
+    @Schema(description = "用户状态")
+    private String status;
 }

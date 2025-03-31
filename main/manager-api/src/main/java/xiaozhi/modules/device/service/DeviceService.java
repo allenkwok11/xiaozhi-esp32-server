@@ -45,4 +45,11 @@ public interface DeviceService {
      * @param userId 用户id
      */
     void deleteByUserId(Long userId);
+
+    /**
+     * 获取指定用户的设备数量
+     * @param userId 用户id
+     * @return 设备数量
+     */
+    Long selectCountByUserId(Long userId);
 }

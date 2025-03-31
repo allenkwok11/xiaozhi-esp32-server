@@ -205,6 +205,13 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         baseDao.delete(wrapper);
     }
 
+    @Override
+    public Long selectCountByUserId(Long userId) {
+        UpdateWrapper<DeviceEntity> wrapper = new UpdateWrapper<>();
+        wrapper.eq("user_id", userId);
+        return baseDao.selectCount(wrapper);
+    }
+
     private DeviceReportRespDTO.ServerTime buildServerTime() {
         DeviceReportRespDTO.ServerTime serverTime = new DeviceReportRespDTO.ServerTime();
         TimeZone tz = TimeZone.getDefault();

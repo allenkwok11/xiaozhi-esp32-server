@@ -161,12 +161,14 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
                 new QueryWrapper<SysUserEntity>()
                         // 必须按照手机号码查找
                         .eq(StringUtils.isNotBlank(dto.getMobile()), "username", dto.getMobile()));
+        // 循环处理page获取回来的数据，返回需要的字段
         List<AdminPageUserVO> list = page.getRecords().stream().map(user -> {
             AdminPageUserVO adminPageUserVO = new AdminPageUserVO();
             adminPageUserVO.setUserid(user.getId().toString());
             adminPageUserVO.setMobile(user.getUsername());
-            // TODO 2. 等设备功能写好，获取对应数据
-            adminPageUserVO.setDeviceCount("0");
+            String deviceCount = deviceService.selectCountByUserId(user.getId()).toString();
+            adminPageUserVO.setDeviceCount(deviceCount);
+            adminPageUserVO.setStatus(user.getStatus().toString());
             return adminPageUserVO;
         }).toList();
         return new PageData<>(list, page.getTotal());
