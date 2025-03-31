@@ -11,11 +11,12 @@ import websockets
 from typing import Dict, Any
 import plugins_func.loadplugins
 from config.logger import setup_logging
+from core.providers.tts.dto.dto import TTSMessageDTO, MsgType
 from core.utils.dialogue import Message, Dialogue
 from core.handle.textHandle import handleTextMessage
 from core.utils.util import get_string_no_punctuation_or_emoji, extract_json_from_string, get_ip_info
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
-from core.handle.sendAudioHandle import sendAudioMessage, sendAudioMessageStream
+from core.handle.sendAudioHandle import sendAudioMessage
 from core.handle.receiveAudioHandle import handleAudioMessage
 from core.handle.functionHandler import FunctionHandler
 from plugins_func.register import Action
@@ -45,6 +46,7 @@ class ConnectionHandler:
         self.session_id = None
         self.prompt = None
         self.welcome_msg = None
+        self.u_id = None
 
         # 客户端状态相关
         self.client_abort = False
@@ -58,6 +60,7 @@ class ConnectionHandler:
         self.audio_play_queue = queue.Queue()
         max_workers = self.config.get("TTS_SET", {}).get("MAX_WORKERS", 10)
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.start_tts_request_flag = False
 
         # 依赖的组件
         self.vad = _vad
@@ -157,13 +160,13 @@ class ConnectionHandler:
             # 异步初始化
             await self.loop.run_in_executor(None, self._initialize_components)
 
-            # tts 消化线程
-            tts_priority = threading.Thread(target=self._tts_priority_thread, daemon=True)
-            tts_priority.start()
-
             # 音频播放 消化线程
+            self.stop_event.clear()
             audio_play_priority = threading.Thread(target=self._audio_play_priority_thread, daemon=True)
             audio_play_priority.start()
+
+            # 打开音频通道
+            await self.tts.open_audio_channels()
 
             try:
                 async for message in self.websocket:
@@ -196,9 +199,9 @@ class ConnectionHandler:
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
 
-        self.client_ip_info = get_ip_info(self.client_ip)
-        self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
-        self.prompt = self.prompt + f"\n我在:{self.client_ip_info}"
+        # self.client_ip_info = get_ip_info(self.client_ip)
+        # self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
+        # self.prompt = self.prompt + f"\n我在:{self.client_ip_info}"
         self.dialogue.put(Message(role="system", content=self.prompt))
 
         self.func_handler = FunctionHandler(self.config)
@@ -258,6 +261,8 @@ class ConnectionHandler:
 
         self.llm_finish_task = False
         text_index = 0
+        uuid_str = str(uuid.uuid4())
+        msg_type = None
         for content in llm_responses:
             response_message.append(content)
             if self.client_abort:
@@ -265,62 +270,14 @@ class ConnectionHandler:
 
             end_time = time.time()
             self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
-
-            # 合并当前全部文本并处理未分割部分
-            full_text = "".join(response_message)
-            current_text = full_text[processed_chars:]  # 从未处理的位置开始
-
-            # 查找最后一个有效标点
-            punctuations = ("。", "？", "！", "；", "：", ".", "?", "!", ";", ":", " ")
-            last_punct_pos = -1
-            for punct in punctuations:
-                pos = current_text.rfind(punct)
-                if pos > last_punct_pos:
-                    last_punct_pos = pos
-
-            # 找到分割点则处理
-            if last_punct_pos != -1:
-                segment_text_raw = current_text[:last_punct_pos + 1]
-                segment_text = get_string_no_punctuation_or_emoji(segment_text_raw)
-                if segment_text:
-                    # 强制设置空字符，测试TTS出错返回语音的健壮性
-                    # if text_index % 2 == 0:
-                    #     segment_text = " "
-                    text_index += 1
-                    self.recode_first_last_text(segment_text, text_index)
-                    if self.tts_stream:
-                        stream_queue = queue.Queue()
-                        self.executor.submit(self.speak_and_play_stream, segment_text, stream_queue)
-                        self.tts_queue_stream.put({
-                            "text": segment_text,
-                            "chunk_queque": stream_queue,
-                            "text_index": text_index
-                        })
-                    else:
-                        future = self.executor.submit(self.speak_and_play, segment_text, text_index)
-                        self.tts_queue.put(future)
-                    processed_chars += len(segment_text_raw)  # 更新已处理字符位置
-
-        # 处理最后剩余的文本
-        full_text = "".join(response_message)
-        remaining_text = full_text[processed_chars:]
-        if remaining_text:
-            segment_text = get_string_no_punctuation_or_emoji(remaining_text)
-            if segment_text:
-                text_index += 1
-                self.recode_first_last_text(segment_text, text_index)
-                if self.tts_stream:
-                    stream_queue = queue.Queue()
-                    self.executor.submit(self.speak_and_play_stream, segment_text, stream_queue, text_index)
-                    self.tts_queue_stream.put({
-                        "text": segment_text,
-                        "chunk_queque": stream_queue,
-                        "text_index": text_index
-                    })
-                else:
-                    future = self.executor.submit(self.speak_and_play, segment_text, text_index)
-                    self.tts_queue.put(future)
-
+            if text_index == 0:
+                msg_type = MsgType.START_TTS_REQUEST
+            else:
+                msg_type = MsgType.TTS_TEXT_REQUEST
+            self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=msg_type, content=content))
+            text_index += 1
+        msg_type = MsgType.STOP_TTS_REQUEST
+        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=msg_type, content=""))
         self.llm_finish_task = True
         self.dialogue.put(Message(role="assistant", content="".join(response_message)))
         self.logger.bind(tag=TAG).debug(json.dumps(self.dialogue.get_llm_dialogue(), indent=4, ensure_ascii=False))
@@ -372,6 +329,9 @@ class ConnectionHandler:
         function_id = None
         function_arguments = ""
         content_arguments = ""
+        uuid_str = str(uuid.uuid4()).replace("-", "")
+        self.u_id = uuid_str
+        msg_type = None
         for response in llm_responses:
             content, tools_call = response
             if content is not None and len(content) > 0:
@@ -398,39 +358,16 @@ class ConnectionHandler:
 
                     end_time = time.time()
                     self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
-
-                    # 处理文本分段和TTS逻辑
-                    # 合并当前全部文本并处理未分割部分
-                    full_text = "".join(response_message)
-                    current_text = full_text[processed_chars:]  # 从未处理的位置开始
-
-                    # 查找最后一个有效标点
-                    punctuations = ("。", "？", "！", "；", "：", ".", "?", "!", ";", ":", " ")
-                    last_punct_pos = -1
-                    for punct in punctuations:
-                        pos = current_text.rfind(punct)
-                        if pos > last_punct_pos:
-                            last_punct_pos = pos
-
-                    # 找到分割点则处理
-                    if last_punct_pos != -1:
-                        segment_text_raw = current_text[:last_punct_pos + 1]
-                        segment_text = get_string_no_punctuation_or_emoji(segment_text_raw)
-                        if segment_text:
-                            text_index += 1
-                            self.recode_first_last_text(segment_text, text_index)
-                            if self.tts_stream:
-                                stream_queue = queue.Queue()
-                                self.executor.submit(self.speak_and_play_stream, segment_text, stream_queue)
-                                self.tts_queue_stream.put({
-                                    "text": segment_text,
-                                    "chunk_queque": stream_queue,
-                                    "text_index": text_index
-                                })
-                            else:
-                                future = self.executor.submit(self.speak_and_play, segment_text, text_index)
-                                self.tts_queue.put(future)
-                            processed_chars += len(segment_text_raw)  # 更新已处理字符位置
+                    if text_index == 0:
+                        self.tts.tts_text_queue.put(
+                            TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.START_TTS_REQUEST, content=''))
+                        self.start_tts_request_flag = True
+                    self.tts.tts_text_queue.put(
+                        TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.TTS_TEXT_REQUEST, content=content))
+                    text_index += 1
+        if self.start_tts_request_flag:
+            self.start_tts_request_flag = False
+            self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.STOP_TTS_REQUEST, content=''))
 
         # 处理function call
         if tool_call_flag:
@@ -464,26 +401,6 @@ class ConnectionHandler:
                 result = self.func_handler.handle_llm_function_call(self, function_call_data)
                 self._handle_function_result(result, function_call_data, text_index + 1)
 
-        # 处理最后剩余的文本
-        full_text = "".join(response_message)
-        remaining_text = full_text[processed_chars:]
-        if remaining_text:
-            segment_text = get_string_no_punctuation_or_emoji(remaining_text)
-            if segment_text:
-                text_index += 1
-                self.recode_first_last_text(segment_text, text_index)
-                if self.tts_stream:
-                    stream_queue = queue.Queue()
-                    self.executor.submit(self.speak_and_play_stream, segment_text, stream_queue, text_index)
-                    self.tts_queue_stream.put({
-                        "text": segment_text,
-                        "chunk_queque": stream_queue,
-                        "text_index": text_index
-                    })
-                else:
-                    future = self.executor.submit(self.speak_and_play, segment_text, text_index)
-                    self.tts_queue.put(future)
-
         # 存储对话内容
         if len(response_message) > 0:
             self.dialogue.put(Message(role="assistant", content="".join(response_message)))
@@ -497,20 +414,9 @@ class ConnectionHandler:
         if result.action == Action.RESPONSE:  # 直接回复前端
             text = result.response
             self.recode_first_last_text(text, text_index)
-            if self.tts_stream:
-                stream_queue = queue.Queue()
-                self.executor.submit(self.speak_and_play_stream, text, stream_queue, text_index)
-                self.tts_queue_stream.put({
-                    "text": text,
-                    "chunk_queque": stream_queue,
-                    "text_index": text_index
-                })
-            else:
-                future = self.executor.submit(self.speak_and_play, text, text_index)
-                self.tts_queue.put(future)
+            asyncio.run_coroutine_threadsafe(self.tts.tts_one_sentence(text), loop=self.loop)
             self.dialogue.put(Message(role="assistant", content=text))
         elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
-
             text = result.result
             if text is not None and len(text) > 0:
                 function_id = function_call_data["id"]
@@ -528,14 +434,12 @@ class ConnectionHandler:
         elif result.action == Action.NOTFOUND:
             text = result.result
             self.recode_first_last_text(text, text_index)
-            future = self.executor.submit(self.speak_and_play, text, text_index)
-            self.tts_queue.put(future)
+            asyncio.run_coroutine_threadsafe(self.tts.tts_one_sentence(text), loop=self.loop)
             self.dialogue.put(Message(role="assistant", content=text))
         else:
             text = result.result
             self.recode_first_last_text(text, text_index)
-            future = self.executor.submit(self.speak_and_play, text, text_index)
-            self.tts_queue.put(future)
+            asyncio.run_coroutine_threadsafe(self.tts.tts_one_sentence(text), loop=self.loop)
             self.dialogue.put(Message(role="assistant", content=text))
 
     def _tts_priority_thread(self):
@@ -615,22 +519,10 @@ class ConnectionHandler:
         while not self.stop_event.is_set():
             text = None
             try:
-                if self.tts_stream:
-                    data, text, text_index = self.audio_play_queue.get()
-                    if isinstance(data, list):
-                        future = asyncio.run_coroutine_threadsafe(sendAudioMessage(self, data, text, text_index),
-                                                                  self.loop)
-                        future.result()
-                    else:
-                        future = asyncio.run_coroutine_threadsafe(
-                            sendAudioMessageStream(self, data, text, text_index),
-                            self.loop)
-                        future.result()
-                else:
-                    opus_datas, text, text_index = self.audio_play_queue.get()
-                    future = asyncio.run_coroutine_threadsafe(sendAudioMessage(self, opus_datas, text, text_index),
-                                                              self.loop)
-                    future.result()
+                ttsMessageDTO = self.tts.tts_audio_queue.get()
+                future = asyncio.run_coroutine_threadsafe(sendAudioMessage(self, ttsMessageDTO),
+                                                          self.loop)
+                future.result()
             except Exception as e:
                 self.logger.bind(tag=TAG).error(f"audio_play_priority priority_thread: {text} {e}")
 
@@ -670,12 +562,12 @@ class ConnectionHandler:
 
     async def close(self):
         """资源清理方法"""
-
         # 清理其他资源
         self.stop_event.set()
         self.executor.shutdown(wait=False)
         if self.websocket:
             await self.websocket.close()
+        await self.tts.close()
         self.logger.bind(tag=TAG).info("连接资源已释放")
 
     def reset_vad_states(self):

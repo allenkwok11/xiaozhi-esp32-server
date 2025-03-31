@@ -78,6 +78,7 @@ class WebSocketServer:
     async def _handle_connection(self, websocket):
         """处理新连接，每次创建独立的ConnectionHandler"""
         # 创建ConnectionHandler时传入当前server实例
+        # tts 变成链接的时候创建，避免并非问题
         handler = ConnectionHandler(self.config, self._vad, self._asr, self._llm, self._tts, self._memory, self.intent)
         self.active_connections.add(handler)
         try:
