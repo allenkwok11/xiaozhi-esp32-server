@@ -5,14 +5,14 @@
       <div class="top-area">
         <div class="page-title">用户管理</div>
         <div class="page-search">
-          <el-input placeholder="请输入手机号码查询" v-model="searchPhone" class="search-input" />
+          <el-input placeholder="请输入手机号码查询" v-model="searchPhone" class="search-input" @keyup.enter.native="handleSearch"/>
           <el-button class="btn-search" @click="handleSearch">搜索</el-button>
         </div>
       </div>
 
       <el-card class="user-card" shadow="never">
         <el-table :data="userList" class="transparent-table" :header-cell-class-name="headerCellClassName">
-          <el-table-column label="选择" type="selection" align="center" width="100"></el-table-column>
+          <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
           <el-table-column label="用户Id" prop="user_id" align="center"></el-table-column>
           <el-table-column label="手机号码" prop="mobile" align="center"></el-table-column>
           <el-table-column label="设备数量" prop="device_count" align="center"></el-table-column>
@@ -67,7 +67,6 @@
 
 <script>
 import HeaderBar from "@/components/HeaderBar.vue";
-import Api from '@/apis/api';
 import adminApi from '@/apis/module/admin';
 
 
@@ -77,6 +76,7 @@ export default {
     return {
       searchPhone: '',
       userList: [],
+      originalUserList: [], // 原始数据
       currentPage: 1,
       pageSize: 5,
       total: 20
@@ -110,16 +110,15 @@ export default {
     fetchUsers() {
       adminApi.getUserList(({data}) => {
         if (data.code === 0) {
-          const responseData = data.data[0] || data.data
-
-          this.userList = responseData.list.map(user => ({
+          const responseData = data.data[0] || data.data;
+          this.originalUserList = responseData.list.map(user => ({
             ...user,
             status: user.status === '1' ? '正常' : '禁用'
-          }))
-
-          this.total = responseData.totalCount || 0
+          }));
+          this.userList = [...this.originalUserList];
+          this.total = responseData.totalCount || 0;
         }
-      })
+      });
     },
 
     // 分页变化
@@ -131,13 +130,12 @@ export default {
     // 搜索
     handleSearch() {
       if (!this.searchPhone) {
-        this.fetchUsers()
-        return
+        this.userList = [...this.originalUserList];
+        return;
       }
-      this.userList = this.userList.filter(user =>
+      this.userList = this.originalUserList.filter(user =>
         user.mobile.includes(this.searchPhone)
-      )
-    },
+      )},
     batchDelete() {
       console.log('执行批量删除操作');
     },
@@ -273,6 +271,7 @@ $table-bg-color: #ecf1fd;
   .ctrl_btn {
     display: flex;
     align-items: center;
+    margin-left: 25px;
   }
 }
 
