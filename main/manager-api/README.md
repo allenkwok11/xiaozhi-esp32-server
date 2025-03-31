@@ -86,10 +86,10 @@ src/main/java/xiaozhi/AdminApplication.java
 mvn clean install
 ```
 
-把jar包放在服务器上，执行
+把jar包与start.sh放在服务器上，执行
 
 ```
-nohup java -jar xiaozhi-esp32-api.jar --spring.profiles.active=dev > xiaozhi-server.log 2>&1 & echo $! > xiaozhi-server.pid
+sh start.sh
 ```
 
 # 接口文档
