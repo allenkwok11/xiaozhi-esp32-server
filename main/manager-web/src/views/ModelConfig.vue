@@ -9,11 +9,11 @@
             语音设置
           </el-button>
           <el-button plain size="small" @click="handleImport" style="background: #7b9de5; color: white;">
-            <img alt="" src="@/assets/model/inner_conf.png">
+            <img loading="lazy" alt="" src="@/assets/model/inner_conf.png">
             导入配置
           </el-button>
           <el-button plain size="small" @click="handleExport" style="background: #71c9d1; color: white;">
-            <img alt="" src="@/assets/model/output_conf.png">
+            <img loading="lazy" alt="" src="@/assets/model/output_conf.png">
             导出配置
           </el-button>
         </div>
