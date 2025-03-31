@@ -37,6 +37,7 @@ async def check_direct_exit(conn, text):
     for cmd in cmd_exit:
         if text == cmd:
             logger.bind(tag=TAG).info(f"识别到明确的退出命令: {text}")
+            await send_stt_message(conn, text)
             await conn.close()
             return True
     return False
