@@ -83,13 +83,13 @@ src/main/java/xiaozhi/AdminApplication.java
 执行以下命令生产jar包
 
 ```
-mvn install
+mvn clean install
 ```
 
 把jar包放在服务器上，执行
 
 ```
-nohup java -jar xiaozhi-esp32-api.jar --spring.profiles.active=dev >/dev/null &
+nohup java -jar xiaozhi-esp32-api.jar --spring.profiles.active=dev > xiaozhi-server.log 2>&1 & echo $! > xiaozhi-server.pid
 ```
 
 # 接口文档
