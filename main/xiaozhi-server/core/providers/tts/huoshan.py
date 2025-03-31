@@ -152,7 +152,7 @@ class TTSProvider(TTSProviderBase):
         self.tts_text = ""
 
     async def open_audio_channels(self):
-        self.loop_tts = asyncio.new_event_loop()
+        await super().open_audio_channels()
         ws_header = {
             "X-Api-App-Key": self.appId,
             "X-Api-Access-Key": self.access_token,
@@ -316,6 +316,7 @@ class TTSProvider(TTSProviderBase):
 
     async def close(self):
         """资源清理方法"""
+        await self.finish_connection()
         await self.ws.close()
 
     async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):

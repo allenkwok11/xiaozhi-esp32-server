@@ -13,7 +13,9 @@ logger = setup_logging()
 
 
 async def sendAudioMessage(conn, ttsMessageDTO: TTSMessageDTO):
-    u_id = None
+    if ttsMessageDTO.u_id != conn.u_id:
+        logger.bind(tag=TAG).info(f"msg id:{ttsMessageDTO.u_id},不是当前对话，当前对话id：{conn.u_id}")
+        return
     # 发送句子开始消息
     if SentenceType.SENTENCE_START == ttsMessageDTO.sentence_type:
         logger.bind(tag=TAG).info(f"发送第一段语音: {ttsMessageDTO.tts_finish_text}")

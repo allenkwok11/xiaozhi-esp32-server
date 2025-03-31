@@ -180,8 +180,8 @@ class TTSProvider(TTSProviderBase):
                         if len(chunk_total) % 2 == 0 and chunk_total[-2:] == b'\x00\x00':
                             audio = self._get_audio_from_tts(chunk_total)
                             audio_raw = audio_raw + audio.raw_data
-                            # 长度凑够2贞开始发送，60ms*4=240ms
-                            if len(audio_raw) >= 7680:
+                            # 长度凑够2贞开始发送，60ms*2=120ms
+                            if len(audio_raw) >= 3840:
                                 opus_datas = self.wav_to_opus_data_audio_raw(audio_raw)
                                 if index == 0:
                                     yield TTSMessageDTO(u_id=u_id, msg_type=MsgType.TTS_TEXT_RESPONSE,

@@ -50,21 +50,9 @@ class TTSProviderBase(ABC):
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
 
     async def open_audio_channels(self):
-        pass
-
-    async def reset(self):
-        try:
-            logger.bind(tag=TAG).info("说明开始了新的对话，重建tts监听")
-            await self.stop_listen_resource()
-            self.tts_text_queue = queue.Queue()
-            self.tts_audio_queue = queue.Queue()
-            # 启动tts_text_queue监听线程
-            self.stop_event.clear()
-            tts_priority = threading.Thread(target=self._tts_text_priority_thread, daemon=True)
-            tts_priority.start()
-        except Exception as e:
-            logger.bind(tag=TAG).error(f"Failed to process TTS text: {e}")
-            traceback.print_exc()
+        # 启动tts_text_queue监听线程
+        tts_priority = threading.Thread(target=self._tts_text_priority_thread, daemon=True)
+        tts_priority.start()
 
     async def stop_listen_resource(self):
         """资源清理方法"""

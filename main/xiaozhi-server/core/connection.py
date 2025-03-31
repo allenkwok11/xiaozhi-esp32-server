@@ -46,6 +46,7 @@ class ConnectionHandler:
         self.session_id = None
         self.prompt = None
         self.welcome_msg = None
+        self.u_id = None
 
         # 客户端状态相关
         self.client_abort = False
@@ -159,9 +160,13 @@ class ConnectionHandler:
             # 异步初始化
             await self.loop.run_in_executor(None, self._initialize_components)
 
-            # tts 消化线程
-            tts_priority = threading.Thread(target=self._tts_priority_thread, daemon=True)
-            tts_priority.start()
+            # 音频播放 消化线程
+            self.stop_event.clear()
+            audio_play_priority = threading.Thread(target=self._audio_play_priority_thread, daemon=True)
+            audio_play_priority.start()
+
+            # 打开音频通道
+            await self.tts.open_audio_channels()
 
             try:
                 async for message in self.websocket:
@@ -325,6 +330,7 @@ class ConnectionHandler:
         function_arguments = ""
         content_arguments = ""
         uuid_str = str(uuid.uuid4()).replace("-", "")
+        self.u_id = uuid_str
         msg_type = None
         for response in llm_responses:
             content, tools_call = response
@@ -554,18 +560,8 @@ class ConnectionHandler:
             self.tts_first_text_index = text_index
         self.tts_last_text_index = text_index
 
-    async def init_and_reset_tts(self):
-        self.stop_event.set()
-        # 释放之前的tts语音监听：重置监听队列
-        await self.tts.reset()
-        # 音频播放 消化线程
-        self.stop_event.clear()
-        audio_play_priority = threading.Thread(target=self._audio_play_priority_thread, daemon=True)
-        audio_play_priority.start()
-
     async def close(self):
         """资源清理方法"""
-
         # 清理其他资源
         self.stop_event.set()
         self.executor.shutdown(wait=False)
