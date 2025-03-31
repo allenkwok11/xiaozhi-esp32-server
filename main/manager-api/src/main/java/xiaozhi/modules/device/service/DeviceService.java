@@ -26,7 +26,7 @@ public interface DeviceService {
     DeviceEntity bindDevice(DeviceBindDTO deviceHeader);
 
     /**
-     * 获取用户设备列表
+     * 获取用户指定智能体的设备列表，
      */
     List<DeviceEntity> getUserDevices(Long userId, String agentId);
 
@@ -39,4 +39,10 @@ public interface DeviceService {
      * 设备激活
      */
     Boolean deviceActivation(String activationCode);
+
+    /**
+     * 删除此用户的所有设备
+     * @param userId 用户id
+     */
+    void deleteByUserId(Long userId);
 }

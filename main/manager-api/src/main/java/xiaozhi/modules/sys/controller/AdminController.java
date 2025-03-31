@@ -70,7 +70,7 @@ public class AdminController {
     @Operation(summary = "用户删除")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@PathVariable Long id) {
-        sysUserService.delete(new Long[] { id });
+        sysUserService.deleteById( id );
         return new Result<>();
     }
 

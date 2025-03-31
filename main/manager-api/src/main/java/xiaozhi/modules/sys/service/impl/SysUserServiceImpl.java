@@ -1,6 +1,5 @@
 package xiaozhi.modules.sys.service.impl;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +21,8 @@ import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.utils.ConvertUtils;
+import xiaozhi.modules.agent.service.AgentService;
+import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.security.password.PasswordUtils;
 import xiaozhi.modules.sys.dao.SysUserDao;
 import xiaozhi.modules.sys.dto.AdminPageUserDTO;
@@ -39,6 +40,10 @@ import xiaozhi.modules.sys.vo.AdminPageUserVO;
 @Service
 public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntity> implements SysUserService {
     private final SysUserDao sysUserDao;
+
+    private final DeviceService deviceService;
+
+    private final AgentService agentService;
 
     @Override
     public SysUserDTO getByUsername(String username) {
@@ -87,10 +92,14 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Long[] ids) {
+    public void deleteById(Long id) {
         // 删除用户
-        baseDao.deleteBatchIds(Arrays.asList(ids));
-        // TODO 除了要删除用户还要删除用户关联的设备，对话，智能体。等此3个功能完善在添加
+        baseDao.deleteById(id);
+        // 删除设备
+        deviceService.deleteByUserId(id);
+        // 删除智能体
+        agentService.deleteById(id);
+        // TODO 除了要删除用户还要删除用户关联的对话
     }
 
     @Override

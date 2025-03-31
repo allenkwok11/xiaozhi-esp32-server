@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 
 import cn.hutool.core.util.RandomUtil;
+import org.springframework.transaction.annotation.Transactional;
 import xiaozhi.common.exception.RenException;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.user.UserDetail;
@@ -194,6 +195,13 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         UpdateWrapper<DeviceEntity> wrapper = new UpdateWrapper<>();
         wrapper.eq("user_id", userId);
         wrapper.eq("id", deviceId);
+        baseDao.delete(wrapper);
+    }
+
+    @Override
+    public void deleteByUserId(Long userId) {
+        UpdateWrapper<DeviceEntity> wrapper = new UpdateWrapper<>();
+        wrapper.eq("user_id", userId);
         baseDao.delete(wrapper);
     }
 
