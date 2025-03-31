@@ -62,6 +62,13 @@ const routes = [
      return import('../views/ModelConfig.vue')
    }
   },
+  {
+    path: '/test',
+    name: 'TestServer',
+    component: function () {
+      return import('../views/test.vue')
+    }
+  },
 
 ]
 

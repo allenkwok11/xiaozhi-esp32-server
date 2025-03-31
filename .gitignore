@@ -157,3 +157,4 @@ main/xiaozhi-server/models/SenseVoiceSmall/model.pt
 main/xiaozhi-server/models/sherpa-onnx*
 main/xiaozhi-server/models/vosk-model*
 my_wakeup_words.mp3
+main/manager-api/.vscode

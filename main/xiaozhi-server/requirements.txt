@@ -24,3 +24,4 @@ modelscope==1.23.2
 sherpa_onnx==1.11.0
 cnlunar==0.2.0
 vosk==0.3.45
+mcp==1.4.1
