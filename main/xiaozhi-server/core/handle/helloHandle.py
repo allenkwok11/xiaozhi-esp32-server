@@ -38,7 +38,7 @@ async def checkWakeupWords(conn, text):
         opus_packets, duration = conn.tts.audio_to_opus_data(file)
         text_hello = WAKEUP_CONFIG["text"]
         if not text_hello:
-            text_hello, _ = await conn.asr.speech_to_text(opus_packets, conn.session_id)
+            text_hello = text
         conn.audio_play_queue.put((opus_packets, text_hello, 0))
         if time.time() - WAKEUP_CONFIG["create_time"] > WAKEUP_CONFIG["refresh_time"]:
             asyncio.create_task(wakeupWordsResponse(conn))
@@ -74,6 +74,7 @@ async def wakeupWordsResponse(conn):
         if old_file is not None:
             os.remove(old_file)
         """将文件挪到"wakeup_words.mp3"""
-        shutil.move(tts_file, WAKEUP_CONFIG["dir"] + "my_" + WAKEUP_CONFIG["file_name"] + "." + file_type)
+        shutil.move(tts_file, WAKEUP_CONFIG["dir"] + "my_" +
+                    WAKEUP_CONFIG["file_name"] + "." + file_type)
         WAKEUP_CONFIG["create_time"] = time.time()
         WAKEUP_CONFIG["text"] = result

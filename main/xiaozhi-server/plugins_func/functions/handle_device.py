@@ -6,12 +6,14 @@ import asyncio
 TAG = __name__
 logger = setup_logging()
 
+
 async def _get_device_status(conn, device_name, device_type, property_name):
     """获取设备状态"""
     status = await get_iot_status(conn, device_type, property_name)
     if status is None:
         raise Exception(f"你的设备不支持{device_name}控制")
     return status
+
 
 async def _set_device_property(conn, device_name, device_type, method_name, property_name, new_value=None, action=None, step=10):
     """设置设备属性"""
@@ -32,9 +34,11 @@ async def _set_device_property(conn, device_name, device_type, method_name, prop
     await send_iot_conn(conn, device_type, method_name, {property_name: current_value})
     return current_value
 
+
 def _handle_device_action(conn, func, success_message, error_message, *args, **kwargs):
     """处理设备操作的通用函数"""
-    future = asyncio.run_coroutine_threadsafe(func(conn, *args, **kwargs), conn.loop)
+    future = asyncio.run_coroutine_threadsafe(
+        func(conn, *args, **kwargs), conn.loop)
     try:
         result = future.result()
         logger.bind(tag=TAG).info(f"{success_message}: {result}")
@@ -45,9 +49,8 @@ def _handle_device_action(conn, func, success_message, error_message, *args, **k
         response = f"{error_message}: {e}"
         return ActionResponse(action=Action.RESPONSE, result=None, response=response)
 
+
 # 设备控制
-# TODO: 和自动注册的iot方法重复了，也许可以删掉这里手动定义的实现？
-# 另外观察到function_call准确率不够高，可能是llm的问题
 handle_device_function_desc = {
     "type": "function",
     "function": {
@@ -80,6 +83,7 @@ handle_device_function_desc = {
     }
 }
 
+
 @register_function('handle_device', handle_device_function_desc, ToolType.IOT_CTL)
 def handle_device(conn, device_type: str, action: str, value: int = None):
     if device_type == "Speaker":
@@ -88,10 +92,10 @@ def handle_device(conn, device_type: str, action: str, value: int = None):
         method_name, property_name, device_name = "SetBrightness", "brightness", "亮度"
     else:
         raise Exception(f"未识别的设备类型: {device_type}")
-    
+
     if action not in ["get", "set", "raise", "lower"]:
         raise Exception(f"未识别的动作名称: {action}")
-    
+
     if action == "get":
         # get
         return _handle_device_action(
