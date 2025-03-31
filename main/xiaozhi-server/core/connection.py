@@ -261,7 +261,8 @@ class ConnectionHandler:
 
         self.llm_finish_task = False
         text_index = 0
-        uuid_str = str(uuid.uuid4())
+        uuid_str = str(uuid.uuid4()).replace("-", "")
+        self.u_id = uuid_str
         msg_type = None
         for content in llm_responses:
             response_message.append(content)
@@ -271,13 +272,15 @@ class ConnectionHandler:
             end_time = time.time()
             self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
             if text_index == 0:
-                msg_type = MsgType.START_TTS_REQUEST
-            else:
-                msg_type = MsgType.TTS_TEXT_REQUEST
-            self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=msg_type, content=content))
+                self.tts.tts_text_queue.put(
+                    TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.START_TTS_REQUEST, content=''))
+                self.start_tts_request_flag = True
+            self.tts.tts_text_queue.put(
+                TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.TTS_TEXT_REQUEST, content=content))
             text_index += 1
-        msg_type = MsgType.STOP_TTS_REQUEST
-        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=msg_type, content=""))
+        if self.start_tts_request_flag:
+            self.start_tts_request_flag = False
+            self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.STOP_TTS_REQUEST, content=''))
         self.llm_finish_task = True
         self.dialogue.put(Message(role="assistant", content="".join(response_message)))
         self.logger.bind(tag=TAG).debug(json.dumps(self.dialogue.get_llm_dialogue(), indent=4, ensure_ascii=False))
