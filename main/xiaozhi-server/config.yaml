@@ -468,7 +468,8 @@ TTS:
     # token申请地址：https://dash.302.ai/
   TencentTTS:
     # 腾讯云智能语音交互服务，需要先在腾讯云平台开通服务
-    # token申请地址：https://console.cloud.tencent.com/cam/capi
+    # appid、secret_id、secret_key申请地址：https://console.cloud.tencent.com/cam/capi
+    # 免费领取资源：https://console.cloud.tencent.com/tts/resourcebundle
     type: tencent
     output_dir: tmp/
     appid: 你的腾讯云AppId
