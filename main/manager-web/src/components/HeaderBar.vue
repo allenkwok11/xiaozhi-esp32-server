@@ -43,7 +43,7 @@
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item icon="el-icon-plus" @click.native="">个人中心</el-dropdown-item>
             <el-dropdown-item icon="el-icon-circle-plus" @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="">退出登录</el-dropdown-item>
+            <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="handleLogout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -57,6 +57,8 @@
 <script>
 import userApi from '@/apis/module/user';
 import ChangePasswordDialog from './ChangePasswordDialog.vue'; // 引入修改密码弹窗组件
+import { mapActions } from 'vuex'; // 导入 mapActions
+
 
 export default {
   name: 'HeaderBar',
@@ -118,7 +120,24 @@ export default {
     // 显示修改密码弹窗
     showChangePasswordDialog() {
       this.isChangePasswordDialogVisible = true;
-    }
+    },
+    // 退出登录
+    async handleLogout() {
+      try {
+        // 调用 Vuex 的 logout action
+        await this.logout();
+
+        this.$message.success('退出登录成功');
+
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('退出登录失败:', error);
+        this.$message.error('退出登录失败，请重试');
+      }
+    },
+
+    // 使用 mapActions 引入 Vuex 的 logout action
+    ...mapActions(['logout'])
   }
 }
 </script>
