@@ -10,7 +10,7 @@ logger = setup_logging()
 
 async def handleAudioMessage(conn, audio):
     if not conn.asr_server_receive:
-        # logger.bind(tag=TAG).debug(f"前期数据处理中，暂停接收")
+        logger.bind(tag=TAG).debug(f"前期数据处理中，暂停接收")
         return
     if conn.client_listen_mode == "auto":
         have_voice = conn.vad.is_vad(conn, audio)
