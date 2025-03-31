@@ -106,7 +106,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -156,3 +155,6 @@ main/xiaozhi-server/models/SenseVoiceSmall/model.pt
 main/xiaozhi-server/models/sherpa-onnx*
 my_wakeup_words.mp3
 main/manager-api/.vscode
+
+# Ignore webpack cache directory
+main/manager-web/.webpack_cache/

@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <% if (htmlWebpackPlugin.options.cdn) { %>
+      <% for (var i in htmlWebpackPlugin.options.cdn.css) { %>
+        <link rel="stylesheet" href="<%= htmlWebpackPlugin.options.cdn.css[i] %>">
+      <% } %>
+    <% } %>
   </head>
   <body>
     <noscript>
@@ -13,5 +18,10 @@
     </noscript>
     <div id="app"></div>
     <!-- built files will be auto injected -->
+    <% if (htmlWebpackPlugin.options.cdn) { %>
+      <% for (var i in htmlWebpackPlugin.options.cdn.js) { %>
+        <script src="<%= htmlWebpackPlugin.options.cdn.js[i] %>"></script>
+      <% } %>
+    <% } %>
   </body>
 </html>
