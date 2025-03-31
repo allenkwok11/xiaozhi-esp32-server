@@ -93,6 +93,7 @@ class ConnectionHandler:
 
         # iot相关变量
         self.iot_descriptors = {}
+        self.func_handler = None
 
         self.cmd_exit = self.config["CMD_exit"]
         self.max_cmd_length = 0

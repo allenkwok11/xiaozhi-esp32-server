@@ -10,8 +10,14 @@ import time
 
 logger = setup_logging()
 
-WAKEUP_CONFIG = {"dir": "config/assets/", "file_name": "wakeup_words", "create_time": time.time(), "refresh_time": 10,
-                 "words": ["很高兴见到你", "你好啊", "我们又见面了", "最近可好?", "很高兴再次和你谈话", "在干嘛"], "text": ""}
+WAKEUP_CONFIG = {
+    "dir": "config/assets/",
+    "file_name": "wakeup_words",
+    "create_time": time.time(),
+    "refresh_time": 10,
+    "words": ["你好小智", "你好啊小智", "小智你好", "小智"],
+    "text": "",
+}
 
 
 async def handleHelloMessage(conn):
@@ -19,7 +25,9 @@ async def handleHelloMessage(conn):
 
 
 async def checkWakeupWords(conn, text):
-    enable_wakeup_words_response_cache = conn.config["enable_wakeup_words_response_cache"]
+    enable_wakeup_words_response_cache = conn.config[
+        "enable_wakeup_words_response_cache"
+    ]
     """是否开启唤醒词加速"""
     if not enable_wakeup_words_response_cache:
         return False
@@ -69,12 +77,14 @@ async def wakeupWordsResponse(conn):
     if tts_file is not None and os.path.exists(tts_file):
         file_type = os.path.splitext(tts_file)[1]
         if file_type:
-            file_type = file_type.lstrip('.')
+            file_type = file_type.lstrip(".")
         old_file = getWakeupWordFile("my_" + WAKEUP_CONFIG["file_name"])
         if old_file is not None:
             os.remove(old_file)
         """将文件挪到"wakeup_words.mp3"""
-        shutil.move(tts_file, WAKEUP_CONFIG["dir"] + "my_" +
-                    WAKEUP_CONFIG["file_name"] + "." + file_type)
+        shutil.move(
+            tts_file,
+            WAKEUP_CONFIG["dir"] + "my_" + WAKEUP_CONFIG["file_name"] + "." + file_type,
+        )
         WAKEUP_CONFIG["create_time"] = time.time()
         WAKEUP_CONFIG["text"] = result
