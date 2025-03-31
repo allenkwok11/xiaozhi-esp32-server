@@ -22,10 +22,10 @@
             <el-button size="mini" type="text" @click="resetPassword(scope.row)" style="color: #989fdd">重置密码</el-button>
             <el-button size="mini" type="text"
               v-if="scope.row.status === '正常'"
-              @click="disableUser(scope.row)">禁用</el-button>
+              @click="disableUser(scope.row)">禁用账户</el-button>
             <el-button size="mini" type="text"
               v-if="scope.row.status === '禁用'"
-              @click="restoreUser(scope.row)">恢复</el-button>
+              @click="restoreUser(scope.row)">恢复账号</el-button>
             <el-button size="mini" type="text" @click="deleteUser(scope.row)" style="color: #989fdd">删除用户</el-button>
             </template>
           </el-table-column>
@@ -76,25 +76,16 @@ export default {
   data() {
     return {
       searchPhone: '',
-      userList: [
-        { userId: '123456', phone: '13800138000', status: '正常', deviceCount: 10 },
-        { userId: '123456', phone: '13800138000', status: '正常', deviceCount: 9 },
-        { userId: '123456', phone: '13800138000', status: '正常', deviceCount: 7 },
-        { userId: '123456', phone: '13800138000', status: '禁用', deviceCount: 7 }
-      ],
+      userList: [],
       currentPage: 1,
       pageSize: 5,
       total: 20
     };
   },
   created() {
-    adminApi.getUserList(({data}) => {
-      //mock偶尔会返回-1导致出错，又会返回两个list，所以这里只取第一个
-      this.userList = data.data[0].list;
-      console.log('用户列表：', this.userList);
-    })
+    this.fetchUsers();
   },
-    computed: {
+  computed: {
     pageCount() {
       return Math.ceil(this.total / this.pageSize);
     },
@@ -115,9 +106,37 @@ export default {
     }
   },
   methods: {
+    // 获取用户列表
+    fetchUsers() {
+      adminApi.getUserList(({data}) => {
+        if (data.code === 0) {
+          const responseData = data.data[0] || data.data
+
+          this.userList = responseData.list.map(user => ({
+            ...user,
+            status: user.status === '1' ? '正常' : '禁用'
+          }))
+
+          this.total = responseData.totalCount || 0
+        }
+      })
+    },
+
+    // 分页变化
+    handleCurrentChange(page) {
+      this.currentPage = page;
+      this.fetchUsers();
+    },
+
+    // 搜索
     handleSearch() {
-      // 模拟搜索逻辑
-      console.log('执行查询，搜索号码：', this.searchPhone);
+      if (!this.searchPhone) {
+        this.fetchUsers()
+        return
+      }
+      this.userList = this.userList.filter(user =>
+        user.mobile.includes(this.searchPhone)
+      )
     },
     batchDelete() {
       console.log('执行批量删除操作');
@@ -138,10 +157,6 @@ export default {
     },
     deleteUser(row) {
       console.log('删除用户：', row);
-    },
-    handleCurrentChange(page) {
-      this.currentPage = page;
-      console.log('当前页码：', page);
     },
     handleSizeChange(val) {
       this.pageSize = val;
