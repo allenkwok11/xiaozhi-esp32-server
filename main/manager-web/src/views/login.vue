@@ -4,15 +4,15 @@
       <el-header>
         <div
             style="display: flex;align-items: center;margin-top: 15px;margin-left: 10px;gap: 10px;">
-          <img alt="" src="@/assets/xiaozhi-logo.png" style="width: 45px;height: 45px;"/>
-          <img alt="" src="@/assets/xiaozhi-ai.png" style="width: 70px;height: 13px;"/>
+          <img loading="lazy" alt="" src="@/assets/xiaozhi-logo.png" style="width: 45px;height: 45px;"/>
+          <img loading="lazy" alt="" src="@/assets/xiaozhi-ai.png" style="width: 70px;height: 13px;"/>
         </div>
       </el-header>
       <el-main style="position: relative;">
         <div class="login-box">
           <div
               style="display: flex;align-items: center;gap: 20px;margin-bottom: 39px;padding: 0 30px;">
-            <img alt="" src="@/assets/login/hi.png" style="width: 34px;height: 34px;"/>
+            <img loading="lazy" alt="" src="@/assets/login/hi.png" style="width: 34px;height: 34px;"/>
             <div class="login-text">登录</div>
             <div class="login-welcome">
               WELCOME TO LOGIN
@@ -20,19 +20,19 @@
           </div>
           <div style="padding: 0 30px;">
             <div class="input-box">
-              <img alt="" class="input-icon" src="@/assets/login/username.png"/>
+              <img loading="lazy" alt="" class="input-icon" src="@/assets/login/username.png"/>
               <el-input v-model="form.username" placeholder="请输入用户名"/>
             </div>
             <div class="input-box">
-              <img alt="" class="input-icon" src="@/assets/login/password.png"/>
+              <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png"/>
               <el-input v-model="form.password" placeholder="请输入密码" type="password"/>
             </div>
             <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
               <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
-                <img alt="" class="input-icon" src="@/assets/login/shield.png"/>
+                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png"/>
                 <el-input v-model="form.captcha" placeholder="请输入验证码" style="flex: 1;"/>
               </div>
-              <img v-if="captchaUrl"
+              <img loading="lazy" v-if="captchaUrl"
                    :src="captchaUrl"
                    alt="验证码"
                    style="width: 150px; height: 40px; cursor: pointer;"
