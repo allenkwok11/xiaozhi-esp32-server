@@ -65,14 +65,5 @@ mybatis-plus:
     blobType: BLOB
     boolValue: TRUE
 
-# 添加日志相关配置
-logging:
-  config: classpath:logback-spring.xml
-  file:
-    path: ./logs
-  level:
-    root: info
-    xiaozhi: debug
-
 app:
   fronted-url: http://localhost:8001
