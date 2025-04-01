@@ -85,7 +85,7 @@ export default {
     },
     // 获取智能体列表
     fetchAgentList() {
-      import('@/apis/module/user').then(({ default: userApi }) => {
+      import('@/apis/module/agent').then(({ default: userApi }) => {
         userApi.getAgentList(({data}) => {
         this.originalDevices = data.data.map(item => ({
           ...item,
