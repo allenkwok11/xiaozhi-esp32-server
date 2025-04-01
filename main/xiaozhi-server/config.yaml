@@ -188,6 +188,8 @@ ASR:
     cluster: volcengine_input_common
     output_dir: tmp/
   TencentASR:
+    # token申请地址：https://console.cloud.tencent.com/cam/capi
+    # 免费领取资源：https://console.cloud.tencent.com/asr/resourcebundle
     type: tencent
     appid: 你的腾讯语音合成服务appid
     secret_id: 你的腾讯语音合成服务secret_id
