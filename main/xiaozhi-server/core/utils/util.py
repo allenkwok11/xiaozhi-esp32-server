@@ -67,11 +67,13 @@ def is_private_ip(ip_addr):
 
 def get_ip_info(ip_addr):
     try:
-        url = "https://whois.pconline.com.cn/ipJson.jsp?json=true"
+        url = f"https://whois.pconline.com.cn/ipJson.jsp?json=true&ip={ip_addr}"
         resp = requests.get(url).json()
 
         ip_info = {
-            "city": resp.get("city")
+            "city": resp.get("city"),
+            "region": resp.get("region"),
+            "addr": resp.get("addr")
         }
         return ip_info
     except Exception as e:
