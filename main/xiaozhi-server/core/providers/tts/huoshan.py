@@ -141,6 +141,7 @@ class TTSProvider(TTSProviderBase):
         self.appId = config.get("appid")
         self.access_token = config.get("access_token")
         self.cluster = config.get("cluster")
+        self.resource_id = config.get("resource_id")
         self.voice = config.get("voice")
         self.ws_url = config.get("ws_url")
         self.authorization = config.get("authorization")
@@ -156,7 +157,7 @@ class TTSProvider(TTSProviderBase):
         ws_header = {
             "X-Api-App-Key": self.appId,
             "X-Api-Access-Key": self.access_token,
-            "X-Api-Resource-Id": 'volc.service_type.10029',
+            "X-Api-Resource-Id": self.resource_id,
             "X-Api-Connect-Id": uuid.uuid4(),
         }
         self.ws = await websockets.connect(self.ws_url, additional_headers=ws_header, max_size=1000000000)
