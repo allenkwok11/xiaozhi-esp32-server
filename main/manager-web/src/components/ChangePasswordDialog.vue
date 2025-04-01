@@ -2,12 +2,8 @@
   <form>
     <el-dialog :visible.sync="value" width="400px" center>
       <div
-          style="margin: 0 10px 10px;display: flex;align-items: center;gap: 10px;font-weight: 700;font-size: 20px;text-align: left;color: #3d4566;">
-        <div
-            style="width: 40px;height: 40px;border-radius: 50%;background: #5778ff;display: flex;align-items: center;justify-content: center;">
-          <img src="@/assets/login/shield.png" alt="" style="width: 19px;height: 23px; filter: brightness(0) invert(1);" />
-        </div>
-        修改密码
+          style="width: 40px;height: 40px;border-radius: 50%;background: #5778ff;display: flex;align-items: center;justify-content: center;">
+        <img loading="lazy" src="@/assets/login/shield.png" alt="" style="width: 19px;height: 23px; filter: brightness(0) invert(1);" />
       </div>
       <div style="height: 1px;background: #e8f0ff;"/>
       <div style="margin: 22px 15px;">
