@@ -35,11 +35,25 @@ class TTSProviderBase(ABC):
         self.stop_event = threading.Event()
 
         self.tts_text_buff = []
-        self.punctuations = ("。", "？", "！", "；", "：", ".", "?", "!", ";", ":", " ", ",", "，")
+        self.punctuations = (
+            "。",
+            "？",
+            "！",
+            "；",
+            "：",
+            ".",
+            "?",
+            "!",
+            ";",
+            ":",
+            " ",
+            ",",
+            "，",
+        )
         self.tts_request = False
         self.processed_chars = 0
         self.stream = False
-        self.last_to_opus_raw = b''
+        self.last_to_opus_raw = b""
 
         # 启动tts_text_queue监听线程
         # 线程任务相关
@@ -51,7 +65,9 @@ class TTSProviderBase(ABC):
 
     async def open_audio_channels(self):
         # 启动tts_text_queue监听线程
-        tts_priority = threading.Thread(target=self._tts_text_priority_thread, daemon=True)
+        tts_priority = threading.Thread(
+            target=self._tts_text_priority_thread, daemon=True
+        )
         tts_priority.start()
 
     async def stop_listen_resource(self):
@@ -67,15 +83,19 @@ class TTSProviderBase(ABC):
     def _get_segment_text(self):
         # 合并当前全部文本并处理未分割部分
         full_text = "".join(self.tts_text_buff)
-        current_text = full_text[self.processed_chars:]  # 从未处理的位置开始
+        current_text = full_text[self.processed_chars :]  # 从未处理的位置开始
         last_punct_pos = -1
         for punct in self.punctuations:
             pos = current_text.rfind(punct)
-            if (pos != -1 and last_punct_pos == -1) or (pos != -1 and pos < last_punct_pos):
+            if (pos != -1 and last_punct_pos == -1) or (
+                pos != -1 and pos < last_punct_pos
+            ):
                 last_punct_pos = pos
         if last_punct_pos != -1:
-            segment_text_raw = current_text[:last_punct_pos + 1]
-            segment_text = textUtils.get_string_no_punctuation_or_emoji(segment_text_raw)
+            segment_text_raw = current_text[: last_punct_pos + 1]
+            segment_text = textUtils.get_string_no_punctuation_or_emoji(
+                segment_text_raw
+            )
             self.processed_chars += len(segment_text_raw)  # 更新已处理字符位置
             return segment_text
         else:
@@ -98,11 +118,21 @@ class TTSProviderBase(ABC):
     async def finish_session(self, session_id):
         pass
 
-    async def tts_one_sentence(self,text):
+    async def tts_one_sentence(self, text):
         uuid_str = str(uuid.uuid4()).replace("-", "")
-        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.START_TTS_REQUEST, content=''))
-        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.TTS_TEXT_REQUEST, content=text))
-        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.STOP_TTS_REQUEST, content=text))
+        self.tts.tts_text_queue.put(
+            TTSMessageDTO(u_id=uuid_str, msg_type=MsgType.START_TTS_REQUEST, content="")
+        )
+        self.tts.tts_text_queue.put(
+            TTSMessageDTO(
+                u_id=uuid_str, msg_type=MsgType.TTS_TEXT_REQUEST, content=text
+            )
+        )
+        self.tts.tts_text_queue.put(
+            TTSMessageDTO(
+                u_id=uuid_str, msg_type=MsgType.STOP_TTS_REQUEST, content=text
+            )
+        )
 
     def _enable_two_way_tts(self):
         while not self.stop_event.is_set():
@@ -114,27 +144,36 @@ class TTSProviderBase(ABC):
                     self.tts_request = True
                     self.u_id = ttsMessageDTO.u_id
                     # 开启session
-                    future = asyncio.run_coroutine_threadsafe(self.start_session(ttsMessageDTO.u_id), loop=self.loop)
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.start_session(ttsMessageDTO.u_id), loop=self.loop
+                    )
                     future.result()
                     # await self.start_session(ttsMessageDTO.u_id)
                 elif self.tts_request and msg_type == MsgType.TTS_TEXT_REQUEST:
                     future = asyncio.run_coroutine_threadsafe(
-                        self.text_to_speak(u_id=ttsMessageDTO.u_id, text=ttsMessageDTO.content), loop=self.loop)
+                        self.text_to_speak(
+                            u_id=ttsMessageDTO.u_id, text=ttsMessageDTO.content
+                        ),
+                        loop=self.loop,
+                    )
                     future.result()
                 elif msg_type == MsgType.STOP_TTS_REQUEST:
                     self.tts_request = False
-                    future = asyncio.run_coroutine_threadsafe(self.finish_session(ttsMessageDTO.u_id), loop=self.loop)
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.finish_session(ttsMessageDTO.u_id), loop=self.loop
+                    )
                     future.result()
-
 
             except Exception as e:
                 logger.bind(tag=TAG).error(f"Failed to process TTS text: {e}")
                 # 报错了。要关闭说话
                 self.tts_audio_queue.put(
                     TTSMessageDTO(
-                        u_id=self.u_id, msg_type=MsgType.STOP_TTS_RESPONSE, content=[],
-                        tts_finish_text='',
-                        sentence_type=None
+                        u_id=self.u_id,
+                        msg_type=MsgType.STOP_TTS_RESPONSE,
+                        content=[],
+                        tts_finish_text="",
+                        sentence_type=None,
                     )
                 )
                 traceback.print_exc()
@@ -162,25 +201,43 @@ class TTSProviderBase(ABC):
                         if segment_text:
                             # 修改部分：创建协程对象
                             # 修改部分：创建协程对象
-                            tts_generator = self.text_to_speak(ttsMessageDTO.u_id, segment_text,
-                                                               True if msg_type == MsgType.STOP_TTS_REQUEST else False,
-                                                               True if msg_type == MsgType.START_TTS_REQUEST else False)
-                            future = asyncio.run_coroutine_threadsafe(self.process_generator(tts_generator), self.loop)
+                            tts_generator = self.text_to_speak(
+                                ttsMessageDTO.u_id,
+                                segment_text,
+                                True if msg_type == MsgType.STOP_TTS_REQUEST else False,
+                                (
+                                    True
+                                    if msg_type == MsgType.START_TTS_REQUEST
+                                    else False
+                                ),
+                            )
+                            future = asyncio.run_coroutine_threadsafe(
+                                self.process_generator(tts_generator), self.loop
+                            )
                             self.active_tasks.add(future)
                         if self.active_tasks:
+
                             async def wrap_future(future):
                                 return await asyncio.wrap_future(future)
 
-                            wrapped_tasks = [wrap_future(task) for task in self.active_tasks]
-                            done, _ = loop.run_until_complete(asyncio.wait(wrapped_tasks))
+                            wrapped_tasks = [
+                                wrap_future(task) for task in self.active_tasks
+                            ]
+                            done, _ = loop.run_until_complete(
+                                asyncio.wait(wrapped_tasks)
+                            )
                             self.active_tasks -= done
 
                         # 发送合成结束
-                        self.tts_audio_queue.put(TTSMessageDTO(u_id=ttsMessageDTO.u_id,
-                                                               msg_type=MsgType.STOP_TTS_RESPONSE,
-                                                               content=[],
-                                                               tts_finish_text='',
-                                                               sentence_type=SentenceType.SENTENCE_END))
+                        self.tts_audio_queue.put(
+                            TTSMessageDTO(
+                                u_id=ttsMessageDTO.u_id,
+                                msg_type=MsgType.STOP_TTS_RESPONSE,
+                                content=[],
+                                tts_finish_text="",
+                                sentence_type=SentenceType.SENTENCE_END,
+                            )
+                        )
 
                     segment_text = self._get_segment_text()
                     if segment_text:
@@ -189,25 +246,31 @@ class TTSProviderBase(ABC):
                             ttsMessageDTO.u_id,
                             segment_text,
                             msg_type == MsgType.STOP_TTS_REQUEST,
-                            msg_type == MsgType.START_TTS_REQUEST
+                            msg_type == MsgType.START_TTS_REQUEST,
                         )
                         # 提交协程到事件循环
                         tts_generator_future = asyncio.run_coroutine_threadsafe(
-                            self.process_generator(tts_generator),
-                            loop
+                            self.process_generator(tts_generator), loop
                         )
                         self.active_tasks.add(tts_generator_future)
                         if len(self.active_tasks) >= self.max_workers:
                             # 等待所有任务完成
                             try:
+
                                 async def wrap_future(future):
                                     return await asyncio.wrap_future(future)
 
-                                wrapped_tasks = [wrap_future(task) for task in self.active_tasks]
-                                done, _ = loop.run_until_complete(asyncio.wait(wrapped_tasks))
+                                wrapped_tasks = [
+                                    wrap_future(task) for task in self.active_tasks
+                                ]
+                                done, _ = loop.run_until_complete(
+                                    asyncio.wait(wrapped_tasks)
+                                )
                                 self.active_tasks -= done
                             except Exception as e:
-                                logger.bind(tag=TAG).error(f"Failed to process TTS text: {e}")
+                                logger.bind(tag=TAG).error(
+                                    f"Failed to process TTS text: {e}"
+                                )
                                 traceback.print_exc()
                 else:
                     pass
@@ -227,10 +290,14 @@ class TTSProviderBase(ABC):
                 asyncio.run(self.text_to_speak(text, tmp_file))
                 if not os.path.exists(tmp_file):
                     max_repeat_time = max_repeat_time - 1
-                    logger.bind(tag=TAG).error(f"语音生成失败: {text}:{tmp_file}，再试{max_repeat_time}次")
+                    logger.bind(tag=TAG).error(
+                        f"语音生成失败: {text}:{tmp_file}，再试{max_repeat_time}次"
+                    )
 
             if max_repeat_time > 0:
-                logger.bind(tag=TAG).info(f"语音生成成功: {text}:{tmp_file}，重试{5 - max_repeat_time}次")
+                logger.bind(tag=TAG).info(
+                    f"语音生成成功: {text}:{tmp_file}，重试{5 - max_repeat_time}次"
+                )
 
             return tmp_file
         except Exception as e:
@@ -256,7 +323,7 @@ class TTSProviderBase(ABC):
         # 获取文件后缀名
         file_type = os.path.splitext(audio_file_path)[1]
         if file_type:
-            file_type = file_type.lstrip('.')
+            file_type = file_type.lstrip(".")
         audio = AudioSegment.from_file(audio_file_path, format=file_type)
 
         # 转换为单声道/16kHz采样率/16位小端编码（确保与编码器匹配）
@@ -279,11 +346,11 @@ class TTSProviderBase(ABC):
         # 按帧处理所有音频数据（包括最后一帧可能补零）
         for i in range(0, len(raw_data), frame_size * 2):  # 16bit=2bytes/sample
             # 获取当前帧的二进制数据
-            chunk = raw_data[i:i + frame_size * 2]
+            chunk = raw_data[i : i + frame_size * 2]
 
             # 如果最后一帧不足，补零
             if len(chunk) < frame_size * 2:
-                chunk += b'\x00' * (frame_size * 2 - len(chunk))
+                chunk += b"\x00" * (frame_size * 2 - len(chunk))
 
             # 转换为numpy数组处理
             np_frame = np.frombuffer(chunk, dtype=np.int16)
@@ -295,7 +362,9 @@ class TTSProviderBase(ABC):
         return opus_datas, duration
 
     def get_audio_from_tts(self, data_bytes, src_rate, to_rate=16000):
-        tts_speech = torch.from_numpy(np.array(np.frombuffer(data_bytes, dtype=np.int16))).unsqueeze(dim=0)
+        tts_speech = torch.from_numpy(
+            np.array(np.frombuffer(data_bytes, dtype=np.int16))
+        ).unsqueeze(dim=0)
         with io.BytesIO() as bf:
             torchaudio.save(bf, tts_speech, src_rate, format="wav")
             audio = AudioSegment.from_file(bf, format="wav")
@@ -304,7 +373,7 @@ class TTSProviderBase(ABC):
 
     def wav_to_opus_data_audio_raw(self, raw_data_var, is_end=False):
         raw_data = self.last_to_opus_raw + raw_data_var
-        self.last_to_opus_raw = b''
+        self.last_to_opus_raw = b""
         # 初始化Opus编码器
         encoder = opuslib_next.Encoder(16000, 1, opuslib_next.APPLICATION_AUDIO)
 
@@ -316,7 +385,7 @@ class TTSProviderBase(ABC):
         # 按帧处理所有音频数据（包括最后一帧可能补零）
         for i in range(0, len(raw_data), frame_size * 2):  # 16bit=2bytes/sample
             # 获取当前帧的二进制数据
-            chunk = raw_data[i:i + frame_size * 2]
+            chunk = raw_data[i : i + frame_size * 2]
 
             # 如果最后一帧不足，补零
             # 缓存记录一下
@@ -326,7 +395,7 @@ class TTSProviderBase(ABC):
                 break
             if len(chunk) < frame_size * 2 and is_end:
                 logger.bind(tag=TAG).info("是最后一句了，补零")
-                chunk += b'\x00' * (frame_size * 2 - len(chunk))
+                chunk += b"\x00" * (frame_size * 2 - len(chunk))
 
             # 转换为numpy数组处理
             np_frame = np.frombuffer(chunk, dtype=np.int16)
