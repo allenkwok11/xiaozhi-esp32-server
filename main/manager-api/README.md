@@ -5,12 +5,11 @@ manager-api 该项目基于SpringBoot框架开发。
 
 开发使用代码编辑器，导入项目时，选择`manager-api`文件夹作为项目目录
 
-参照[manager前后端接口协议](https://app.apifox.com/invite/project?token=H_8qhgfjUeaAL0wybghgU)开发
-
 # 开发环境
 JDK 21
 Maven 3.8+
 MySQL 8.0+
+Redis 5.0+
 Vue 3.x
 
 # 创建数据库
@@ -43,6 +42,30 @@ spring:
     password: 123456
 ```
 
+
+# 连接Redis
+
+如果还没有Redis，你可以通过docker安装redis
+
+```
+docker run --name xiaozhi-esp32-server-redis -d -p 6379:6379 redis
+```
+
+# 确认项目Redis连接信息
+
+在`src/main/resources/application-dev.yml`中配置Redis连接信息
+
+```
+spring:
+    data:
+      redis:
+        host: localhost
+        port: 6379
+        password:
+        database: 0
+```
+
+
 # 测试启动
 
 本项目为SpringBoot项目，启动方式为：
@@ -58,14 +81,15 @@ src/main/java/xiaozhi/AdminApplication.java
 执行以下命令生产jar包
 
 ```
-mvn install
+mvn clean install
 ```
 
 把jar包放在服务器上，执行
 
 ```
-nohup java -jar xiaozhi-esp32-api.jar --spring.profiles.active=dev >/dev/null &
+nohup java -jar xiaozhi-esp32-api.jar --spring.profiles.activate=dev
 ```
+
 
 # 接口文档
 启动后打开：http://localhost:8002/xiaozhi-esp32-api/doc.html
