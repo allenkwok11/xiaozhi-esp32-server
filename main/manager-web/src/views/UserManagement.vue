@@ -34,7 +34,7 @@
         <div class="table_bottom">
           <div class="ctrl_btn">
             <el-button size="mini" type="primary" class="select-all-btn" @click="handleSelectAll">全选</el-button>
-            <el-button size="mini" type="success" icon="el-icon-circle-check" @click="restoreUser">启用</el-button>
+            <el-button size="mini" type="success" icon="el-icon-circle-check" @click="batchEnable">启用</el-button>
             <el-button size="mini" type="warning" @click="batchDisable"><i class="el-icon-remove-outline rotated-icon"></i>禁用</el-button>
             <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">删除</el-button>
           </div>
@@ -124,16 +124,90 @@ export default {
         this.currentPage = 1;
         this.fetchUsers();
     },
+
     // 全选
     handleSelectAll() {
       this.$refs.userTable.toggleAllSelection();
     },
+
+    // 批量删除用户
     batchDelete() {
-      console.log('执行批量删除操作');
+      const selectedUsers = this.$refs.userTable.selection;
+      if (selectedUsers.length === 0) {
+        this.$message.warning('请先选择需要删除的用户');
+        return;
+      }
+
+      this.$confirm(`确定要删除选中的${selectedUsers.length}个用户吗？`, '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        const loading = this.$loading({
+          lock: true,
+          text: '正在删除中...',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        });
+
+        try {
+          const results = await Promise.all(
+            selectedUsers.map(user => {
+              return new Promise((resolve) => {
+                adminApi.deleteUser(user.userid, ({data}) => {
+                  if (data.code === 0) {
+                    resolve({success: true, userid: user.userid});
+                  } else {
+                    resolve({success: false, userid: user.userid, msg: data.msg});
+                  }
+                });
+              });
+            })
+          );
+
+          const successCount = results.filter(r => r.success).length;
+          const failCount = results.length - successCount;
+
+          if (failCount === 0) {
+            this.$message.success(`成功删除${successCount}个用户`);
+          } else if (successCount === 0) {
+            this.$message.error(`删除失败，请重试`);
+          } else {
+            this.$message.warning(`成功删除${successCount}个用户，${failCount}个删除失败`);
+          }
+
+          this.fetchUsers();
+        } catch (error) {
+          this.$message.error('删除过程中发生错误');
+        } finally {
+          loading.close();
+        }
+      }).catch(() => {
+        this.$message.info('已取消删除');
+      });
     },
+
+    // 批量启用用户
+    batchEnable() {
+      const selectedUsers = this.$refs.userTable.selection;
+      if (selectedUsers.length === 0) {
+        this.$message.warning('请先选择需要启用的用户');
+        return;
+      }
+      selectedUsers.forEach(user => {
+        user.status = '正常';
+      });
+      this.$message.success('启用操作成功');
+    },
+
+    // 批量禁用用户
     batchDisable() {
-      console.log('执行批量禁用操作');
+      this.userList.forEach(user => {
+      user.status = '禁用';
+      });
+      this.$message.success('状态已更新为禁用');
     },
+
     // 重置密码
     resetPassword(row) {
       this.$confirm('重置后将会生成新密码，是否继续？', '提示', {
@@ -157,6 +231,7 @@ export default {
       row.status = '正常';
       console.log('恢复用户：', row);
     },
+    
     // 用户删除
     deleteUser(row) {
         this.$confirm('确定要删除该用户吗？', '警告', {
@@ -200,6 +275,7 @@ export default {
       this.currentPage = page;
       this.fetchUsers();
     },
+
   }
 };
 </script>
@@ -288,7 +364,7 @@ $table-bg-color: #ecf1fd;
     margin-left: 30px;
     .el-button {
       min-width: 72px;
-      height: 30px;
+      height: 32px;
       padding: 7px 12px;
       font-size: 12px;
       border-radius: 4px;
