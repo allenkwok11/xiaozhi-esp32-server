@@ -533,109 +533,6 @@ class ConnectionHandler:
             )
             self.dialogue.put(Message(role="assistant", content=text))
 
-    def _tts_priority_thread(self):
-        if self.tts_stream:
-            self._tts_priority_thread_stream()
-        else:
-            self._tts_priority_thread_no_stream()
-
-    def _tts_priority_thread_no_stream(self):
-        while not self.stop_event.is_set():
-            text = None
-            try:
-                future = self.tts_queue.get()
-                if future is None:
-                    continue
-                text = None
-                opus_datas, text_index, tts_file = [], 0, None
-                try:
-                    self.logger.bind(tag=TAG).debug("正在处理TTS任务...")
-                    tts_timeout = self.config.get("tts_timeout", 10)
-                    tts_file, text, text_index = future.result(timeout=tts_timeout)
-                    if text is None or len(text) <= 0:
-                        self.logger.bind(tag=TAG).error(
-                            f"TTS出错：{text_index}: tts text is empty"
-                        )
-                    elif tts_file is None:
-                        self.logger.bind(tag=TAG).error(
-                            f"TTS出错： file is empty: {text_index}: {text}"
-                        )
-                    else:
-                        self.logger.bind(tag=TAG).debug(
-                            f"TTS生成：文件路径: {tts_file}"
-                        )
-                        if os.path.exists(tts_file):
-                            opus_datas, duration = self.tts.audio_to_opus_data(tts_file)
-                        else:
-                            self.logger.bind(tag=TAG).error(
-                                f"TTS出错：文件不存在{tts_file}"
-                            )
-                except TimeoutError:
-                    self.logger.bind(tag=TAG).error("TTS超时")
-                except Exception as e:
-                    self.logger.bind(tag=TAG).error(f"TTS出错: {e}")
-                if not self.client_abort:
-                    # 如果没有中途打断就发送语音
-                    self.audio_play_queue.put((opus_datas, text, text_index))
-                if (
-                    self.tts.delete_audio_file
-                    and tts_file is not None
-                    and os.path.exists(tts_file)
-                ):
-                    os.remove(tts_file)
-            except Exception as e:
-                self.logger.bind(tag=TAG).error(f"TTS任务处理错误: {e}")
-                self.clearSpeakStatus()
-                asyncio.run_coroutine_threadsafe(
-                    self.websocket.send(
-                        json.dumps(
-                            {
-                                "type": "tts",
-                                "state": "stop",
-                                "session_id": self.session_id,
-                            }
-                        )
-                    ),
-                    self.loop,
-                )
-                self.logger.bind(tag=TAG).error(
-                    f"tts_priority priority_thread: {text} {e}"
-                )
-
-    def _tts_priority_thread_stream(self):
-        while not self.stop_event.is_set():
-            text = None
-            try:
-                tts_stream_queue_msg = self.tts_queue_stream.get()
-                try:
-                    text = tts_stream_queue_msg["text"]
-                    chunk_queque = tts_stream_queue_msg["chunk_queque"]
-                    text_index = tts_stream_queue_msg["text_index"]
-                except TimeoutError:
-                    self.logger.error("TTS 任务超时")
-                    continue
-                except Exception as e:
-                    self.logger.error(f"TTS 任务出错: {e}")
-                    continue
-                if not self.client_abort:
-                    # 如果没有中途打断就发送语音
-                    self.audio_play_queue.put((chunk_queque, text, text_index))
-            except Exception as e:
-                self.clearSpeakStatus()
-                asyncio.run_coroutine_threadsafe(
-                    self.websocket.send(
-                        json.dumps(
-                            {
-                                "type": "tts",
-                                "state": "stop",
-                                "session_id": self.session_id,
-                            }
-                        )
-                    ),
-                    self.loop,
-                )
-                self.logger.error(f"tts_priority priority_thread: {text}{e}")
-
     def _audio_play_priority_thread(self):
         while not self.stop_event.is_set():
             text = None
@@ -649,28 +546,6 @@ class ConnectionHandler:
                 self.logger.bind(tag=TAG).error(
                     f"audio_play_priority priority_thread: {text} {e}"
                 )
-
-    def speak_and_play(self, text, text_index=0):
-        if text is None or len(text) <= 0:
-            self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{text}")
-            return None, text, text_index
-        tts_file = self.tts.to_tts(text)
-        if tts_file is None:
-            self.logger.bind(tag=TAG).error(f"tts转换失败，{text}")
-            return None, text, text_index
-        self.logger.bind(tag=TAG).debug(f"TTS 文件生成完毕: {tts_file}")
-        return tts_file, text, text_index
-
-    def speak_and_play_stream(self, text, queue: queue.Queue, text_index=0):
-        try:
-            if text is None or len(text) <= 0:
-                self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{text}")
-                return None, text
-            self.tts.to_tts_stream(text, queue, text_index)
-        except Exception as e:
-            self.logger.bind(tag=TAG).error(e)
-            traceback.print_exc()
-            raise e
 
     def clearSpeakStatus(self):
         self.logger.bind(tag=TAG).debug(f"清除服务端讲话状态")
