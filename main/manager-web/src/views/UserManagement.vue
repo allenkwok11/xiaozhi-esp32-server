@@ -349,7 +349,7 @@ $table-bg-color: #ecf1fd;
   background: white;
   border-radius: 12px;
   padding: 15px;
-  margin: -10px 15px;
+  margin: 15px;
 }
 
 .table_bottom {
