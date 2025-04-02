@@ -5,9 +5,6 @@
       <div class="operation-bar">
           <h2 class="page-title">模型配置</h2>
         <div class="right-operations">
-          <el-button v-if="activeTab === 'tts'" type="primary" plain size="small" @click="ttsDialogVisible = true" style="">
-            语音设置
-          </el-button>
           <el-button plain size="small" @click="handleImport" style="background: #7b9de5; color: white;">
             <img loading="lazy" alt="" src="@/assets/model/inner_conf.png">
             导入配置
@@ -74,7 +71,14 @@
                 <el-switch v-model="scope.row.isApplied" class="custom-switch" :active-color="null" :inactive-color="null"/>
               </template>
             </el-table-column>
-            <el-table-column label="操作" align="center" width="180">
+            <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
+              <template slot-scope="scope">
+                <el-button type="text" size="mini" @click="ttsDialogVisible = true" class="voice-management-btn">
+                  音色管理
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" width="150px">
               <template slot-scope="scope">
                 <el-button type="text" size="mini" @click="editModel(scope.row)" class="edit-btn">
                   修改
@@ -230,10 +234,6 @@ export default {
 </script>
 
 <style scoped>
-::v-deep .el-table tr{
-  background: transparent;
-}
-
 .welcome {
   min-width: 900px;
   min-height: 506px;
@@ -241,8 +241,8 @@ export default {
   display: flex;
   position: relative;
   flex-direction: column;
-  background-size: cover;
   background: linear-gradient(to bottom right, #dce8ff, #e4eeff, #e6cbfd) center;
+  background-size: cover;
   -webkit-background-size: cover;
   -o-background-size: cover;
 }
@@ -365,6 +365,12 @@ export default {
   margin: 0;
 }
 
+.title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .action-group {
   display: flex;
   align-items: center;
@@ -380,19 +386,13 @@ export default {
   width: 240px;
 }
 
-::v-deep .search-input .el-input__inner::placeholder {
+.search-input .el-input__inner::placeholder {
   color: black;
   opacity: 0.6;
 }
 
-::v-deep .search-input .el-input__inner {
+.search-input .el-input__inner {
   background: transparent;
-}
-
-.search-btn {
-  background: linear-gradient(135deg, #6B8CFF, #A966FF);
-  border: none;
-  color: white;
 }
 
 .data-table {
@@ -401,8 +401,16 @@ export default {
   background-color: transparent !important;
 }
 
-.data-table /deep/ .el-table__row {
+.data-table .el-table__row {
   background-color: transparent !important;
+}
+
+.data-table .el-table__header-wrapper {
+  border-bottom: 1px solid rgb(224,227,237);
+}
+
+.data-table .el-table__body td {
+  border-bottom: 1px solid rgb(224,227,237) !important;
 }
 
 .table-header th {
@@ -425,6 +433,11 @@ export default {
   gap: 8px;
 }
 
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .copyright {
   text-align: center;
   color: #979db1;
@@ -439,12 +452,14 @@ export default {
   width: 100%;
 }
 
-.edit-btn {
-  color: #7079aa !important;
-}
-
-.delete-btn {
-  color: #7079aa !important;
+/* 按钮样式 */
+.el-button {
+  img {
+    height: 1em;
+    vertical-align: middle;
+    padding-right: 2px;
+    padding-bottom: 2px;
+  }
 }
 
 .add-btn {
@@ -455,93 +470,92 @@ export default {
   padding: 8px 16px;
 }
 
-.title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.batch-actions .el-button:first-child {
-  background: linear-gradient(135deg, #409EFF, #6B8CFF);
+.search-btn {
+  background: linear-gradient(135deg, #6B8CFF, #A966FF);
   border: none;
   color: white;
 }
 
-.batch-actions .el-button:first-child:hover {
-  background: linear-gradient(135deg, #3A8EE6, #5A7CFF);
+.voice-management-btn {
+  background: #9db3ea;
+  color: white;
+  min-width: 68px;
+  line-height: 14px;
+  white-space: nowrap;
+  transition: all 0.3s;
+  border-radius: 10px;
 }
 
-.el-table th /deep/ .el-table__cell {
-  overflow: hidden;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  user-select: none;
-  background-color: transparent !important;
+.voice-management-btn:hover {
+  background: #8aa2e0;
+  transform: scale(1.05);
 }
 
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
+.edit-btn, .delete-btn {
+  margin: 0 8px;
+  color: #7079aa !important;
 }
 
-::v-deep .el-table .custom-selection-header .cell .el-checkbox__inner {
-  display: none !important; /* 使表头复选框不可见 */
-}
+/* 深度选择器合并 */
+::v-deep {
+  .el-table tr {
+    background: transparent;
+  }
 
-::v-deep .el-table .custom-selection-header .cell::before {
-  content: '选择';
-  display: block;
-  text-align: center;
-  line-height: 0;
-  color: black;
-  margin-top: 23px;
-}
+  .el-table .custom-selection-header .cell .el-checkbox__inner {
+    display: none !important;
+  }
 
-::v-deep .el-table__body .el-checkbox__inner {
-  display: inline-block !important;
-  background: #e6edfa;
-}
+  .el-table .custom-selection-header .cell::before {
+    content: '选择';
+    display: block;
+    text-align: center;
+    line-height: 0;
+    color: black;
+    margin-top: 23px;
+  }
 
-::v-deep .el-table thead th:not(:first-child) .cell {
-  color: #303133 !important;
-}
+  .el-table__body .el-checkbox__inner {
+    display: inline-block !important;
+    background: #e6edfa;
+  }
 
-::v-deep .nav-panel .el-menu-item.is-active .menu-text {
-  color: #409EFF !important;
-}
+  .el-table thead th:not(:first-child) .cell {
+    color: #303133 !important;
+  }
 
-::v-deep .data-table {
-  &.el-table::before,
-  &.el-table::after,
-  &.el-table__inner-wrapper::before {
+  .nav-panel .el-menu-item.is-active .menu-text {
+    color: #409EFF !important;
+  }
+
+  .el-checkbox__inner {
+    border-color: #cfcfcf !important;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .el-checkbox__input.is-checked .el-checkbox__inner {
+    background-color: #409EFF !important;
+    border-color: #409EFF !important;
+  }
+
+  .el-table .el-table-column--selection .cell {
+    padding-left: 15px !important;
+  }
+
+  .el-table .el-table__fixed-right .cell {
+    padding-right: 15px !important;
+  }
+
+  .el-table .cell {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .data-table.el-table::before,
+  .data-table.el-table::after,
+  .data-table.el-table__inner-wrapper::before {
     display: none !important;
   }
 }
-
-::v-deep .data-table .el-table__header-wrapper {
-  border-bottom: 1px solid rgb(224,227,237);
-}
-
-::v-deep .data-table .el-table__body td {
-  border-bottom: 1px solid rgb(224,227,237) !important;
-}
-
-.el-button img{
-  height: 1em;
-  vertical-align: middle;
-  padding-right: 2px;
-  padding-bottom: 2px;
-}
-
-::v-deep .el-checkbox__inner {
-  border-color: #cfcfcf !important;
-  transition: all 0.2s ease-in-out;
-}
-
-::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #409EFF !important;
-  border-color: #409EFF !important;
-}
-
 </style>
 
