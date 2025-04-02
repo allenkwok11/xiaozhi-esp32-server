@@ -3,7 +3,6 @@ import {getServiceUrl} from '../api'
 
 
 export default {
-    
     // 获取智能体列表
     getAgentList(callback) {
         RequestService.sendRequest()
@@ -19,13 +18,12 @@ export default {
                 });
             }).send();
     },
-   
     // 添加智能体
     addAgent(agentName, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/agent/add`)
+            .url(`${getServiceUrl()}/api/v1/agent`)
             .method('POST')
-            .data({name: agentName})
+            .data({agentName: agentName})
             .success((res) => {
                 RequestService.clearRequestTime();
                 callback(res);
@@ -51,7 +49,6 @@ export default {
                 });
             }).send();
     },
-    
     // 获取智能体配置
     getDeviceConfig(deviceId, callback) {
         RequestService.sendRequest()
@@ -85,9 +82,9 @@ export default {
             }).send();
     },
     // 新增方法：获取智能体模板
-    getAgentTemplate(templateName, callback) {
+    getAgentTemplate(callback) {  // 移除templateName参数
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/api/v1/agent/templateId`)
+            .url(`${getServiceUrl()}/api/v1/agent/template`)
             .method('GET')
             .success((res) => {
                 RequestService.clearRequestTime();
@@ -96,8 +93,8 @@ export default {
             .fail((err) => {
                 console.error('获取模板失败:', err);
                 RequestService.reAjaxFun(() => {
-                this.getAgentTemplate(templateName, callback);
+                    this.getAgentTemplate(callback);
                 });
             }).send();
-        },
+    },
 }
