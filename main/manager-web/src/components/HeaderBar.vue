@@ -10,9 +10,7 @@
       <!-- 中间导航菜单 -->
       <div class="header-center">
         <div class="equipment-management" :class="{ 'active-tab': $route.path === '/home' }" @click="goHome">
-
           <img loading="lazy" alt="" src="@/assets/header/robot.png" :style="{ filter: $route.path === '/home' ? 'brightness(0) invert(1)' : 'None' }"/>
-
           智能体管理
         </div>
         <div class="equipment-management" :class="{ 'active-tab': $route.path === '/user-management' }" @click="goUserManagement">
@@ -43,7 +41,6 @@
              {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item icon="el-icon-plus" @click.native="">个人中心</el-dropdown-item>
             <el-dropdown-item icon="el-icon-circle-plus" @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
             <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="handleLogout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
@@ -128,9 +125,7 @@ export default {
       try {
         // 调用 Vuex 的 logout action
         await this.logout();
-
         this.$message.success('退出登录成功');
-
         this.$router.push('/login');
       } catch (error) {
         console.error('退出登录失败:', error);
