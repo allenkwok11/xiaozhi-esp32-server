@@ -28,29 +28,32 @@ play_music_function_desc = {
             "properties": {
                 "song_name": {
                     "type": "string",
-                    "description": "歌曲名称，如果没有指定具体歌名则为'random'"
+                    "description": "歌曲名称，如果没有指定具体歌名则为'random'",
                 }
             },
-            "required": ["song_name"]
-        }
-    }
+            "required": ["song_name"],
+        },
+    },
 }
 
 
-@register_function('play_music', play_music_function_desc, ToolType.SYSTEM_CTL)
+@register_function("play_music", play_music_function_desc, ToolType.SYSTEM_CTL)
 def play_music(conn, song_name: str):
     try:
-        music_intent = f"播放音乐 {song_name}" if song_name != "random" else "随机播放音乐"
+        music_intent = (
+            f"播放音乐 {song_name}" if song_name != "random" else "随机播放音乐"
+        )
 
         # 检查事件循环状态
         if not conn.loop.is_running():
             logger.bind(tag=TAG).error("事件循环未运行，无法提交任务")
-            return ActionResponse(action=Action.RESPONSE, result="系统繁忙", response="请稍后再试")
+            return ActionResponse(
+                action=Action.RESPONSE, result="系统繁忙", response="请稍后再试"
+            )
 
         # 提交异步任务
         future = asyncio.run_coroutine_threadsafe(
-            handle_music_command(conn, music_intent),
-            conn.loop
+            handle_music_command(conn, music_intent), conn.loop
         )
 
         # 非阻塞回调处理
@@ -63,10 +66,14 @@ def play_music(conn, song_name: str):
 
         future.add_done_callback(handle_done)
 
-        return ActionResponse(action=Action.RESPONSE, result="指令已接收", response="正在为您播放音乐")
+        return ActionResponse(
+            action=Action.RESPONSE, result="指令已接收", response="正在为您播放音乐"
+        )
     except Exception as e:
         logger.bind(tag=TAG).error(f"处理音乐意图错误: {e}")
-        return ActionResponse(action=Action.RESPONSE, result=str(e), response="播放音乐时出错了")
+        return ActionResponse(
+            action=Action.RESPONSE, result=str(e), response="播放音乐时出错了"
+        )
 
 
 def _extract_song_name(text):
@@ -106,7 +113,9 @@ def get_music_files(music_dir, music_ext):
             if ext in music_ext:
                 # 添加相对路径
                 music_files.append(str(file.relative_to(music_dir)))
-                music_file_names.append(os.path.splitext(str(file.relative_to(music_dir)))[0])
+                music_file_names.append(
+                    os.path.splitext(str(file.relative_to(music_dir)))[0]
+                )
     return music_files, music_file_names
 
 
@@ -118,15 +127,20 @@ def initialize_music_handler(conn):
             MUSIC_CACHE["music_dir"] = os.path.abspath(
                 MUSIC_CACHE["music_config"].get("music_dir", "./music")  # 默认路径修改
             )
-            MUSIC_CACHE["music_ext"] = MUSIC_CACHE["music_config"].get("music_ext", (".mp3", ".wav", ".p3"))
-            MUSIC_CACHE["refresh_time"] = MUSIC_CACHE["music_config"].get("refresh_time", 60)
+            MUSIC_CACHE["music_ext"] = MUSIC_CACHE["music_config"].get(
+                "music_ext", (".mp3", ".wav", ".p3")
+            )
+            MUSIC_CACHE["refresh_time"] = MUSIC_CACHE["music_config"].get(
+                "refresh_time", 60
+            )
         else:
             MUSIC_CACHE["music_dir"] = os.path.abspath("./music")
             MUSIC_CACHE["music_ext"] = (".mp3", ".wav", ".p3")
             MUSIC_CACHE["refresh_time"] = 60
         # 获取音乐文件列表
-        MUSIC_CACHE["music_files"], MUSIC_CACHE["music_file_names"] = get_music_files(MUSIC_CACHE["music_dir"],
-                                                                                      MUSIC_CACHE["music_ext"])
+        MUSIC_CACHE["music_files"], MUSIC_CACHE["music_file_names"] = get_music_files(
+            MUSIC_CACHE["music_dir"], MUSIC_CACHE["music_ext"]
+        )
         MUSIC_CACHE["scan_time"] = time.time()
     return MUSIC_CACHE
 
@@ -136,15 +150,16 @@ async def handle_music_command(conn, text):
     global MUSIC_CACHE
 
     """处理音乐播放指令"""
-    clean_text = re.sub(r'[^\w\s]', '', text).strip()
+    clean_text = re.sub(r"[^\w\s]", "", text).strip()
     logger.bind(tag=TAG).debug(f"检查是否是音乐命令: {clean_text}")
 
     # 尝试匹配具体歌名
     if os.path.exists(MUSIC_CACHE["music_dir"]):
         if time.time() - MUSIC_CACHE["scan_time"] > MUSIC_CACHE["refresh_time"]:
             # 刷新音乐文件列表
-            MUSIC_CACHE["music_files"], MUSIC_CACHE["music_file_names"] = get_music_files(MUSIC_CACHE["music_dir"],
-                                                                                          MUSIC_CACHE["music_ext"])
+            MUSIC_CACHE["music_files"], MUSIC_CACHE["music_file_names"] = (
+                get_music_files(MUSIC_CACHE["music_dir"], MUSIC_CACHE["music_ext"])
+            )
             MUSIC_CACHE["scan_time"] = time.time()
 
         potential_song = _extract_song_name(clean_text)
@@ -192,8 +207,12 @@ async def play_local_music(conn, specific_file=None):
             opus_packets, duration = conn.tts.audio_to_opus_data(music_path)
         conn.tts.tts_audio_queue.put(
             TTSMessageDTO(
-                u_id=conn.u_id, msg_type=MsgType.TTS_TEXT_RESPONSE, content=opus_packets,
-                tts_finish_text="", sentence_type=None, duration=0
+                u_id=conn.u_id,
+                msg_type=MsgType.TTS_TEXT_RESPONSE,
+                content=opus_packets,
+                tts_finish_text="",
+                sentence_type=None,
+                duration=0,
             )
         )
         conn.tts.tts_audio_queue.put(
