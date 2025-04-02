@@ -353,6 +353,7 @@ export default {
   height: 100%;
   min-width: 600px;
   overflow-x: auto;
+  background-color: white;
 
 }
 
