@@ -273,34 +273,6 @@ class TTSProviderBase(ABC):
     def generate_filename(self):
         pass
 
-    def to_tts(self, text):
-        tmp_file = self.generate_filename()
-        try:
-            max_repeat_time = 5
-            while not os.path.exists(tmp_file) and max_repeat_time > 0:
-                asyncio.run(self.text_to_speak(text, tmp_file))
-                if not os.path.exists(tmp_file):
-                    max_repeat_time = max_repeat_time - 1
-                    logger.bind(tag=TAG).error(
-                        f"语音生成失败: {text}:{tmp_file}，再试{max_repeat_time}次"
-                    )
-
-            if max_repeat_time > 0:
-                logger.bind(tag=TAG).info(
-                    f"语音生成成功: {text}:{tmp_file}，重试{5 - max_repeat_time}次"
-                )
-
-            return tmp_file
-        except Exception as e:
-            logger.bind(tag=TAG).info(f"Failed to generate TTS file: {e}")
-            return None
-
-    def to_tts_stream(self, u_id, text, queue: queue.Queue, text_index=0):
-        try:
-            asyncio.run(self.text_to_speak_stream(text, queue, text_index))
-        except Exception as e:
-            logger.bind(tag=TAG).info(f"Failed to generate TTS file: {e}")
-            return None
 
     @abstractmethod
     async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):
