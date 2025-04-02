@@ -132,15 +132,19 @@ export default {
     },
     // 重置密码
     resetPassword(row) {
+      this.$confirm('重置后将会生成新密码，是否继续？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }).then(() => {
         adminApi.resetUserPassword(row.userid, ({ data }) => {
           if (data.code === 0) {
             this.currentPassword = data.data
             this.showViewPassword = true
-          } else {
-            this.$message.error(data.msg || '获取密码失败')
+            this.$message.success('密码已重置，请通知用户使用新密码登录')
           }
         })
-      },
+      })
+    },
     disableUser(row) {
       row.status = '禁用';
       console.log('禁用用户：', row);
