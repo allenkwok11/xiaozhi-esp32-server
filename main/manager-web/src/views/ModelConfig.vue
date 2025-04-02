@@ -63,12 +63,18 @@
 
           <el-table ref="modelTable" style="width: 100%" :header-cell-style="{background: 'transparent'}" :data="modelList"  class="data-table" header-row-class-name="table-header" :header-cell-class-name="headerCellClassName" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" align="center"></el-table-column>
-            <el-table-column label="模型名称" prop="candidateName" align="center"></el-table-column>
-            <el-table-column label="模型编码" prop="code" align="center"></el-table-column>
-            <el-table-column label="提供商" prop="supplier" align="center"></el-table-column>
+            <el-table-column label="模型名称" prop="modelName" align="center"></el-table-column>
+            <el-table-column label="模型编码" prop="modelCode" align="center"></el-table-column>
+            <el-table-column label="提供商" align="center">
+              <template slot-scope="scope">
+                {{ scope.row.configJson?.provider || '未知' }}
+              </template>
+            </el-table-column>
             <el-table-column label="是否启用" align="center">
               <template slot-scope="scope">
-                <el-switch v-model="scope.row.isApplied" class="custom-switch" :active-color="null" :inactive-color="null"/>
+                <el-switch v-model="scope.row.isEnabled" class="custom-switch"
+                           :active-value="1" :inactive-value="0"
+                           :active-color="null" :inactive-color="null"/>
               </template>
             </el-table-column>
             <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
@@ -128,6 +134,7 @@ import HeaderBar from "@/components/HeaderBar.vue";
 import ModelEditDialog from "@/components/ModelEditDialog.vue";
 import TtsModel from "@/components/TtsModel.vue";
 import AddModelDialog from "@/components/AddModelDialog.vue";
+import ModelApi from "@/apis/module/model";
 
 export default {
   components: { HeaderBar, ModelEditDialog, TtsModel, AddModelDialog },
@@ -139,17 +146,17 @@ export default {
       editDialogVisible: false,
       editModelData: {},
       ttsDialogVisible: false,
-      modelList: [
-        { code: 'DeepSeek', candidateName: '深度求索', isApplied: true, supplier: '硅基流动' },
-        { code: 'SmartAssist', candidateName: '智能助手', isApplied: false, supplier: '智脑科技' },
-        { code: 'CogEngine', candidateName: '认知引擎', isApplied: true, supplier: '云智科技' },
-      ],
+      modelList: [],
       currentPage: 1,
-      pageSize: 4,
-      total: 20,
+      pageSize: 5,
+      total: 0,
       selectedModels: [],
       isAllSelected: false
     };
+  },
+
+  created() {
+    this.loadData();
   },
 
   computed: {
@@ -281,8 +288,24 @@ export default {
       this.currentPage = page;
       this.loadData();
     },
+
+    // 获取模型配置列表
     loadData() {
-      console.log('加载数据，当前页:', this.currentPage);
+      const params = {
+        modelType: this.activeTab,
+        modelName: this.search,
+        page: this.currentPage,
+        limit: this.pageSize
+      };
+
+      ModelApi.getModelList(params, ({data}) => {
+        if (data.code === 0) {
+          this.modelList = data.data.list;
+          this.total = data.data.total;
+        } else {
+          this.$message.error(data.msg || '获取模型列表失败');
+        }
+      });
     }
   },
 };
