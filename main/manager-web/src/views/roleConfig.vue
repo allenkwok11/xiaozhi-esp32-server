@@ -1,6 +1,5 @@
 <template>
   <div class="welcome">
-    <!-- 公共头部 -->
     <HeaderBar/>
     <el-main style="padding: 16px;display: flex;flex-direction: column;">
       <div style="border-radius: 16px;background: #fafcfe; border: 1px solid #e8f0ff;">
@@ -8,21 +7,21 @@
             style="padding: 15px 24px;font-weight: 700;font-size: 19px;text-align: left;color: #3d4566;display: flex;gap: 13px;align-items: center;">
           <div
               style="width: 37px;height: 37px;background: #5778ff;border-radius: 50%;display: flex;align-items: center;justify-content: center;">
-            <img src="@/assets/home/setting-user.png" alt="" style="width: 19px;height: 19px;"/>
+            <img loading="lazy" src="@/assets/home/setting-user.png" alt="" style="width: 19px;height: 19px;"/>
           </div>
-          {{ deviceMac }}
+          {{ form.agentName }}
         </div>
         <div style="height: 1px;background: #e8f0ff;"/>
         <el-form ref="form" :model="form" label-width="72px">
           <div style="padding: 16px 24px;max-width: 792px;">
             <el-form-item label="助手昵称：">
               <div class="input-46" style="width: 100%; max-width: 412px;">
-                <el-input v-model="form.name"/>
+                <el-input v-model="form.agentName"/>
               </div>
             </el-form-item>
             <el-form-item label="角色模版：">
               <div style="display: flex;gap: 8px;">
-                <div v-for="template in templates" :key="template" class="template-item" @click="selectTemplate(template)">
+                <div v-for="template in templates" :key="template" class="template-item" :class="{ 'template-loading': loadingTemplate }" @click="selectTemplate(template)">
                   {{ template }}
                 </div>
               </div>
@@ -30,7 +29,7 @@
             <el-form-item label="角色音色：">
               <div style="display: flex;gap: 8px;align-items: center;">
                 <div class="input-46" style="flex:1.4;">
-                  <el-select v-model="form.timbre" placeholder="请选择" style="width: 100%;">
+                  <el-select v-model="form.ttsVoiceId" placeholder="请选择" style="width: 100%;">
                     <el-option v-for="item in options" :key="item.value" :label="item.label"
                                :value="item.value">
                     </el-option>
@@ -45,14 +44,14 @@
             <el-form-item label="角色介绍：">
               <div class="textarea-box">
                 <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容"
-                          v-model="form.introduction" maxlength="2000" show-word-limit/>
+                          v-model="form.systemPrompt" maxlength="2000" show-word-limit/>
               </div>
             </el-form-item>
             <el-form-item label="记忆体：">
               <div class="textarea-box">
                 <el-input type="textarea" rows="5" resize="none" placeholder="请输入内容"
-                          v-model="form.prompt" maxlength="1000"/>
-                <div class="prompt-bottom">
+                          v-model="form.langCode" maxlength="1000"/>
+                <div class="prompt-bottom" @click="clearMemory">
                   <div style="display: flex;gap: 8px;align-items: center;">
                     <div style="color: #979db1;font-size: 11px;">当前记忆（每次对话后重新生成）</div>
                     <div class="clear-btn">
@@ -60,7 +59,7 @@
                       清除
                     </div>
                   </div>
-                  <div style="color: #979db1;font-size:11px;">{{ form.prompt.length }}/1000</div>
+                  <div style="color: #979db1;font-size:11px;">{{ (form.langCode || '').length }}/1000</div>
                 </div>
               </div>
             </el-form-item>
@@ -84,7 +83,7 @@
             重制
           </div>
           <div class="clear-text">
-            <img src="@/assets/home/red-info.png" alt="" style="width: 19px;height: 19px;"/>
+            <img loading="lazy" src="@/assets/home/red-info.png" alt="" style="width: 19px;height: 19px;"/>
             保存配置后，需要重启设备，新的配置才会生效。
           </div>
         </div>
@@ -104,41 +103,65 @@ export default {
   components: {HeaderBar},
   data() {
     return {
-      deviceMac: 'CC:ba:97:11:a6:ac',
       form: {
-        name: "",
-        timbre: "",
-        introduction: "",
-        prompt: "",
+        agentCode: "",
+        agentName: "",
+        ttsVoiceId: "",
+        systemPrompt: "",
+        langCode: "",
+        language: "",
+        sort: "",
         model: {
-          tts: "",
-          vad: "",
-          asr: "",
-          llm: "",
-          memory:"",
-          intent:""
+          ttsModelId: "",
+          vadModelId: "",
+          asrModelId: "",
+          llmModelId: "",
+          memModelId: "",
+          intentModelId: "",
         }
       },
-    options: [
-      { value: '选项1', label: '黄金糕' },
-      { value: '选项2', label: '双皮奶' }
-    ],
+      options: [
+        {value: '选项1', label: '黄金糕'},
+        {value: '选项2', label: '双皮奶'}
+      ],
       models: [
-      { label: '大语言模型(LLM)', key: 'llm' },
-      { label: '语音转文本模型(ASR)', key: 'asr' },
-      { label: '语音活动检测模型(VAD)', key: 'vad' },
-      { label: '语音生成模型(TTS)', key: 'tts' },
-      { label: '意图分类模型(Intent)', key: 'intent' },
-      { label: '记忆增强模型(Memory)', key: 'memory' }
-    ],
-      templates: ['台湾女友', '土豆子', '英语老师', '好奇小男孩', '汪汪队队长']
-
+        {label: '大语言模型(LLM)', key: 'llmModelId'},
+        {label: '语音识别(ASR)', key: 'asrModelId'},
+        {label: '语音活动检测模型(VAD)', key: 'vadModelId'},
+        {label: '语音合成模型(TTS)', key: 'ttsModelId'},
+        {label: '意图识别模型(Intent)', key: 'intentModelId'},
+        {label: '记忆模型(Memory)', key: 'memModelId'}
+      ],
+      templates: ['湾湾小何', '星际游子', '英语老师', '好奇男孩', '汪汪队长'],
+      loadingTemplate: false
     }
   },
   methods: {
     saveConfig() {
-      // 此处写保存配置逻辑
-      this.$message.success('配置已保存')
+      const configData = {
+        agentCode: this.form.agentCode,
+        agentName: this.form.agentName,
+        asrModelId: this.form.model.asrModelId,
+        vadModelId: this.form.model.vadModelId,
+        llmModelId: this.form.model.llmModelId,
+        ttsModelId: this.form.model.ttsModelId,
+        ttsVoiceId: this.form.ttsVoiceId,
+        memModelId: this.form.model.memModelId,
+        intentModelId: this.form.model.intentModelId,
+        systemPrompt: this.form.systemPrompt,
+        langCode: this.form.langCode,
+        language: this.form.language,
+        sort: this.form.sort
+      };
+      import('@/apis/module/agent').then(({default: agentApi}) => {
+        agentApi.updateAgentConfig(this.$route.query.agentId, configData, ({data}) => {
+          if (data.code === 0) {
+            this.$message.success('配置保存成功');
+          } else {
+            this.$message.error(data.msg || '配置保存失败');
+          }
+        });
+      });
     },
     resetConfig() {
       this.$confirm('确定要重置配置吗？', '提示', {
@@ -148,20 +171,103 @@ export default {
       }).then(() => {
         // 重置表单
         this.form = {
-          name: "",
-          timbre: "",
-          introduction: "",
-          prompt: "",
-          model: ""
+          agentCode: "",
+          agentName: "",
+          ttsVoiceId: "",
+          systemPrompt: "",
+          langCode: "",
+          language: "",
+          sort: "",
+          model: {
+            ttsModelId: "",
+            vadModelId: "",
+            asrModelId: "",
+            llmModelId: "",
+            memModelId: "",
+            intentModelId: "",
+          }
         }
         this.$message.success('配置已重置')
       }).catch(() => {
       })
     },
-    // 处理选择模板的逻辑
-    selectTemplate(template) {
-      this.form.name = template;
-      this.$message.success(`已选择模板：${template}`);
+    selectTemplate(templateName) {
+        if (this.loadingTemplate) return;
+        this.loadingTemplate = true;
+        import('@/apis/module/agent').then(({default: agentApi}) => {
+            agentApi.getAgentTemplate((response) => {  // 移除参数传递
+                this.loadingTemplate = false;
+                if (response.data.code === 0) {
+                    // 在客户端过滤匹配的模板
+                    const matchedTemplate = response.data.data.find(
+                        t => t.agentName === templateName
+                    );
+                    if (matchedTemplate) {
+                        this.applyTemplateData(matchedTemplate);
+                        this.$message.success(`「${templateName}」模板已应用`);
+                    } else {
+                        this.$message.warning(`未找到「${templateName}」模板`);
+                    }
+                } else {
+                    this.$message.error(response.data.msg || '获取模板失败');
+                }
+            });
+        }).catch((error) => {
+            this.loadingTemplate = false;
+            this.$message.error('模板加载失败');
+            console.error('接口异常:', error);
+        });
+    },
+    applyTemplateData(templateData) {
+      this.form = {
+        ...this.form,
+        agentName: templateData.agentName || this.form.agentName,
+        ttsVoiceId: templateData.ttsVoiceId || this.form.ttsVoiceId,
+        systemPrompt: templateData.systemPrompt || this.form.systemPrompt,
+        langCode: templateData.langCode || this.form.langCode,
+        model: {
+          ttsModelId: templateData.ttsModelId || this.form.model.ttsModelId,
+          vadModelId: templateData.vadModelId || this.form.model.vadModelId,
+          asrModelId: templateData.asrModelId || this.form.model.asrModelId,
+          llmModelId: templateData.llmModelId || this.form.model.llmModelId,
+          memModelId: templateData.memModelId || this.form.model.memModelId,
+          intentModelId: templateData.intentModelId || this.form.model.intentModelId
+        }
+      };
+    },
+  fetchAgentConfig(agentId) {
+    import('@/apis/module/agent').then(({default: agentApi}) => {
+      agentApi.getDeviceConfig(agentId, ({data}) => {
+        if (data.code === 0) {
+          this.form = {
+            ...this.form,
+            ...data.data,
+            model: {
+              ttsModelId: data.data.ttsModelId,
+              vadModelId: data.data.vadModelId,
+              asrModelId: data.data.asrModelId,
+              llmModelId: data.data.llmModelId,
+              memModelId: data.data.memModelId,
+              intentModelId: data.data.intentModelId
+            }
+          };
+        } else {
+          this.$message.error(data.msg || '获取配置失败');
+        }
+      });
+    });
+  },
+  // 清空记忆体内容
+  clearMemory() {
+    this.form.langCode = "";
+    this.$message.success("记忆体已清空");
+  },
+},
+  mounted() {
+    const agentId = this.$route.query.agentId;
+    console.log('agentId2222',agentId);
+    if (agentId) {
+      this.fetchAgentConfig(agentId);
     }
   }
 }
