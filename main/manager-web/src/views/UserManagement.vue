@@ -42,13 +42,7 @@
             <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
             <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
 
-            <button
-              v-for="page in visiblePages"
-              :key="page"
-              class="pagination-btn"
-              :class="{ active: page === currentPage }"
-              @click="goToPage(page)"
-            >
+            <button v-for="page in visiblePages" :key="page" class="pagination-btn" :class="{ active: page === currentPage }" @click="goToPage(page)">
               {{ page }}
             </button>
 
@@ -61,6 +55,7 @@
       <div style="font-size: 12px; font-weight: 400; margin-top: auto; padding-top: 30px; color: #979db1;">
         ©2025 xiaozhi-esp32-server
       </div>
+        <view-password-dialog :visible.sync="showViewPassword" :password="currentPassword"/>
     </el-main>
   </div>
 </template>
@@ -68,12 +63,14 @@
 <script>
 import HeaderBar from "@/components/HeaderBar.vue";
 import adminApi from '@/apis/module/admin';
-
+import ViewPasswordDialog from '@/components/ViewPasswordDialog.vue'
 
 export default {
-  components: { HeaderBar },
+  components: { HeaderBar, ViewPasswordDialog },
   data() {
     return {
+      showViewPassword: false,
+      currentPassword: '', // 存储获取到的密码
       searchPhone: '',
       userList: [],
       currentPage: 1,
@@ -86,9 +83,7 @@ export default {
   },
   computed: {
     pageCount() {
-      const count = Math.ceil(this.total / this.pageSize);
-      console.log('总页数计算:', this.total, '/', this.pageSize, '=', count);
-      return count;
+      return Math.ceil(this.total / this.pageSize);
     },
     visiblePages() {
       const pages = [];
@@ -109,19 +104,11 @@ export default {
   methods: {
     // 获取用户列表
     fetchUsers() {
-
-      console.log('请求参数:', {
-      page: this.currentPage,
-      limit: this.pageSize,
-      mobile: this.searchPhone
-      });
-
         adminApi.getUserList({
             page: this.currentPage,
             limit: this.pageSize,
             mobile: this.searchPhone
         }, ({ data }) => {
-          console.log('响应数据:', data);
             if (data.code === 0) {
                 this.userList = data.data.list.map(user => ({
                     ...user,
@@ -143,9 +130,17 @@ export default {
     batchDisable() {
       console.log('执行批量禁用操作');
     },
+    // 重置密码
     resetPassword(row) {
-      console.log('重置用户密码，用户：', row);
-    },
+        adminApi.resetUserPassword(row.userid, ({ data }) => {
+          if (data.code === 0) {
+            this.currentPassword = data.data
+            this.showViewPassword = true
+          } else {
+            this.$message.error(data.msg || '获取密码失败')
+          }
+        })
+      },
     disableUser(row) {
       row.status = '禁用';
       console.log('禁用用户：', row);
@@ -154,6 +149,7 @@ export default {
       row.status = '正常';
       console.log('恢复用户：', row);
     },
+    // 用户删除
     deleteUser(row) {
         this.$confirm('确定要删除该用户吗？', '警告', {
             confirmButtonText: '确定',
@@ -161,10 +157,8 @@ export default {
             type: 'warning'
         }).then(() => {
             adminApi.deleteUser(row.userid, ({data}) => {
-              console.log("33333333")
                 if (data.code === 0) {
                     this.$message.success('删除成功')
-                    // 删除后重新获取数据（或前端直接过滤）
                     this.fetchUsers()
                 } else {
                     this.$message.error(data.msg || '删除失败')
@@ -184,7 +178,7 @@ export default {
     },
     goFirst() {
       this.currentPage = 1;
-      this.handleCurrentChange(1);
+      this.fetchUsers();
     },
     goPrev() {
       if (this.currentPage > 1) {
@@ -193,9 +187,7 @@ export default {
       }
     },
     goNext() {
-      console.log("1111111111111")
       if (this.currentPage < this.pageCount) {
-        console.log("2222222222")
         this.currentPage++;
          this.fetchUsers();
       }

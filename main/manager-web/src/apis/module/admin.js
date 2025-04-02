@@ -40,5 +40,22 @@ export default {
                     this.deleteUser(id, callback)
                 })
             }).send()
+    },
+    // 重置用户密码
+    resetUserPassword(id, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/api/v1/admin/users/${id}`)
+            .method('PUT')
+            .success((res) => {
+                RequestService.clearRequestTime()
+                callback(res)
+            })
+            .fail((err) => {
+                console.error('重置密码失败:', err)
+                RequestService.reAjaxFun(() => {
+                    this.resetUserPassword(id, callback)
+                })
+            }).send()
     }
+
 }
