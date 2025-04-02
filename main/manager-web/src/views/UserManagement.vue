@@ -348,8 +348,8 @@ $table-bg-color: #ecf1fd;
 .user-card {
   background: white;
   border-radius: 12px;
-  padding: 20px;
-  margin: 15px;
+  padding: 15px;
+  margin: -10px 15px;
 }
 
 .table_bottom {
