@@ -182,13 +182,13 @@ ASR:
     model_dir: models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17
     output_dir: tmp/
   DoubaoASR:
+    # 可以在这里申请相关Key等信息
+    # https://console.volcengine.com/speech/app
     type: doubao
     appid: 你的火山引擎语音合成服务appid
     access_token: 你的火山引擎语音合成服务access_token
     cluster: volcengine_input_common
     output_dir: tmp/
-    # 可以在这里申请相关Key等信息
-    # https://console.volcengine.com/speech/app
   TencentASR:
     # token申请地址：https://console.cloud.tencent.com/cam/capi
     # 免费领取资源：https://console.cloud.tencent.com/asr/resourcebundle
@@ -284,12 +284,12 @@ LLM:
   CozeLLM:
     # 定义LLM API类型
     type: coze
+    # 你可以在这里找到个人令牌
+    # https://www.coze.cn/open/oauth/pats
     # bot_id和user_id的内容写在引号之内
     bot_id: "你的bot_id"
     user_id: "你的user_id"
     personal_access_token: 你的coze个人令牌
-    # 你可以在这里找到个人令牌
-    # https://www.coze.cn/open/oauth/pats
   LMStudioLLM:
     # 定义LLM API类型
     type: openai
