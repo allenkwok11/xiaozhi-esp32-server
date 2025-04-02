@@ -124,31 +124,32 @@ export default {
     handleCurrentChange(val) {
       this.currentPage = val;
     },
-     fetchBindDevices(agentId) {
-        this.loading = true;
-        import('@/apis/module/user').then(({ default: userApi }) => {
-          userApi.getAgentBindDevices(agentId, ({ data }) => {
+    fetchBindDevices(agentId) {
+      this.loading = true;
+      import('@/apis/module/device').then(({ default: deviceApi }) => {
+        deviceApi.getAgentBindDevices(agentId, ({ data }) => {
             this.loading = false;
             if (data.code === 0) {
-              this.deviceList = data.data[0].list.map(device => ({
-                device_id: device.id,
-                model: device.device_type,
-                firmwareVersion: device.app_version,
-                macAddress: device.mac_address,
-                lastConversation: device.recent_chat_time,
-                remark: '',
-                isEdit: false,
-                otaSwitch: device.ota_upgrade === 1
-              }));
-            } else {
-              this.$message.error(data.msg || '获取设备列表失败');
-            }
-          });
-        }).catch(error => {
-          console.error('模块加载失败:', error);
-          this.$message.error('功能模块加载失败');
+                this.deviceList = data.data.map(device => ({
+                    device_id: device.id,
+                    model: device.board,
+                    firmwareVersion: device.appVersion,
+                    macAddress: device.macAddress,
+                    bindTime: device.createDate,
+                    lastConversation: device.lastConnectedAt,
+                    remark: device.alias,
+                    isEdit: false,
+                    otaSwitch: device.autoUpdate === 1
+                }));
+          } else {
+            this.$message.error(data.msg || '获取设备列表失败');
+          }
         });
-     },
+      }).catch(error => {
+        console.error('模块加载失败:', error);
+        this.$message.error('功能模块加载失败');
+      });
+    },
   }
 };
 </script>

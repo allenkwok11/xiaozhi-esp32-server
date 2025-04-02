@@ -49,8 +49,8 @@ export default {
         return;
       }
       this.loading = true;
-      import('@/apis/module/user').then(({ default: userApi }) => {
-        userApi.bindDevice(
+      import('@/apis/module/device').then(({ default: deviceApi }) => {
+        deviceApi.bindDevice(
             this.agentId,
             this.deviceCode, ({data}) => {
               this.loading = false;
