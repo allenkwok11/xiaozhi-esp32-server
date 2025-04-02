@@ -106,7 +106,7 @@
 
       <ModelEditDialog :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
       <TtsModel :visible.sync="ttsDialogVisible" />
-      <AddModelDialog :visible.sync="addDialogVisible" @confirm="handleAddConfirm"/>
+      <AddModelDialog  :modelType="activeTab" :visible.sync="addDialogVisible" @confirm="handleAddConfirm"/>
     </div>
 
     <div class="copyright">
@@ -234,6 +234,10 @@ export default {
 </script>
 
 <style scoped>
+::v-deep .el-table tr{
+  background: transparent;
+}
+
 .welcome {
   min-width: 900px;
   min-height: 506px;
@@ -241,8 +245,8 @@ export default {
   display: flex;
   position: relative;
   flex-direction: column;
-  background: linear-gradient(to bottom right, #dce8ff, #e4eeff, #e6cbfd) center;
   background-size: cover;
+  background: linear-gradient(to bottom right, #dce8ff, #e4eeff, #e6cbfd) center;
   -webkit-background-size: cover;
   -o-background-size: cover;
 }
@@ -349,6 +353,7 @@ export default {
   height: 100%;
   min-width: 600px;
   overflow-x: auto;
+
 }
 
 .title-bar {
@@ -363,12 +368,6 @@ export default {
   font-size: 18px;
   color: #303133;
   margin: 0;
-}
-
-.title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .action-group {
@@ -386,13 +385,19 @@ export default {
   width: 240px;
 }
 
-.search-input .el-input__inner::placeholder {
+::v-deep .search-input .el-input__inner::placeholder {
   color: black;
   opacity: 0.6;
 }
 
-.search-input .el-input__inner {
+::v-deep .search-input .el-input__inner {
   background: transparent;
+}
+
+.search-btn {
+  background: linear-gradient(135deg, #6B8CFF, #A966FF);
+  border: none;
+  color: white;
 }
 
 .data-table {
@@ -401,16 +406,8 @@ export default {
   background-color: transparent !important;
 }
 
-.data-table .el-table__row {
+.data-table /deep/ .el-table__row {
   background-color: transparent !important;
-}
-
-.data-table .el-table__header-wrapper {
-  border-bottom: 1px solid rgb(224,227,237);
-}
-
-.data-table .el-table__body td {
-  border-bottom: 1px solid rgb(224,227,237) !important;
 }
 
 .table-header th {
@@ -433,11 +430,6 @@ export default {
   gap: 8px;
 }
 
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .copyright {
   text-align: center;
   color: #979db1;
@@ -452,16 +444,6 @@ export default {
   width: 100%;
 }
 
-/* 按钮样式 */
-.el-button {
-  img {
-    height: 1em;
-    vertical-align: middle;
-    padding-right: 2px;
-    padding-bottom: 2px;
-  }
-}
-
 .add-btn {
   background: #cce5f9;
   width: 75px;
@@ -470,10 +452,92 @@ export default {
   padding: 8px 16px;
 }
 
-.search-btn {
-  background: linear-gradient(135deg, #6B8CFF, #A966FF);
+.title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.batch-actions .el-button:first-child {
+  background: linear-gradient(135deg, #409EFF, #6B8CFF);
   border: none;
   color: white;
+}
+
+.batch-actions .el-button:first-child:hover {
+  background: linear-gradient(135deg, #3A8EE6, #5A7CFF);
+}
+
+.el-table th /deep/ .el-table__cell {
+  overflow: hidden;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  background-color: transparent !important;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+::v-deep .el-table .custom-selection-header .cell .el-checkbox__inner {
+  display: none !important; /* 使表头复选框不可见 */
+}
+
+::v-deep .el-table .custom-selection-header .cell::before {
+  content: '选择';
+  display: block;
+  text-align: center;
+  line-height: 0;
+  color: black;
+  margin-top: 23px;
+}
+
+::v-deep .el-table__body .el-checkbox__inner {
+  display: inline-block !important;
+  background: #e6edfa;
+}
+
+::v-deep .el-table thead th:not(:first-child) .cell {
+  color: #303133 !important;
+}
+
+::v-deep .nav-panel .el-menu-item.is-active .menu-text {
+  color: #409EFF !important;
+}
+
+::v-deep .data-table {
+  &.el-table::before,
+  &.el-table::after,
+  &.el-table__inner-wrapper::before {
+    display: none !important;
+  }
+}
+
+::v-deep .data-table .el-table__header-wrapper {
+  border-bottom: 1px solid rgb(224,227,237);
+}
+
+::v-deep .data-table .el-table__body td {
+  border-bottom: 1px solid rgb(224,227,237) !important;
+}
+
+.el-button img{
+  height: 1em;
+  vertical-align: middle;
+  padding-right: 2px;
+  padding-bottom: 2px;
+}
+
+::v-deep .el-checkbox__inner {
+  border-color: #cfcfcf !important;
+  transition: all 0.2s ease-in-out;
+}
+
+::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: #409EFF !important;
+  border-color: #409EFF !important;
 }
 
 .voice-management-btn {
@@ -487,8 +551,16 @@ export default {
 }
 
 .voice-management-btn:hover {
-  background: #8aa2e0;
+    background: #8aa2e0; /* 悬停时颜色加深 */
   transform: scale(1.05);
+}
+
+::v-deep .el-table .el-table-column--selection .cell {
+  padding-left: 15px !important;
+}
+
+::v-deep .el-table .el-table__fixed-right .cell {
+  padding-right: 15px !important;
 }
 
 .edit-btn, .delete-btn {
@@ -496,66 +568,10 @@ export default {
   color: #7079aa !important;
 }
 
-/* 深度选择器合并 */
-::v-deep {
-  .el-table tr {
-    background: transparent;
-  }
-
-  .el-table .custom-selection-header .cell .el-checkbox__inner {
-    display: none !important;
-  }
-
-  .el-table .custom-selection-header .cell::before {
-    content: '选择';
-    display: block;
-    text-align: center;
-    line-height: 0;
-    color: black;
-    margin-top: 23px;
-  }
-
-  .el-table__body .el-checkbox__inner {
-    display: inline-block !important;
-    background: #e6edfa;
-  }
-
-  .el-table thead th:not(:first-child) .cell {
-    color: #303133 !important;
-  }
-
-  .nav-panel .el-menu-item.is-active .menu-text {
-    color: #409EFF !important;
-  }
-
-  .el-checkbox__inner {
-    border-color: #cfcfcf !important;
-    transition: all 0.2s ease-in-out;
-  }
-
-  .el-checkbox__input.is-checked .el-checkbox__inner {
-    background-color: #409EFF !important;
-    border-color: #409EFF !important;
-  }
-
-  .el-table .el-table-column--selection .cell {
-    padding-left: 15px !important;
-  }
-
-  .el-table .el-table__fixed-right .cell {
-    padding-right: 15px !important;
-  }
-
-  .el-table .cell {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .data-table.el-table::before,
-  .data-table.el-table::after,
-  .data-table.el-table__inner-wrapper::before {
-    display: none !important;
-  }
+::v-deep .el-table .cell {
+  padding-left: 10px;
+  padding-right: 10px;
 }
+
 </style>
 
