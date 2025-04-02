@@ -2,10 +2,13 @@ package xiaozhi.modules.device.service;
 
 import java.util.List;
 
+import xiaozhi.common.page.ExtendPageData;
 import xiaozhi.modules.device.dto.DeviceBindDTO;
+import xiaozhi.modules.device.dto.DevicePageUserDTO;
 import xiaozhi.modules.device.dto.DeviceReportReqDTO;
 import xiaozhi.modules.device.dto.DeviceReportRespDTO;
 import xiaozhi.modules.device.entity.DeviceEntity;
+import xiaozhi.modules.device.vo.UserShowDeviceListVO;
 
 public interface DeviceService {
 
@@ -52,4 +55,12 @@ public interface DeviceService {
      * @return 设备数量
      */
     Long selectCountByUserId(Long userId);
+
+    /**
+     * 分页获取全部设备信息
+     *
+     * @param dto 分页查找参数
+     * @return 用户列表分页数据
+     */
+    ExtendPageData<UserShowDeviceListVO> page(DevicePageUserDTO dto);
 }

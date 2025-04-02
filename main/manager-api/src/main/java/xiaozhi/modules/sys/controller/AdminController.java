@@ -17,9 +17,13 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import xiaozhi.common.constant.Constant;
+import xiaozhi.common.page.ExtendPageData;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.ValidatorUtils;
+import xiaozhi.modules.device.dto.DevicePageUserDTO;
+import xiaozhi.modules.device.service.DeviceService;
+import xiaozhi.modules.device.vo.UserShowDeviceListVO;
 import xiaozhi.modules.sys.dto.AdminPageUserDTO;
 import xiaozhi.modules.sys.service.SysUserService;
 import xiaozhi.modules.sys.vo.AdminPageUserVO;
@@ -36,6 +40,8 @@ import xiaozhi.modules.sys.vo.AdminPageUserVO;
 @Tag(name = "管理员管理")
 public class AdminController {
     private final SysUserService sysUserService;
+
+    private final DeviceService deviceService;
 
     @GetMapping("/users")
     @Operation(summary = "分页查找用户")
@@ -82,9 +88,13 @@ public class AdminController {
             @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
             @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
     })
-    public Result<Void> pageDevice(
+    public Result<ExtendPageData<UserShowDeviceListVO>> pageDevice(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
-        // TODO 等设备功能模块写好
-        return new Result<Void>().error(600, "等设备功能模块写好");
+        DevicePageUserDTO dto = new DevicePageUserDTO();
+        dto.setKeywords((String) params.get("keywords"));
+        dto.setLimit((String) params.get(Constant.LIMIT));
+        dto.setPage((String) params.get(Constant.PAGE));
+        ExtendPageData<UserShowDeviceListVO> page = deviceService.page(dto);
+        return new Result<ExtendPageData<UserShowDeviceListVO>>().ok(page);
     }
 }
