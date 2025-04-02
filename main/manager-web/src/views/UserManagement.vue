@@ -13,9 +13,9 @@
       <el-card class="user-card" shadow="never">
         <el-table :data="userList" class="transparent-table" :header-cell-class-name="headerCellClassName">
           <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
-          <el-table-column label="用户Id" prop="user_id" align="center"></el-table-column>
+          <el-table-column label="用户Id" prop="userid" align="center"></el-table-column>
           <el-table-column label="手机号码" prop="mobile" align="center"></el-table-column>
-          <el-table-column label="设备数量" prop="device_count" align="center"></el-table-column>
+          <el-table-column label="设备数量" prop="deviceCount" align="center"></el-table-column>
           <el-table-column label="状态" prop="status" align="center"></el-table-column>
           <el-table-column label="操作" align="center">
             <template slot-scope="scope">
@@ -76,10 +76,9 @@ export default {
     return {
       searchPhone: '',
       userList: [],
-      originalUserList: [], // 原始数据
       currentPage: 1,
       pageSize: 5,
-      total: 20
+      total: 0
     };
   },
   created() {
@@ -87,7 +86,9 @@ export default {
   },
   computed: {
     pageCount() {
-      return Math.ceil(this.total / this.pageSize);
+      const count = Math.ceil(this.total / this.pageSize);
+      console.log('总页数计算:', this.total, '/', this.pageSize, '=', count);
+      return count;
     },
     visiblePages() {
       const pages = [];
@@ -108,34 +109,34 @@ export default {
   methods: {
     // 获取用户列表
     fetchUsers() {
-      adminApi.getUserList(({data}) => {
-        if (data.code === 0) {
-          const responseData = data.data[0] || data.data;
-          this.originalUserList = responseData.list.map(user => ({
-            ...user,
-            status: user.status === '1' ? '正常' : '禁用'
-          }));
-          this.userList = [...this.originalUserList];
-          this.total = responseData.totalCount || 0;
-        }
-      });
-    },
 
-    // 分页变化
-    handleCurrentChange(page) {
-      this.currentPage = page;
-      this.fetchUsers();
+      console.log('请求参数:', {
+      page: this.currentPage,
+      limit: this.pageSize,
+      mobile: this.searchPhone
+      });
+
+        adminApi.getUserList({
+            page: this.currentPage,
+            limit: this.pageSize,
+            mobile: this.searchPhone
+        }, ({ data }) => {
+          console.log('响应数据:', data);
+            if (data.code === 0) {
+                this.userList = data.data.list.map(user => ({
+                    ...user,
+                    status: user.status === '1' ? '正常' : '禁用'
+                }));
+                this.total = data.data.total;
+            }
+        });
     },
 
     // 搜索
     handleSearch() {
-      if (!this.searchPhone) {
-        this.userList = [...this.originalUserList];
-        return;
-      }
-      this.userList = this.originalUserList.filter(user =>
-        user.mobile.includes(this.searchPhone)
-      )},
+        this.currentPage = 1;
+        this.fetchUsers();
+    },
     batchDelete() {
       console.log('执行批量删除操作');
     },
@@ -154,7 +155,22 @@ export default {
       console.log('恢复用户：', row);
     },
     deleteUser(row) {
-      console.log('删除用户：', row);
+        this.$confirm('确定要删除该用户吗？', '警告', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        }).then(() => {
+            adminApi.deleteUser(row.userid, ({data}) => {
+              console.log("33333333")
+                if (data.code === 0) {
+                    this.$message.success('删除成功')
+                    // 删除后重新获取数据（或前端直接过滤）
+                    this.fetchUsers()
+                } else {
+                    this.$message.error(data.msg || '删除失败')
+                }
+            })
+        }).catch(() => {})
     },
     handleSizeChange(val) {
       this.pageSize = val;
@@ -173,18 +189,20 @@ export default {
     goPrev() {
       if (this.currentPage > 1) {
         this.currentPage--;
-        this.handleCurrentChange(this.currentPage);
+         this.fetchUsers();
       }
     },
     goNext() {
+      console.log("1111111111111")
       if (this.currentPage < this.pageCount) {
+        console.log("2222222222")
         this.currentPage++;
-        this.handleCurrentChange(this.currentPage);
+         this.fetchUsers();
       }
     },
     goToPage(page) {
       this.currentPage = page;
-      this.handleCurrentChange(page);
+      this.fetchUsers();
     },
   }
 };
