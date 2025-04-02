@@ -18,7 +18,7 @@ import lombok.AllArgsConstructor;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.exception.RenException;
-import xiaozhi.common.page.PageData;
+import xiaozhi.common.page.ExtendPageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.modules.agent.service.AgentService;
@@ -151,7 +151,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     }
 
     @Override
-    public PageData<AdminPageUserVO> page(AdminPageUserDTO dto) {
+    public ExtendPageData<AdminPageUserVO> page(AdminPageUserDTO dto) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put(Constant.PAGE, dto.getPage());
         params.put(Constant.LIMIT, dto.getLimit());
@@ -171,7 +171,9 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
             adminPageUserVO.setStatus(user.getStatus().toString());
             return adminPageUserVO;
         }).toList();
-        return new PageData<>(list, page.getTotal());
+        //计算页数
+        long num = page.getTotal() / Long.parseLong(dto.getPage());
+        return new ExtendPageData<>(list, page.getTotal(),num);
     }
 
     private boolean isStrongPassword(String password) {

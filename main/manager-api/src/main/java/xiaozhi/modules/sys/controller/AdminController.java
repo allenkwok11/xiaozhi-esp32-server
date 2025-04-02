@@ -51,7 +51,7 @@ public class AdminController {
             @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
             @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
     })
-    public Result<PageData<AdminPageUserVO>> pageUser(
+    public Result<ExtendPageData<AdminPageUserVO>> pageUser(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
         AdminPageUserDTO dto = new AdminPageUserDTO();
         dto.setMobile((String) params.get("mobile"));
@@ -59,8 +59,8 @@ public class AdminController {
         dto.setPage((String) params.get("pages"));
 
         ValidatorUtils.validateEntity(dto);
-        PageData<AdminPageUserVO> page = sysUserService.page(dto);
-        return new Result<PageData<AdminPageUserVO>>().ok(page);
+        ExtendPageData<AdminPageUserVO> page = sysUserService.page(dto);
+        return new Result<ExtendPageData<AdminPageUserVO>>().ok(page);
     }
 
     @PutMapping("/users/{id}")
