@@ -11,7 +11,7 @@
       </div>
 
       <el-card class="user-card" shadow="never">
-        <el-table :data="userList" class="transparent-table" :header-cell-class-name="headerCellClassName">
+        <el-table ref="userTable" :data="userList" class="transparent-table" :header-cell-class-name="headerCellClassName">
           <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
           <el-table-column label="用户Id" prop="userid" align="center"></el-table-column>
           <el-table-column label="手机号码" prop="mobile" align="center"></el-table-column>
@@ -33,10 +33,10 @@
 
         <div class="table_bottom">
           <div class="ctrl_btn">
-            <el-button size="mini" type="primary" style="width: 72px; background: #5f70f3">全选</el-button>
-            <el-button size="mini" type="success" icon="el-icon-circle-check" style="background: #5bc98c">启用</el-button>
-            <el-button size="mini" type="warning" style="color: black; background: #f6d075"><i class="el-icon-remove-outline rotated-icon"></i>禁用</el-button>
-            <el-button size="mini" type="danger" icon="el-icon-delete" style="background: #fd5b63">删除</el-button>
+            <el-button size="mini" type="primary" class="select-all-btn" @click="handleSelectAll">全选</el-button>
+            <el-button size="mini" type="success" icon="el-icon-circle-check" @click="restoreUser">启用</el-button>
+            <el-button size="mini" type="warning" @click="batchDisable"><i class="el-icon-remove-outline rotated-icon"></i>禁用</el-button>
+            <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">删除</el-button>
           </div>
           <div class="custom-pagination">
             <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
@@ -124,6 +124,10 @@ export default {
         this.currentPage = 1;
         this.fetchUsers();
     },
+    // 全选
+    handleSelectAll() {
+      this.$refs.userTable.toggleAllSelection();
+    },
     batchDelete() {
       console.log('执行批量删除操作');
     },
@@ -170,11 +174,7 @@ export default {
             })
         }).catch(() => {})
     },
-    handleSizeChange(val) {
-      this.pageSize = val;
-      console.log('每页条数：', val);
-    },
-    headerCellClassName({column, columnIndex}) {
+    headerCellClassName({columnIndex}) {
       if (columnIndex === 0) {
         return 'custom-selection-header'
       }
@@ -285,78 +285,203 @@ $table-bg-color: #ecf1fd;
   .ctrl_btn {
     display: flex;
     align-items: center;
-    margin-left: 25px;
-  }
-}
+    margin-left: 30px;
+    .el-button {
+      min-width: 72px;
+      height: 30px;
+      padding: 7px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+      line-height: 1;
+      font-weight: 500;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
 
-.rotated-icon {
-  display: inline-block;
-  transform: rotate(45deg);
-  margin-right: 4px;
-  color: black;
-}
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
 
-:deep(.el-table) {
-  background: $table-bg-color;
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-  &.transparent-table {
-    .el-table__header th {
-      background: $table-bg-color !important;
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%, -50%);
+        transform-origin: 50% 50%;
+      }
+
+      &:focus:not(:active)::after {
+        animation: ripple 0.6s ease-out;
+      }
+    }
+
+    /* 全选按钮 */
+    .el-button--primary {
+      background: #5f70f3;
+      box-shadow: 0 2px 6px rgba(95, 112, 243, 0.3);
+
+      &:hover {
+        background: #4d5fe1;
+        box-shadow: 0 4px 8px rgba(95, 112, 243, 0.4);
+      }
+
+      &:active {
+        background: #3a4bcf;
+        box-shadow: 0 2px 4px rgba(95, 112, 243, 0.2);
+      }
+    }
+
+    /* 启用按钮 */
+    .el-button--success {
+      background: #5bc98c;
+      box-shadow: 0 2px 6px rgba(91, 201, 140, 0.3);
+
+      &:hover {
+        background: #4ab57d;
+        box-shadow: 0 4px 8px rgba(91, 201, 140, 0.4);
+      }
+
+      &:active {
+        background: #3aa16e;
+        box-shadow: 0 2px 4px rgba(91, 201, 140, 0.2);
+      }
+    }
+
+    /* 禁用按钮 */
+    .el-button--warning {
+      background: #f6d075;
       color: black;
+      box-shadow: 0 2px 6px rgba(246, 208, 117, 0.3);
+
+      &:hover {
+        background: #e4c068;
+        box-shadow: 0 4px 8px rgba(246, 208, 117, 0.4);
+      }
+
+      &:active {
+        background: #d2b05b;
+        box-shadow: 0 2px 4px rgba(246, 208, 117, 0.2);
+      }
+
+      .rotated-icon {
+        display: inline-block;
+        transform: rotate(45deg);
+        margin-right: 4px;
+        color: black;
+      }
     }
 
-    &::before {
-      display: none;
-    }
+    /* 删除按钮 */
+    .el-button--danger {
+      background: #fd5b63;
+      box-shadow: 0 2px 6px rgba(253, 91, 99, 0.3);
 
-    &:last-child td {
-        border-bottom: none !important;
-    }
+      &:hover {
+        background: #e44a52;
+        box-shadow: 0 4px 8px rgba(253, 91, 99, 0.4);
+      }
 
-    .el-table__body tr {
-      background-color: $table-bg-color;
-      td {
-        border: {
-          top: 1px solid rgba(0, 0, 0, 0.04);
-          bottom: 1px solid rgba(0, 0, 0, 0.04);
+      &:active {
+        background: #cb3941;
+        box-shadow: 0 2px 4px rgba(253, 91, 99, 0.2);
+      }
+    }
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: scale(0, 0);
+      opacity: 0.5;
+    }
+    100% {
+      transform: scale(20, 20);
+      opacity: 0;
+    }
+  }
+  }
+
+  .rotated-icon {
+    display: inline-block;
+    transform: rotate(45deg);
+    margin-right: 4px;
+    color: black;
+  }
+
+  :deep(.el-table) {
+    background: $table-bg-color;
+
+    &.transparent-table {
+      .el-table__header th {
+        background: $table-bg-color !important;
+        color: black;
+      }
+
+      &::before {
+        display: none;
+      }
+
+      &:last-child td {
+          border-bottom: none !important;
+      }
+
+      .el-table__body tr {
+        background-color: $table-bg-color;
+        td {
+          border: {
+            top: 1px solid rgba(0, 0, 0, 0.04);
+            bottom: 1px solid rgba(0, 0, 0, 0.04);
+          }
         }
       }
     }
   }
-}
 
-.search-input {
-  width: 300px;
-  margin-right: 10px;
+  .search-input {
+    width: 300px;
+    margin-right: 10px;
 
-  :deep(.el-input__inner) {
-    background-color: transparent;
-    border-color: #d3d6dc;
+    :deep(.el-input__inner) {
+      background-color: transparent;
+      border-color: #d3d6dc;
 
-    &:focus {
-      border-color: #409eff;
+      &:focus {
+        border-color: #409eff;
+      }
+
+      &::placeholder {
+        color: #606266;
+        opacity: 0.7;
+      }
+    }
+  }
+
+  :deep(.custom-selection-header) {
+    .el-checkbox {
+      display: none !important;
     }
 
-    &::placeholder {
-      color: #606266;
-      opacity: 0.7;
+    &::after {
+      content: '选择';
+      display: inline-block;
+      color: black;
+      font-weight: bold;
+      padding-bottom: 18px;
     }
   }
-}
-
-:deep(.custom-selection-header) {
-  .el-checkbox {
-    display: none !important;
-  }
-
-  &::after {
-    content: '选择';
-    display: inline-block;
-    color: black;
-    font-weight: bold;
-    padding-bottom: 18px;
-  }
-}
 
 .custom-pagination {
   display: flex;
