@@ -46,7 +46,7 @@
         <div class="content-area">
           <div class="title-bar">
             <div class="title-wrapper">
-            <h2 class="model-title">大语言模型（LLM）</h2>
+            <h2 class="model-title">{{ modelTypeText }}</h2>
             <el-button type="primary" size="small" @click="addModel" class="add-btn">
                添加
             </el-button>
@@ -160,6 +160,20 @@ export default {
   },
 
   computed: {
+
+    modelTypeText() {
+      const map = {
+        vad: '语言活动检测模型(VAD)',
+        asr: '语音识别模型(ASR)',
+        llm: '大语言模型（LLM）',
+        intent: '意图识别模型(Intent)',
+        tts: '语音合成模型(TTS)',
+        memory: '记忆模型(Memory)'
+      }
+      return map[this.activeTab] || '模型配置'
+    },
+
+
     pageCount() {
       return Math.ceil(this.total / this.pageSize);
     },
@@ -189,6 +203,8 @@ export default {
     },
     handleMenuSelect(index) {
       this.activeTab = index;
+      this.currentPage = 1;
+      this.loadData();
     },
     handleSearch() {
       console.log('查询：', this.search);
