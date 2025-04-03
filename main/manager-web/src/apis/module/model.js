@@ -26,5 +26,22 @@ export default {
             })
         }).send()
     },
+     // 获取模型供应器列表
+    getModelProviders(modelType, callback) {
+      RequestService.sendRequest()
+        .url(`${getServiceUrl()}/api/v1/models/${modelType}/provideTypes`)
+        .method('GET')
+        .success((res) => {
+          RequestService.clearRequestTime()
+          callback(res.data?.data || [])
+        })
+        .fail((err) => {
+          console.error('获取供应器列表失败:', err)
+          this.$message.error('获取供应器列表失败')
+          RequestService.reAjaxFun(() => {
+            this.getModelProviders(modelType, callback)
+          })
+        }).send()
+    }
 
 }
