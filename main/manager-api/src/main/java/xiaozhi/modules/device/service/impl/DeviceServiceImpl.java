@@ -22,7 +22,6 @@ import cn.hutool.core.util.RandomUtil;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.ExtendPageData;
-import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.ConvertUtils;
@@ -36,14 +35,14 @@ import xiaozhi.modules.device.entity.DeviceEntity;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.device.vo.UserShowDeviceListVO;
 import xiaozhi.modules.security.user.SecurityUser;
-import xiaozhi.modules.sys.service.SysUserService;
+import xiaozhi.modules.sys.service.SysUserUtilService;
 
 @Service
 public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> implements DeviceService {
 
     private final DeviceDao deviceDao;
 
-    private final SysUserService sysUserService;
+    private final SysUserUtilService sysUserUtilService;
 
     private final String frontedUrl;
 
@@ -51,11 +50,11 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
     private final RedisTemplate<String, Object> redisTemplate;
 
     // 添加构造函数来初始化 deviceMapper
-    public DeviceServiceImpl(DeviceDao deviceDao, SysUserService sysUserService,
+    public DeviceServiceImpl(DeviceDao deviceDao, SysUserUtilService sysUserUtilService,
                              @Value("${app.fronted-url:http://localhost:8001}") String frontedUrl,
                              RedisTemplate<String, Object> redisTemplate) {
         this.deviceDao = deviceDao;
-        this.sysUserService = sysUserService;
+        this.sysUserUtilService = sysUserUtilService;
         this.frontedUrl = frontedUrl;
         this.redisTemplate = redisTemplate;
     }
@@ -239,9 +238,8 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
             UserShowDeviceListVO vo = ConvertUtils.sourceToTarget(device, UserShowDeviceListVO.class);
             // 把最后修改的时间，改为简短描述的时间
             vo.setRecentChatTime(DateUtils.getShortTime(device.getUpdateDate()));
-            // 获取用户名
-            String username = sysUserService.getByUserId(device.getUserId()).getUsername();
-            vo.setBindUserName(username);
+            sysUserUtilService.assignUsername(device.getUserId(),
+                    vo::setBindUserName);
             vo.setDeviceType(device.getBoard());
             return vo;
         }).toList();
