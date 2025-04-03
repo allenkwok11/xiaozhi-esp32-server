@@ -38,7 +38,7 @@
             />
           </div>
         </div>
-        <div class="footer">
+        <div class="copyright">
           ©2025 xiaozhi-esp32-server
         </div>
         <AddWisdomBodyDialog :visible.sync="addDeviceDialogVisible" @confirm="handleWisdomBodyAdded" />
