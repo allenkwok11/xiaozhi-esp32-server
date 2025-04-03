@@ -18,70 +18,68 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import Recorder from 'opus-recorder';
 import { OpusDecoder } from 'opus-decoder';
 
 export default {
   name: 'TestPage',
-  setup() {
-    const messages = ref([]);
-    const chatContainer = ref(null);
-    const wsStatus = ref('disconnected');
-    const isRecording = ref(false);
-    let ws = null;
-    let recorder = null;
-    let stream = null;
-    let audioContext = null;
-    let sourceNode = null;
-    let audioDecoder = null;
-    let audioBufferQueue = []; // 当前句子的音频缓冲区
-    let playbackQueue = []; // 播放队列，存储待播放的句子
-    let isPlaying = false;
-
-    const connectWebSocket = () => {
-      ws = new WebSocket('ws://192.168.3.97:8000');//修改服务端地址
-      ws.binaryType = 'arraybuffer';
-      ws.onopen = () => {
-        wsStatus.value = 'connected';
+  data() {
+    return {
+      messages: [],
+      wsStatus: 'disconnected',
+      isRecording: false,
+      ws: null,
+      recorder: null,
+      stream: null,
+      audioContext: null,
+      sourceNode: null,
+      audioDecoder: null,
+      audioBufferQueue: [], // 当前句子的音频缓冲区
+      playbackQueue: [], // 播放队列，存储待播放的句子
+      isPlaying: false,
+    }
+  },
+  methods: {
+    connectWebSocket() {
+      this.ws = new WebSocket('ws://192.168.3.97:8000');//修改服务端地址
+      this.ws.binaryType = 'arraybuffer';
+      this.ws.onopen = () => {
+        this.wsStatus = 'connected';
         console.log('WebSocket 连接成功');
-        ws.send(JSON.stringify({ type: 'auth', 'device-id': 'test-device' }));
-        audioDecoder = new OpusDecoder({ sampleRate: 16000, channels: 1 });
+        this.ws.send(JSON.stringify({ type: 'auth', 'device-id': 'test-device' }));
+        this.audioDecoder = new OpusDecoder({ sampleRate: 16000, channels: 1 });
       };
-      ws.onmessage = async (event) => {
+      this.ws.onmessage = async (event) => {
         if (typeof event.data === 'string') {
           const msg = JSON.parse(event.data);
           console.log('收到文本消息:', msg);
 
           if (msg.type === 'stt') {
-            messages.value.push({ role: 'user', content: msg.text });
-            scrollToBottom();
+            this.messages.push({ role: 'user', content: msg.text });
+            this.scrollToBottom();
           } else if (msg.type === 'llm') {
-            messages.value.push({ role: 'assistant', content: msg.text });
-            scrollToBottom();
+            this.messages.push({ role: 'assistant', content: msg.text });
+            this.scrollToBottom();
           } else if (msg.type === 'tts') {
             if (msg.state === 'sentence_start') {
-              // 开始新句子，清空当前缓冲区
-              audioBufferQueue = [];
-              const lastMessage = messages.value[messages.value.length - 1];
+              this.audioBufferQueue = [];
+              const lastMessage = this.messages[this.messages.length - 1];
               if (!lastMessage || lastMessage.content !== msg.text) {
-                messages.value.push({ role: 'assistant', content: msg.text });
-                scrollToBottom();
+                this.messages.push({ role: 'assistant', content: msg.text });
+                this.scrollToBottom();
               }
             } else if (msg.state === 'sentence_end') {
-              // 句子结束，将当前缓冲区加入播放队列
-              if (audioBufferQueue.length > 0) {
-                playbackQueue.push([...audioBufferQueue]);
-                audioBufferQueue = [];
-                playNextInQueue(); // 尝试播放队列中的下一句
+              if (this.audioBufferQueue.length > 0) {
+                this.playbackQueue.push([...this.audioBufferQueue]);
+                this.audioBufferQueue = [];
+                this.playNextInQueue();
               }
             } else if (msg.state === 'stop') {
               console.log('TTS 任务结束');
-              // 确保所有剩余音频播放
-              if (audioBufferQueue.length > 0) {
-                playbackQueue.push([...audioBufferQueue]);
-                audioBufferQueue = [];
-                playNextInQueue();
+              if (this.audioBufferQueue.length > 0) {
+                this.playbackQueue.push([...this.audioBufferQueue]);
+                this.audioBufferQueue = [];
+                this.playNextInQueue();
               }
             }
           } else if (msg.type === 'hello') {
@@ -96,18 +94,17 @@ export default {
           console.log('音频帧前8字节:', frameHead);
 
           try {
-            const decoded = audioDecoder.decodeFrame(opusFrame);
+            const decoded = this.audioDecoder.decodeFrame(opusFrame);
             console.log('解码结果:', decoded);
             if (decoded && decoded.channelData && decoded.channelData[0]) {
               const pcmData = decoded.channelData[0];
               if (pcmData.length > 0) {
-                audioBufferQueue.push(pcmData);
+                this.audioBufferQueue.push(pcmData);
                 console.log('解码音频帧，PCM 数据长度:', pcmData.length);
-                // 如果缓冲区达到一定长度（例如 5 帧，180ms），立即播放
-                if (audioBufferQueue.length >= 5 && playbackQueue.length === 0 && !isPlaying) {
-                  playbackQueue.push([...audioBufferQueue]);
-                  audioBufferQueue = [];
-                  playNextInQueue();
+                if (this.audioBufferQueue.length >= 5 && this.playbackQueue.length === 0 && !this.isPlaying) {
+                  this.playbackQueue.push([...this.audioBufferQueue]);
+                  this.audioBufferQueue = [];
+                  this.playNextInQueue();
                 }
               } else {
                 console.warn('解码成功，但 PCM 数据长度为 0');
@@ -120,39 +117,39 @@ export default {
           }
         }
       };
-      ws.onerror = (error) => {
+      this.ws.onerror = (error) => {
         console.error('WebSocket 错误:', error);
-        wsStatus.value = 'error';
+        this.wsStatus = 'error';
       };
-      ws.onclose = () => {
-        wsStatus.value = 'disconnected';
+      this.ws.onclose = () => {
+        this.wsStatus = 'disconnected';
         console.log('WebSocket 断开');
-        setTimeout(connectWebSocket, 1000);
+        setTimeout(this.connectWebSocket, 1000);
       };
-    };
-
-    const scrollToBottom = () => {
-      nextTick(() => {
-        if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    },
+    scrollToBottom() {
+      this.$nextTick(() => {
+        if (this.$refs.chatContainer) {
+          this.$refs.chatContainer.scrollTop = this.$refs.chatContainer.scrollHeight;
+        }
       });
-    };
-
-    const playNextInQueue = async () => {
-      if (isPlaying || playbackQueue.length === 0) {
-        return; // 正在播放或队列为空，等待下次触发
+    },
+    async playNextInQueue() {
+      if (this.isPlaying || this.playbackQueue.length === 0) {
+        return;
       }
-      isPlaying = true;
+      this.isPlaying = true;
 
-      if (!audioContext || audioContext.state === 'closed') {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
       }
 
-      const pcmBuffers = playbackQueue.shift(); // 取出队列中的第一句
+      const pcmBuffers = this.playbackQueue.shift();
       const totalLength = pcmBuffers.reduce((sum, pcm) => sum + pcm.length, 0);
       if (totalLength === 0) {
         console.error('音频缓冲区总长度为 0，无法播放');
-        isPlaying = false;
-        playNextInQueue(); // 尝试播放下一句
+        this.isPlaying = false;
+        this.playNextInQueue();
         return;
       }
 
@@ -163,22 +160,21 @@ export default {
         offset += pcm.length;
       }
 
-      const audioBuffer = audioContext.createBuffer(1, totalLength, 16000);
+      const audioBuffer = this.audioContext.createBuffer(1, totalLength, 16000);
       audioBuffer.getChannelData(0).set(mergedPcm);
 
-      const source = audioContext.createBufferSource();
+      const source = this.audioContext.createBufferSource();
       source.buffer = audioBuffer;
-      source.connect(audioContext.destination);
+      source.connect(this.audioContext.destination);
       source.onended = () => {
-        isPlaying = false;
+        this.isPlaying = false;
         console.log('音频播放结束');
-        playNextInQueue(); // 播放结束后继续下一句
+        this.playNextInQueue();
       };
       source.start();
       console.log('开始播放音频，总长度:', totalLength);
-    };
-
-    const stripOggContainer = (data) => {
+    },
+    stripOggContainer(data) {
       let arrayBuffer;
       if (data instanceof ArrayBuffer) {
         arrayBuffer = data;
@@ -227,23 +223,22 @@ export default {
       }
       console.log('剥离后找到', frames.length, '个裸 Opus 帧');
       return frames;
-    };
-
-    const initRecorder = async () => {
+    },
+    async initRecorder() {
       console.log('开始初始化录音');
       try {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
+        if (this.stream) {
+          this.stream.getTracks().forEach(track => track.stop());
         }
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('获取麦克风权限成功，stream:', stream);
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('获取麦克风权限成功，stream:', this.stream);
 
-        if (!audioContext || audioContext.state === 'closed') {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        if (!this.audioContext || this.audioContext.state === 'closed') {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
         }
-        sourceNode = audioContext.createMediaStreamSource(stream);
+        this.sourceNode = this.audioContext.createMediaStreamSource(this.stream);
 
-        recorder = new Recorder({
+        this.recorder = new Recorder({
           encoderPath: '/encoderWorker.min.js',
           sampleRate: 16000,
           numberOfChannels: 1,
@@ -252,17 +247,16 @@ export default {
           encoderFrameSize: 60,
           encoderBitRate: 24000,
           monitorGain: 0,
-          sourceNode: sourceNode,
+          sourceNode: this.sourceNode,
           ogg: false,
           streamPages: false,
           maxFramesPerPage: 1,
         });
 
-        recorder.ondataavailable = (data) => {
+        this.recorder.ondataavailable = (data) => {
           console.log('录音数据可用:', data.byteLength, '类型:', data.constructor.name);
-          const frames = stripOggContainer(data);
+          const frames = this.stripOggContainer(data);
           frames.forEach((frame, index) => {
-            const frameView = new DataView(frame);
             const frameHead = Array.from(new Uint8Array(frame.slice(0, 8)))
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join(' ');
@@ -273,8 +267,8 @@ export default {
               return;
             }
 
-            if (ws && ws.readyState === WebSocket.OPEN) {
-              ws.send(frame);
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+              this.ws.send(frame);
               console.log('发送裸 Opus 帧:', frame.byteLength);
             } else {
               console.warn('WebSocket 未连接，跳过发送');
@@ -282,16 +276,16 @@ export default {
           });
         };
 
-        recorder.onstart = () => {
+        this.recorder.onstart = () => {
           console.log('录音已启动');
         };
 
-        recorder.onstop = () => {
+        this.recorder.onstop = () => {
           console.log('录音停止');
-          stream.getTracks().forEach(track => track.stop());
-          stream = null;
-          sourceNode = null;
-          scrollToBottom();
+          this.stream.getTracks().forEach(track => track.stop());
+          this.stream = null;
+          this.sourceNode = null;
+          this.scrollToBottom();
         };
 
         console.log('Recorder 初始化成功');
@@ -299,48 +293,43 @@ export default {
         console.error('初始化录音失败:', err);
         alert('无法访问麦克风或录音初始化失败，请检查权限');
       }
-    };
-
-    const toggleRecording = async () => {
-      console.log('点击 toggleRecording，当前状态:', isRecording.value, 'WebSocket 状态:', wsStatus.value);
-      if (!recorder) {
-        await initRecorder();
-        if (!recorder) {
+    },
+    async toggleRecording() {
+      console.log('点击 toggleRecording，当前状态:', this.isRecording, 'WebSocket 状态:', this.wsStatus);
+      if (!this.recorder) {
+        await this.initRecorder();
+        if (!this.recorder) {
           console.error('recorder 初始化失败');
           return;
         }
       }
-      if (isRecording.value) {
+      if (this.isRecording) {
         console.log('停止录音');
-        recorder.stop();
-        isRecording.value = false;
+        this.recorder.stop();
+        this.isRecording = false;
       } else {
         try {
           console.log('开始录音');
-          await initRecorder();
-          await recorder.start();
-          console.log('录音开始后，状态:', recorder.state);
-          isRecording.value = true;
+          await this.initRecorder();
+          await this.recorder.start();
+          console.log('录音开始后，状态:', this.recorder.state);
+          this.isRecording = true;
         } catch (err) {
           console.error('录音启动失败:', err);
         }
       }
-    };
-
-    onMounted(() => {
-      console.log('组件挂载，初始化 WebSocket');
-      connectWebSocket();
-    });
-
-    onUnmounted(() => {
-      if (ws) ws.close();
-      if (stream) stream.getTracks().forEach(track => track.stop());
-      if (recorder) recorder.stop();
-      if (audioContext) audioContext.close();
-      if (audioDecoder) audioDecoder.destroy();
-    });
-
-    return { messages, chatContainer, wsStatus, isRecording, toggleRecording };
+    },
+  },
+  mounted() {
+    console.log('组件挂载，初始化 WebSocket');
+    this.connectWebSocket();
+  },
+  destroyed() {
+    if (this.ws) this.ws.close();
+    if (this.stream) this.stream.getTracks().forEach(track => track.stop());
+    if (this.recorder) this.recorder.stop();
+    if (this.audioContext) this.audioContext.close();
+    if (this.audioDecoder) this.audioDecoder.destroy();
   }
 };
 </script>

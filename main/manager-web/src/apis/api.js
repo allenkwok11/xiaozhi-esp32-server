@@ -16,6 +16,7 @@ const DEV_API_SERVICE = 'https://2662r3426b.vicp.fun/xiaozhi-esp32-api'
  * @returns {string}
  */
 export function getServiceUrl() {
+    // return '/xiaozhi-esp32-api'
     return DEV_API_SERVICE
 }
 
