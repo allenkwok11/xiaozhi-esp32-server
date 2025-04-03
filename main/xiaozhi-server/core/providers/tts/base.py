@@ -118,17 +118,18 @@ class TTSProviderBase(ABC):
     async def finish_session(self, session_id):
         pass
 
-    async def tts_one_sentence(self, text, u_id=None):
+    def tts_one_sentence(self,conn, text, u_id=None):
         if not u_id:
             u_id = str(uuid.uuid4()).replace("-", "")
-        self.tts.tts_text_queue.put(
+        conn.u_id = u_id
+        self.tts_text_queue.put(
             TTSMessageDTO(u_id=u_id, msg_type=MsgType.START_TTS_REQUEST, content="")
         )
-        self.tts.tts_text_queue.put(
+        self.tts_text_queue.put(
             TTSMessageDTO(u_id=u_id, msg_type=MsgType.TTS_TEXT_REQUEST, content=text)
         )
-        self.tts.tts_text_queue.put(
-            TTSMessageDTO(u_id=u_id, msg_type=MsgType.STOP_TTS_REQUEST, content=text)
+        self.tts_text_queue.put(
+            TTSMessageDTO(u_id=u_id, msg_type=MsgType.STOP_TTS_REQUEST, content="")
         )
 
     def _enable_two_way_tts(self):

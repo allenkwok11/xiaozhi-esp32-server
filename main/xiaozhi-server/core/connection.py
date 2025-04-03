@@ -1,4 +1,3 @@
-import os
 import json
 import uuid
 import time
@@ -311,7 +310,6 @@ class ConnectionHandler:
         self.dialogue.put(Message(role="user", content=query))
 
         response_message = []
-        processed_chars = 0  # 跟踪已处理的字符位置
         try:
             start_time = time.time()
             # 使用带记忆的对话
@@ -332,7 +330,6 @@ class ConnectionHandler:
         text_index = 0
         uuid_str = str(uuid.uuid4()).replace("-", "")
         self.u_id = uuid_str
-        msg_type = None
         for content in llm_responses:
             response_message.append(content)
             if self.client_abort:
@@ -390,7 +387,6 @@ class ConnectionHandler:
         if hasattr(self, "func_handler"):
             functions = self.func_handler.get_functions()
         response_message = []
-        processed_chars = 0  # 跟踪已处理的字符位置
 
         try:
             start_time = time.time()
@@ -424,7 +420,6 @@ class ConnectionHandler:
         content_arguments = ""
         uuid_str = str(uuid.uuid4()).replace("-", "")
         self.u_id = uuid_str
-        msg_type = None
         for response in llm_responses:
             content, tools_call = response
             if "content" in response:
@@ -588,9 +583,7 @@ class ConnectionHandler:
         if result.action == Action.RESPONSE:  # 直接回复前端
             text = result.response
             self.recode_first_last_text(text, text_index)
-            asyncio.run_coroutine_threadsafe(
-                self.tts.tts_one_sentence(text), loop=self.loop
-            )
+            self.tts.tts_one_sentence(self, text)
             self.dialogue.put(Message(role="assistant", content=text))
         elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
             text = result.result
@@ -622,16 +615,12 @@ class ConnectionHandler:
         elif result.action == Action.NOTFOUND:
             text = result.result
             self.recode_first_last_text(text, text_index)
-            asyncio.run_coroutine_threadsafe(
-                self.tts.tts_one_sentence(text), loop=self.loop
-            )
+            self.tts.tts_one_sentence(self, text)
             self.dialogue.put(Message(role="assistant", content=text))
         else:
             text = result.result
             self.recode_first_last_text(text, text_index)
-            asyncio.run_coroutine_threadsafe(
-                self.tts.tts_one_sentence(text), loop=self.loop
-            )
+            self.tts.tts_one_sentence(self, text)
             self.dialogue.put(Message(role="assistant", content=text))
 
     def _audio_play_priority_thread(self):

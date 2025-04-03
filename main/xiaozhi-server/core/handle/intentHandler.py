@@ -102,8 +102,7 @@ async def process_intent_result(conn, intent_result, original_text):
                     if text is None:
                         text = result.result
                     if text is not None:
-                        # TODO 将text转换为tts_message_dto
-                        pass
+                        conn.tts.tts_one_sentence(conn, text)
             # 将函数执行放在线程池中
             conn.executor.submit(process_function_call)
             return True
