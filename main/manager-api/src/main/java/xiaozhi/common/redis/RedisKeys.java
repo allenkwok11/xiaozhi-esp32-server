@@ -26,4 +26,13 @@ public class RedisKeys {
     public static String getDeviceCaptchaKey(String captcha) {
         return "sys:device:captcha:" + captcha;
     }
+
+    /**
+     * 用户id的Key
+     */
+    public static String getUserIdKey(Long userid) {
+        return "sys:username:id:" + userid;
+    }
+
+
 }
