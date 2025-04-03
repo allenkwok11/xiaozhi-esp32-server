@@ -20,12 +20,12 @@
       <div class="settings-btn" @click="handleConfigure">
         配置角色
       </div>
-      <div class="settings-btn">
-        声纹识别
-      </div>
-      <div class="settings-btn">
-        历史对话
-      </div>
+<!--      <div class="settings-btn">-->
+<!--        声纹识别-->
+<!--      </div>-->
+<!--      <div class="settings-btn">-->
+<!--        历史对话-->
+<!--      </div>-->
       <div class="settings-btn"  @click="handleDeviceManage">
         设备管理
       </div>

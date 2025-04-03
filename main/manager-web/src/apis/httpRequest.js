@@ -110,7 +110,7 @@ function httpHandlerError(info, callBack) {
         }else if (info.data.code === 401) {
             console.log('触发 401，清除 Token 并跳转登录页');
             store.commit('clearAuth');
-            window.location.href = '/login';
+            goToPage(Constant.PAGE.LOGIN, true);
             return true
         } else {
             showDanger(info.data.msg)

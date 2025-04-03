@@ -47,7 +47,10 @@ export default {
         return;
       }
       userApi.addAgent(this.wisdomBodyName, (res) => {
-        this.$message.success('添加成功');
+        this.$message.success({
+            message: '添加成功',
+            showClose: true
+        });
         this.$emit('confirm', res);
         this.$emit('update:visible', false);
         this.wisdomBodyName = "";

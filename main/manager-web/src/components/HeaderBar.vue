@@ -88,7 +88,7 @@ export default {
   methods: {
     goHome() {
       // 跳转到首页
-      this.$router.push('/')
+      this.$router.push('/home')
     },
     goUserManagement() {
       this.$router.push('/user-management')
@@ -135,13 +135,16 @@ export default {
       try {
         // 调用 Vuex 的 logout action
         await this.logout();
-
-        this.$message.success('退出登录成功');
-
-        this.$router.push('/login');
+        this.$message.success({
+          message:'退出登录成功',
+          showClose:true
+        });
       } catch (error) {
         console.error('退出登录失败:', error);
-        this.$message.error('退出登录失败，请重试');
+        this.$message.error({
+          message:'退出登录失败，请重试',
+          showClose:true
+        });
       }
     },
 
@@ -203,6 +206,7 @@ export default {
 }
 
 .equipment-management {
+  padding: 0 9px;
   width: 82px;
   height: 24px;
   border-radius: 12px;
