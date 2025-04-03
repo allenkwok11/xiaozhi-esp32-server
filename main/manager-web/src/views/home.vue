@@ -109,10 +109,16 @@ export default {
         import('@/apis/module/agent').then(({ default: userApi }) => {
           userApi.deleteAgent(agentId, (res) => {
             if (res.data.code === 0) {
-              this.$message.success('删除成功');
+              this.$message.success({
+                  message: '删除成功',
+                  showClose: true
+              });
               this.fetchAgentList(); // 刷新列表
             } else {
-              this.$message.error(res.data.msg || '删除失败');
+              this.$message.error({
+                  message: res.data.msg || '删除失败',
+                  showClose: true
+              });
             }
           });
         });
