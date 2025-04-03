@@ -13,7 +13,7 @@
         <span style="font-size: 11px"> 验证码：</span>
       </div>
       <div class="input-46" style="margin-top: 12px;">
-        <el-input placeholder="请输入设备播报的6位数验证码.." v-model="deviceCode" />
+        <el-input placeholder="请输入设备播报的6位数验证码.." v-model="deviceCode" @keyup.enter.native="confirm"/>
       </div>
     </div>
     <div style="display: flex;margin: 15px 15px;gap: 7px;">
