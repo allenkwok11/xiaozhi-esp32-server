@@ -38,7 +38,7 @@
             />
           </div>
         </div>
-        <div style="font-size: 12px;font-weight: 400;margin-top: auto;padding-top: 30px;color: #979db1;">
+        <div class="copyright">
           ©2025 xiaozhi-esp32-server
         </div>
         <AddWisdomBodyDialog :visible.sync="addDeviceDialogVisible" @confirm="handleWisdomBodyAdded" />
@@ -85,7 +85,7 @@ export default {
     },
     // 获取智能体列表
     fetchAgentList() {
-      import('@/apis/module/user').then(({ default: userApi }) => {
+      import('@/apis/module/agent').then(({ default: userApi }) => {
         userApi.getAgentList(({data}) => {
         this.originalDevices = data.data.map(item => ({
           ...item,
@@ -106,13 +106,19 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        import('@/apis/module/user').then(({ default: userApi }) => {
+        import('@/apis/module/agent').then(({ default: userApi }) => {
           userApi.deleteAgent(agentId, (res) => {
             if (res.data.code === 0) {
-              this.$message.success('删除成功');
+              this.$message.success({
+                  message: '删除成功',
+                  showClose: true
+              });
               this.fetchAgentList(); // 刷新列表
             } else {
-              this.$message.error(res.data.msg || '删除失败');
+              this.$message.error({
+                  message: res.data.msg || '删除失败',
+                  showClose: true
+              });
             }
           });
         });

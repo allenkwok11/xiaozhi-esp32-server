@@ -1,11 +1,9 @@
-本文档是开发类文档，如需部署小智服务端，[点击这里查看部署教程](../../README.md#%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F-)
+本文档是开发类文档，如需部署小智服务端，[点击这里查看部署教程](.././FAQ.md#%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F-)
 # 项目介绍
 
 manager-api 该项目基于SpringBoot框架开发。
 
 开发使用代码编辑器，导入项目时，选择`manager-api`文件夹作为项目目录
-
-参照[manager前后端接口协议](https://app.apifox.com/invite/project?token=H_8qhgfjUeaAL0wybghgU)开发
 
 # 开发环境
 JDK 21
@@ -83,14 +81,15 @@ src/main/java/xiaozhi/AdminApplication.java
 执行以下命令生产jar包
 
 ```
-mvn install
+mvn clean install
 ```
 
 把jar包放在服务器上，执行
 
 ```
-nohup java -jar xiaozhi-esp32-api.jar --spring.profiles.active=dev >/dev/null &
+nohup java -jar xiaozhi-esp32-api.jar --spring.profiles.activate=dev
 ```
+
 
 # 接口文档
 启动后打开：http://localhost:8002/xiaozhi-esp32-api/doc.html
