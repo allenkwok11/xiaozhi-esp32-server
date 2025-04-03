@@ -97,7 +97,6 @@
 <script>
 import model from '@/apis/module/model'
 export default {
-  
   name: 'AddModelDialog',
   props: {
     visible: {type: Boolean, required: true},
@@ -130,7 +129,6 @@ export default {
         return
 
       model.getModelProviders(this.modelType, (data) => {
-        console.log("data", data)
         this.providers = data.map(item => ({
           label: item.name,
           value: item.providerCode
@@ -147,7 +145,8 @@ export default {
 
       this.$emit('confirm', {
         ...this.formData,
-        provideType: this.formData.supplier
+        provideType: this.formData.supplier,
+        configJson: this.formData.configJson
       });
       this.$emit('update:visible', false);
       this.resetForm();

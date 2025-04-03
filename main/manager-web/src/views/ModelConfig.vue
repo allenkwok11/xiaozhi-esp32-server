@@ -239,6 +239,7 @@ export default {
       };
       this.editDialogVisible = true;
     },
+    // 删除模型配置
     deleteModel(model) {
       this.$confirm(`确定要删除模型 ${model.candidateName} 吗?`, '提示', {
         confirmButtonText: '确定',
@@ -279,8 +280,27 @@ export default {
         this.isAllSelected = false;
       }
     },
+
+    // 新增模型配置
     handleAddConfirm(newModel) {
-      console.log('新增模型数据:', newModel);
+      const params = {
+        modelType: this.activeTab,
+        provideCode: newModel.supplier,
+        formData: {
+          ...newModel,
+          isDefault: newModel.isDefault ? 1 : 0,
+          isEnabled: newModel.isEnabled ? 1 : 0
+        }
+      };
+
+      ModelApi.addModel(params, ({data}) => {
+        if (data.code === 0) {
+          this.$message.success('新增成功');
+          this.loadData();
+        } else {
+          this.$message.error(data.msg || '新增失败');
+        }
+      });
     },
 
     // 分页器
