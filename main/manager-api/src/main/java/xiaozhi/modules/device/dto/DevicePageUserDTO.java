@@ -1,6 +1,7 @@
 package xiaozhi.modules.device.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 /**
@@ -17,8 +18,10 @@ public class DevicePageUserDTO {
     private String keywords;
 
     @Schema(description = "页数")
+    @Min(value = 0, message = "{page.number}")
     private String page;
 
     @Schema(description = "显示列数")
+    @Min(value = 0, message = "{limit.number}")
     private String limit;
 }

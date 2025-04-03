@@ -1,6 +1,7 @@
 package xiaozhi.modules.sys.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 /**
@@ -17,8 +18,10 @@ public class AdminPageUserDTO {
     private String mobile;
 
     @Schema(description = "页数")
+    @Min(value = 0, message = "{sort.number}")
     private String page;
 
     @Schema(description = "显示列数")
+    @Min(value = 0, message = "{sort.number}")
     private String limit;
 }

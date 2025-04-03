@@ -57,7 +57,7 @@ public class AdminController {
         dto.setMobile((String) params.get("mobile"));
         dto.setLimit((String) params.get(Constant.LIMIT));
         dto.setPage((String) params.get("pages"));
-
+        ValidatorUtils.validateEntity(dto);
         ValidatorUtils.validateEntity(dto);
         ExtendPageData<AdminPageUserVO> page = sysUserService.page(dto);
         return new Result<ExtendPageData<AdminPageUserVO>>().ok(page);
@@ -76,7 +76,7 @@ public class AdminController {
     @Operation(summary = "用户删除")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@PathVariable Long id) {
-        sysUserService.deleteById( id );
+        sysUserService.deleteById(id);
         return new Result<>();
     }
 
@@ -94,6 +94,7 @@ public class AdminController {
         dto.setKeywords((String) params.get("keywords"));
         dto.setLimit((String) params.get(Constant.LIMIT));
         dto.setPage((String) params.get(Constant.PAGE));
+        ValidatorUtils.validateEntity(dto);
         ExtendPageData<UserShowDeviceListVO> page = deviceService.page(dto);
         return new Result<ExtendPageData<UserShowDeviceListVO>>().ok(page);
     }
