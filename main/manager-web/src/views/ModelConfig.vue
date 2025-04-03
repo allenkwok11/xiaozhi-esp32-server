@@ -676,7 +676,6 @@ export default {
   margin-top: 15px;
 
   /* 导航按钮样式 (首页、上一页、下一页) */
-
   .pagination-btn:first-child,
   .pagination-btn:nth-child(2),
   .pagination-btn:nth-last-child(2) {
@@ -702,7 +701,6 @@ export default {
   }
 
   /* 数字按钮样式 */
-
   .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)) {
     min-width: 28px;
     height: 32px;
