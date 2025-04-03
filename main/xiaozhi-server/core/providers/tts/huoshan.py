@@ -9,7 +9,6 @@ import json
 import base64
 import requests
 from datetime import datetime
-from mutagen.oggopus import OggOpus
 
 import websockets
 
@@ -76,14 +75,16 @@ EVENT_TTSResponse = 352
 
 
 class Header:
-    def __init__(self,
-                 protocol_version=PROTOCOL_VERSION,
-                 header_size=DEFAULT_HEADER_SIZE,
-                 message_type: int = 0,
-                 message_type_specific_flags: int = 0,
-                 serial_method: int = NO_SERIALIZATION,
-                 compression_type: int = COMPRESSION_NO,
-                 reserved_data=0):
+    def __init__(
+        self,
+        protocol_version=PROTOCOL_VERSION,
+        header_size=DEFAULT_HEADER_SIZE,
+        message_type: int = 0,
+        message_type_specific_flags: int = 0,
+        serial_method: int = NO_SERIALIZATION,
+        compression_type: int = COMPRESSION_NO,
+        reserved_data=0,
+    ):
         self.header_size = header_size
         self.protocol_version = protocol_version
         self.message_type = message_type
@@ -93,16 +94,20 @@ class Header:
         self.reserved_data = reserved_data
 
     def as_bytes(self) -> bytes:
-        return bytes([
-            (self.protocol_version << 4) | self.header_size,
-            (self.message_type << 4) | self.message_type_specific_flags,
-            (self.serial_method << 4) | self.compression_type,
-            self.reserved_data
-        ])
+        return bytes(
+            [
+                (self.protocol_version << 4) | self.header_size,
+                (self.message_type << 4) | self.message_type_specific_flags,
+                (self.serial_method << 4) | self.compression_type,
+                self.reserved_data,
+            ]
+        )
 
 
 class Optional:
-    def __init__(self, event: int = EVENT_NONE, sessionId: str = None, sequence: int = None):
+    def __init__(
+        self, event: int = EVENT_NONE, sessionId: str = None, sequence: int = None
+    ):
         self.event = event
         self.sessionId = sessionId
         self.errorCode: int = 0
@@ -160,45 +165,57 @@ class TTSProvider(TTSProviderBase):
             "X-Api-Resource-Id": self.resource_id,
             "X-Api-Connect-Id": uuid.uuid4(),
         }
-        self.ws = await websockets.connect(self.ws_url, additional_headers=ws_header, max_size=1000000000)
-        tts_priority = threading.Thread(target=self._start_monitor_tts_response_thread(), daemon=True)
+        self.ws = await websockets.connect(
+            self.ws_url, additional_headers=ws_header, max_size=1000000000
+        )
+        tts_priority = threading.Thread(
+            target=self._start_monitor_tts_response_thread(), daemon=True
+        )
         tts_priority.start()
 
     def generate_filename(self, extension=".wav"):
-        return os.path.join(self.output_file, f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}")
+        return os.path.join(
+            self.output_file,
+            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
+        )
 
-    async def send_event(self, header: bytes, optional: bytes | None = None,
-                         payload: bytes = None):
+    async def send_event(
+        self, header: bytes, optional: bytes | None = None, payload: bytes = None
+    ):
         full_client_request = bytearray(header)
         if optional is not None:
             full_client_request.extend(optional)
         if payload is not None:
-            payload_size = len(payload).to_bytes(4, 'big', signed=True)
+            payload_size = len(payload).to_bytes(4, "big", signed=True)
             full_client_request.extend(payload_size)
             full_client_request.extend(payload)
         await self.ws.send(full_client_request)
 
     async def send_text(self, speaker: str, text: str, session_id):
-        header = Header(message_type=FULL_CLIENT_REQUEST,
-                        message_type_specific_flags=MsgTypeFlagWithEvent,
-                        serial_method=JSON).as_bytes()
+        header = Header(
+            message_type=FULL_CLIENT_REQUEST,
+            message_type_specific_flags=MsgTypeFlagWithEvent,
+            serial_method=JSON,
+        ).as_bytes()
         optional = Optional(event=EVENT_TaskRequest, sessionId=session_id).as_bytes()
-        payload = self.get_payload_bytes(event=EVENT_TaskRequest, text=text, speaker=speaker)
+        payload = self.get_payload_bytes(
+            event=EVENT_TaskRequest, text=text, speaker=speaker
+        )
         return await self.send_event(header, optional, payload)
 
     # 读取 res 数组某段 字符串内容
     def read_res_content(self, res: bytes, offset: int):
-        content_size = int.from_bytes(res[offset: offset + 4], "big", signed=True)
+        content_size = int.from_bytes(res[offset : offset + 4], "big", signed=True)
         offset += 4
-        content = str(res[offset: offset + content_size])
+        content = str(res[offset : offset + content_size])
         offset += content_size
         return content, offset
 
     # 读取 payload
     def read_res_payload(self, res: bytes, offset: int):
-        payload_size = int.from_bytes(res[offset: offset + 4], "big", signed=True)
+        payload_size = int.from_bytes(res[offset : offset + 4], "big", signed=True)
         offset += 4
-        payload = res[offset: offset + payload_size]
+        payload = res[offset : offset + payload_size]
         offset += payload_size
         return payload, offset
 
@@ -211,11 +228,11 @@ class TTSProvider(TTSProviderBase):
         header = response.header
         num = 0b00001111
         header.protocol_version = res[0] >> 4 & num
-        header.header_size = res[0] & 0x0f
+        header.header_size = res[0] & 0x0F
         header.message_type = (res[1] >> 4) & num
-        header.message_type_specific_flags = res[1] & 0x0f
+        header.message_type_specific_flags = res[1] & 0x0F
         header.serialization_method = res[2] >> num
-        header.message_compression = res[2] & 0x0f
+        header.message_compression = res[2] & 0x0F
         header.reserved = res[3]
         #
         offset = 4
@@ -231,78 +248,101 @@ class TTSProvider(TTSProviderBase):
                 elif optional.event == EVENT_ConnectionStarted:
                     optional.connectionId, offset = self.read_res_content(res, offset)
                 elif optional.event == EVENT_ConnectionFailed:
-                    optional.response_meta_json, offset = self.read_res_content(res, offset)
-                elif (optional.event == EVENT_SessionStarted
-                      or optional.event == EVENT_SessionFailed
-                      or optional.event == EVENT_SessionFinished):
+                    optional.response_meta_json, offset = self.read_res_content(
+                        res, offset
+                    )
+                elif (
+                    optional.event == EVENT_SessionStarted
+                    or optional.event == EVENT_SessionFailed
+                    or optional.event == EVENT_SessionFinished
+                ):
                     optional.sessionId, offset = self.read_res_content(res, offset)
-                    optional.response_meta_json, offset = self.read_res_content(res, offset)
+                    optional.response_meta_json, offset = self.read_res_content(
+                        res, offset
+                    )
                 else:
                     optional.sessionId, offset = self.read_res_content(res, offset)
                     response.payload, offset = self.read_res_payload(res, offset)
 
         elif header.message_type == ERROR_INFORMATION:
-            optional.errorCode = int.from_bytes(res[offset:offset + 4], "big", signed=True)
+            optional.errorCode = int.from_bytes(
+                res[offset : offset + 4], "big", signed=True
+            )
             offset += 4
             response.payload, offset = self.read_res_payload(res, offset)
         return response
 
     async def start_connection(self):
-        header = Header(message_type=FULL_CLIENT_REQUEST, message_type_specific_flags=MsgTypeFlagWithEvent).as_bytes()
+        header = Header(
+            message_type=FULL_CLIENT_REQUEST,
+            message_type_specific_flags=MsgTypeFlagWithEvent,
+        ).as_bytes()
         optional = Optional(event=EVENT_Start_Connection).as_bytes()
         payload = str.encode("{}")
         return await self.send_event(header, optional, payload)
 
     def print_response(self, res, tag_msg: str):
-        logger.bind(tag=TAG).info(f'===>{tag_msg} header:{res.header.__dict__}')
-        logger.bind(tag=TAG).info(f'===>{tag_msg} optional:{res.optional.__dict__}')
+        logger.bind(tag=TAG).info(f"===>{tag_msg} header:{res.header.__dict__}")
+        logger.bind(tag=TAG).info(f"===>{tag_msg} optional:{res.optional.__dict__}")
 
-    def get_payload_bytes(self, uid='1234', event=EVENT_NONE, text='', speaker='', audio_format='pcm',
-                          audio_sample_rate=16000):
-        return str.encode(json.dumps(
-            {
-                "user": {"uid": uid},
-                "event": event,
-                "namespace": "BidirectionalTTS",
-                "req_params": {
-                    "text": text,
-                    "speaker": speaker,
-                    "audio_params": {
-                        "format": audio_format,
-                        "sample_rate": audio_sample_rate
-                    }
+    def get_payload_bytes(
+        self,
+        uid="1234",
+        event=EVENT_NONE,
+        text="",
+        speaker="",
+        audio_format="pcm",
+        audio_sample_rate=16000,
+    ):
+        return str.encode(
+            json.dumps(
+                {
+                    "user": {"uid": uid},
+                    "event": event,
+                    "namespace": "BidirectionalTTS",
+                    "req_params": {
+                        "text": text,
+                        "speaker": speaker,
+                        "audio_params": {
+                            "format": audio_format,
+                            "sample_rate": audio_sample_rate,
+                        },
+                    },
                 }
-            }
-        ))
+            )
+        )
 
     async def finish_connection(self):
-        header = Header(message_type=FULL_CLIENT_REQUEST,
-                        message_type_specific_flags=MsgTypeFlagWithEvent,
-                        serial_method=JSON
-                        ).as_bytes()
+        header = Header(
+            message_type=FULL_CLIENT_REQUEST,
+            message_type_specific_flags=MsgTypeFlagWithEvent,
+            serial_method=JSON,
+        ).as_bytes()
         optional = Optional(event=EVENT_FinishConnection).as_bytes()
-        payload = str.encode('{}')
+        payload = str.encode("{}")
         await self.send_event(header, optional, payload)
         return
 
     async def start_session(self, session_id):
         self.stop_event_response.clear()
-        header = Header(message_type=FULL_CLIENT_REQUEST,
-                        message_type_specific_flags=MsgTypeFlagWithEvent,
-                        serial_method=JSON
-                        ).as_bytes()
+        header = Header(
+            message_type=FULL_CLIENT_REQUEST,
+            message_type_specific_flags=MsgTypeFlagWithEvent,
+            serial_method=JSON,
+        ).as_bytes()
         optional = Optional(event=EVENT_StartSession, sessionId=session_id).as_bytes()
         payload = self.get_payload_bytes(event=EVENT_StartSession, speaker=self.speaker)
         await self.send_event(header, optional, payload)
 
     async def finish_session(self, session_id):
         self.stop_event_response.set()
-        header = Header(message_type=FULL_CLIENT_REQUEST,
-                        message_type_specific_flags=MsgTypeFlagWithEvent,
-                        serial_method=JSON
-                        ).as_bytes()
+        header = Header(
+            message_type=FULL_CLIENT_REQUEST,
+            message_type_specific_flags=MsgTypeFlagWithEvent,
+            serial_method=JSON,
+        ).as_bytes()
         optional = Optional(event=EVENT_FinishSession, sessionId=session_id).as_bytes()
-        payload = str.encode('{}')
+        payload = str.encode("{}")
         await self.send_event(header, optional, payload)
         return
 
@@ -327,59 +367,78 @@ class TTSProvider(TTSProviderBase):
 
     def _start_monitor_tts_response_thread(self):
         # 初始化链接
-        asyncio.run_coroutine_threadsafe(self._start_monitor_tts_response(), loop=self.loop)
+        asyncio.run_coroutine_threadsafe(
+            self._start_monitor_tts_response(), loop=self.loop
+        )
 
     async def _start_monitor_tts_response(self):
-        chunk_total = b''
+        chunk_total = b""
         while True:
             try:
                 msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
                 res = self.parser_response(msg)
-                self.print_response(res, 'send_text res:')
+                self.print_response(res, "send_text res:")
 
-                if res.optional.event == EVENT_TTSResponse and res.header.message_type == AUDIO_ONLY_RESPONSE:
-                    logger.bind(tag=TAG).info(f'推送数据到队列里面～～')
+                if (
+                    res.optional.event == EVENT_TTSResponse
+                    and res.header.message_type == AUDIO_ONLY_RESPONSE
+                ):
+                    logger.bind(tag=TAG).info(f"推送数据到队列里面～～")
                     opus_datas = self.wav_to_opus_data_audio_raw(res.payload)
                     self.tts_audio_queue.put(
                         TTSMessageDTO(
-                            u_id=self.u_id, msg_type=MsgType.TTS_TEXT_RESPONSE, content=opus_datas,
-                            tts_finish_text="", sentence_type=None, duration=0
+                            u_id=self.u_id,
+                            msg_type=MsgType.TTS_TEXT_RESPONSE,
+                            content=opus_datas,
+                            tts_finish_text="",
+                            sentence_type=None,
+                            duration=0,
                         )
                     )
                 elif res.optional.event == EVENT_TTSSentenceStart:
-                    json_data = json.loads(res.payload.decode('utf-8'))
+                    json_data = json.loads(res.payload.decode("utf-8"))
                     self.tts_text = json_data.get("text", "")
-                    logger.bind(tag=TAG).info(f'句子开始～～{self.tts_text}')
+                    logger.bind(tag=TAG).info(f"句子开始～～{self.tts_text}")
                     self.tts_audio_queue.put(
                         TTSMessageDTO(
-                            u_id=self.u_id, msg_type=MsgType.TTS_TEXT_RESPONSE, content=[],
+                            u_id=self.u_id,
+                            msg_type=MsgType.TTS_TEXT_RESPONSE,
+                            content=[],
                             tts_finish_text=self.tts_text,
-                            sentence_type=SentenceType.SENTENCE_START
+                            sentence_type=SentenceType.SENTENCE_START,
                         )
                     )
                 elif res.optional.event == EVENT_TTSSentenceEnd:
-                    logger.bind(tag=TAG).info(f'句子结束～～{self.tts_text}')
+                    logger.bind(tag=TAG).info(f"句子结束～～{self.tts_text}")
                     self.tts_audio_queue.put(
                         TTSMessageDTO(
-                            u_id=self.u_id, msg_type=MsgType.TTS_TEXT_RESPONSE, content=[],
+                            u_id=self.u_id,
+                            msg_type=MsgType.TTS_TEXT_RESPONSE,
+                            content=[],
                             tts_finish_text=self.tts_text,
-                            sentence_type=SentenceType.SENTENCE_END
+                            sentence_type=SentenceType.SENTENCE_END,
                         )
                     )
                 elif res.optional.event == EVENT_SessionFinished:
-                    logger.bind(tag=TAG).info(f'会话结束～～,最后一句补零')
-                    opus_datas = self.wav_to_opus_data_audio_raw(b'', is_end=True)
+                    logger.bind(tag=TAG).info(f"会话结束～～,最后一句补零")
+                    opus_datas = self.wav_to_opus_data_audio_raw(b"", is_end=True)
                     self.tts_audio_queue.put(
                         TTSMessageDTO(
-                            u_id=self.u_id, msg_type=MsgType.TTS_TEXT_RESPONSE, content=opus_datas,
-                            tts_finish_text="", sentence_type=None, duration=0
+                            u_id=self.u_id,
+                            msg_type=MsgType.TTS_TEXT_RESPONSE,
+                            content=opus_datas,
+                            tts_finish_text="",
+                            sentence_type=None,
+                            duration=0,
                         )
                     )
                     self.tts_audio_queue.put(
                         TTSMessageDTO(
-                            u_id=self.u_id, msg_type=MsgType.STOP_TTS_RESPONSE, content=[],
+                            u_id=self.u_id,
+                            msg_type=MsgType.STOP_TTS_RESPONSE,
+                            content=[],
                             tts_finish_text=self.tts_text,
-                            sentence_type=SentenceType.SENTENCE_END
+                            sentence_type=SentenceType.SENTENCE_END,
                         )
                     )
                 else:

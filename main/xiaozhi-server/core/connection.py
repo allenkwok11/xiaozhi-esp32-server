@@ -9,7 +9,7 @@ import traceback
 import threading
 import websockets
 from typing import Dict, Any
-import plugins_func.loadplugins
+from plugins_func.loadplugins import auto_import_modules
 from config.logger import setup_logging
 from core.providers.tts.dto.dto import TTSMessageDTO, MsgType
 from core.utils.dialogue import Message, Dialogue
@@ -23,12 +23,15 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from core.handle.sendAudioHandle import sendAudioMessage
 from core.handle.receiveAudioHandle import handleAudioMessage
 from core.handle.functionHandler import FunctionHandler
-from plugins_func.register import Action
+from plugins_func.register import Action, ActionResponse
 from config.private_config import PrivateConfig
 from core.auth import AuthMiddleware, AuthenticationError
 from core.utils.auth_code_gen import AuthCodeGenerator
+from core.mcp.manager import MCPManager
 
 TAG = __name__
+
+auto_import_modules("plugins_func.functions")
 
 
 class TTSException(RuntimeError):
@@ -98,6 +101,7 @@ class ConnectionHandler:
 
         # iot相关变量
         self.iot_descriptors = {}
+        self.func_handler = None
 
         self.cmd_exit = self.config["CMD_exit"]
         self.max_cmd_length = 0
@@ -125,11 +129,15 @@ class ConnectionHandler:
 
             # 进行认证
             await self.auth.authenticate(self.headers)
-
             device_id = self.headers.get("device-id", None)
-            self.memory.init_memory(device_id, self.llm)
-            self.intent.set_llm(self.llm)
 
+            # 认证通过,继续处理
+            self.websocket = ws
+            self.session_id = str(uuid.uuid4())
+
+            self.welcome_msg = self.config["xiaozhi"]
+            self.welcome_msg["session_id"] = self.session_id
+            await self.websocket.send(json.dumps(self.welcome_msg))
             # Load private configuration if device_id is provided
             bUsePrivateConfig = self.config.get("use_private_config", False)
             self.logger.bind(tag=TAG).info(
@@ -167,23 +175,14 @@ class ConnectionHandler:
                     self.private_config = None
                     raise
 
-            # 认证通过,继续处理
-            self.websocket = ws
-            self.session_id = str(uuid.uuid4())
-
-            self.welcome_msg = self.config["xiaozhi"]
-            self.welcome_msg["session_id"] = self.session_id
-            await self.websocket.send(json.dumps(self.welcome_msg))
-
             # 异步初始化
-            await self.loop.run_in_executor(None, self._initialize_components)
+            self.executor.submit(self._initialize_components)
 
             # 音频播放 消化线程
-            self.stop_event.clear()
-            audio_play_priority = threading.Thread(
+            self.audio_play_priority_thread = threading.Thread(
                 target=self._audio_play_priority_thread, daemon=True
             )
-            audio_play_priority.start()
+            self.audio_play_priority_thread.start()
 
             # 打开音频通道
             await self.tts.open_audio_channels()
@@ -193,19 +192,25 @@ class ConnectionHandler:
                     await self._route_message(message)
             except websockets.exceptions.ConnectionClosed:
                 self.logger.bind(tag=TAG).info("客户端断开连接")
-                await self.close()
 
         except AuthenticationError as e:
             self.logger.bind(tag=TAG).error(f"Authentication failed: {str(e)}")
-            await ws.close()
             return
         except Exception as e:
             stack_trace = traceback.format_exc()
             self.logger.bind(tag=TAG).error(f"Connection error: {str(e)}-{stack_trace}")
-            await ws.close()
             return
         finally:
+            await self._save_and_close(ws)
+
+    async def _save_and_close(self, ws):
+        """保存记忆并关闭连接"""
+        try:
             await self.memory.save_memory(self.dialogue.dialogue)
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
+        finally:
+            await self.close(ws)
 
     async def _route_message(self, message):
         """消息路由"""
@@ -215,16 +220,60 @@ class ConnectionHandler:
             await handleAudioMessage(self, message)
 
     def _initialize_components(self):
+        """加载提示词"""
         self.prompt = self.config["prompt"]
         if self.private_config:
             self.prompt = self.private_config.private_config.get("prompt", self.prompt)
-
-        self.client_ip_info = get_ip_info(self.client_ip)
-        self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
-        self.prompt = self.prompt + f"\n我在:{self.client_ip_info}"
         self.dialogue.put(Message(role="system", content=self.prompt))
 
-        self.func_handler = FunctionHandler(self.config)
+        """加载插件"""
+        self.func_handler = FunctionHandler(self)
+        self.mcp_manager = MCPManager(self)
+        """加载记忆"""
+        device_id = self.headers.get("device-id", None)
+        self.memory.init_memory(device_id, self.llm)
+
+        """为意图识别设置LLM，优先使用专用LLM"""
+        # 检查是否配置了专用的意图识别LLM
+        intent_llm_name = self.config["Intent"]["intent_llm"]["llm"]
+
+        # 记录开始初始化意图识别LLM的时间
+        intent_llm_init_start = time.time()
+
+        if (
+            not self.use_function_call_mode
+            and intent_llm_name
+            and intent_llm_name in self.config["LLM"]
+        ):
+            # 如果配置了专用LLM，则创建独立的LLM实例
+            from core.utils import llm as llm_utils
+
+            intent_llm_config = self.config["LLM"][intent_llm_name]
+            intent_llm_type = intent_llm_config.get("type", intent_llm_name)
+            intent_llm = llm_utils.create_instance(intent_llm_type, intent_llm_config)
+            self.logger.bind(tag=TAG).info(
+                f"为意图识别创建了专用LLM: {intent_llm_name}, 类型: {intent_llm_type}"
+            )
+
+            self.intent.set_llm(intent_llm)
+        else:
+            # 否则使用主LLM
+            self.intent.set_llm(self.llm)
+
+        # 记录意图识别LLM初始化耗时
+        intent_llm_init_time = time.time() - intent_llm_init_start
+
+        """加载位置信息"""
+        self.client_ip_info = get_ip_info(self.client_ip)
+        if self.client_ip_info is not None and "city" in self.client_ip_info:
+            self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
+            self.prompt = self.prompt + f"\nuser location:{self.client_ip_info}"
+            self.dialogue.update_system_message(self.prompt)
+
+        """加载MCP工具"""
+        asyncio.run_coroutine_threadsafe(
+            self.mcp_manager.initialize_servers(), self.loop
+        )
 
     def change_system_prompt(self, prompt):
         self.prompt = prompt
@@ -240,9 +289,6 @@ class ConnectionHandler:
             if auth_code:
                 # 发送验证码语音提示
                 text = f"请在后台输入验证码：{' '.join(auth_code)}"
-                self.recode_first_last_text(text)
-                future = self.executor.submit(self.speak_and_play, text)
-                self.tts_queue.put(future)
             return False
         return True
 
@@ -293,6 +339,7 @@ class ConnectionHandler:
                 break
 
             end_time = time.time()
+
             self.logger.bind(tag=TAG).debug(
                 f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}"
             )
@@ -316,6 +363,7 @@ class ConnectionHandler:
                     u_id=uuid_str, msg_type=MsgType.STOP_TTS_REQUEST, content=""
                 )
             )
+
         self.llm_finish_task = True
         self.dialogue.put(Message(role="assistant", content="".join(response_message)))
         self.logger.bind(tag=TAG).debug(
@@ -338,8 +386,9 @@ class ConnectionHandler:
             self.dialogue.put(Message(role="user", content=query))
 
         # Define intent functions
-        functions = self.func_handler.get_functions()
-
+        functions = None
+        if hasattr(self, "func_handler"):
+            functions = self.func_handler.get_functions()
         response_message = []
         processed_chars = 0  # 跟踪已处理的字符位置
 
@@ -378,6 +427,9 @@ class ConnectionHandler:
         msg_type = None
         for response in llm_responses:
             content, tools_call = response
+            if "content" in response:
+                content = response["content"]
+                tools_call = None
             if content is not None and len(content) > 0:
                 if len(response_message) <= 0 and (
                     content == "```" or "<tool_call>" in content
@@ -403,6 +455,7 @@ class ConnectionHandler:
                         break
 
                     end_time = time.time()
+
                     self.logger.bind(tag=TAG).debug(
                         f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}"
                     )
@@ -465,9 +518,15 @@ class ConnectionHandler:
                     "id": function_id,
                     "arguments": function_arguments,
                 }
-                result = self.func_handler.handle_llm_function_call(
-                    self, function_call_data
-                )
+
+                # 处理MCP工具调用
+                if self.mcp_manager.is_mcp_tool(function_name):
+                    result = self._handle_mcp_tool_call(function_call_data)
+                else:
+                    # 处理系统函数
+                    result = self.func_handler.handle_llm_function_call(
+                        self, function_call_data
+                    )
                 self._handle_function_result(result, function_call_data, text_index + 1)
 
         # 存储对话内容
@@ -482,6 +541,48 @@ class ConnectionHandler:
         )
 
         return True
+
+    def _handle_mcp_tool_call(self, function_call_data):
+        function_arguments = function_call_data["arguments"]
+        function_name = function_call_data["name"]
+        try:
+            args_dict = function_arguments
+            if isinstance(function_arguments, str):
+                try:
+                    args_dict = json.loads(function_arguments)
+                except json.JSONDecodeError:
+                    self.logger.bind(tag=TAG).error(
+                        f"无法解析 function_arguments: {function_arguments}"
+                    )
+                    return ActionResponse(
+                        action=Action.REQLLM, result="参数解析失败", response=""
+                    )
+
+            tool_result = asyncio.run_coroutine_threadsafe(
+                self.mcp_manager.execute_tool(function_name, args_dict), self.loop
+            ).result()
+            # meta=None content=[TextContent(type='text', text='北京当前天气:\n温度: 21°C\n天气: 晴\n湿度: 6%\n风向: 西北 风\n风力等级: 5级', annotations=None)] isError=False
+            content_text = ""
+            if tool_result is not None and tool_result.content is not None:
+                for content in tool_result.content:
+                    content_type = content.type
+                    if content_type == "text":
+                        content_text = content.text
+                    elif content_type == "image":
+                        pass
+
+            if len(content_text) > 0:
+                return ActionResponse(
+                    action=Action.REQLLM, result=content_text, response=""
+                )
+
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"MCP工具调用错误: {e}")
+            return ActionResponse(
+                action=Action.REQLLM, result="工具调用出错", response=""
+            )
+
+        return ActionResponse(action=Action.REQLLM, result="工具调用出错", response="")
 
     def _handle_function_result(self, result, function_call_data, text_index):
         if result.action == Action.RESPONSE:  # 直接回复前端
@@ -559,15 +660,43 @@ class ConnectionHandler:
             self.tts_first_text_index = text_index
         self.tts_last_text_index = text_index
 
-    async def close(self):
+    async def close(self, ws=None):
         """资源清理方法"""
-        # 清理其他资源
-        self.stop_event.set()
-        self.executor.shutdown(wait=False)
-        if self.websocket:
+        # 清理MCP资源
+        await self.mcp_manager.cleanup_all()
+
+        # 触发停止事件并清理资源
+        if self.stop_event:
+            self.stop_event.set()
+
+        # 立即关闭线程池
+        if self.executor:
+            self.executor.shutdown(wait=False, cancel_futures=True)
+            self.executor = None
+
+        # 清空任务队列
+        self._clear_queues()
+
+        if ws:
+            await ws.close()
+        elif self.websocket:
             await self.websocket.close()
         await self.tts.close()
         self.logger.bind(tag=TAG).info("连接资源已释放")
+
+    def _clear_queues(self):
+        # 清空所有任务队列
+        for q in [self.tts_queue, self.audio_play_queue]:
+            if not q:
+                continue
+            while not q.empty():
+                try:
+                    q.get_nowait()
+                except queue.Empty:
+                    continue
+            q.queue.clear()
+            # 添加毒丸信号到队列，确保线程退出
+            # q.queue.put(None)
 
     def reset_vad_states(self):
         self.client_audio_buffer = bytes()

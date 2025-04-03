@@ -217,12 +217,13 @@ async def play_local_music(conn, specific_file=None):
         )
         conn.tts.tts_audio_queue.put(
             TTSMessageDTO(
-                u_id=conn.u_id, msg_type=MsgType.STOP_TTS_RESPONSE, content=[],
-                tts_finish_text='',
-                sentence_type=None
+                u_id=conn.u_id,
+                msg_type=MsgType.STOP_TTS_RESPONSE,
+                content=[],
+                tts_finish_text="",
+                sentence_type=None,
             )
         )
-
 
     except Exception as e:
         logger.bind(tag=TAG).error(f"播放音乐失败: {str(e)}")
