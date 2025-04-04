@@ -74,5 +74,23 @@ export default {
           })
         }).send()
     },
+    // 删除模型配置
+    deleteModel(modelType, provideCode, id, callback) {
+      RequestService.sendRequest()
+        .url(`${getServiceUrl()}/api/v1/models/models/${modelType}/${provideCode}/${id}`)
+        .method('DELETE')
+        .success((res) => {
+          RequestService.clearRequestTime()
+          callback(res)
+        })
+        .fail((err) => {
+          console.error('删除模型失败:', err)
+          this.$message.error(err.msg || '删除模型失败')
+          RequestService.reAjaxFun(() => {
+            this.deleteModel(modelType, provideCode, id, callback)
+          })
+        }).send()
+    },
+
 
 }

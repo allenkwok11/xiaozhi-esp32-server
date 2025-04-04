@@ -118,7 +118,7 @@
         </div>
       </div>
 
-      <ModelEditDialog :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
+      <ModelEditDialog :modelType="activeTab" :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
       <TtsModel :visible.sync="ttsDialogVisible" />
       <AddModelDialog  :modelType="activeTab" :visible.sync="addDialogVisible" @confirm="handleAddConfirm"/>
     </div>
@@ -209,48 +209,71 @@ export default {
     handleSearch() {
       console.log('查询：', this.search);
     },
+    // 批量删除
     batchDelete() {
       if (this.selectedModels.length === 0) {
-        this.$message.warning('请先选择要删除的模型');
-        return;
+        this.$message.warning('请先选择要删除的模型')
+        return
       }
+
       this.$confirm('确定要删除选中的模型吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        const selectedIds = this.selectedModels.map(model => model.code);
-        this.modelList = this.modelList.filter(model => !selectedIds.includes(model.code));
-        this.$message.success('删除成功');
-        this.selectedModels = [];
-        this.isAllSelected = false;
+        const deletePromises = this.selectedModels.map(model =>
+          new Promise(resolve => {
+            ModelApi.deleteModel(
+              this.activeTab,
+              model.configJson?.provider || '',
+              model.id,
+              ({data}) => resolve(data.code === 0)
+            )
+          })
+        )
+
+        Promise.all(deletePromises).then(results => {
+          if (results.every(Boolean)) {
+            this.$message.success('批量删除成功')
+            this.loadData()
+          } else {
+            this.$message.error('部分删除失败')
+          }
+        })
       }).catch(() => {
-        this.$message.info('已取消删除');
-        });
-      },
+        this.$message.info('已取消删除')
+      })
+    },
     addModel() {
       this.addDialogVisible = true;
     },
     editModel(model) {
-      this.editModelData = {
-        code: model.code,
-        name: model.candidateName,
-        supplier: model.supplier,
-      };
+      this.editModelData = JSON.parse(JSON.stringify(model));
       this.editDialogVisible = true;
     },
-    // 删除模型配置
+    // 删除单个模型
     deleteModel(model) {
-      this.$confirm(`确定要删除模型 ${model.candidateName} 吗?`, '提示', {
+      this.$confirm('确定要删除该模型吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.modelList = this.modelList.filter(item => item.code !== model.code);
-        this.$message.success('删除成功');
+        ModelApi.deleteModel(
+          this.activeTab,
+          model.configJson?.provider || '',  // 从configJson获取provider
+          model.id,
+          ({data}) => {
+            if (data.code === 0) {
+              this.$message.success('删除成功')
+              this.loadData()
+            } else {
+              this.$message.error(data.msg || '删除失败')
+            }
+          }
+        )
       }).catch(() => {
-        this.$message.info('已取消删除');
-      });
+        this.$message.info('已取消删除')
+      })
     },
     handleCurrentChange(page) {
       this.currentPage = page;

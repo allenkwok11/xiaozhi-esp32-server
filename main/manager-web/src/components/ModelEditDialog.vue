@@ -37,10 +37,9 @@
 
         <div style="display: flex; gap: 20px; margin-bottom: 0;">
           <el-form-item label="供应器" prop="supplier" style="flex: 1;">
-            <el-select v-model="form.supplier" placeholder="请选择" class="custom-select custom-input-bg" style="width: 100%;">
-              <el-option label="openai" value="openai"></el-option>
-              <el-option label="dify" value="dify"></el-option>
-            </el-select>
+            <el-select v-model="form.supplier" placeholder="请选择" class="custom-select custom-input-bg" style="width: 100%;" @focus="loadProviders" filterable>
+              <el-option v-for="item in providers" :key="item.value" :label="item.label" :value="item.value"/>
+              </el-select>
           </el-form-item>
           <el-form-item label="排序号" prop="sort" style="flex: 1;">
             <el-input v-model="form.sort" placeholder="请输入排序号" class="custom-input-bg"></el-input>
@@ -84,15 +83,19 @@
 </template>
 
 <script>
+import model from '@/apis/module/model'
 export default {
   name: "ModelConfigDialog",
   props: {
     visible: { type: Boolean, default: false },
-    configData: { type: Object, default: () => ({}) }
+    configData: { type: Object, default: () => ({}) },
+    modelType: { type: String, required: true }
   },
   data() {
     return {
       dialogVisible: this.visible,
+      providers: [],
+      providersLoaded: false,
       form: {
         code: "",
         name: "",
@@ -109,19 +112,51 @@ export default {
     };
   },
   watch: {
+    modelType() {
+      this.resetProviders()
+    },
     dialogVisible(val) {
       this.$emit('update:visible', val);
+      if (!val) {
+        this.form = {
+          code: "",
+          name: "",
+          supplier: "",
+        };
+      }
     },
     visible(val) {
       this.dialogVisible = val;
-      if (val) this.form = { ...this.form, ...this.configData };
-    }
+      if (val) {
+        this.form = JSON.parse(JSON.stringify({
+          ...this.form,
+          ...this.configData
+        }));
+        this.resetProviders();
+      }
+    },
   },
   methods: {
+    resetProviders() {
+      this.providers = []
+      this.providersLoaded = false
+    },
     handleSave() {
       this.$emit("submit", this.form);
       this.dialogVisible = false;
-    }
+    },
+
+    loadProviders() {
+      if (this.providersLoaded) return
+
+      model.getModelProviders(this.modelType, (data) => {
+        this.providers = data.map(item => ({
+          label: item.name,
+          value: item.providerCode
+        }))
+        this.providersLoaded = true
+      })
+    },
   }
 };
 </script>
