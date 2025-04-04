@@ -73,7 +73,7 @@ class ConnectionHandler:
         self.intent = _intent
 
         # vad相关变量
-        self.client_audio_buffer = bytes()
+        self.client_audio_buffer = bytearray()
         self.client_have_voice = False
         self.client_have_voice_last_time = 0.0
         self.client_no_voice_last_time = 0.0
@@ -804,7 +804,7 @@ class ConnectionHandler:
             # q.queue.put(None)
 
     def reset_vad_states(self):
-        self.client_audio_buffer = bytes()
+        self.client_audio_buffer = bytearray()
         self.client_have_voice = False
         self.client_have_voice_last_time = 0
         self.client_voice_stop = False
