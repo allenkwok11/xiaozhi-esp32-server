@@ -65,7 +65,7 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
     }
 
     @Override
-    public void deleteAgentByUserId(String userId) {
+    public void deleteAgentByUserId(Long userId) {
         UpdateWrapper<AgentEntity> wrapper = new UpdateWrapper<>();
         wrapper.eq("user_id", userId);
         baseDao.delete(wrapper);

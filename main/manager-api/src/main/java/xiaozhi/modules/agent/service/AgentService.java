@@ -25,7 +25,8 @@ public interface AgentService extends BaseService<AgentEntity> {
 
     /**
      * 删除这个用户的所有
+     * 
      * @param userId
      */
-    void deleteAgentByUserId(String userId);
+    void deleteAgentByUserId(Long userId);
 }

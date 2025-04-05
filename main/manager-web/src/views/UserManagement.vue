@@ -55,8 +55,7 @@
                 <button v-for="page in visiblePages" :key="page" class="pagination-btn"
                   :class="{ active: page === currentPage }" @click="goToPage(page)">
                   {{ page }}
-                </button>getUserList <button class="pagination-btn" :disabled="currentPage === pageCount"
-                  @click="goNext">
+                </button> <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">
                   下一页
                 </button>
                 <span class="total-text">共{{ total }}条记录</span>

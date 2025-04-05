@@ -98,7 +98,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         // 删除设备
         deviceService.deleteByUserId(id);
         // 删除智能体
-        agentService.deleteById(id);
+        agentService.deleteAgentByUserId(id);
     }
 
     @Override
