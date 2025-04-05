@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -17,11 +16,12 @@ import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import cn.hutool.core.util.RandomUtil;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.RenException;
-import xiaozhi.common.page.ExtendPageData;
+import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.ConvertUtils;
@@ -46,13 +46,12 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
 
     private final String frontedUrl;
 
-
     private final RedisTemplate<String, Object> redisTemplate;
 
     // 添加构造函数来初始化 deviceMapper
     public DeviceServiceImpl(DeviceDao deviceDao, SysUserUtilService sysUserUtilService,
-                             @Value("${app.fronted-url:http://localhost:8001}") String frontedUrl,
-                             RedisTemplate<String, Object> redisTemplate) {
+            @Value("${app.fronted-url:http://localhost:8001}") String frontedUrl,
+            RedisTemplate<String, Object> redisTemplate) {
         this.deviceDao = deviceDao;
         this.sysUserUtilService = sysUserUtilService;
         this.frontedUrl = frontedUrl;
@@ -223,7 +222,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
     }
 
     @Override
-    public ExtendPageData<UserShowDeviceListVO> page(DevicePageUserDTO dto) {
+    public PageData<UserShowDeviceListVO> page(DevicePageUserDTO dto) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put(Constant.PAGE, dto.getPage());
         params.put(Constant.LIMIT, dto.getLimit());
@@ -243,9 +242,8 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
             vo.setDeviceType(device.getBoard());
             return vo;
         }).toList();
-        //计算页数
-        long num = page.getTotal() / Long.parseLong(dto.getPage());
-        return new ExtendPageData<>(list, page.getTotal(), num);
+        // 计算页数
+        return new PageData<>(list, page.getTotal());
     }
 
     private DeviceReportRespDTO.ServerTime buildServerTime() {

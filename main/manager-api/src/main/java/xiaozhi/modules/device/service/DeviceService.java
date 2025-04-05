@@ -2,7 +2,7 @@ package xiaozhi.modules.device.service;
 
 import java.util.List;
 
-import xiaozhi.common.page.ExtendPageData;
+import xiaozhi.common.page.PageData;
 import xiaozhi.modules.device.dto.DeviceBindDTO;
 import xiaozhi.modules.device.dto.DevicePageUserDTO;
 import xiaozhi.modules.device.dto.DeviceReportReqDTO;
@@ -45,12 +45,14 @@ public interface DeviceService {
 
     /**
      * 删除此用户的所有设备
+     * 
      * @param userId 用户id
      */
     void deleteByUserId(Long userId);
 
     /**
      * 获取指定用户的设备数量
+     * 
      * @param userId 用户id
      * @return 设备数量
      */
@@ -62,5 +64,5 @@ public interface DeviceService {
      * @param dto 分页查找参数
      * @return 用户列表分页数据
      */
-    ExtendPageData<UserShowDeviceListVO> page(DevicePageUserDTO dto);
+    PageData<UserShowDeviceListVO> page(DevicePageUserDTO dto);
 }

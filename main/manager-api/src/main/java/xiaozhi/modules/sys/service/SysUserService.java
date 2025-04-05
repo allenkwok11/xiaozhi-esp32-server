@@ -1,6 +1,6 @@
 package xiaozhi.modules.sys.service;
 
-import xiaozhi.common.page.ExtendPageData;
+import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.BaseService;
 import xiaozhi.modules.sys.dto.AdminPageUserDTO;
 import xiaozhi.modules.sys.dto.PasswordDTO;
@@ -21,6 +21,7 @@ public interface SysUserService extends BaseService<SysUserEntity> {
 
     /**
      * 删除指定用户，且有关联的数据设备和智能体
+     * 
      * @param ids
      */
     void deleteById(Long ids);
@@ -55,5 +56,5 @@ public interface SysUserService extends BaseService<SysUserEntity> {
      * @param dto 分页查找参数
      * @return 用户列表分页数据
      */
-    ExtendPageData<AdminPageUserVO> page(AdminPageUserDTO dto);
+    PageData<AdminPageUserVO> page(AdminPageUserDTO dto);
 }

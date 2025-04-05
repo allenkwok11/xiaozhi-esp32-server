@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import xiaozhi.common.constant.Constant;
-import xiaozhi.common.page.ExtendPageData;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.ValidatorUtils;
@@ -51,7 +50,7 @@ public class AdminController {
             @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
             @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
     })
-    public Result<ExtendPageData<AdminPageUserVO>> pageUser(
+    public Result<PageData<AdminPageUserVO>> pageUser(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
         AdminPageUserDTO dto = new AdminPageUserDTO();
         dto.setMobile((String) params.get("mobile"));
@@ -59,8 +58,8 @@ public class AdminController {
         dto.setPage((String) params.get(Constant.PAGE));
         ValidatorUtils.validateEntity(dto);
         ValidatorUtils.validateEntity(dto);
-        ExtendPageData<AdminPageUserVO> page = sysUserService.page(dto);
-        return new Result<ExtendPageData<AdminPageUserVO>>().ok(page);
+        PageData<AdminPageUserVO> page = sysUserService.page(dto);
+        return new Result<PageData<AdminPageUserVO>>().ok(page);
     }
 
     @PutMapping("/users/{id}")
@@ -88,14 +87,14 @@ public class AdminController {
             @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
             @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
     })
-    public Result<ExtendPageData<UserShowDeviceListVO>> pageDevice(
+    public Result<PageData<UserShowDeviceListVO>> pageDevice(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
         DevicePageUserDTO dto = new DevicePageUserDTO();
         dto.setKeywords((String) params.get("keywords"));
         dto.setLimit((String) params.get(Constant.LIMIT));
         dto.setPage((String) params.get(Constant.PAGE));
         ValidatorUtils.validateEntity(dto);
-        ExtendPageData<UserShowDeviceListVO> page = deviceService.page(dto);
-        return new Result<ExtendPageData<UserShowDeviceListVO>>().ok(page);
+        PageData<UserShowDeviceListVO> page = deviceService.page(dto);
+        return new Result<PageData<UserShowDeviceListVO>>().ok(page);
     }
 }

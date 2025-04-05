@@ -18,7 +18,7 @@ import lombok.AllArgsConstructor;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.exception.RenException;
-import xiaozhi.common.page.ExtendPageData;
+import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.modules.agent.service.AgentService;
@@ -99,7 +99,6 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         deviceService.deleteByUserId(id);
         // 删除智能体
         agentService.deleteById(id);
-        // TODO 除了要删除用户还要删除用户关联的对话
     }
 
     @Override
@@ -151,16 +150,14 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     }
 
     @Override
-    public ExtendPageData<AdminPageUserVO> page(AdminPageUserDTO dto) {
+    public PageData<AdminPageUserVO> page(AdminPageUserDTO dto) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put(Constant.PAGE, dto.getPage());
         params.put(Constant.LIMIT, dto.getLimit());
         IPage<SysUserEntity> page = baseDao.selectPage(
                 getPage(params, "id", true),
-                // 定义查询条件
-                new QueryWrapper<SysUserEntity>()
-                        // 必须按照手机号码查找
-                        .eq(StringUtils.isNotBlank(dto.getMobile()), "username", dto.getMobile()));
+                new QueryWrapper<SysUserEntity>().eq(StringUtils.isNotBlank(dto.getMobile()), "username",
+                        dto.getMobile()));
         // 循环处理page获取回来的数据，返回需要的字段
         List<AdminPageUserVO> list = page.getRecords().stream().map(user -> {
             AdminPageUserVO adminPageUserVO = new AdminPageUserVO();
@@ -168,12 +165,10 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
             adminPageUserVO.setMobile(user.getUsername());
             String deviceCount = deviceService.selectCountByUserId(user.getId()).toString();
             adminPageUserVO.setDeviceCount(deviceCount);
-            adminPageUserVO.setStatus(user.getStatus().toString());
+            adminPageUserVO.setStatus(user.getStatus());
             return adminPageUserVO;
         }).toList();
-        //计算页数
-        long num = page.getTotal() / Long.parseLong(dto.getPage());
-        return new ExtendPageData<>(list, page.getTotal(),num);
+        return new PageData<>(list, page.getTotal());
     }
 
     private boolean isStrongPassword(String password) {
