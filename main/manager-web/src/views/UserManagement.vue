@@ -5,7 +5,8 @@
     <div class="operation-bar">
       <h2 class="page-title">用户管理</h2>
       <div class="right-operations">
-        <el-input placeholder="请输入手机号码查询" v-model="searchPhone" class="search-input" @keyup.enter.native="handleSearch"/>
+        <el-input placeholder="请输入手机号码查询" v-model="searchPhone" class="search-input"
+          @keyup.enter.native="handleSearch" />
         <el-button class="btn-search" @click="handleSearch">搜索</el-button>
       </div>
     </div>
@@ -14,7 +15,8 @@
       <div class="content-panel">
         <div class="content-area">
           <el-card class="user-card" shadow="never">
-            <el-table ref="userTable" :data="userList" class="transparent-table" :header-cell-class-name="headerCellClassName">
+            <el-table ref="userTable" :data="userList" class="transparent-table"
+              :header-cell-class-name="headerCellClassName">
               <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
               <el-table-column label="用户Id" prop="userid" align="center"></el-table-column>
               <el-table-column label="手机号码" prop="mobile" align="center"></el-table-column>
@@ -22,14 +24,14 @@
               <el-table-column label="状态" prop="status" align="center"></el-table-column>
               <el-table-column label="操作" align="center">
                 <template slot-scope="scope">
-                  <el-button size="mini" type="text" @click="resetPassword(scope.row)" style="color: #989fdd">重置密码</el-button>
-                  <el-button size="mini" type="text"
-                    v-if="scope.row.status === '正常'"
+                  <el-button size="mini" type="text" @click="resetPassword(scope.row)"
+                    style="color: #989fdd">重置密码</el-button>
+                  <el-button size="mini" type="text" v-if="scope.row.status === '正常'"
                     @click="disableUser(scope.row)">禁用账户</el-button>
-                  <el-button size="mini" type="text"
-                    v-if="scope.row.status === '禁用'"
+                  <el-button size="mini" type="text" v-if="scope.row.status === '禁用'"
                     @click="restoreUser(scope.row)">恢复账号</el-button>
-                  <el-button size="mini" type="text" @click="deleteUser(scope.row)" style="color: #989fdd">删除用户</el-button>
+                  <el-button size="mini" type="text" @click="deleteUser(scope.row)"
+                    style="color: #989fdd">删除用户</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -38,14 +40,16 @@
               <div class="ctrl_btn">
                 <el-button size="mini" type="primary" class="select-all-btn" @click="handleSelectAll">全选</el-button>
                 <el-button size="mini" type="success" icon="el-icon-circle-check" @click="batchEnable">启用</el-button>
-                <el-button size="mini" type="warning" @click="batchDisable"><i class="el-icon-remove-outline rotated-icon"></i>禁用</el-button>
+                <el-button size="mini" type="warning" @click="batchDisable"><i
+                    class="el-icon-remove-outline rotated-icon"></i>禁用</el-button>
                 <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">删除</el-button>
               </div>
               <div class="custom-pagination">
                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
 
-                <button v-for="page in visiblePages" :key="page" class="pagination-btn" :class="{ active: page === currentPage }" @click="goToPage(page)">
+                <button v-for="page in visiblePages" :key="page" class="pagination-btn"
+                  :class="{ active: page === currentPage }" @click="goToPage(page)">
                   {{ page }}
                 </button>
 
@@ -61,14 +65,14 @@
     <div class="copyright">
       ©2025 xiaozhi-esp32-server
     </div>
-    <view-password-dialog :visible.sync="showViewPassword" :password="currentPassword"/>
+    <view-password-dialog :visible.sync="showViewPassword" :password="currentPassword" />
   </div>
 </template>
 
 <script>
-import HeaderBar from "@/components/HeaderBar.vue";
 import adminApi from '@/apis/module/admin';
-import ViewPasswordDialog from '@/components/ViewPasswordDialog.vue'
+import HeaderBar from "@/components/HeaderBar.vue";
+import ViewPasswordDialog from '@/components/ViewPasswordDialog.vue';
 
 export default {
   components: { HeaderBar, ViewPasswordDialog },
@@ -108,23 +112,23 @@ export default {
   },
   methods: {
     fetchUsers() {
-        adminApi.getUserList({
-            page: this.currentPage,
-            limit: this.pageSize,
-            mobile: this.searchPhone
-        }, ({ data }) => {
-            if (data.code === 0) {
-                this.userList = data.data.list.map(user => ({
-                    ...user,
-                    status: user.status === '1' ? '正常' : '禁用'
-                }));
-                this.total = data.data.total;
-            }
-        });
+      adminApi.getUserList({
+        page: this.currentPage,
+        limit: this.pageSize,
+        mobile: this.searchPhone
+      }, ({ data }) => {
+        if (data.code === 0) {
+          this.userList = data.data.list.map(user => ({
+            ...user,
+            status: user.status === '1' ? '正常' : '禁用'
+          }));
+          this.total = data.data.total;
+        }
+      });
     },
     handleSearch() {
-        this.currentPage = 1;
-        this.fetchUsers();
+      this.currentPage = 1;
+      this.fetchUsers();
     },
     handleSelectAll() {
       this.$refs.userTable.toggleAllSelection();
@@ -152,11 +156,11 @@ export default {
           const results = await Promise.all(
             selectedUsers.map(user => {
               return new Promise((resolve) => {
-                adminApi.deleteUser(user.userid, ({data}) => {
+                adminApi.deleteUser(user.userid, ({ data }) => {
                   if (data.code === 0) {
-                    resolve({success: true, userid: user.userid});
+                    resolve({ success: true, userid: user.userid });
                   } else {
-                    resolve({success: false, userid: user.userid, msg: data.msg});
+                    resolve({ success: false, userid: user.userid, msg: data.msg });
                   }
                 });
               });
@@ -197,7 +201,7 @@ export default {
     },
     batchDisable() {
       this.userList.forEach(user => {
-      user.status = '禁用';
+        user.status = '禁用';
       });
       this.$message.success('状态已更新为禁用');
     },
@@ -224,22 +228,22 @@ export default {
       console.log('恢复用户：', row);
     },
     deleteUser(row) {
-        this.$confirm('确定要删除该用户吗？', '警告', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning'
-        }).then(() => {
-            adminApi.deleteUser(row.userid, ({data}) => {
-                if (data.code === 0) {
-                    this.$message.success('删除成功')
-                    this.fetchUsers()
-                } else {
-                    this.$message.error(data.msg || '删除失败')
-                }
-            })
-        }).catch(() => {})
+      this.$confirm('确定要删除该用户吗？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        adminApi.deleteUser(row.userid, ({ data }) => {
+          if (data.code === 0) {
+            this.$message.success('删除成功')
+            this.fetchUsers()
+          } else {
+            this.$message.error(data.msg || '删除失败')
+          }
+        })
+      }).catch(() => { })
     },
-    headerCellClassName({columnIndex}) {
+    headerCellClassName({ columnIndex }) {
       if (columnIndex === 0) {
         return 'custom-selection-header'
       }
@@ -252,13 +256,13 @@ export default {
     goPrev() {
       if (this.currentPage > 1) {
         this.currentPage--;
-         this.fetchUsers();
+        this.fetchUsers();
       }
     },
     goNext() {
       if (this.currentPage < this.pageCount) {
         this.currentPage++;
-         this.fetchUsers();
+        this.fetchUsers();
       }
     },
     goToPage(page) {
@@ -289,7 +293,7 @@ export default {
   min-height: 600px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: relative;
-  background: rgba(237,242,255,0.5);
+  background: rgba(237, 242, 255, 0.5);
 }
 
 .operation-bar {
@@ -355,6 +359,7 @@ export default {
   display: flex;
   gap: 8px;
   padding-left: 26px;
+
   .el-button {
     min-width: 72px;
     height: 32px;
@@ -481,6 +486,7 @@ export default {
 
 :deep(.transparent-table) {
   background: white;
+
   .el-table__header th {
     background: white !important;
     color: black;
@@ -492,6 +498,7 @@ export default {
 
   .el-table__body tr {
     background-color: white;
+
     td {
       border-top: 1px solid rgba(0, 0, 0, 0.04);
       border-bottom: 1px solid rgba(0, 0, 0, 0.04);
@@ -534,17 +541,18 @@ export default {
     align-items: center;
     margin-top: 40px;
   }
+
   :deep(.transparent-table) {
     .el-table__body tr {
       td {
         padding-top: 16px;
         padding-bottom: 16px;
       }
-      & + tr {
+
+      &+tr {
         margin-top: 10px;
       }
     }
   }
 }
-
 </style>

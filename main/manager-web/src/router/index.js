@@ -56,11 +56,11 @@ const routes = [
     }
   },
   {
-   path: '/model-config',
-   name: 'ModelConfig',
-   component: function () {
-     return import('../views/ModelConfig.vue')
-   }
+    path: '/model-config',
+    name: 'ModelConfig',
+    component: function () {
+      return import('../views/ModelConfig.vue')
+    }
   },
   {
     path: '/test',

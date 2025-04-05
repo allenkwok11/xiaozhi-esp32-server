@@ -1,5 +1,5 @@
+import { getServiceUrl } from '../api'
 import RequestService from '../httpRequest'
-import {getServiceUrl} from '../api'
 
 
 export default {

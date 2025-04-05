@@ -1,5 +1,5 @@
-import RequestService from '../httpRequest'
-import {getServiceUrl} from '../api'
+import { getServiceUrl } from '../api';
+import RequestService from '../httpRequest';
 
 
 export default {
@@ -23,7 +23,7 @@ export default {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/api/v1/agent`)
             .method('POST')
-            .data({agentName: agentName})
+            .data({ agentName: agentName })
             .success((res) => {
                 RequestService.clearRequestTime();
                 callback(res);

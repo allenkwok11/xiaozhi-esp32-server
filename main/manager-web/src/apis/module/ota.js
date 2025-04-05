@@ -1,5 +1,5 @@
+import { getServiceUrl } from '../api'
 import RequestService from '../httpRequest'
-import {getServiceUrl} from '../api'
 
 export default {
     /**
@@ -11,7 +11,7 @@ export default {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/api/v1/ota/activation`)
             .method('GET')
-            .query({code})
+            .query({ code })
             .success((res) => {
                 RequestService.clearRequestTime()
                 callback(res)
