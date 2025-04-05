@@ -91,16 +91,7 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
     }
 
     @Override
-    public void delete(String modelType, String provideCode, String id) {
-        // 先验证有没有供应器
-        if (StringUtils.isBlank(modelType) || StringUtils.isBlank(provideCode)) {
-            throw new RenException("modelType和provideCode不能为空");
-        }
-        List<ModelProviderDTO> providerList = modelProviderService.getList(modelType, provideCode);
-        if (CollectionUtil.isEmpty(providerList)) {
-            throw new RenException("供应器不存在");
-        }
-
+    public void delete(String id) {
         modelConfigDao.deleteById(id);
     }
 

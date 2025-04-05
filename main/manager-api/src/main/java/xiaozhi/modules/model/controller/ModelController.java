@@ -17,11 +17,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import xiaozhi.common.page.PageData;
+import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.common.utils.Result;
 import xiaozhi.modules.model.dto.ModelConfigBodyDTO;
 import xiaozhi.modules.model.dto.ModelConfigDTO;
 import xiaozhi.modules.model.dto.ModelProviderDTO;
-import xiaozhi.modules.model.dto.ModelProviderFieldDTO;
+import xiaozhi.modules.model.entity.ModelConfigEntity;
 import xiaozhi.modules.model.service.ModelConfigService;
 import xiaozhi.modules.model.service.ModelProviderService;
 
@@ -50,15 +51,6 @@ public class ModelController {
     public Result<List<ModelProviderDTO>> getModelProviderList(@PathVariable String modelType) {
         List<ModelProviderDTO> modelProviderDTOS = modelProviderService.getListByModelType(modelType);
         return new Result<List<ModelProviderDTO>>().ok(modelProviderDTOS);
-    }
-
-    @GetMapping("/{modelType}/{provideCode}/fields")
-    @Operation(summary = "获取模型供应器字段")
-    @RequiresPermissions("sys:role:superAdmin")
-    public Result<List<ModelProviderFieldDTO>> getModelProviderFields(@PathVariable String modelType,
-            @PathVariable String provideCode) {
-        List<ModelProviderFieldDTO> fieldList = modelProviderService.getFieldList(modelType, provideCode);
-        return new Result<List<ModelProviderFieldDTO>>().ok(fieldList);
     }
 
     @GetMapping("/models/list")
@@ -94,13 +86,21 @@ public class ModelController {
         return new Result<ModelConfigDTO>().ok(modelConfigDTO);
     }
 
-    @DeleteMapping("/models/{modelType}/{provideCode}/{id}")
+    @DeleteMapping("/models/{id}")
     @Operation(summary = "删除模型配置")
     @RequiresPermissions("sys:role:superAdmin")
-    public Result<Void> deleteModelConfig(@PathVariable String modelType, @PathVariable String provideCode,
-            @PathVariable String id) {
-        modelConfigService.delete(modelType, provideCode, id);
+    public Result<Void> deleteModelConfig(@PathVariable String id) {
+        modelConfigService.delete(id);
         return new Result<>();
+    }
+
+    @GetMapping("/models/{id}")
+    @Operation(summary = "获取模型配置")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<ModelConfigDTO> getModelConfig(@PathVariable String id) {
+        ModelConfigEntity item = modelConfigService.selectById(id);
+        ModelConfigDTO modelConfigDTO = ConvertUtils.sourceToTarget(item, ModelConfigDTO.class);
+        return new Result<ModelConfigDTO>().ok(modelConfigDTO);
     }
 
     @GetMapping("/models/{modelId}/voices")
