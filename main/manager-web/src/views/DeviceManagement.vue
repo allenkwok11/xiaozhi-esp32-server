@@ -164,7 +164,7 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-image: url("@/assets/home/background.png");
+  background: linear-gradient(145deg, #e6eeff, #eff0ff);
   background-size: cover;
   background-position: center;
   -webkit-background-size: cover;

@@ -101,7 +101,7 @@
             <div class="batch-actions">
               <el-button size="mini" @click="selectAll" style="width: 75px; background: #606ff3">{{ isAllSelected ?
                 '取消全选' : '全选'
-                }}</el-button>
+              }}</el-button>
               <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">
                 删除
               </el-button>
@@ -396,7 +396,7 @@ export default {
 }
 
 .main-wrapper {
-  margin: 5px 60px;
+  margin: 5px 20px;
   border-radius: 15px;
   min-height: 600px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
