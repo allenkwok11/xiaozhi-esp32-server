@@ -109,23 +109,26 @@ export default {
     // 处理搜索
     handleSearch() {
       const searchValue = this.search.trim();
-      let filteredDevices;
 
+      // 如果搜索内容为空，触发重置事件
       if (!searchValue) {
-        // 当搜索内容为空时，显示原始完整列表
-        filteredDevices = this.$parent.originalDevices;
-      } else {
-        // 过滤逻辑
-        filteredDevices = this.devices.filter(device => {
-          return device.agentName.includes(searchValue) ||
-              device.ttsModelName.includes(searchValue) ||
-              device.ttsVoiceName.includes(searchValue);
-        });
+        this.$emit('search-reset');
+        return;
       }
 
-      this.$emit('search-result', filteredDevices);
+      try {
+        // 创建不区分大小写的正则表达式
+        const regex = new RegExp(searchValue, 'i');
+        // 触发搜索事件，将正则表达式传递给父组件
+        this.$emit('search', regex);
+      } catch (error) {
+        console.error('正则表达式创建失败:', error);
+        this.$message.error({
+          message: '搜索关键词格式不正确',
+          showClose: true
+        });
+      }
     },
-
     // 显示修改密码弹窗
     showChangePasswordDialog() {
       this.isChangePasswordDialogVisible = true;
