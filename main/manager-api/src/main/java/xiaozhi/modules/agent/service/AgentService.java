@@ -22,4 +22,10 @@ public interface AgentService extends BaseService<AgentEntity> {
      * 获取智能体详情
      */
     AgentEntity getAgentById(String id);
+
+    /**
+     * 删除这个用户的所有
+     * @param userId
+     */
+    void deleteAgentByUserId(String userId);
 }

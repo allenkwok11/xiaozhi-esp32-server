@@ -17,9 +17,13 @@ import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import xiaozhi.common.constant.Constant;
+import xiaozhi.common.page.ExtendPageData;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.ValidatorUtils;
+import xiaozhi.modules.device.dto.DevicePageUserDTO;
+import xiaozhi.modules.device.service.DeviceService;
+import xiaozhi.modules.device.vo.UserShowDeviceListVO;
 import xiaozhi.modules.sys.dto.AdminPageUserDTO;
 import xiaozhi.modules.sys.service.SysUserService;
 import xiaozhi.modules.sys.vo.AdminPageUserVO;
@@ -37,6 +41,8 @@ import xiaozhi.modules.sys.vo.AdminPageUserVO;
 public class AdminController {
     private final SysUserService sysUserService;
 
+    private final DeviceService deviceService;
+
     @GetMapping("/users")
     @Operation(summary = "分页查找用户")
     @RequiresPermissions("sys:role:superAdmin")
@@ -45,16 +51,16 @@ public class AdminController {
             @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
             @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
     })
-    public Result<PageData<AdminPageUserVO>> pageUser(
+    public Result<ExtendPageData<AdminPageUserVO>> pageUser(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
         AdminPageUserDTO dto = new AdminPageUserDTO();
         dto.setMobile((String) params.get("mobile"));
         dto.setLimit((String) params.get(Constant.LIMIT));
         dto.setPage((String) params.get(Constant.PAGE));
-
         ValidatorUtils.validateEntity(dto);
-        PageData<AdminPageUserVO> page = sysUserService.page(dto);
-        return new Result<PageData<AdminPageUserVO>>().ok(page);
+        ValidatorUtils.validateEntity(dto);
+        ExtendPageData<AdminPageUserVO> page = sysUserService.page(dto);
+        return new Result<ExtendPageData<AdminPageUserVO>>().ok(page);
     }
 
     @PutMapping("/users/{id}")
@@ -70,7 +76,7 @@ public class AdminController {
     @Operation(summary = "用户删除")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@PathVariable Long id) {
-        sysUserService.delete(new Long[] { id });
+        sysUserService.deleteById(id);
         return new Result<>();
     }
 
@@ -82,9 +88,14 @@ public class AdminController {
             @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
             @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true),
     })
-    public Result<Void> pageDevice(
+    public Result<ExtendPageData<UserShowDeviceListVO>> pageDevice(
             @Parameter(hidden = true) @RequestParam Map<String, Object> params) {
-        // TODO 等设备功能模块写好
-        return new Result<Void>().error(600, "等设备功能模块写好");
+        DevicePageUserDTO dto = new DevicePageUserDTO();
+        dto.setKeywords((String) params.get("keywords"));
+        dto.setLimit((String) params.get(Constant.LIMIT));
+        dto.setPage((String) params.get(Constant.PAGE));
+        ValidatorUtils.validateEntity(dto);
+        ExtendPageData<UserShowDeviceListVO> page = deviceService.page(dto);
+        return new Result<ExtendPageData<UserShowDeviceListVO>>().ok(page);
     }
 }

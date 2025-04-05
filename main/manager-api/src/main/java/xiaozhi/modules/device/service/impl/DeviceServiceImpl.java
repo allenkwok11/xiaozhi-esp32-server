@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,32 +19,42 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 
 import cn.hutool.core.util.RandomUtil;
+import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.RenException;
+import xiaozhi.common.page.ExtendPageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.ConvertUtils;
+import xiaozhi.common.utils.DateUtils;
 import xiaozhi.modules.device.dao.DeviceDao;
 import xiaozhi.modules.device.dto.DeviceBindDTO;
+import xiaozhi.modules.device.dto.DevicePageUserDTO;
 import xiaozhi.modules.device.dto.DeviceReportReqDTO;
 import xiaozhi.modules.device.dto.DeviceReportRespDTO;
 import xiaozhi.modules.device.entity.DeviceEntity;
 import xiaozhi.modules.device.service.DeviceService;
+import xiaozhi.modules.device.vo.UserShowDeviceListVO;
 import xiaozhi.modules.security.user.SecurityUser;
+import xiaozhi.modules.sys.service.SysUserUtilService;
 
 @Service
 public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> implements DeviceService {
 
     private final DeviceDao deviceDao;
 
+    private final SysUserUtilService sysUserUtilService;
+
     private final String frontedUrl;
+
 
     private final RedisTemplate<String, Object> redisTemplate;
 
     // 添加构造函数来初始化 deviceMapper
-    public DeviceServiceImpl(DeviceDao deviceDao,
-            @Value("${app.fronted-url:http://localhost:8001}") String frontedUrl,
-            RedisTemplate<String, Object> redisTemplate) {
+    public DeviceServiceImpl(DeviceDao deviceDao, SysUserUtilService sysUserUtilService,
+                             @Value("${app.fronted-url:http://localhost:8001}") String frontedUrl,
+                             RedisTemplate<String, Object> redisTemplate) {
         this.deviceDao = deviceDao;
+        this.sysUserUtilService = sysUserUtilService;
         this.frontedUrl = frontedUrl;
         this.redisTemplate = redisTemplate;
     }
@@ -195,6 +206,46 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         wrapper.eq("user_id", userId);
         wrapper.eq("id", deviceId);
         baseDao.delete(wrapper);
+    }
+
+    @Override
+    public void deleteByUserId(Long userId) {
+        UpdateWrapper<DeviceEntity> wrapper = new UpdateWrapper<>();
+        wrapper.eq("user_id", userId);
+        baseDao.delete(wrapper);
+    }
+
+    @Override
+    public Long selectCountByUserId(Long userId) {
+        UpdateWrapper<DeviceEntity> wrapper = new UpdateWrapper<>();
+        wrapper.eq("user_id", userId);
+        return baseDao.selectCount(wrapper);
+    }
+
+    @Override
+    public ExtendPageData<UserShowDeviceListVO> page(DevicePageUserDTO dto) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put(Constant.PAGE, dto.getPage());
+        params.put(Constant.LIMIT, dto.getLimit());
+        IPage<DeviceEntity> page = baseDao.selectPage(
+                getPage(params, "sort", true),
+                // 定义查询条件
+                new QueryWrapper<DeviceEntity>()
+                        // 必须设备关键词查找
+                        .like(StringUtils.isNotBlank(dto.getKeywords()), "alias", dto.getKeywords()));
+        // 循环处理page获取回来的数据，返回需要的字段
+        List<UserShowDeviceListVO> list = page.getRecords().stream().map(device -> {
+            UserShowDeviceListVO vo = ConvertUtils.sourceToTarget(device, UserShowDeviceListVO.class);
+            // 把最后修改的时间，改为简短描述的时间
+            vo.setRecentChatTime(DateUtils.getShortTime(device.getUpdateDate()));
+            sysUserUtilService.assignUsername(device.getUserId(),
+                    vo::setBindUserName);
+            vo.setDeviceType(device.getBoard());
+            return vo;
+        }).toList();
+        //计算页数
+        long num = page.getTotal() / Long.parseLong(dto.getPage());
+        return new ExtendPageData<>(list, page.getTotal(), num);
     }
 
     private DeviceReportRespDTO.ServerTime buildServerTime() {

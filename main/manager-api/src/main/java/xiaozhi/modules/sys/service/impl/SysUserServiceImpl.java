@@ -1,6 +1,5 @@
 package xiaozhi.modules.sys.service.impl;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +18,11 @@ import lombok.AllArgsConstructor;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.exception.RenException;
-import xiaozhi.common.page.PageData;
+import xiaozhi.common.page.ExtendPageData;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.utils.ConvertUtils;
+import xiaozhi.modules.agent.service.AgentService;
+import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.security.password.PasswordUtils;
 import xiaozhi.modules.sys.dao.SysUserDao;
 import xiaozhi.modules.sys.dto.AdminPageUserDTO;
@@ -39,6 +40,10 @@ import xiaozhi.modules.sys.vo.AdminPageUserVO;
 @Service
 public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntity> implements SysUserService {
     private final SysUserDao sysUserDao;
+
+    private final DeviceService deviceService;
+
+    private final AgentService agentService;
 
     @Override
     public SysUserDTO getByUsername(String username) {
@@ -87,10 +92,14 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(Long[] ids) {
+    public void deleteById(Long id) {
         // 删除用户
-        baseDao.deleteBatchIds(Arrays.asList(ids));
-        // TODO 除了要删除用户还要删除用户关联的设备，对话，智能体。等此3个功能完善在添加
+        baseDao.deleteById(id);
+        // 删除设备
+        deviceService.deleteByUserId(id);
+        // 删除智能体
+        agentService.deleteById(id);
+        // TODO 除了要删除用户还要删除用户关联的对话
     }
 
     @Override
@@ -142,7 +151,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     }
 
     @Override
-    public PageData<AdminPageUserVO> page(AdminPageUserDTO dto) {
+    public ExtendPageData<AdminPageUserVO> page(AdminPageUserDTO dto) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put(Constant.PAGE, dto.getPage());
         params.put(Constant.LIMIT, dto.getLimit());
@@ -152,16 +161,19 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
                 new QueryWrapper<SysUserEntity>()
                         // 必须按照手机号码查找
                         .eq(StringUtils.isNotBlank(dto.getMobile()), "username", dto.getMobile()));
+        // 循环处理page获取回来的数据，返回需要的字段
         List<AdminPageUserVO> list = page.getRecords().stream().map(user -> {
             AdminPageUserVO adminPageUserVO = new AdminPageUserVO();
             adminPageUserVO.setUserid(user.getId().toString());
             adminPageUserVO.setMobile(user.getUsername());
-            adminPageUserVO.setStatus(user.getStatus());
-            // TODO 2. 等设备功能写好，获取对应数据
-            adminPageUserVO.setDeviceCount("0");
+            String deviceCount = deviceService.selectCountByUserId(user.getId()).toString();
+            adminPageUserVO.setDeviceCount(deviceCount);
+            adminPageUserVO.setStatus(user.getStatus().toString());
             return adminPageUserVO;
         }).toList();
-        return new PageData<>(list, page.getTotal());
+        //计算页数
+        long num = page.getTotal() / Long.parseLong(dto.getPage());
+        return new ExtendPageData<>(list, page.getTotal(),num);
     }
 
     private boolean isStrongPassword(String password) {
