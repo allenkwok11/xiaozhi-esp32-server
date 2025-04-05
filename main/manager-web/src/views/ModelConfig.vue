@@ -2,26 +2,26 @@
   <div class="welcome">
     <HeaderBar />
 
-      <div class="operation-bar">
-          <h2 class="page-title">模型配置</h2>
-        <div class="right-operations">
-          <el-button plain size="small" @click="handleImport" style="background: #7b9de5; color: white;">
-            <img loading="lazy" alt="" src="@/assets/model/inner_conf.png">
-            导入配置
-          </el-button>
-          <el-button plain size="small" @click="handleExport" style="background: #71c9d1; color: white;">
-            <img loading="lazy" alt="" src="@/assets/model/output_conf.png">
-            导出配置
-          </el-button>
-        </div>
+    <div class="operation-bar">
+      <h2 class="page-title">模型配置</h2>
+      <div class="right-operations">
+        <el-button plain size="small" @click="handleImport" style="background: #7b9de5; color: white;">
+          <img loading="lazy" alt="" src="@/assets/model/inner_conf.png">
+          导入配置
+        </el-button>
+        <el-button plain size="small" @click="handleExport" style="background: #71c9d1; color: white;">
+          <img loading="lazy" alt="" src="@/assets/model/output_conf.png">
+          导出配置
+        </el-button>
       </div>
+    </div>
 
     <!-- 主体内容 -->
     <div class="main-wrapper">
       <div class="content-panel">
         <!-- 左侧导航 -->
         <el-menu :default-active="activeTab" class="nav-panel" @select="handleMenuSelect"
-                 style="background-size: cover; background-position: center;">
+          style="background-size: cover; background-position: center;">
           <el-menu-item index="vad">
             <span class="menu-text">语言活动检测</span>
           </el-menu-item>
@@ -46,14 +46,14 @@
         <div class="content-area">
           <div class="title-bar">
             <div class="title-wrapper">
-            <h2 class="model-title">大语言模型（LLM）</h2>
-            <el-button type="primary" size="small" @click="addModel" class="add-btn">
-               添加
-            </el-button>
+              <h2 class="model-title">{{ modelTypeText }}</h2>
+              <el-button type="primary" size="small" @click="addModel" class="add-btn">
+                添加
+              </el-button>
             </div>
             <div class="action-group">
               <div class="search-group">
-                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable/>
+                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable />
                 <el-button type="primary" size="small" class="search-btn" @click="handleSearch">
                   查询
                 </el-button>
@@ -61,14 +61,21 @@
             </div>
           </div>
 
-          <el-table ref="modelTable" style="width: 100%" :header-cell-style="{background: 'transparent'}" :data="modelList"  class="data-table" header-row-class-name="table-header" :header-cell-class-name="headerCellClassName" @selection-change="handleSelectionChange">
+          <el-table ref="modelTable" style="width: 100%" :header-cell-style="{ background: 'transparent' }"
+            :data="modelList" class="data-table" header-row-class-name="table-header"
+            :header-cell-class-name="headerCellClassName" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" align="center"></el-table-column>
-            <el-table-column label="模型名称" prop="candidateName" align="center"></el-table-column>
-            <el-table-column label="模型编码" prop="code" align="center"></el-table-column>
-            <el-table-column label="提供商" prop="supplier" align="center"></el-table-column>
+            <el-table-column label="模型名称" prop="modelName" align="center"></el-table-column>
+            <el-table-column label="模型编码" prop="modelCode" align="center"></el-table-column>
+            <el-table-column label="提供商" align="center">
+              <template slot-scope="scope">
+                {{ scope.row.configJson?.provider || '未知' }}
+              </template>
+            </el-table-column>
             <el-table-column label="是否启用" align="center">
               <template slot-scope="scope">
-                <el-switch v-model="scope.row.isApplied" class="custom-switch" :active-color="null" :inactive-color="null"/>
+                <el-switch v-model="scope.row.isEnabled" class="custom-switch" :active-value="1" :inactive-value="0"
+                  :active-color="null" :inactive-color="null" />
               </template>
             </el-table-column>
             <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
@@ -92,7 +99,9 @@
 
           <div class="table-footer">
             <div class="batch-actions">
-              <el-button size="mini" @click="selectAll" style="width: 75px; background: #606ff3">{{ isAllSelected ? '取消全选' : '全选' }}</el-button>
+              <el-button size="mini" @click="selectAll" style="width: 75px; background: #606ff3">{{ isAllSelected ?
+                '取消全选' : '全选'
+              }}</el-button>
               <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">
                 删除
               </el-button>
@@ -101,7 +110,8 @@
               <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
               <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
 
-              <button v-for="page in visiblePages" :key="page" class="pagination-btn" :class="{ active: page === currentPage }" @click="goToPage(page)">
+              <button v-for="page in visiblePages" :key="page" class="pagination-btn"
+                :class="{ active: page === currentPage }" @click="goToPage(page)">
                 {{ page }}
               </button>
 
@@ -112,22 +122,24 @@
         </div>
       </div>
 
-      <ModelEditDialog :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
+      <ModelEditDialog :modelType="activeTab" :visible.sync="editDialogVisible" :modelData="editModelData"
+        @save="handleModelSave" />
       <TtsModel :visible.sync="ttsDialogVisible" />
-      <AddModelDialog  :modelType="activeTab" :visible.sync="addDialogVisible" @confirm="handleAddConfirm"/>
+      <AddModelDialog :modelType="activeTab" :visible.sync="addDialogVisible" @confirm="handleAddConfirm" />
     </div>
 
     <div class="copyright">
-        ©2025 xiaozhi-esp32-server
-      </div>
+      ©2025 xiaozhi-esp32-server
     </div>
+  </div>
 </template>
 
 <script>
+import Api from "@/apis/api";
+import AddModelDialog from "@/components/AddModelDialog.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
 import ModelEditDialog from "@/components/ModelEditDialog.vue";
 import TtsModel from "@/components/TtsModel.vue";
-import AddModelDialog from "@/components/AddModelDialog.vue";
 
 export default {
   components: { HeaderBar, ModelEditDialog, TtsModel, AddModelDialog },
@@ -139,20 +151,34 @@ export default {
       editDialogVisible: false,
       editModelData: {},
       ttsDialogVisible: false,
-      modelList: [
-        { code: 'DeepSeek', candidateName: '深度求索', isApplied: true, supplier: '硅基流动' },
-        { code: 'SmartAssist', candidateName: '智能助手', isApplied: false, supplier: '智脑科技' },
-        { code: 'CogEngine', candidateName: '认知引擎', isApplied: true, supplier: '云智科技' },
-      ],
+      modelList: [],
       currentPage: 1,
-      pageSize: 4,
-      total: 20,
+      pageSize: 5,
+      total: 0,
       selectedModels: [],
       isAllSelected: false
     };
   },
 
+  created() {
+    this.loadData();
+  },
+
   computed: {
+
+    modelTypeText() {
+      const map = {
+        vad: '语言活动检测模型(VAD)',
+        asr: '语音识别模型(ASR)',
+        llm: '大语言模型（LLM）',
+        intent: '意图识别模型(Intent)',
+        tts: '语音合成模型(TTS)',
+        memory: '记忆模型(Memory)'
+      }
+      return map[this.activeTab] || '模型配置'
+    },
+
+
     pageCount() {
       return Math.ceil(this.total / this.pageSize);
     },
@@ -182,64 +208,92 @@ export default {
     },
     handleMenuSelect(index) {
       this.activeTab = index;
+      this.currentPage = 1;
+      this.loadData();
     },
     handleSearch() {
+      // TODO: 查询
       console.log('查询：', this.search);
     },
+    // 批量删除
     batchDelete() {
       if (this.selectedModels.length === 0) {
-        this.$message.warning('请先选择要删除的模型');
-        return;
+        this.$message.warning('请先选择要删除的模型')
+        return
       }
+
       this.$confirm('确定要删除选中的模型吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        const selectedIds = this.selectedModels.map(model => model.code);
-        this.modelList = this.modelList.filter(model => !selectedIds.includes(model.code));
-        this.$message.success('删除成功');
-        this.selectedModels = [];
-        this.isAllSelected = false;
+        const deletePromises = this.selectedModels.map(model =>
+          new Promise(resolve => {
+            // TODO: 删除获取model.id
+            Api.model.deleteModel(
+              model.id,
+              ({ data }) => resolve(data.code === 0)
+            )
+          })
+        )
+
+        Promise.all(deletePromises).then(results => {
+          if (results.every(Boolean)) {
+            this.$message.success('批量删除成功')
+            this.loadData()
+          } else {
+            this.$message.error('部分删除失败')
+          }
+        })
       }).catch(() => {
-        this.$message.info('已取消删除');
-        });
-      },
+        this.$message.info('已取消删除')
+      })
+    },
     addModel() {
       this.addDialogVisible = true;
     },
     editModel(model) {
-      this.editModelData = {
-        code: model.code,
-        name: model.candidateName,
-        supplier: model.supplier,
-      };
+      this.editModelData = JSON.parse(JSON.stringify(model));
       this.editDialogVisible = true;
     },
+    // 删除单个模型
     deleteModel(model) {
-      this.$confirm(`确定要删除模型 ${model.candidateName} 吗?`, '提示', {
+      this.$confirm('确定要删除该模型吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.modelList = this.modelList.filter(item => item.code !== model.code);
-        this.$message.success('删除成功');
+        Api.model.deleteModel(
+          this.activeTab,
+          model.configJson?.provider || '',  // 从configJson获取provider
+          model.id,
+          ({ data }) => {
+            if (data.code === 0) {
+              this.$message.success('删除成功')
+              this.loadData()
+            } else {
+              this.$message.error(data.msg || '删除失败')
+            }
+          }
+        )
       }).catch(() => {
-        this.$message.info('已取消删除');
-      });
+        this.$message.info('已取消删除')
+      })
     },
     handleCurrentChange(page) {
       this.currentPage = page;
       this.$refs.modelTable.clearSelection();
-      console.log('当前页码：', page);
     },
     handleImport() {
+      // TODO: 导入配置
       console.log('导入配置');
     },
     handleExport() {
+      // TODO: 导出配置
       console.log('导出配置');
     },
     handleModelSave(formData) {
+      // TODO: 保存模型数据
       console.log('保存的模型数据：', formData);
     },
     selectAll() {
@@ -256,14 +310,33 @@ export default {
         this.isAllSelected = false;
       }
     },
+
+    // 新增模型配置
     handleAddConfirm(newModel) {
-      console.log('新增模型数据:', newModel);
+      const params = {
+        modelType: this.activeTab,
+        provideCode: newModel.supplier,
+        formData: {
+          ...newModel,
+          isDefault: newModel.isDefault ? 1 : 0,
+          isEnabled: newModel.isEnabled ? 1 : 0
+        }
+      };
+
+      Api.model.addModel(params, ({ data }) => {
+        if (data.code === 0) {
+          this.$message.success('新增成功');
+          this.loadData();
+        } else {
+          this.$message.error(data.msg || '新增失败');
+        }
+      });
     },
 
     // 分页器
     goFirst() {
-    this.currentPage = 1;
-    this.loadData();
+      this.currentPage = 1;
+      this.loadData();
     },
     goPrev() {
       if (this.currentPage > 1) {
@@ -281,15 +354,31 @@ export default {
       this.currentPage = page;
       this.loadData();
     },
+
+    // 获取模型配置列表
     loadData() {
-      console.log('加载数据，当前页:', this.currentPage);
+      const params = {
+        modelType: this.activeTab,
+        modelName: this.search,
+        page: this.currentPage,
+        limit: this.pageSize
+      };
+
+      Api.model.getModelList(params, ({ data }) => {
+        if (data.code === 0) {
+          this.modelList = data.data.list;
+          this.total = data.data.total;
+        } else {
+          this.$message.error(data.msg || '获取模型列表失败');
+        }
+      });
     }
   },
 };
 </script>
 
 <style scoped>
-::v-deep .el-table tr{
+::v-deep .el-table tr {
   background: transparent;
 }
 
@@ -307,12 +396,12 @@ export default {
 }
 
 .main-wrapper {
-  margin: 5px 60px;
+  margin: 5px 20px;
   border-radius: 15px;
   min-height: 600px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: relative;
-  background: rgba(237,242,255,0.5);
+  background: rgba(237, 242, 255, 0.5);
 }
 
 .operation-bar {
@@ -320,7 +409,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-bottom: 1px solid #ebeef5;
 }
 
 .page-title {
@@ -341,6 +429,7 @@ export default {
   height: 100%;
   border-radius: 15px;
   background: transparent;
+  border: 1px solid #fff;
 }
 
 .nav-panel {
@@ -348,12 +437,10 @@ export default {
   height: 100%;
   border-right: 1px solid #ebeef5;
   background:
-    linear-gradient(
-      120deg,
+    linear-gradient(120deg,
       rgba(107, 140, 255, 0.3) 0%,
       rgba(169, 102, 255, 0.3) 25%,
-      transparent 60%
-    ),
+      transparent 60%),
     url("../assets/model/model.png") no-repeat center / cover;
   padding: 16px 0;
   flex-shrink: 0;
@@ -538,7 +625,8 @@ export default {
 }
 
 ::v-deep .el-table .custom-selection-header .cell .el-checkbox__inner {
-  display: none !important; /* 使表头复选框不可见 */
+  display: none !important;
+  /* 使表头复选框不可见 */
 }
 
 ::v-deep .el-table .custom-selection-header .cell::before {
@@ -564,6 +652,7 @@ export default {
 }
 
 ::v-deep .data-table {
+
   &.el-table::before,
   &.el-table::after,
   &.el-table__inner-wrapper::before {
@@ -572,14 +661,14 @@ export default {
 }
 
 ::v-deep .data-table .el-table__header-wrapper {
-  border-bottom: 1px solid rgb(224,227,237);
+  border-bottom: 1px solid rgb(224, 227, 237);
 }
 
 ::v-deep .data-table .el-table__body td {
-  border-bottom: 1px solid rgb(224,227,237) !important;
+  border-bottom: 1px solid rgb(224, 227, 237) !important;
 }
 
-.el-button img{
+.el-button img {
   height: 1em;
   vertical-align: middle;
   padding-right: 2px;
@@ -607,7 +696,8 @@ export default {
 }
 
 .voice-management-btn:hover {
-    background: #8aa2e0; /* 悬停时颜色加深 */
+  background: #8aa2e0;
+  /* 悬停时颜色加深 */
   transform: scale(1.05);
 }
 
@@ -619,7 +709,8 @@ export default {
   padding-right: 15px !important;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
   margin: 0 8px;
   color: #7079aa !important;
 }
@@ -637,7 +728,6 @@ export default {
   margin-top: 15px;
 
   /* 导航按钮样式 (首页、上一页、下一页) */
-
   .pagination-btn:first-child,
   .pagination-btn:nth-child(2),
   .pagination-btn:nth-last-child(2) {
@@ -663,7 +753,6 @@ export default {
   }
 
   /* 数字按钮样式 */
-
   .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)) {
     min-width: 28px;
     height: 32px;
@@ -697,6 +786,4 @@ export default {
     margin-left: 10px;
   }
 }
-
 </style>
-

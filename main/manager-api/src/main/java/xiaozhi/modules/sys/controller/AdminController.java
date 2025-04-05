@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -77,6 +78,15 @@ public class AdminController {
     public Result<Void> delete(@PathVariable Long id) {
         sysUserService.deleteById(id);
         return new Result<>();
+    }
+
+    @PutMapping("/users/changeStatus/{status}")
+    @Operation(summary = "批量修改用户状态")
+    @RequiresPermissions("sys:role:superAdmin")
+    @Parameter(name = "status", description = "用户状态", required = true)
+    public Result<Void> changeStatus(@PathVariable Integer status, @RequestBody Long[] userIds) {
+        sysUserService.changeStatus(status, userIds);
+        return new Result<Void>();
     }
 
     @GetMapping("/device/all")
