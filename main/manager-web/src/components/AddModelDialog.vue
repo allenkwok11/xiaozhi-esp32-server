@@ -1,5 +1,6 @@
 <template>
-  <el-dialog :visible.sync="visible" width="975px" center custom-class="custom-dialog" :show-close="false" class="center-dialog">
+  <el-dialog :visible.sync="visible" width="975px" center custom-class="custom-dialog" :show-close="false"
+    class="center-dialog">
     <div style="margin: 0 18px; text-align: left; padding: 10px; border-radius: 10px;">
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
         添加模型
@@ -38,8 +39,9 @@
 
         <div style="display: flex; gap: 20px; margin-bottom: 0;">
           <el-form-item label="供应器" prop="supplier" style="flex: 1;">
-            <el-select v-model="formData.supplier" placeholder="请选择" class="custom-select custom-input-bg" style="width: 100%;" @focus="loadProviders" filterable>
-            <el-option v-for="item in providers" :key="item.value" :label="item.label" :value="item.value"/>
+            <el-select v-model="formData.supplier" placeholder="请选择" class="custom-select custom-input-bg"
+              style="width: 100%;" @focus="loadProviders" filterable>
+              <el-option v-for="item in providers" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item label="排序号" prop="sortOrder" style="flex: 1;">
@@ -49,21 +51,12 @@
 
 
         <el-form-item label="文档地址" prop="docLink" style="margin-bottom: 27px;">
-          <el-input
-              v-model="formData.docLink"
-              placeholder="请输入文档地址"
-              class="custom-input-bg"
-          ></el-input>
+          <el-input v-model="formData.docLink" placeholder="请输入文档地址" class="custom-input-bg"></el-input>
         </el-form-item>
 
         <el-form-item label="备注" prop="remark" class="prop-remark">
-          <el-input
-              v-model="formData.remark"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入模型备注"
-              class="custom-input-bg"
-          ></el-input>
+          <el-input v-model="formData.remark" type="textarea" :rows="3" placeholder="请输入模型备注"
+            class="custom-input-bg"></el-input>
         </el-form-item>
       </el-form>
 
@@ -73,7 +66,8 @@
       <el-form :model="formData" label-width="100px" label-position="left" class="custom-form">
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
           <el-form-item label="模型名称" prop="param1" style="flex: 0.5; margin-bottom: 0;">
-            <el-input v-model="formData.configJson.param1" placeholder="请输入model_name" class="custom-input-bg"></el-input>
+            <el-input v-model="formData.configJson.param1" placeholder="请输入model_name"
+              class="custom-input-bg"></el-input>
           </el-form-item>
           <el-form-item label="接口地址" prop="param2" style="flex: 1; margin-bottom: 0;">
             <el-input v-model="formData.configJson.param2" placeholder="请输入base_url" class="custom-input-bg"></el-input>
@@ -81,7 +75,8 @@
         </div>
 
         <el-form-item label="秘钥信息" prop="apiKey">
-          <el-input v-model="formData.configJson.apiKey" placeholder="请输入api_key" show-password class="custom-input-bg"></el-input>
+          <el-input v-model="formData.configJson.apiKey" placeholder="请输入api_key" show-password
+            class="custom-input-bg"></el-input>
         </el-form-item>
       </el-form>
     </div>
@@ -95,12 +90,12 @@
 </template>
 
 <script>
-import model from '@/apis/module/model'
+import Api from '@/apis/api';
 export default {
   name: 'AddModelDialog',
   props: {
-    visible: {type: Boolean, required: true},
-    modelType: {type: String, required: true}
+    visible: { type: Boolean, required: true },
+    modelType: { type: String, required: true }
   },
   data() {
     return {
@@ -128,7 +123,7 @@ export default {
       if (this.providersLoaded)
         return
 
-      model.getModelProviders(this.modelType, (data) => {
+      Api.model.getModelProviders(this.modelType, (data) => {
         this.providers = data.map(item => ({
           label: item.name,
           value: item.providerCode
@@ -138,7 +133,7 @@ export default {
     },
     confirm() {
       if (!this.formData.modelName || !this.formData.modelCode || !this.formData.supplier ||
-          !this.formData.configJson.param1 || !this.formData.configJson.param2 || !this.formData.configJson.apiKey) {
+        !this.formData.configJson.param1 || !this.formData.configJson.param2 || !this.formData.configJson.apiKey) {
         this.$message.error('请填写所有必填字段');
         return;
       }
@@ -344,6 +339,4 @@ export default {
 .custom-input-bg .el-input__inner {
   height: 32px;
 }
-
-
 </style>

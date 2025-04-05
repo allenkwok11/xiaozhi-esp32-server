@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import Api from '@/apis/api';
 import AddDeviceDialog from "@/components/AddDeviceDialog.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
 
@@ -78,12 +79,9 @@ export default {
   },
   mounted() {
     const agentId = this.$route.query.agentId;
-    import('@/apis/module/device').then(({ default: deviceApi }) => {
-      this.deviceApi = deviceApi;
-      if (agentId) {
-        this.fetchBindDevices(agentId);
-      }
-    });
+    if (agentId) {
+      this.fetchBindDevices(agentId);
+    }
   },
   methods: {
     handleAddDevice() {
@@ -105,7 +103,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.deviceApi.unbindDevice(device_id, ({ data }) => {
+        Api.device.unbindDevice(device_id, ({ data }) => {
           if (data.code === 0) {
             this.$message.success({
               message: '设备解绑成功',
@@ -129,38 +127,33 @@ export default {
     },
     fetchBindDevices(agentId) {
       this.loading = true;
-      import('@/apis/module/device').then(({ default: deviceApi }) => {
-        deviceApi.getAgentBindDevices(agentId, ({ data }) => {
-          this.loading = false;
-          if (data.code === 0) {
-            // 格式化日期并按照绑定时间降序排列
-            this.deviceList = data.data.map(device => {
-              // 格式化绑定时间
-              const bindDate = new Date(device.createDate);
-              const formattedBindTime = `${bindDate.getFullYear()}-${(bindDate.getMonth() + 1).toString().padStart(2, '0')}-${bindDate.getDate().toString().padStart(2, '0')} ${bindDate.getHours().toString().padStart(2, '0')}:${bindDate.getMinutes().toString().padStart(2, '0')}:${bindDate.getSeconds().toString().padStart(2, '0')}`;
-              return {
-                device_id: device.id,
-                model: device.board,
-                firmwareVersion: device.appVersion,
-                macAddress: device.macAddress,
-                bindTime: formattedBindTime, // 使用格式化后的时间
-                lastConversation: device.lastConnectedAt,
-                remark: device.alias,
-                isEdit: false,
-                otaSwitch: device.autoUpdate === 1,
-                // 添加原始时间用于排序
-                rawBindTime: new Date(device.createDate).getTime()
-              };
-            })
-              // 按照绑定时间降序排序
-              .sort((a, b) => a.rawBindTime - b.rawBindTime);
-          } else {
-            this.$message.error(data.msg || '获取设备列表失败');
-          }
-        });
-      }).catch(error => {
-        console.error('模块加载失败:', error);
-        this.$message.error('功能模块加载失败');
+      Api.device.getAgentBindDevices(agentId, ({ data }) => {
+        this.loading = false;
+        if (data.code === 0) {
+          // 格式化日期并按照绑定时间降序排列
+          this.deviceList = data.data.map(device => {
+            // 格式化绑定时间
+            const bindDate = new Date(device.createDate);
+            const formattedBindTime = `${bindDate.getFullYear()}-${(bindDate.getMonth() + 1).toString().padStart(2, '0')}-${bindDate.getDate().toString().padStart(2, '0')} ${bindDate.getHours().toString().padStart(2, '0')}:${bindDate.getMinutes().toString().padStart(2, '0')}:${bindDate.getSeconds().toString().padStart(2, '0')}`;
+            return {
+              device_id: device.id,
+              model: device.board,
+              firmwareVersion: device.appVersion,
+              macAddress: device.macAddress,
+              bindTime: formattedBindTime, // 使用格式化后的时间
+              lastConversation: device.lastConnectedAt,
+              remark: device.alias,
+              isEdit: false,
+              otaSwitch: device.autoUpdate === 1,
+              // 添加原始时间用于排序
+              rawBindTime: new Date(device.createDate).getTime()
+            };
+          })
+            // 按照绑定时间降序排序
+            .sort((a, b) => a.rawBindTime - b.rawBindTime);
+        } else {
+          this.$message.error(data.msg || '获取设备列表失败');
+        }
       });
     },
   }

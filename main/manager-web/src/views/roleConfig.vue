@@ -96,7 +96,9 @@
 </template>
 
 <script>
+import Api from '@/apis/api';
 import HeaderBar from "@/components/HeaderBar.vue";
+
 
 export default {
   name: 'RoleConfigPage',
@@ -153,14 +155,12 @@ export default {
         language: this.form.language,
         sort: this.form.sort
       };
-      import('@/apis/module/agent').then(({ default: agentApi }) => {
-        agentApi.updateAgentConfig(this.$route.query.agentId, configData, ({ data }) => {
-          if (data.code === 0) {
-            this.$message.success('配置保存成功');
-          } else {
-            this.$message.error(data.msg || '配置保存失败');
-          }
-        });
+      Api.agent.updateAgentConfig(this.$route.query.agentId, configData, ({ data }) => {
+        if (data.code === 0) {
+          this.$message.success('配置保存成功');
+        } else {
+          this.$message.error(data.msg || '配置保存失败');
+        }
       });
     },
     resetConfig() {
@@ -194,24 +194,22 @@ export default {
     selectTemplate(templateName) {
       if (this.loadingTemplate) return;
       this.loadingTemplate = true;
-      import('@/apis/module/agent').then(({ default: agentApi }) => {
-        agentApi.getAgentTemplate((response) => {  // 移除参数传递
-          this.loadingTemplate = false;
-          if (response.data.code === 0) {
-            // 在客户端过滤匹配的模板
-            const matchedTemplate = response.data.data.find(
-              t => t.agentName === templateName
-            );
-            if (matchedTemplate) {
-              this.applyTemplateData(matchedTemplate);
-              this.$message.success(`「${templateName}」模板已应用`);
-            } else {
-              this.$message.warning(`未找到「${templateName}」模板`);
-            }
+      Api.agent.getAgentTemplate((response) => {  // 移除参数传递
+        this.loadingTemplate = false;
+        if (response.data.code === 0) {
+          // 在客户端过滤匹配的模板
+          const matchedTemplate = response.data.data.find(
+            t => t.agentName === templateName
+          );
+          if (matchedTemplate) {
+            this.applyTemplateData(matchedTemplate);
+            this.$message.success(`「${templateName}」模板已应用`);
           } else {
-            this.$message.error(response.data.msg || '获取模板失败');
+            this.$message.warning(`未找到「${templateName}」模板`);
           }
-        });
+        } else {
+          this.$message.error(response.data.msg || '获取模板失败');
+        }
       }).catch((error) => {
         this.loadingTemplate = false;
         this.$message.error('模板加载失败');
@@ -236,25 +234,23 @@ export default {
       };
     },
     fetchAgentConfig(agentId) {
-      import('@/apis/module/agent').then(({ default: agentApi }) => {
-        agentApi.getDeviceConfig(agentId, ({ data }) => {
-          if (data.code === 0) {
-            this.form = {
-              ...this.form,
-              ...data.data,
-              model: {
-                ttsModelId: data.data.ttsModelId,
-                vadModelId: data.data.vadModelId,
-                asrModelId: data.data.asrModelId,
-                llmModelId: data.data.llmModelId,
-                memModelId: data.data.memModelId,
-                intentModelId: data.data.intentModelId
-              }
-            };
-          } else {
-            this.$message.error(data.msg || '获取配置失败');
-          }
-        });
+      Api.agent.getDeviceConfig(agentId, ({ data }) => {
+        if (data.code === 0) {
+          this.form = {
+            ...this.form,
+            ...data.data,
+            model: {
+              ttsModelId: data.data.ttsModelId,
+              vadModelId: data.data.vadModelId,
+              asrModelId: data.data.asrModelId,
+              llmModelId: data.data.llmModelId,
+              memModelId: data.data.memModelId,
+              intentModelId: data.data.intentModelId
+            }
+          };
+        } else {
+          this.$message.error(data.msg || '获取配置失败');
+        }
       });
     },
     // 清空记忆体内容
@@ -265,7 +261,6 @@ export default {
   },
   mounted() {
     const agentId = this.$route.query.agentId;
-    console.log('agentId2222', agentId);
     if (agentId) {
       this.fetchAgentConfig(agentId);
     }

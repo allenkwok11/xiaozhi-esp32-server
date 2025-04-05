@@ -84,7 +84,6 @@ export default {
   },
   methods: {
     fetchCaptcha() {
-      console.log(this.$store.getters.getToken)
       if (this.$store.getters.getToken) {
         if (this.$route.path !== '/home') {
           this.$router.push('/home')

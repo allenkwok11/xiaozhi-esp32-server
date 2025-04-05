@@ -143,7 +143,6 @@ export default {
       }
 
       Api.user.register(this.form, ({ data }) => {
-        console.log(data)
         if (data.code === 0) {
           showSuccess('注册成功！')
           goToPage('/login')

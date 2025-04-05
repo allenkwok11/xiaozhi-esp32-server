@@ -101,7 +101,7 @@
             <div class="batch-actions">
               <el-button size="mini" @click="selectAll" style="width: 75px; background: #606ff3">{{ isAllSelected ?
                 '取消全选' : '全选'
-                }}</el-button>
+              }}</el-button>
               <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">
                 删除
               </el-button>
@@ -135,7 +135,7 @@
 </template>
 
 <script>
-import ModelApi from "@/apis/module/model";
+import Api from "@/apis/api";
 import AddModelDialog from "@/components/AddModelDialog.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
 import ModelEditDialog from "@/components/ModelEditDialog.vue";
@@ -212,6 +212,7 @@ export default {
       this.loadData();
     },
     handleSearch() {
+      // TODO: 查询
       console.log('查询：', this.search);
     },
     // 批量删除
@@ -228,7 +229,7 @@ export default {
       }).then(() => {
         const deletePromises = this.selectedModels.map(model =>
           new Promise(resolve => {
-            ModelApi.deleteModel(
+            Api.model.deleteModel(
               this.activeTab,
               model.configJson?.provider || '',
               model.id,
@@ -263,7 +264,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        ModelApi.deleteModel(
+        Api.model.deleteModel(
           this.activeTab,
           model.configJson?.provider || '',  // 从configJson获取provider
           model.id,
@@ -283,15 +284,17 @@ export default {
     handleCurrentChange(page) {
       this.currentPage = page;
       this.$refs.modelTable.clearSelection();
-      console.log('当前页码：', page);
     },
     handleImport() {
+      // TODO: 导入配置
       console.log('导入配置');
     },
     handleExport() {
+      // TODO: 导出配置
       console.log('导出配置');
     },
     handleModelSave(formData) {
+      // TODO: 保存模型数据
       console.log('保存的模型数据：', formData);
     },
     selectAll() {
@@ -321,7 +324,7 @@ export default {
         }
       };
 
-      ModelApi.addModel(params, ({ data }) => {
+      Api.model.addModel(params, ({ data }) => {
         if (data.code === 0) {
           this.$message.success('新增成功');
           this.loadData();
@@ -362,7 +365,7 @@ export default {
         limit: this.pageSize
       };
 
-      ModelApi.getModelList(params, ({ data }) => {
+      Api.model.getModelList(params, ({ data }) => {
         if (data.code === 0) {
           this.modelList = data.data.list;
           this.total = data.data.total;

@@ -100,7 +100,6 @@ function sendRequest() {
  */
 // 在错误处理函数中添加日志
 function httpHandlerError(info, callBack) {
-    console.log('httpHandlerError', info)
 
     /** 请求成功，退出该函数 可以根据项目需求来判断是否请求成功。这里判断的是status为200的时候是成功 */
     let networkError = false
@@ -108,7 +107,6 @@ function httpHandlerError(info, callBack) {
         if (info.data.code === 'success' || info.data.code === 0 || info.data.code === undefined) {
             return networkError
         } else if (info.data.code === 401) {
-            console.log('触发 401，清除 Token 并跳转登录页');
             store.commit('clearAuth');
             goToPage(Constant.PAGE.LOGIN, true);
             return true

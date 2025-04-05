@@ -45,15 +45,20 @@
                 <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">删除</el-button>
               </div>
               <div class="custom-pagination">
-                <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
-                <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
+                <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
+                  首页
+                </button>
+                <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">
+                  上一页
+                </button>
 
                 <button v-for="page in visiblePages" :key="page" class="pagination-btn"
                   :class="{ active: page === currentPage }" @click="goToPage(page)">
                   {{ page }}
+                </button>getUserList <button class="pagination-btn" :disabled="currentPage === pageCount"
+                  @click="goNext">
+                  下一页
                 </button>
-
-                <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">下一页</button>
                 <span class="total-text">共{{ total }}条记录</span>
               </div>
             </div>
@@ -62,29 +67,27 @@
       </div>
     </div>
 
-    <div class="copyright">
-      ©2025 xiaozhi-esp32-server
-    </div>
+    <div class="copyright">©2025 xiaozhi-esp32-server</div>
     <view-password-dialog :visible.sync="showViewPassword" :password="currentPassword" />
   </div>
 </template>
 
 <script>
-import adminApi from '@/apis/module/admin';
+import Api from "@/apis/api";
 import HeaderBar from "@/components/HeaderBar.vue";
-import ViewPasswordDialog from '@/components/ViewPasswordDialog.vue';
+import ViewPasswordDialog from "@/components/ViewPasswordDialog.vue";
 
 export default {
   components: { HeaderBar, ViewPasswordDialog },
   data() {
     return {
       showViewPassword: false,
-      currentPassword: '',
-      searchPhone: '',
+      currentPassword: "",
+      searchPhone: "",
       userList: [],
       currentPage: 1,
       pageSize: 5,
-      total: 0
+      total: 0,
     };
   },
   created() {
@@ -108,23 +111,26 @@ export default {
         pages.push(i);
       }
       return pages;
-    }
+    },
   },
   methods: {
     fetchUsers() {
-      adminApi.getUserList({
-        page: this.currentPage,
-        limit: this.pageSize,
-        mobile: this.searchPhone
-      }, ({ data }) => {
-        if (data.code === 0) {
-          this.userList = data.data.list.map(user => ({
-            ...user,
-            status: user.status === '1' ? '正常' : '禁用'
-          }));
-          this.total = data.data.total;
+      Api.admin.getUserList(
+        {
+          page: this.currentPage,
+          limit: this.pageSize,
+          mobile: this.searchPhone,
+        },
+        ({ data }) => {
+          if (data.code === 0) {
+            this.userList = data.data.list.map((user) => ({
+              ...user,
+              status: user.status === "1" ? "正常" : "禁用",
+            }));
+            this.total = data.data.total;
+          }
         }
-      });
+      );
     },
     handleSearch() {
       this.currentPage = 1;
@@ -136,118 +142,122 @@ export default {
     batchDelete() {
       const selectedUsers = this.$refs.userTable.selection;
       if (selectedUsers.length === 0) {
-        this.$message.warning('请先选择需要删除的用户');
+        this.$message.warning("请先选择需要删除的用户");
         return;
       }
 
-      this.$confirm(`确定要删除选中的${selectedUsers.length}个用户吗？`, '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        const loading = this.$loading({
-          lock: true,
-          text: '正在删除中...',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.7)'
-        });
+      this.$confirm(`确定要删除选中的${selectedUsers.length}个用户吗？`, "警告", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          const loading = this.$loading({
+            lock: true,
+            text: "正在删除中...",
+            spinner: "el-icon-loading",
+            background: "rgba(0, 0, 0, 0.7)",
+          });
 
-        try {
-          const results = await Promise.all(
-            selectedUsers.map(user => {
-              return new Promise((resolve) => {
-                adminApi.deleteUser(user.userid, ({ data }) => {
-                  if (data.code === 0) {
-                    resolve({ success: true, userid: user.userid });
-                  } else {
-                    resolve({ success: false, userid: user.userid, msg: data.msg });
-                  }
+          try {
+            const results = await Promise.all(
+              selectedUsers.map((user) => {
+                return new Promise((resolve) => {
+                  Api.admin.deleteUser(user.userid, ({ data }) => {
+                    if (data.code === 0) {
+                      resolve({ success: true, userid: user.userid });
+                    } else {
+                      resolve({ success: false, userid: user.userid, msg: data.msg });
+                    }
+                  });
                 });
-              });
-            })
-          );
+              })
+            );
 
-          const successCount = results.filter(r => r.success).length;
-          const failCount = results.length - successCount;
+            const successCount = results.filter((r) => r.success).length;
+            const failCount = results.length - successCount;
 
-          if (failCount === 0) {
-            this.$message.success(`成功删除${successCount}个用户`);
-          } else if (successCount === 0) {
-            this.$message.error(`删除失败，请重试`);
-          } else {
-            this.$message.warning(`成功删除${successCount}个用户，${failCount}个删除失败`);
+            if (failCount === 0) {
+              this.$message.success(`成功删除${successCount}个用户`);
+            } else if (successCount === 0) {
+              this.$message.error(`删除失败，请重试`);
+            } else {
+              this.$message.warning(
+                `成功删除${successCount}个用户，${failCount}个删除失败`
+              );
+            }
+
+            this.fetchUsers();
+          } catch (error) {
+            this.$message.error("删除过程中发生错误");
+          } finally {
+            loading.close();
           }
-
-          this.fetchUsers();
-        } catch (error) {
-          this.$message.error('删除过程中发生错误');
-        } finally {
-          loading.close();
-        }
-      }).catch(() => {
-        this.$message.info('已取消删除');
-      });
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
     },
     batchEnable() {
       const selectedUsers = this.$refs.userTable.selection;
       if (selectedUsers.length === 0) {
-        this.$message.warning('请先选择需要启用的用户');
+        this.$message.warning("请先选择需要启用的用户");
         return;
       }
-      selectedUsers.forEach(user => {
-        user.status = '正常';
+      selectedUsers.forEach((user) => {
+        user.status = "正常";
       });
-      this.$message.success('启用操作成功');
+      this.$message.success("启用操作成功");
     },
     batchDisable() {
-      this.userList.forEach(user => {
-        user.status = '禁用';
+      this.userList.forEach((user) => {
+        user.status = "禁用";
       });
-      this.$message.success('状态已更新为禁用');
+      this.$message.success("状态已更新为禁用");
     },
     resetPassword(row) {
-      this.$confirm('重置后将会生成新密码，是否继续？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
+      this.$confirm("重置后将会生成新密码，是否继续？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
       }).then(() => {
-        adminApi.resetUserPassword(row.userid, ({ data }) => {
+        Api.admin.resetUserPassword(row.userid, ({ data }) => {
           if (data.code === 0) {
-            this.currentPassword = data.data
-            this.showViewPassword = true
-            this.$message.success('密码已重置，请通知用户使用新密码登录')
+            this.currentPassword = data.data;
+            this.showViewPassword = true;
+            this.$message.success("密码已重置，请通知用户使用新密码登录");
           }
-        })
-      })
+        });
+      });
     },
     disableUser(row) {
-      row.status = '禁用';
-      console.log('禁用用户：', row);
+      row.status = "禁用";
     },
     restoreUser(row) {
-      row.status = '正常';
-      console.log('恢复用户：', row);
+      row.status = "正常";
     },
     deleteUser(row) {
-      this.$confirm('确定要删除该用户吗？', '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        adminApi.deleteUser(row.userid, ({ data }) => {
-          if (data.code === 0) {
-            this.$message.success('删除成功')
-            this.fetchUsers()
-          } else {
-            this.$message.error(data.msg || '删除失败')
-          }
+      this.$confirm("确定要删除该用户吗？", "警告", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          Api.admin.deleteUser(row.userid, ({ data }) => {
+            if (data.code === 0) {
+              this.$message.success("删除成功");
+              this.fetchUsers();
+            } else {
+              this.$message.error(data.msg || "删除失败");
+            }
+          });
         })
-      }).catch(() => { })
+        .catch(() => { });
     },
     headerCellClassName({ columnIndex }) {
       if (columnIndex === 0) {
-        return 'custom-selection-header'
+        return "custom-selection-header";
       }
-      return ''
+      return "";
     },
     goFirst() {
       this.currentPage = 1;
@@ -269,7 +279,7 @@ export default {
       this.currentPage = page;
       this.fetchUsers();
     },
-  }
+  },
 };
 </script>
 
@@ -320,7 +330,7 @@ export default {
 }
 
 .btn-search {
-  background: linear-gradient(135deg, #6B8CFF, #A966FF);
+  background: linear-gradient(135deg, #6b8cff, #a966ff);
   border: none;
   color: white;
 }
@@ -434,7 +444,7 @@ export default {
     padding: 0 12px;
     border-radius: 4px;
     border: 1px solid #e4e7ed;
-    background: #DEE7FF;
+    background: #dee7ff;
     color: #606266;
     font-size: 14px;
     cursor: pointer;
@@ -512,7 +522,7 @@ export default {
   }
 
   &::after {
-    content: '选择';
+    content: "选择";
     display: inline-block;
     color: black;
     font-weight: bold;

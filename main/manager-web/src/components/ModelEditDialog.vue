@@ -1,5 +1,6 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" width="975px" center custom-class="custom-dialog" :show-close="false" class="center-dialog">
+  <el-dialog :visible.sync="dialogVisible" width="975px" center custom-class="custom-dialog" :show-close="false"
+    class="center-dialog">
     <div style="margin: 0 18px; text-align: left; padding: 10px; border-radius: 10px;">
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
         修改模型
@@ -37,9 +38,10 @@
 
         <div style="display: flex; gap: 20px; margin-bottom: 0;">
           <el-form-item label="供应器" prop="supplier" style="flex: 1;">
-            <el-select v-model="form.supplier" placeholder="请选择" class="custom-select custom-input-bg" style="width: 100%;" @focus="loadProviders" filterable>
-              <el-option v-for="item in providers" :key="item.value" :label="item.label" :value="item.value"/>
-              </el-select>
+            <el-select v-model="form.supplier" placeholder="请选择" class="custom-select custom-input-bg"
+              style="width: 100%;" @focus="loadProviders" filterable>
+              <el-option v-for="item in providers" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
           </el-form-item>
           <el-form-item label="排序号" prop="sort" style="flex: 1;">
             <el-input v-model="form.sort" placeholder="请输入排序号" class="custom-input-bg"></el-input>
@@ -51,7 +53,8 @@
         </el-form-item>
 
         <el-form-item label="备注" prop="remark" class="prop-remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入模型备注" class="custom-input-bg"></el-input>
+          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入模型备注"
+            class="custom-input-bg"></el-input>
         </el-form-item>
       </el-form>
 
@@ -83,7 +86,7 @@
 </template>
 
 <script>
-import model from '@/apis/module/model'
+import Api from '@/apis/api';
 export default {
   name: "ModelConfigDialog",
   props: {
@@ -149,7 +152,7 @@ export default {
     loadProviders() {
       if (this.providersLoaded) return
 
-      model.getModelProviders(this.modelType, (data) => {
+      Api.model.getModelProviders(this.modelType, (data) => {
         this.providers = data.map(item => ({
           label: item.name,
           value: item.providerCode

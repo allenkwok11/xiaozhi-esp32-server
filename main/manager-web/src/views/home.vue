@@ -45,9 +45,10 @@
 </template>
 
 <script>
-import AddWisdomBodyDialog from '@/components/AddWisdomBodyDialog.vue'
-import DeviceItem from '@/components/DeviceItem.vue'
-import HeaderBar from '@/components/HeaderBar.vue'
+import Api from '@/apis/api';
+import AddWisdomBodyDialog from '@/components/AddWisdomBodyDialog.vue';
+import DeviceItem from '@/components/DeviceItem.vue';
+import HeaderBar from '@/components/HeaderBar.vue';
 
 export default {
   name: 'HomePage',
@@ -75,7 +76,6 @@ export default {
       this.$router.push('/role-config')
     },
     handleWisdomBodyAdded(res) {
-      console.log('新增智能体响应：', res);
       this.fetchAgentList();
       this.addDeviceDialogVisible = false;
     },
@@ -108,14 +108,12 @@ export default {
     },
     // 获取智能体列表
     fetchAgentList() {
-      import('@/apis/module/agent').then(({ default: userApi }) => {
-        userApi.getAgentList(({ data }) => {
-          this.originalDevices = data.data.map(item => ({
-            ...item,
-            agentId: item.id // 字段映射
-          }));
-          this.handleSearchReset(); // 重置搜索状态
-        });
+      Api.agent.getAgentList(({ data }) => {
+        this.originalDevices = data.data.map(item => ({
+          ...item,
+          agentId: item.id // 字段映射
+        }));
+        this.handleSearchReset(); // 重置搜索状态
       });
     },
     // 删除智能体
@@ -125,21 +123,19 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        import('@/apis/module/agent').then(({ default: userApi }) => {
-          userApi.deleteAgent(agentId, (res) => {
-            if (res.data.code === 0) {
-              this.$message.success({
-                message: '删除成功',
-                showClose: true
-              });
-              this.fetchAgentList(); // 刷新列表
-            } else {
-              this.$message.error({
-                message: res.data.msg || '删除失败',
-                showClose: true
-              });
-            }
-          });
+        Api.agent.deleteAgent(agentId, (res) => {
+          if (res.data.code === 0) {
+            this.$message.success({
+              message: '删除成功',
+              showClose: true
+            });
+            this.fetchAgentList(); // 刷新列表
+          } else {
+            this.$message.error({
+              message: res.data.msg || '删除失败',
+              showClose: true
+            });
+          }
         });
       }).catch(() => { });
     }
