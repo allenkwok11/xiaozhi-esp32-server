@@ -127,10 +127,10 @@ export default {
       models: [
         {label: '大语言模型(LLM)', key: 'llmModelId'},
         {label: '语音识别(ASR)', key: 'asrModelId'},
-        {label: '语音活动检测模型(VAD)', key: 'vadModelId'},
-        {label: '语音合成模型(TTS)', key: 'ttsModelId'},
-        {label: '意图识别模型(Intent)', key: 'intentModelId'},
-        {label: '记忆模型(Memory)', key: 'memModelId'}
+        {label: '语音活动检测(VAD)', key: 'vadModelId'},
+        {label: '语音合成(TTS)', key: 'ttsModelId'},
+        {label: '意图识别(Intent)', key: 'intentModelId'},
+        {label: '记忆(Memory)', key: 'memModelId'}
       ],
       templates: ['湾湾小何', '星际游子', '英语老师', '好奇男孩', '汪汪队长'],
       loadingTemplate: false

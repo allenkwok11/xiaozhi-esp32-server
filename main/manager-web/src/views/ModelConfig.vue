@@ -46,7 +46,7 @@
         <div class="content-area">
           <div class="title-bar">
             <div class="title-wrapper">
-            <h2 class="model-title">大语言模型（LLM）</h2>
+            <h2 class="model-title">{{ modelTypeText }}</h2>
             <el-button type="primary" size="small" @click="addModel" class="add-btn">
                添加
             </el-button>
@@ -63,12 +63,18 @@
 
           <el-table ref="modelTable" style="width: 100%" :header-cell-style="{background: 'transparent'}" :data="modelList"  class="data-table" header-row-class-name="table-header" :header-cell-class-name="headerCellClassName" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="55" align="center"></el-table-column>
-            <el-table-column label="模型名称" prop="candidateName" align="center"></el-table-column>
-            <el-table-column label="模型编码" prop="code" align="center"></el-table-column>
-            <el-table-column label="提供商" prop="supplier" align="center"></el-table-column>
+            <el-table-column label="模型名称" prop="modelName" align="center"></el-table-column>
+            <el-table-column label="模型编码" prop="modelCode" align="center"></el-table-column>
+            <el-table-column label="提供商" align="center">
+              <template slot-scope="scope">
+                {{ scope.row.configJson?.provider || '未知' }}
+              </template>
+            </el-table-column>
             <el-table-column label="是否启用" align="center">
               <template slot-scope="scope">
-                <el-switch v-model="scope.row.isApplied" class="custom-switch" :active-color="null" :inactive-color="null"/>
+                <el-switch v-model="scope.row.isEnabled" class="custom-switch"
+                           :active-value="1" :inactive-value="0"
+                           :active-color="null" :inactive-color="null"/>
               </template>
             </el-table-column>
             <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
@@ -112,7 +118,7 @@
         </div>
       </div>
 
-      <ModelEditDialog :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
+      <ModelEditDialog :modelType="activeTab" :visible.sync="editDialogVisible" :modelData="editModelData" @save="handleModelSave"/>
       <TtsModel :visible.sync="ttsDialogVisible" />
       <AddModelDialog  :modelType="activeTab" :visible.sync="addDialogVisible" @confirm="handleAddConfirm"/>
     </div>
@@ -128,6 +134,7 @@ import HeaderBar from "@/components/HeaderBar.vue";
 import ModelEditDialog from "@/components/ModelEditDialog.vue";
 import TtsModel from "@/components/TtsModel.vue";
 import AddModelDialog from "@/components/AddModelDialog.vue";
+import ModelApi from "@/apis/module/model";
 
 export default {
   components: { HeaderBar, ModelEditDialog, TtsModel, AddModelDialog },
@@ -139,20 +146,34 @@ export default {
       editDialogVisible: false,
       editModelData: {},
       ttsDialogVisible: false,
-      modelList: [
-        { code: 'DeepSeek', candidateName: '深度求索', isApplied: true, supplier: '硅基流动' },
-        { code: 'SmartAssist', candidateName: '智能助手', isApplied: false, supplier: '智脑科技' },
-        { code: 'CogEngine', candidateName: '认知引擎', isApplied: true, supplier: '云智科技' },
-      ],
+      modelList: [],
       currentPage: 1,
-      pageSize: 4,
-      total: 20,
+      pageSize: 5,
+      total: 0,
       selectedModels: [],
       isAllSelected: false
     };
   },
 
+  created() {
+    this.loadData();
+  },
+
   computed: {
+
+    modelTypeText() {
+      const map = {
+        vad: '语言活动检测模型(VAD)',
+        asr: '语音识别模型(ASR)',
+        llm: '大语言模型（LLM）',
+        intent: '意图识别模型(Intent)',
+        tts: '语音合成模型(TTS)',
+        memory: '记忆模型(Memory)'
+      }
+      return map[this.activeTab] || '模型配置'
+    },
+
+
     pageCount() {
       return Math.ceil(this.total / this.pageSize);
     },
@@ -182,51 +203,77 @@ export default {
     },
     handleMenuSelect(index) {
       this.activeTab = index;
+      this.currentPage = 1;
+      this.loadData();
     },
     handleSearch() {
       console.log('查询：', this.search);
     },
+    // 批量删除
     batchDelete() {
       if (this.selectedModels.length === 0) {
-        this.$message.warning('请先选择要删除的模型');
-        return;
+        this.$message.warning('请先选择要删除的模型')
+        return
       }
+
       this.$confirm('确定要删除选中的模型吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        const selectedIds = this.selectedModels.map(model => model.code);
-        this.modelList = this.modelList.filter(model => !selectedIds.includes(model.code));
-        this.$message.success('删除成功');
-        this.selectedModels = [];
-        this.isAllSelected = false;
+        const deletePromises = this.selectedModels.map(model =>
+          new Promise(resolve => {
+            ModelApi.deleteModel(
+              this.activeTab,
+              model.configJson?.provider || '',
+              model.id,
+              ({data}) => resolve(data.code === 0)
+            )
+          })
+        )
+
+        Promise.all(deletePromises).then(results => {
+          if (results.every(Boolean)) {
+            this.$message.success('批量删除成功')
+            this.loadData()
+          } else {
+            this.$message.error('部分删除失败')
+          }
+        })
       }).catch(() => {
-        this.$message.info('已取消删除');
-        });
-      },
+        this.$message.info('已取消删除')
+      })
+    },
     addModel() {
       this.addDialogVisible = true;
     },
     editModel(model) {
-      this.editModelData = {
-        code: model.code,
-        name: model.candidateName,
-        supplier: model.supplier,
-      };
+      this.editModelData = JSON.parse(JSON.stringify(model));
       this.editDialogVisible = true;
     },
+    // 删除单个模型
     deleteModel(model) {
-      this.$confirm(`确定要删除模型 ${model.candidateName} 吗?`, '提示', {
+      this.$confirm('确定要删除该模型吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.modelList = this.modelList.filter(item => item.code !== model.code);
-        this.$message.success('删除成功');
+        ModelApi.deleteModel(
+          this.activeTab,
+          model.configJson?.provider || '',  // 从configJson获取provider
+          model.id,
+          ({data}) => {
+            if (data.code === 0) {
+              this.$message.success('删除成功')
+              this.loadData()
+            } else {
+              this.$message.error(data.msg || '删除失败')
+            }
+          }
+        )
       }).catch(() => {
-        this.$message.info('已取消删除');
-      });
+        this.$message.info('已取消删除')
+      })
     },
     handleCurrentChange(page) {
       this.currentPage = page;
@@ -256,8 +303,27 @@ export default {
         this.isAllSelected = false;
       }
     },
+
+    // 新增模型配置
     handleAddConfirm(newModel) {
-      console.log('新增模型数据:', newModel);
+      const params = {
+        modelType: this.activeTab,
+        provideCode: newModel.supplier,
+        formData: {
+          ...newModel,
+          isDefault: newModel.isDefault ? 1 : 0,
+          isEnabled: newModel.isEnabled ? 1 : 0
+        }
+      };
+
+      ModelApi.addModel(params, ({data}) => {
+        if (data.code === 0) {
+          this.$message.success('新增成功');
+          this.loadData();
+        } else {
+          this.$message.error(data.msg || '新增失败');
+        }
+      });
     },
 
     // 分页器
@@ -281,8 +347,24 @@ export default {
       this.currentPage = page;
       this.loadData();
     },
+
+    // 获取模型配置列表
     loadData() {
-      console.log('加载数据，当前页:', this.currentPage);
+      const params = {
+        modelType: this.activeTab,
+        modelName: this.search,
+        page: this.currentPage,
+        limit: this.pageSize
+      };
+
+      ModelApi.getModelList(params, ({data}) => {
+        if (data.code === 0) {
+          this.modelList = data.data.list;
+          this.total = data.data.total;
+        } else {
+          this.$message.error(data.msg || '获取模型列表失败');
+        }
+      });
     }
   },
 };
@@ -637,7 +719,6 @@ export default {
   margin-top: 15px;
 
   /* 导航按钮样式 (首页、上一页、下一页) */
-
   .pagination-btn:first-child,
   .pagination-btn:nth-child(2),
   .pagination-btn:nth-last-child(2) {
@@ -663,7 +744,6 @@ export default {
   }
 
   /* 数字按钮样式 */
-
   .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)) {
     min-width: 28px;
     height: 32px;
