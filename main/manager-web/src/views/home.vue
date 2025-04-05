@@ -1,7 +1,7 @@
 <template>
   <div class="welcome">
       <!-- 公共头部 -->
-      <HeaderBar :devices="devices" @search-result="handleSearchResult" />
+      <HeaderBar :devices="devices" @search="handleSearch" @search-reset="handleSearchReset"  />
       <el-main style="padding: 20px;display: flex;flex-direction: column;">
         <div>
           <!-- 首页内容 -->
@@ -30,7 +30,7 @@
               </div>
             </div>
           </div>
-          <div style="display: flex;flex-wrap: wrap;margin-top: 20px;gap: 20px;justify-content: flex-start;box-sizing: border-box;">
+          <div class="device-list-container">
             <DeviceItem v-for="(item,index) in devices" :key="index" :device="item"
                         @configure="goToRoleConfig"
                         @deviceManage="handleDeviceManage"
@@ -60,6 +60,8 @@ export default {
       addDeviceDialogVisible: false,
       devices: [],
       originalDevices: [],
+      isSearching: false,
+      searchRegex: null
     }
   },
 
@@ -83,21 +85,41 @@ export default {
     handleDeviceManage() {
       this.$router.push('/device-management');
     },
-    // 获取智能体列表
-    fetchAgentList() {
-      import('@/apis/module/agent').then(({ default: userApi }) => {
-        userApi.getAgentList(({data}) => {
-        this.originalDevices = data.data.map(item => ({
-          ...item,
-          agentId: item.id // 字段映射
-        }));
-        this.devices = this.originalDevices;
-        });
+    handleSearch(regex) {
+      this.isSearching = true;
+      this.searchRegex = regex;
+      this.applySearchFilter();
+    },
+    handleSearchReset() {
+      this.isSearching = false;
+      this.searchRegex = null;
+      this.devices = [...this.originalDevices];
+    },
+    applySearchFilter() {
+      if (!this.isSearching || !this.searchRegex) {
+        this.devices = [...this.originalDevices];
+        return;
+      }
+
+      this.devices = this.originalDevices.filter(device => {
+        return this.searchRegex.test(device.agentName);
       });
     },
     // 搜索更新智能体列表
     handleSearchResult(filteredList) {
       this.devices = filteredList; // 更新设备列表
+    },
+    // 获取智能体列表
+    fetchAgentList() {
+      import('@/apis/module/agent').then(({ default: userApi }) => {
+        userApi.getAgentList(({data}) => {
+          this.originalDevices = data.data.map(item => ({
+            ...item,
+            agentId: item.id // 字段映射
+          }));
+          this.handleSearchReset(); // 重置搜索状态
+        });
+      });
     },
     // 删除智能体
     handleDeleteAgent(agentId) {
@@ -220,4 +242,27 @@ export default {
     align-items: center;
   }
 }
+
+.device-list-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 30px;
+  padding: 30px 0;
+}
+
+/* 在 DeviceItem.vue 的样式中 */
+.device-item {
+  margin: 0 !important; /* 避免冲突 */
+  width: auto !important;
+}
+
+.footer {
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: auto;
+  padding-top: 30px;
+  color: #979db1;
+  text-align: center; /* 居中显示 */
+}
+
 </style>

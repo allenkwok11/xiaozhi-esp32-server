@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -36,8 +34,6 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
     private final ModelConfigDao modelConfigDao;
     private final ModelProviderService modelProviderService;
     private final TimbreService timbreService;
-
-    private static final Logger logger = LoggerFactory.getLogger(ModelConfigServiceImpl.class);
 
     @Override
     public List<String> getModelCodeList(String modelType, String modelName) {

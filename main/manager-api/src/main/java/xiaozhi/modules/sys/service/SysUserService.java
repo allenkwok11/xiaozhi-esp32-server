@@ -19,7 +19,12 @@ public interface SysUserService extends BaseService<SysUserEntity> {
 
     void save(SysUserDTO dto);
 
-    void delete(Long[] ids);
+    /**
+     * 删除指定用户，且有关联的数据设备和智能体
+     * 
+     * @param ids
+     */
+    void deleteById(Long ids);
 
     /**
      * 验证是否允许修改密码更改

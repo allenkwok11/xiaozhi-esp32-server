@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import xiaozhi.common.page.PageData;
@@ -61,5 +62,12 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
         }
 
         return super.insert(entity);
+    }
+
+    @Override
+    public void deleteAgentByUserId(String userId) {
+        UpdateWrapper<AgentEntity> wrapper = new UpdateWrapper<>();
+        wrapper.eq("user_id", userId);
+        baseDao.delete(wrapper);
     }
 }
