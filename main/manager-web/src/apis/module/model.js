@@ -75,9 +75,9 @@ export default {
       }).send()
   },
   // 删除模型配置
-  deleteModel(modelType, provideCode, id, callback) {
+  deleteModel(id, callback) {
     RequestService.sendRequest()
-      .url(`${getServiceUrl()}/api/v1/models/models/${modelType}/${provideCode}/${id}`)
+      .url(`${getServiceUrl()}/api/v1/models/models/${id}`)
       .method('DELETE')
       .success((res) => {
         RequestService.clearRequestTime()
@@ -87,7 +87,7 @@ export default {
         console.error('删除模型失败:', err)
         this.$message.error(err.msg || '删除模型失败')
         RequestService.reAjaxFun(() => {
-          this.deleteModel(modelType, provideCode, id, callback)
+          this.deleteModel(id, callback)
         })
       }).send()
   },

@@ -101,7 +101,7 @@
             <div class="batch-actions">
               <el-button size="mini" @click="selectAll" style="width: 75px; background: #606ff3">{{ isAllSelected ?
                 '取消全选' : '全选'
-              }}</el-button>
+                }}</el-button>
               <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">
                 删除
               </el-button>
@@ -229,9 +229,8 @@ export default {
       }).then(() => {
         const deletePromises = this.selectedModels.map(model =>
           new Promise(resolve => {
+            // TODO: 删除获取model.id
             Api.model.deleteModel(
-              this.activeTab,
-              model.configJson?.provider || '',
               model.id,
               ({ data }) => resolve(data.code === 0)
             )

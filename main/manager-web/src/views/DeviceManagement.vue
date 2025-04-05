@@ -94,10 +94,6 @@ export default {
       this.deviceList[index].isEdit = false;
     },
     handleUnbind(device_id) {
-      if (!this.deviceApi) {
-        this.$message.error('功能模块加载失败');
-        return;
-      }
       this.$confirm('确认要解绑该设备吗？', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
