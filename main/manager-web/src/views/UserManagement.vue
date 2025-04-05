@@ -24,14 +24,12 @@
               <el-table-column label="状态" prop="status" align="center"></el-table-column>
               <el-table-column label="操作" align="center">
                 <template slot-scope="scope">
-                  <el-button size="mini" type="text" @click="resetPassword(scope.row)"
-                    style="color: #989fdd">重置密码</el-button>
+                  <el-button size="mini" type="text" @click="resetPassword(scope.row)">重置密码</el-button>
                   <el-button size="mini" type="text" v-if="scope.row.status === '正常'"
                     @click="disableUser(scope.row)">禁用账户</el-button>
                   <el-button size="mini" type="text" v-if="scope.row.status === '禁用'"
                     @click="restoreUser(scope.row)">恢复账号</el-button>
-                  <el-button size="mini" type="text" @click="deleteUser(scope.row)"
-                    style="color: #989fdd">删除用户</el-button>
+                  <el-button size="mini" type="text" @click="deleteUser(scope.row)">删除用户</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -310,7 +308,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-bottom: 1px solid #ebeef5;
 }
 
 .page-title {
@@ -341,6 +338,7 @@ export default {
   height: 100%;
   border-radius: 15px;
   background: transparent;
+  border: 1px solid #fff;
 }
 
 .content-area {

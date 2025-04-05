@@ -409,7 +409,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-bottom: 1px solid #ebeef5;
 }
 
 .page-title {
@@ -430,6 +429,7 @@ export default {
   height: 100%;
   border-radius: 15px;
   background: transparent;
+  border: 1px solid #fff;
 }
 
 .nav-panel {
