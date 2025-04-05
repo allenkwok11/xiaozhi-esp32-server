@@ -13,13 +13,13 @@
           <img loading="lazy" alt="" src="@/assets/header/robot.png" :style="{ filter: $route.path === '/home' ? 'brightness(0) invert(1)' : 'None' }"/>
           智能体管理
         </div>
-        <div v-if="isSuperAdmin" class="equipment-management" :class="{ 'active-tab': $route.path === '/user-management' }" @click="goUserManagement">
-          <img loading="lazy" alt="" src="@/assets/header/user_management.png" :style="{ filter: $route.path === '/user-management' ? 'brightness(0) invert(1)' : 'None' }"/>
-          用户管理
-        </div>
         <div v-if="isSuperAdmin" class="equipment-management" :class="{ 'active-tab': $route.path === '/model-config' }" @click="goModelConfig">
           <img loading="lazy" alt="" src="@/assets/header/model_config.png" :style="{ filter: $route.path === '/model-config' ? 'brightness(0) invert(1)' : 'None' }"/>
           模型配置
+        </div>
+        <div v-if="isSuperAdmin" class="equipment-management" :class="{ 'active-tab': $route.path === '/user-management' }" @click="goUserManagement">
+          <img loading="lazy" alt="" src="@/assets/header/user_management.png" :style="{ filter: $route.path === '/user-management' ? 'brightness(0) invert(1)' : 'None' }"/>
+          用户管理
         </div>
       </div>
 
@@ -41,9 +41,8 @@
              {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item icon="el-icon-plus" @click.native="">个人中心</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-circle-plus" @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
-            <el-dropdown-item icon="el-icon-circle-plus-outline" @click.native="handleLogout">退出登录</el-dropdown-item>
+            <el-dropdown-item @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
+            <el-dropdown-item @click.native="handleLogout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -56,8 +55,8 @@
 
 <script>
 import userApi from '@/apis/module/user';
-import ChangePasswordDialog from './ChangePasswordDialog.vue'; // 引入修改密码弹窗组件
 import { mapActions, mapGetters } from 'vuex';
+import ChangePasswordDialog from './ChangePasswordDialog.vue'; // 引入修改密码弹窗组件
 
 
 export default {
@@ -187,8 +186,7 @@ export default {
 }
 
 .brand-img {
-  width: 58px;
-  height: 12px;
+  height: 18px;
 }
 
 .header-center {

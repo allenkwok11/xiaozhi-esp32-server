@@ -5,7 +5,7 @@
         <div
             style="display: flex;align-items: center;margin-top: 15px;margin-left: 10px;gap: 10px;">
           <img loading="lazy" alt="" src="@/assets/xiaozhi-logo.png" style="width: 45px;height: 45px;"/>
-          <img loading="lazy" alt="" src="@/assets/xiaozhi-ai.png" style="width: 70px;height: 13px;"/>
+          <img loading="lazy" alt="" src="@/assets/xiaozhi-ai.png" style="height: 18px;"/>
         </div>
       </el-header>
       <div class="login-person">
@@ -66,8 +66,8 @@
 </template>
 
 <script>
-import {getUUID, goToPage, showDanger, showSuccess} from '@/utils'
 import Api from '@/apis/api';
+import { getUUID, goToPage, showDanger, showSuccess } from '@/utils';
 
 
 export default {

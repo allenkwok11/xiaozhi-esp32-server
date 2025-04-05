@@ -15,7 +15,8 @@
           <el-table-column label="最近对话" prop="lastConversation" width="140"></el-table-column>
           <el-table-column label="备注" width="180">
             <template slot-scope="scope">
-              <el-input v-if="scope.row.isEdit" v-model="scope.row.remark" size="mini" @blur="stopEditRemark(scope.$index)"></el-input>
+              <el-input v-if="scope.row.isEdit" v-model="scope.row.remark" size="mini"
+                @blur="stopEditRemark(scope.$index)"></el-input>
               <span v-else>
                 <i v-if="!scope.row.remark" class="el-icon-edit" @click="startEditRemark(scope.$index, scope.row)"></i>
                 <span v-else @click="startEditRemark(scope.$index, scope.row)">
@@ -26,7 +27,8 @@
           </el-table-column>
           <el-table-column label="OTA升级" width="120">
             <template slot-scope="scope">
-              <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+              <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66"
+                inactive-color="#ff4949"></el-switch>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="80">
@@ -37,31 +39,25 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-pagination
-          class="pagination"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="currentPage"
-          :page-sizes="[5, 10, 20, 50]"
-          :page-size="pageSize"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="deviceList.length"
-        ></el-pagination>
+        <el-pagination class="pagination" @size-change="handleSizeChange" @current-change="handleCurrentChange"
+          :current-page="currentPage" :page-sizes="[5, 10, 20, 50]" :page-size="pageSize"
+          layout="total, sizes, prev, pager, next, jumper" :total="deviceList.length"></el-pagination>
       </div>
       <div class="copyright">
         ©2025 xiaozhi-esp32-server
       </div>
-      <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId" @refresh="fetchBindDevices(currentAgentId)"  />
+      <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId"
+        @refresh="fetchBindDevices(currentAgentId)" />
     </el-main>
   </div>
 </template>
 
 <script>
-import HeaderBar from "@/components/HeaderBar.vue";
 import AddDeviceDialog from "@/components/AddDeviceDialog.vue";
+import HeaderBar from "@/components/HeaderBar.vue";
 
 export default {
-  components: {HeaderBar, AddDeviceDialog },
+  components: { HeaderBar, AddDeviceDialog },
   data() {
     return {
       addDeviceDialogVisible: false,
@@ -112,14 +108,14 @@ export default {
         this.deviceApi.unbindDevice(device_id, ({ data }) => {
           if (data.code === 0) {
             this.$message.success({
-                message: '设备解绑成功',
-                showClose: true
+              message: '设备解绑成功',
+              showClose: true
             });
             this.fetchBindDevices(this.$route.query.agentId);
           } else {
             this.$message.error({
-            message: data.msg || '设备解绑失败',
-            showClose: true
+              message: data.msg || '设备解绑失败',
+              showClose: true
             });
           }
         });
@@ -141,7 +137,7 @@ export default {
             this.deviceList = data.data.map(device => {
               // 格式化绑定时间
               const bindDate = new Date(device.createDate);
-              const formattedBindTime = `${bindDate.getFullYear()}-${(bindDate.getMonth()+1).toString().padStart(2, '0')}-${bindDate.getDate().toString().padStart(2, '0')} ${bindDate.getHours().toString().padStart(2, '0')}:${bindDate.getMinutes().toString().padStart(2, '0')}:${bindDate.getSeconds().toString().padStart(2, '0')}`;
+              const formattedBindTime = `${bindDate.getFullYear()}-${(bindDate.getMonth() + 1).toString().padStart(2, '0')}-${bindDate.getDate().toString().padStart(2, '0')} ${bindDate.getHours().toString().padStart(2, '0')}:${bindDate.getMinutes().toString().padStart(2, '0')}:${bindDate.getSeconds().toString().padStart(2, '0')}`;
               return {
                 device_id: device.id,
                 model: device.board,
@@ -156,8 +152,8 @@ export default {
                 rawBindTime: new Date(device.createDate).getTime()
               };
             })
-            // 按照绑定时间降序排序
-            .sort((a, b) => a.rawBindTime - b.rawBindTime);
+              // 按照绑定时间降序排序
+              .sort((a, b) => a.rawBindTime - b.rawBindTime);
           } else {
             this.$message.error(data.msg || '获取设备列表失败');
           }
@@ -207,6 +203,7 @@ export default {
   font-size: 14px;
   gap: 8px;
   margin-bottom: 15px;
+
   &:hover {
     background: #3a8ee6;
   }
