@@ -13,7 +13,7 @@ export default {
     }).toString();
 
     RequestService.sendRequest()
-      .url(`${getServiceUrl()}/models/models/list?${queryParams}`)
+      .url(`${getServiceUrl()}/models/list?${queryParams}`)
       .method('GET')
       .success((res) => {
         RequestService.clearRequestTime()
@@ -59,7 +59,7 @@ export default {
     };
 
     RequestService.sendRequest()
-      .url(`${getServiceUrl()}/models/models/${modelType}/${provideCode}`)
+      .url(`${getServiceUrl()}/models/${modelType}/${provideCode}`)
       .method('POST')
       .data(postData)
       .success((res) => {
@@ -77,7 +77,7 @@ export default {
   // 删除模型配置
   deleteModel(id, callback) {
     RequestService.sendRequest()
-      .url(`${getServiceUrl()}/models/models/${id}`)
+      .url(`${getServiceUrl()}/models/${id}`)
       .method('DELETE')
       .success((res) => {
         RequestService.clearRequestTime()
@@ -91,6 +91,38 @@ export default {
         })
       }).send()
   },
-
-
+  // 获取模型名称列表
+  getModelNames(modelType, modelName, callback) {
+    RequestService.sendRequest()
+      .url(`${getServiceUrl()}/models/names`)
+      .method('GET')
+      .data({ modelType, modelName })
+      .success((res) => {
+        RequestService.clearRequestTime();
+        callback(res);
+      })
+      .fail(() => {
+        RequestService.reAjaxFun(() => {
+          this.getModelNames(modelType, modelName, callback);
+        });
+      }).send();
+  },
+  // 获取模型音色列表
+  getModelVoices(modelId, voiceName, callback) {
+    const queryParams = new URLSearchParams({
+      voiceName: voiceName || ''
+    }).toString();
+    RequestService.sendRequest()
+      .url(`${getServiceUrl()}/models/${modelId}/voices?${queryParams}`)
+      .method('GET')
+      .success((res) => {
+        RequestService.clearRequestTime();
+        callback(res);
+      })
+      .fail(() => {
+        RequestService.reAjaxFun(() => {
+          this.getModelVoices(modelId, voiceName, callback);
+        });
+      }).send();
+  },
 }
