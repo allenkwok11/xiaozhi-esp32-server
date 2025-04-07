@@ -15,11 +15,11 @@
         <div style="display: flex; align-items: center; gap: 20px;">
           <div style="display: flex; align-items: center;">
             <span style="margin-right: 8px;">是否启用</span>
-            <el-switch v-model="form.isEnable" class="custom-switch"></el-switch>
+                <el-switch v-model="form.isEnabled" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
           <div style="display: flex; align-items: center;">
             <span style="margin-right: 8px;">设为默认</span>
-            <el-switch v-model="form.isDefault" class="custom-switch"></el-switch>
+                <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
         </div>
       </div>
@@ -29,16 +29,16 @@
       <el-form :model="form" ref="form" label-width="100px" label-position="left" class="custom-form">
         <div style="display: flex; gap: 20px; margin-bottom: 0;">
           <el-form-item label="模型名称" prop="name" style="flex: 1;">
-            <el-input v-model="form.name" placeholder="请输入模型名称" class="custom-input-bg"></el-input>
+            <el-input v-model="form.modelName" placeholder="请输入模型名称" class="custom-input-bg"></el-input>
           </el-form-item>
           <el-form-item label="模型编码" prop="code" style="flex: 1;">
-            <el-input v-model="form.code" placeholder="请输入模型编码" class="custom-input-bg"></el-input>
+            <el-input v-model="form.modelCode" placeholder="请输入模型编码" class="custom-input-bg"></el-input>
           </el-form-item>
         </div>
 
         <div style="display: flex; gap: 20px; margin-bottom: 0;">
           <el-form-item label="供应器" prop="supplier" style="flex: 1;">
-            <el-select v-model="form.supplier" placeholder="请选择" class="custom-select custom-input-bg"
+            <el-select v-model="form.modelType" placeholder="请选择" class="custom-select custom-input-bg"
               style="width: 100%;" @focus="loadProviders" filterable>
               <el-option v-for="item in providers" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
@@ -49,7 +49,7 @@
         </div>
 
         <el-form-item label="文档地址" prop="docUrl" style="margin-bottom: 27px;">
-          <el-input v-model="form.docUrl" placeholder="请输入文档地址" class="custom-input-bg"></el-input>
+          <el-input v-model="form.docLink" placeholder="请输入文档地址" class="custom-input-bg"></el-input>
         </el-form-item>
 
         <el-form-item label="备注" prop="remark" class="prop-remark">
@@ -64,7 +64,7 @@
       <el-form :model="form" label-width="100px" label-position="left" class="custom-form">
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
           <el-form-item label="模型名称" prop="modelName" style="flex: 0.5; margin-bottom: 0;">
-            <el-input v-model="form.modelName" placeholder="请输入model_name" class="custom-input-bg"></el-input>
+            <el-input v-model="form.name" placeholder="请输入model_name" class="custom-input-bg"></el-input>
           </el-form-item>
           <el-form-item label="接口地址" prop="apiUrl" style="flex: 1; margin-bottom: 0;">
             <el-input v-model="form.apiUrl" placeholder="请输入base_url" class="custom-input-bg"></el-input>
@@ -87,11 +87,37 @@
 
 <script>
 import Api from '@/apis/api';
+
+const DEFAULT_CONFIG_JSON = {
+  provider: "",
+  type: "",
+  base_url: "",
+  model_name: "",
+  api_key: "",
+  raw: {},
+  config: {
+    keyComparator: {},
+    ignoreError: 0,
+    ignoreCase: 0,
+    dateFormat: "",
+    ignoreNullValue: false,
+    transientSupport: false,
+    stripTrailingZeros: false,
+    checkDuplicate: false,
+    order: false
+  },
+  empty: false
+};
+
 export default {
-  name: "ModelConfigDialog",
-  props: {
+  name: "ModelEditDialog",
+    props: {
     visible: { type: Boolean, default: false },
-    configData: { type: Object, default: () => ({}) },
+    modelData: {
+      type: Object,
+      default: () => ({}),
+      validator: value => typeof value === 'object' && !Array.isArray(value)
+    },
     modelType: { type: String, required: true }
   },
   data() {
@@ -100,17 +126,18 @@ export default {
       providers: [],
       providersLoaded: false,
       form: {
-        code: "",
-        name: "",
-        supplier: "",
-        isDefault: true,
-        isEnable: true,
-        docUrl: "",
-        sort: 123,
-        remark: "",
-        apiUrl: "",
+        id: "",
+        modelType: "",
+        modelCode: "",
         modelName: "",
-        apiKey: ""
+        isDefault: false,
+        isEnabled: false,
+        docLink: "",
+        remark: "",
+        sort: 0,
+        apiKey: "",
+        apiUrl: "",
+        configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
       }
     };
   },
@@ -121,45 +148,108 @@ export default {
     dialogVisible(val) {
       this.$emit('update:visible', val);
       if (!val) {
-        this.form = {
-          code: "",
-          name: "",
-          supplier: "",
-        };
+        this.resetForm();
+      } else if (val && this.modelData.id) {
+        this.loadModelData();
       }
     },
     visible(val) {
       this.dialogVisible = val;
-      if (val) {
-        this.form = JSON.parse(JSON.stringify({
-          ...this.form,
-          ...this.configData
-        }));
-        this.resetProviders();
-      }
-    },
+    }
   },
   methods: {
+    resetForm() {
+      this.form = {
+        id: "",
+        modelType: "",
+        modelCode: "",
+        modelName: "",
+        isDefault: false,
+        isEnabled: false,
+        docLink: "",
+        remark: "",
+        sort: 0,
+        apiKey: "",
+        apiUrl: "",
+        configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
+      };
+    },
     resetProviders() {
-      this.providers = []
-      this.providersLoaded = false
+      this.providers = [];
+      this.providersLoaded = false;
+    },
+    loadModelData() {
+      if (this.modelData.id) {
+        Api.model.getModelConfig(this.modelData.id, ({ data }) => {
+          if (data.code === 0 && data.data) {
+            const model = data.data;
+
+            this.loadProviders();
+
+            let configJson = model.configJson || {};
+            if (typeof configJson !== 'object' || Array.isArray(configJson)) {
+              console.warn('Invalid configJson format, using default');
+              configJson = {};
+            }
+
+            this.form = {
+              id: model.id || "",
+              modelType: model.modelType || "",
+              modelCode: model.modelCode || "",
+              modelName: model.modelName || "",
+              isDefault: model.isDefault || 0,
+              isEnabled: model.isEnabled || 0,
+              docLink: model.docLink || "",
+              remark: model.remark || "",
+              sort: model.sort || 0,
+              apiKey: configJson.api_key || "",
+              apiUrl: configJson.base_url || "",
+              name:configJson.model_name,
+              configJson: {
+                ...JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON)),
+                ...configJson,
+                config: {
+                  ...DEFAULT_CONFIG_JSON.config,
+                  ...(configJson.config || {})
+                }
+              }
+            };
+          }
+        });
+      }
     },
     handleSave() {
-      this.$emit("submit", this.form);
+      const formData = {
+        modelCode: this.form.code,
+        modelName: this.form.name,
+        supplier: this.form.supplier,
+        isDefault: this.form.isDefault ? 1 : 0,
+        isEnabled: this.form.isEnable ? 1 : 0,
+        docLink: this.form.docUrl,
+        sort: this.form.sort,
+        remark: this.form.remark,
+        configJson: {
+          provider: this.form.supplier,
+          modelName: this.form.modelName,
+          apiUrl: this.form.apiUrl,
+          apiKey: this.form.apiKey
+        }
+      };
+      this.$emit("save", formData);
       this.dialogVisible = false;
     },
-
     loadProviders() {
-      if (this.providersLoaded) return
+      if (this.providersLoaded) return;
 
       Api.model.getModelProviders(this.modelType, (data) => {
         this.providers = data.map(item => ({
           label: item.name,
           value: item.providerCode
-        }))
-        this.providersLoaded = true
-      })
+        }));
+        this.providersLoaded = true;
+      });
     },
+
   }
 };
 </script>
