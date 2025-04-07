@@ -53,7 +53,7 @@
             </div>
             <div class="action-group">
               <div class="search-group">
-                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable />
+                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable @keyup.enter="handleSearch" />
                 <el-button type="primary" size="small" class="search-btn" @click="handleSearch">
                   查询
                 </el-button>
@@ -212,8 +212,8 @@ export default {
       this.loadData();
     },
     handleSearch() {
-      // TODO: 查询
-      console.log('查询：', this.search);
+      this.currentPage = 1;
+      this.loadData();
     },
     // 批量删除
     batchDelete() {
