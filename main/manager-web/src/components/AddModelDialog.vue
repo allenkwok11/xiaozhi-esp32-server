@@ -140,7 +140,7 @@ export default {
 
       this.$emit('confirm', {
         ...this.formData,
-        provideType: this.formData.supplier,
+        provideCode: this.formData.supplier,
         configJson: this.formData.configJson
       });
       this.$emit('update:visible', false);

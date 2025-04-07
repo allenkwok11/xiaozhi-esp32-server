@@ -52,7 +52,7 @@ export default {
       modelName: formData.modelName,
       isDefault: formData.isDefault ? 1 : 0,
       isEnabled: formData.isEnabled ? 1 : 0,
-      configJson: JSON.stringify(formData.configJson),
+      configJson: formData.configJson,
       docLink: formData.docLink,
       remark: formData.remark,
       sort: formData.sort || 0

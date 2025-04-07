@@ -315,11 +315,12 @@ export default {
     handleAddConfirm(newModel) {
       const params = {
         modelType: this.activeTab,
-        provideCode: newModel.supplier,
+        provideCode: newModel.provideCode,
         formData: {
           ...newModel,
           isDefault: newModel.isDefault ? 1 : 0,
-          isEnabled: newModel.isEnabled ? 1 : 0
+          isEnabled: newModel.isEnabled ? 1 : 0,
+          configJson: newModel.configJson
         }
       };
 
