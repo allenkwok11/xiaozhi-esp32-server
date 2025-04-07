@@ -38,7 +38,7 @@
 
         <div style="display: flex; gap: 20px; margin-bottom: 0;">
           <el-form-item label="供应器" prop="supplier" style="flex: 1;">
-            <el-select v-model="form.modelType" placeholder="请选择" class="custom-select custom-input-bg"
+            <el-select v-model="form.configJson.type" placeholder="请选择" class="custom-select custom-input-bg"
               style="width: 100%;" @focus="loadProviders" filterable>
               <el-option v-for="item in providers" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
@@ -184,7 +184,6 @@ export default {
           if (data.code === 0 && data.data) {
             const model = data.data;
 
-            this.loadProviders();
 
             let configJson = model.configJson || {};
             if (typeof configJson !== 'object' || Array.isArray(configJson)) {
