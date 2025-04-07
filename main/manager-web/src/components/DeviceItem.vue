@@ -6,7 +6,7 @@
       </div>
       <div>
         <img src="@/assets/home/delete.png" alt=""
-             style="width: 18px;height: 18px;margin-right: 10px;" />
+             style="width: 18px;height: 18px;margin-right: 10px;" @click.stop="handleDelete" />
         <img src="@/assets/home/info.png" alt="" style="width: 18px;height: 18px;" />
       </div>
     </div>
@@ -17,16 +17,16 @@
       音色模型：{{ device.ttsVoiceName }}
     </div>
     <div style="display: flex;gap: 10px;align-items: center;">
-      <div class="settings-btn" @click="$emit('configure')">
+      <div class="settings-btn" @click="handleConfigure">
         配置角色
       </div>
-      <div class="settings-btn">
-        声纹识别
-      </div>
-      <div class="settings-btn">
-        历史对话
-      </div>
-      <div class="settings-btn"  @click="$emit('deviceManage')">
+<!--      <div class="settings-btn">-->
+<!--        声纹识别-->
+<!--      </div>-->
+<!--      <div class="settings-btn">-->
+<!--        历史对话-->
+<!--      </div>-->
+      <div class="settings-btn"  @click="handleDeviceManage">
         设备管理
       </div>
     </div>
@@ -44,6 +44,17 @@ export default {
   },
   data() {
     return { switchValue: false }
+  },
+  methods: {
+    handleDelete() {
+      this.$emit('delete', this.device.agentId)
+    },
+    handleConfigure() {
+      this.$router.push({ path: '/role-config', query: { agentId: this.device.agentId } });
+    },
+    handleDeviceManage() {
+      this.$router.push({ path: '/device-management', query: { agentId: this.device.agentId } });
+    }
   }
 }
 </script>

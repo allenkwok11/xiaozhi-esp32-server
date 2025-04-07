@@ -118,12 +118,19 @@ class TTSProviderBase(ABC):
     async def finish_session(self, session_id):
         pass
 
-    async def tts_one_sentence(self, text, u_id=None):
+    def tts_one_sentence(self,conn, text, u_id=None):
         if not u_id:
             u_id = str(uuid.uuid4()).replace("-", "")
-        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=u_id, msg_type=MsgType.START_TTS_REQUEST, content=''))
-        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=u_id, msg_type=MsgType.TTS_TEXT_REQUEST, content=text))
-        self.tts.tts_text_queue.put(TTSMessageDTO(u_id=u_id, msg_type=MsgType.STOP_TTS_REQUEST, content=text))
+        conn.u_id = u_id
+        self.tts_text_queue.put(
+            TTSMessageDTO(u_id=u_id, msg_type=MsgType.START_TTS_REQUEST, content="")
+        )
+        self.tts_text_queue.put(
+            TTSMessageDTO(u_id=u_id, msg_type=MsgType.TTS_TEXT_REQUEST, content=text)
+        )
+        self.tts_text_queue.put(
+            TTSMessageDTO(u_id=u_id, msg_type=MsgType.STOP_TTS_REQUEST, content="")
+        )
 
     def _enable_two_way_tts(self):
         while not self.stop_event.is_set():
@@ -272,7 +279,6 @@ class TTSProviderBase(ABC):
     @abstractmethod
     def generate_filename(self):
         pass
-
 
     @abstractmethod
     async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):

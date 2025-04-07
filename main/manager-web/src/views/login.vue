@@ -4,15 +4,18 @@
       <el-header>
         <div
             style="display: flex;align-items: center;margin-top: 15px;margin-left: 10px;gap: 10px;">
-          <img src="@/assets/xiaozhi-logo.png" alt="" style="width: 45px;height: 45px;"/>
-          <img src="@/assets/xiaozhi-ai.png" alt="" style="width: 70px;height: 13px;"/>
+          <img loading="lazy" alt="" src="@/assets/xiaozhi-logo.png" style="width: 45px;height: 45px;"/>
+          <img loading="lazy" alt="" src="@/assets/xiaozhi-ai.png" style="width: 70px;height: 13px;"/>
         </div>
       </el-header>
+      <div class="login-person">
+        <img loading="lazy" alt="" src="@/assets/login/login-person.png" style="width: 100%;"/>
+      </div>
       <el-main style="position: relative;">
-        <div class="login-box">
+        <div class="login-box" @keyup.enter="login">
           <div
               style="display: flex;align-items: center;gap: 20px;margin-bottom: 39px;padding: 0 30px;">
-            <img src="@/assets/login/hi.png" alt="" style="width: 34px;height: 34px;"/>
+            <img loading="lazy" alt="" src="@/assets/login/hi.png" style="width: 34px;height: 34px;"/>
             <div class="login-text">登录</div>
             <div class="login-welcome">
               WELCOME TO LOGIN
@@ -20,19 +23,19 @@
           </div>
           <div style="padding: 0 30px;">
             <div class="input-box">
-              <img src="@/assets/login/username.png" alt="" class="input-icon"/>
+              <img loading="lazy" alt="" class="input-icon" src="@/assets/login/username.png"/>
               <el-input v-model="form.username" placeholder="请输入用户名"/>
             </div>
             <div class="input-box">
-              <img src="@/assets/login/password.png" alt="" class="input-icon"/>
-              <el-input v-model="form.password" type="password" placeholder="请输入密码"/>
+              <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png"/>
+              <el-input v-model="form.password" placeholder="请输入密码" type="password"/>
             </div>
             <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
               <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
-                <img src="@/assets/login/shield.png" alt="" class="input-icon"/>
+                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png"/>
                 <el-input v-model="form.captcha" placeholder="请输入验证码" style="flex: 1;"/>
               </div>
-              <img v-if="captchaUrl"
+              <img loading="lazy" v-if="captchaUrl"
                    :src="captchaUrl"
                    alt="验证码"
                    style="width: 150px; height: 40px; cursor: pointer;"
@@ -54,7 +57,7 @@
         </div>
       </el-main>
       <el-footer>
-        <div style="font-size: 12px;font-weight: 400;color: #979db1;">
+        <div class="copyright">
           ©2025 xiaozhi-esp32-server
         </div>
       </el-footer>
@@ -87,8 +90,11 @@ export default {
   },
   methods: {
     fetchCaptcha() {
+      console.log(this.$store.getters.getToken)
       if (this.$store.getters.getToken) {
-        goToPage('/home')
+        if (this.$route.path !== '/home'){
+          this.$router.push('/home')
+        }
       } else {
         this.captchaUuid = getUUID();
 
@@ -96,42 +102,51 @@ export default {
           if (res.status === 200) {
             const blob = new Blob([res.data], {type: res.data.type});
             this.captchaUrl = URL.createObjectURL(blob);
-
           } else {
-            console.error('验证码加载异常:', error);
-            showDanger('验证码加载失败，点击刷新')
+            showDanger('验证码加载失败，点击刷新');
           }
         });
       }
     },
 
+    // 封装输入验证逻辑
+    validateInput(input, message) {
+      if (!input.trim()) {
+        showDanger(message);
+        return false;
+      }
+      return true;
+    },
+
     async login() {
-      if (!this.form.username.trim()) {  // 替换isNull校验
-        showDanger('用户名不能为空')
-        return
+      // 验证用户名
+      if (!this.validateInput(this.form.username, '用户名不能为空')) {
+        return;
       }
-      if (!this.form.password.trim()) {  // 替换isNull校验
-        showDanger('密码不能为空')
-        return
+      // 验证密码
+      if (!this.validateInput(this.form.password, '密码不能为空')) {
+        return;
       }
-      if (!this.form.captcha.trim()) {  // 替换isNull校验
-        showDanger('验证码不能为空')
-        return
+      // 验证验证码
+      if (!this.validateInput(this.form.captcha, '验证码不能为空')) {
+        return;
       }
 
       this.form.captchaId = this.captchaUuid
       Api.user.login(this.form, ({data}) => {
-        console.log(data)
-        showSuccess('登陆成功！')
-        
-        this.$store.commit('setToken', JSON.stringify(data.data))
-
-        goToPage('/home')
+        if (data.code === 0) {
+          showSuccess('登录成功！');
+          this.$store.commit('setToken', JSON.stringify(data.data));
+          goToPage('/home');
+        } else {
+          showDanger(data.msg || '登录失败');
+        }
       })
 
+      // 重新获取验证码
       setTimeout(() => {
-        this.fetchCaptcha()
-      }, 1000)
+        this.fetchCaptcha();
+      }, 1000);
     },
 
     goToRegister() {
@@ -140,6 +155,6 @@ export default {
   }
 }
 </script>
-<style scoped lang="scss">
+<style lang="scss" scoped>
 @import './auth.scss'; // 添加这行引用
 </style>

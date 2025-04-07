@@ -146,6 +146,7 @@ tmp
 .history
 .DS_Store
 main/xiaozhi-server/data
+main/xiaozhi-server/config/assets/wakeup_words.*
 main/manager-web/node_modules
 .config.yaml
 .secrets.yaml
@@ -160,3 +161,7 @@ main/xiaozhi-server/models/sherpa-onnx*
 /asr-models/iic/SenseVoiceSmall/
 /main/xiaozhi-server/asr-models/iic/SenseVoiceSmall/
 /models/SenseVoiceSmall/model.pt
+my_wakeup_words.mp3
+main/manager-api/.vscode
+# Ignore webpack cache directory
+main/manager-web/.webpack_cache/

@@ -1,16 +1,15 @@
-本文档是开发类文档，如需部署小智服务端，[点击这里查看部署教程](../../README.md#%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F-)
+本文档是开发类文档，如需部署小智服务端，[点击这里查看部署教程](.././FAQ.md#%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F-)
 # 项目介绍
 
 manager-api 该项目基于SpringBoot框架开发。
 
 开发使用代码编辑器，导入项目时，选择`manager-api`文件夹作为项目目录
 
-参照[manager前后端接口协议](https://app.apifox.com/invite/project?token=H_8qhgfjUeaAL0wybghgU)开发
-
 # 开发环境
 JDK 21
 Maven 3.8+
 MySQL 8.0+
+Redis 5.0+
 Vue 3.x
 
 # 创建数据库
@@ -42,6 +41,30 @@ spring:
     username: root
     password: 123456
 ```
+
+
+# 连接Redis
+
+如果还没有Redis，你可以通过docker安装redis
+
+```
+docker run --name xiaozhi-esp32-server-redis -d -p 6379:6379 redis
+```
+
+# 确认项目Redis连接信息
+
+在`src/main/resources/application-dev.yml`中配置Redis连接信息
+
+```
+spring:
+    data:
+      redis:
+        host: localhost
+        port: 6379
+        password:
+        database: 0
+```
+
 
 # 测试启动
 

@@ -2,8 +2,11 @@ from config.logger import setup_logging
 import json
 from core.handle.abortHandle import handleAbortMessage
 from core.handle.helloHandle import handleHelloMessage
+from core.utils.util import remove_punctuation_and_length
 from core.handle.receiveAudioHandle import startToChat, handleAudioMessage
+from core.handle.sendAudioHandle import send_stt_message, send_tts_message
 from core.handle.iotHandle import handleIotDescriptors, handleIotStatus
+import asyncio
 
 TAG = __name__
 logger = setup_logging()
@@ -32,17 +35,31 @@ async def handleTextMessage(conn, message):
                 conn.client_have_voice = True
                 conn.client_voice_stop = True
                 if len(conn.asr_audio) > 0:
-                    await handleAudioMessage(conn, b'')
+                    await handleAudioMessage(conn, b"")
             elif msg_json["state"] == "detect":
                 conn.asr_server_receive = False
                 conn.client_have_voice = False
                 conn.asr_audio.clear()
                 if "text" in msg_json:
-                    await startToChat(conn, msg_json["text"])
+                    text = msg_json["text"]
+                    _, text = remove_punctuation_and_length(text)
+
+                    # 识别是否是唤醒词
+                    is_wakeup_words = text in conn.config.get("wakeup_words")
+                    # 是否开启唤醒词回复
+                    enable_greeting = conn.config.get("enable_greeting", True)
+
+                    if is_wakeup_words and not enable_greeting:
+                        # 如果是唤醒词，且关闭了唤醒词回复，就不用回答
+                        await send_stt_message(conn, text)
+                        await send_tts_message(conn, "stop", None)
+                    else:
+                        # 否则需要LLM对文字内容进行答复
+                        await startToChat(conn, text)
         elif msg_json["type"] == "iot":
             if "descriptors" in msg_json:
-                await handleIotDescriptors(conn, msg_json["descriptors"])
+                asyncio.create_task(handleIotDescriptors(conn, msg_json["descriptors"]))
             if "states" in msg_json:
-                await handleIotStatus(conn, msg_json["states"])
+                asyncio.create_task(handleIotStatus(conn, msg_json["states"]))
     except json.JSONDecodeError:
         await conn.websocket.send(message)

@@ -85,16 +85,18 @@ class WebSocketServer:
         server_config = self.config["server"]
         host = server_config["ip"]
         port = server_config["port"]
-        selected_module = self.config.get("selected_module")
-        self.logger.bind(tag=TAG).info(
-            f"selected_module values: {', '.join(selected_module.values())}"
-        )
 
         self.logger.bind(tag=TAG).info(
-            "Server is running at ws://{}:{}", get_local_ip(), port
+            "Server is running at ws://{}:{}/xiaozhi/v1/", get_local_ip(), port
         )
         self.logger.bind(tag=TAG).info(
             "=======上面的地址是websocket协议地址，请勿用浏览器访问======="
+        )
+        self.logger.bind(tag=TAG).info(
+            "如想测试websocket请用谷歌浏览器打开test目录下的test_page.html"
+        )
+        self.logger.bind(tag=TAG).info(
+            "=============================================================\n"
         )
         async with websockets.serve(self._handle_connection, host, port):
             await asyncio.Future()
@@ -102,7 +104,6 @@ class WebSocketServer:
     async def _handle_connection(self, websocket):
         """处理新连接，每次创建独立的ConnectionHandler"""
         # 创建ConnectionHandler时传入当前server实例
-        # tts 变成链接的时候创建，避免并非问题
         handler = ConnectionHandler(
             self.config,
             self._vad,
