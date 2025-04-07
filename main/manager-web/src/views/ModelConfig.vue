@@ -229,7 +229,6 @@ export default {
       }).then(() => {
         const deletePromises = this.selectedModels.map(model =>
           new Promise(resolve => {
-            // TODO: 删除获取model.id
             Api.model.deleteModel(
               model.id,
               ({ data }) => resolve(data.code === 0)
@@ -264,8 +263,6 @@ export default {
         type: 'warning'
       }).then(() => {
         Api.model.deleteModel(
-          this.activeTab,
-          model.configJson?.provider || '',  // 从configJson获取provider
           model.id,
           ({ data }) => {
             if (data.code === 0) {

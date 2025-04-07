@@ -74,23 +74,23 @@ export default {
         })
       }).send()
   },
-  // 删除模型配置
-  deleteModel(id, callback) {
-    RequestService.sendRequest()
-      .url(`${getServiceUrl()}/models/${id}`)
-      .method('DELETE')
-      .success((res) => {
-        RequestService.clearRequestTime()
-        callback(res)
+// 删除模型配置
+deleteModel(id, callback) {
+  RequestService.sendRequest()
+    .url(`${getServiceUrl()}/models/${id}`)
+    .method('DELETE')
+    .success((res) => {
+      RequestService.clearRequestTime()
+      callback(res)
+    })
+    .fail((err) => {
+      console.error('删除模型失败:', err)
+      this.$message.error(err.msg || '删除模型失败')
+      RequestService.reAjaxFun(() => {
+        this.deleteModel(id, callback)
       })
-      .fail((err) => {
-        console.error('删除模型失败:', err)
-        this.$message.error(err.msg || '删除模型失败')
-        RequestService.reAjaxFun(() => {
-          this.deleteModel(id, callback)
-        })
-      }).send()
-  },
+    }).send()
+},
   // 获取模型名称列表
   getModelNames(modelType, modelName, callback) {
     RequestService.sendRequest()
