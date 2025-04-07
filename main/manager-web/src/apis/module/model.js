@@ -142,5 +142,22 @@ export default {
         })
       }).send()
   },
+    // 启用/禁用模型状态
+    updateModelStatus(id, status, callback) {
+      RequestService.sendRequest()
+        .url(`${getServiceUrl()}/models/enable/${id}/${status}`)
+        .method('PUT')
+        .success((res) => {
+          RequestService.clearRequestTime()
+          callback(res)
+        })
+        .fail((err) => {
+          console.error('更新模型状态失败:', err)
+          this.$message.error(err.msg || '更新模型状态失败')
+          RequestService.reAjaxFun(() => {
+            this.updateModelStatus(id, status, callback)
+          })
+        }).send()
+    },
 
 }

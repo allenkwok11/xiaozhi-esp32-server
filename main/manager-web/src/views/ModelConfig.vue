@@ -75,7 +75,7 @@
             <el-table-column label="是否启用" align="center">
               <template slot-scope="scope">
                 <el-switch v-model="scope.row.isEnabled" class="custom-switch" :active-value="1" :inactive-value="0"
-                  :active-color="null" :inactive-color="null" />
+                  @change="handleStatusChange(scope.row)" />
               </template>
             </el-table-column>
             <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
@@ -370,6 +370,29 @@ export default {
           this.$message.error(data.msg || '获取模型列表失败');
         }
       });
+    },
+     // 处理启用/禁用状态变更
+    handleStatusChange(model) {
+      const newStatus = model.isEnabled ? 1 : 0
+      const originalStatus = model.isEnabled
+      
+      model.isEnabled = !model.isEnabled
+
+      Api.model.updateModelStatus(
+        model.id,
+        newStatus,
+        ({ data }) => {
+          if (data.code === 0) {
+            this.$message.success(newStatus === 1 ? '启用成功' : '禁用成功')
+            // 保持新状态
+            model.isEnabled = newStatus
+          } else {
+            // 操作失败时恢复原状态
+            model.isEnabled = originalStatus
+            this.$message.error(data.msg || '操作失败')
+          }
+        }
+      )
     }
   },
 };
