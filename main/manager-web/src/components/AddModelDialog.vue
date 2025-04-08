@@ -5,8 +5,7 @@
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
         添加模型
       </div>
-
-      <!-- 关闭按钮 -->
+      
       <button class="custom-close-btn" @click="handleClose">
         ×
       </button>
@@ -61,23 +60,28 @@
       </el-form>
 
       <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">调用信息</div>
-      <div style="height: 2px; background: #e9e9e9; margin-bottom: 15px;"></div>
+      <div style="height: 2px; background: #e9e9e9; margin-bottom: 22px;"></div>
 
-      <el-form :model="formData" label-width="100px" label-position="left" class="custom-form">
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-          <el-form-item label="模型名称" prop="param1" style="flex: 0.5; margin-bottom: 0;">
-            <el-input v-model="formData.configJson.param1" placeholder="请输入model_name"
-              class="custom-input-bg"></el-input>
-          </el-form-item>
-          <el-form-item label="接口地址" prop="param2" style="flex: 1; margin-bottom: 0;">
-            <el-input v-model="formData.configJson.param2" placeholder="请输入base_url" class="custom-input-bg"></el-input>
-          </el-form-item>
-        </div>
-
-        <el-form-item label="秘钥信息" prop="apiKey">
-          <el-input v-model="formData.configJson.apiKey" placeholder="请输入api_key" show-password
-            class="custom-input-bg"></el-input>
-        </el-form-item>
+      <el-form :model="formData.configJson" label-width="100px" label-position="left" class="custom-form">
+        <template v-for="(row, rowIndex) in chunkedCallInfoFields">
+          <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
+            <el-form-item
+              v-for="field in row"
+              :key="field.prop"
+              :label="field.label"
+              :prop="field.prop"
+              style="flex: 1;"
+            >
+              <el-input
+                v-model="formData.configJson[field.prop]"
+                :placeholder="field.placeholder"
+                :type="field.type || 'text'"
+                class="custom-input-bg"
+                :show-password="field.type === 'password'"
+              ></el-input>
+            </el-form-item>
+          </div>
+        </template>
       </el-form>
     </div>
 
@@ -110,12 +114,60 @@ export default {
         remark: '',
         isEnabled: true,
         isDefault: true,
-        configJson: {
-          param1: '',
-          param2: '',
-          apiKey: ''
-        }
+        configJson: {}
       }
+    }
+  },
+  watch: {
+    visible(val) {
+      if(val) {
+        this.initConfigJson();
+      }
+    }
+  },
+  computed: {
+    callInfoFields() {
+      const fieldsMap = {
+        llm: [
+          { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+          { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+          { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
+        ],
+        vad: [
+          { label: '模型目录', prop: 'model_dir', placeholder: '请输入model_dir' },
+          { label: '阈值', prop: 'threshold', placeholder: '请输入threshold' },
+          { label: '静音时长', prop: 'min_silence_duration_ms', placeholder: '请输入min_silence_duration_ms' }
+        ],
+        asr: [
+          { label: 'App ID', prop: 'appid', placeholder: '请输入appid' },
+          { label: '集群', prop: 'cluster', placeholder: '请输入cluster' },
+          { label: '访问令牌', prop: 'access_token', placeholder: '请输入access_token', type: 'password' },
+          { label: '输出目录', prop: 'output_dir', placeholder: '请输入output_dir' }
+        ],
+        intent: [
+          { label: '模型', prop: 'llm', placeholder: '请输入model' },
+          { label: '类型', prop: 'type', placeholder: '请输入类型' }
+        ],
+        tts: [
+          { label: '模型', prop: 'model', placeholder: '请输入model' },
+          { label: '语音ID', prop: 'voice_id', placeholder: '请输入voice_id' },
+          { label: 'Group ID', prop: 'group_id', placeholder: '请输入group_id' },
+          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
+        ],
+        memory: [
+          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
+          { label: '类型', prop: 'type', placeholder: '请输入类型' }
+        ]
+      };
+      return fieldsMap[this.modelType] || [];
+    },
+    chunkedCallInfoFields() {
+      const chunkSize = 2;
+      const result = [];
+      for (let i = 0; i < this.callInfoFields.length; i += chunkSize) {
+        result.push(this.callInfoFields.slice(i, i + chunkSize));
+      }
+      return result;
     }
   },
   methods: {
@@ -131,18 +183,51 @@ export default {
         this.providersLoaded = true
       })
     },
+    // 初始化配置
+    initConfigJson() {
+      const defaultConfig = {};
+      this.callInfoFields.forEach(field => {
+        defaultConfig[field.prop] = '';
+      });
+      this.formData.configJson = { ...defaultConfig };
+    },
     confirm() {
-      if (!this.formData.modelName || !this.formData.modelCode || !this.formData.supplier ||
-        !this.formData.configJson.param1 || !this.formData.configJson.param2 || !this.formData.configJson.apiKey) {
+
+      const baseRequiredFields = [
+        this.formData.modelName,
+        this.formData.modelCode,
+        this.formData.supplier
+      ];
+
+      const callInfoRequiredFields = this.callInfoFields.map(
+        field => this.formData.configJson[field.prop]
+      );
+
+      const allRequiredFields = [...baseRequiredFields, ...callInfoRequiredFields];
+
+      if (allRequiredFields.some(field => !field)) {
         this.$message.error('请填写所有必填字段');
         return;
       }
 
-      this.$emit('confirm', {
-        ...this.formData,
+      const submitData = {
+        modelName: this.formData.modelName,
+        modelCode: this.formData.modelCode,
+        supplier: this.formData.supplier,
+        sort: this.formData.sort,
+        docLink: this.formData.docLink,
+        remark: this.formData.remark,
+        isEnabled: this.formData.isEnabled ? 1 : 0,
+        isDefault: this.formData.isDefault ? 1 : 0,
         provideCode: this.formData.supplier,
-        configJson: this.formData.configJson
-      });
+        configJson: {
+          ...this.formData.configJson,
+          type: this.formData.supplier
+        }
+      };
+
+      this.$emit('confirm', submitData);
+
       this.$emit('update:visible', false);
       this.resetForm();
     },
@@ -156,11 +241,7 @@ export default {
         remark: '',
         isEnabled: true,
         isDefault: true,
-        configJson: {
-          param1: '',
-          param2: '',
-          apiKey: ''
-        }
+        configJson: {}
       };
       // 重置加载状态
       this.providers = [];
