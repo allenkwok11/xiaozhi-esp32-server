@@ -109,9 +109,9 @@ selected_module:
   # 语音活动检测模块，默认使用SileroVAD模型
   VAD: SileroVAD
   # 语音识别模块，默认使用FunASR本地模型
-  ASR: AliyunASR
+  ASR: FunASR
   # 将根据配置名称对应的type调用实际的LLM适配器
-  LLM: AliLLM
+  LLM: ChatGLMLLM
   # TTS将根据配置名称对应的type调用实际的TTS适配器
   TTS: EdgeTTS
   # 记忆模块，默认不开启记忆；如果想使用超长记忆，推荐使用mem0ai；如果注重隐私，请使用本地的mem_local_short
@@ -249,7 +249,7 @@ LLM:
     # 可在这里找到你的 api_key https://bailian.console.aliyun.com/?apiKey=1#/api-key
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     model_name: qwen-turbo
-    api_key: sk-a8b1fe19c885431c8a3769e18c02541e
+    api_key: 你的阿里云大模型 key
     temperature: 0.7  # 温度值
     max_tokens: 500   # 最大生成token数
     top_p: 1         
