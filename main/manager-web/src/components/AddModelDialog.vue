@@ -6,6 +6,7 @@
         添加模型
       </div>
 
+
       <button class="custom-close-btn" @click="handleClose">
         ×
       </button>
@@ -70,15 +71,14 @@
               :key="field.prop"
               :label="field.label"
               :prop="field.prop"
-              style="flex: 1;"
-            >
+              style="flex: 1;">
               <el-input
                 v-model="formData.configJson[field.prop]"
                 :placeholder="field.placeholder"
                 :type="field.type || 'text'"
                 class="custom-input-bg"
-                :show-password="field.type === 'password'"
-              ></el-input>
+                :show-password="field.type === 'password'">
+              </el-input>
             </el-form-item>
           </div>
         </template>
@@ -105,6 +105,8 @@ export default {
     return {
       providers: [],
       providersLoaded: false,
+      providerFields: [],
+      currentProvider: null,
       formData: {
         modelName: '',
         modelCode: '',
@@ -123,49 +125,22 @@ export default {
       if(val) {
         this.initConfigJson();
       }
+    },
+    'formData.supplier'(newVal) {
+      this.currentProvider = this.providers.find(p => p.value === newVal);
+      this.providerFields = this.currentProvider?.fields || [];
+      this.initDynamicConfig();
     }
   },
   computed: {
-    callInfoFields() {
-      const fieldsMap = {
-        llm: [
-          { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-          { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-          { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        vad: [
-          { label: '模型目录', prop: 'model_dir', placeholder: '请输入model_dir' },
-          { label: '阈值', prop: 'threshold', placeholder: '请输入threshold' },
-          { label: '静音时长', prop: 'min_silence_duration_ms', placeholder: '请输入min_silence_duration_ms' }
-        ],
-        asr: [
-          { label: 'App ID', prop: 'appid', placeholder: '请输入appid' },
-          { label: '集群', prop: 'cluster', placeholder: '请输入cluster' },
-          { label: '访问令牌', prop: 'access_token', placeholder: '请输入access_token', type: 'password' },
-          { label: '输出目录', prop: 'output_dir', placeholder: '请输入output_dir' }
-        ],
-        intent: [
-          { label: '模型', prop: 'llm', placeholder: '请输入model' },
-          { label: '类型', prop: 'type', placeholder: '请输入类型' }
-        ],
-        tts: [
-          { label: '模型', prop: 'model', placeholder: '请输入model' },
-          { label: '语音ID', prop: 'voice_id', placeholder: '请输入voice_id' },
-          { label: 'Group ID', prop: 'group_id', placeholder: '请输入group_id' },
-          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
-        ],
-        memory: [
-          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
-          { label: '类型', prop: 'type', placeholder: '请输入类型' }
-        ]
-      };
-      return fieldsMap[this.modelType] || [];
+    dynamicCallInfoFields() {
+      return this.providerFields;
     },
     chunkedCallInfoFields() {
       const chunkSize = 2;
       const result = [];
-      for (let i = 0; i < this.callInfoFields.length; i += chunkSize) {
-        result.push(this.callInfoFields.slice(i, i + chunkSize));
+      for (let i = 0; i < this.dynamicCallInfoFields.length; i += chunkSize) {
+        result.push(this.dynamicCallInfoFields.slice(i, i + chunkSize));
       }
       return result;
     }
@@ -178,45 +153,44 @@ export default {
       Api.model.getModelProviders(this.modelType, (data) => {
         this.providers = data.map(item => ({
           label: item.name,
-          value: item.providerCode
+          value: item.providerCode,
+          fields: JSON.parse(item.fields || '[]').map(f => ({
+            label: f.label,
+            prop: f.key,
+            type: f.type === 'password' ? 'password' : 'text',
+            placeholder: `请输入${f.label}`
+          }))
         }))
         this.providersLoaded = true
       })
     },
-    // 初始化配置
     initConfigJson() {
       const defaultConfig = {};
-      this.callInfoFields.forEach(field => {
+      this.providerFields.forEach(field => {
         defaultConfig[field.prop] = '';
       });
       this.formData.configJson = { ...defaultConfig };
     },
+    initDynamicConfig() {
+      const newConfig = {};
+      this.providerFields.forEach(field => {
+        newConfig[field.prop] = this.formData.configJson[field.prop] || '';
+      });
+      this.formData.configJson = newConfig;
+    },
     confirm() {
-
-      const baseRequiredFields = [
-        this.formData.modelName,
-        this.formData.modelCode,
-        this.formData.supplier
-      ];
-
-      const callInfoRequiredFields = this.callInfoFields.map(
-        field => this.formData.configJson[field.prop]
-      );
-
-      const allRequiredFields = [...baseRequiredFields, ...callInfoRequiredFields];
-
-      if (allRequiredFields.some(field => !field)) {
-        this.$message.error('请填写所有必填字段');
+      if (!this.formData.supplier) {
+        this.$message.error('请选择供应器');
         return;
       }
 
       const submitData = {
-        modelName: this.formData.modelName,
-        modelCode: this.formData.modelCode,
+        modelName: this.formData.modelName || '',
+        modelCode: this.formData.modelCode || '',
         supplier: this.formData.supplier,
-        sort: this.formData.sort,
-        docLink: this.formData.docLink,
-        remark: this.formData.remark,
+        sort: this.formData.sort || 1,
+        docLink: this.formData.docLink || '',
+        remark: this.formData.remark || '',
         isEnabled: this.formData.isEnabled ? 1 : 0,
         isDefault: this.formData.isDefault ? 1 : 0,
         provideCode: this.formData.supplier,
@@ -227,7 +201,6 @@ export default {
       };
 
       this.$emit('confirm', submitData);
-
       this.$emit('update:visible', false);
       this.resetForm();
     },
@@ -246,6 +219,9 @@ export default {
       // 重置加载状态
       this.providers = [];
       this.providersLoaded = false;
+      // 重置字段配置
+      this.providerFields = [];
+      this.currentProvider = null;
     },
     handleClose() {
       this.resetForm();

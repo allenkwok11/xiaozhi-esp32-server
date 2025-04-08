@@ -147,34 +147,40 @@ export default {
     callInfoFields() {
       const fieldsMap = {
         llm: [
-          { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-          { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-          { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
+            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
         ],
         vad: [
-          { label: '模型目录', prop: 'model_dir', placeholder: '请输入model_dir' },
-          { label: '阈值', prop: 'threshold', placeholder: '请输入threshold' },
-          { label: '静音时长', prop: 'min_silence_duration_ms', placeholder: '请输入min_silence_duration_ms' }
+            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+            { label: '模型目录', prop: 'model_dir', placeholder: '请输入model_dir' },
+            { label: '阈值', prop: 'threshold', placeholder: '请输入threshold' },
+            { label: '静音时长', prop: 'min_silence_duration_ms', placeholder: '请输入min_silence_duration_ms' },
+            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
         ],
         asr: [
-          { label: 'App ID', prop: 'appid', placeholder: '请输入appid' },
-          { label: '集群', prop: 'cluster', placeholder: '请输入cluster' },
-          { label: '访问令牌', prop: 'access_token', placeholder: '请输入access_token', type: 'password' },
-          { label: '输出目录', prop: 'output_dir', placeholder: '请输入output_dir' }
+            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+            { label: '集群', prop: 'cluster', placeholder: '请输入cluster' },
+            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
         ],
         intent: [
-          { label: '模型', prop: 'llm', placeholder: '请输入model' },
-          { label: '类型', prop: 'type', placeholder: '请输入类型' }
+            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+            { label: 'LLM模型', prop: 'llm', placeholder: '请输入llm' },
+            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
         ],
         tts: [
-          { label: '模型', prop: 'model', placeholder: '请输入model' },
-          { label: '语音ID', prop: 'voice_id', placeholder: '请输入voice_id' },
-          { label: 'Group ID', prop: 'group_id', placeholder: '请输入group_id' },
-          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
+            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+            { label: '语音ID', prop: 'voice_id', placeholder: '请输入voice_id' },
+            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
         ],
         memory: [
-          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
-          { label: '类型', prop: 'type', placeholder: '请输入类型' }
+            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
         ]
       };
 
