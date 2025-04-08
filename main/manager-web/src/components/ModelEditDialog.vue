@@ -61,10 +61,11 @@
       <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">调用信息</div>
       <div style="height: 2px; background: #e9e9e9; margin-bottom: 22px;"></div>
 
-      <el-form :model="form.configJson" ref="callInfoForm" label-width="100px" label-position="left" class="custom-form">
+      <el-form :model="form.configJson" ref="callInfoForm" label-width="100px" class="custom-form">
         <template v-for="(row, rowIndex) in chunkedCallInfoFields">
           <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
-            <el-form-item v-for="field in row"
+            <el-form-item
+              v-for="field in row"
               :key="field.prop"
               :label="field.label"
               :prop="field.prop"
@@ -72,7 +73,7 @@
               <el-input
                 v-model="form.configJson[field.prop]"
                 :placeholder="field.placeholder"
-                :type="field.type || 'text'"
+                :type="field.type"
                 class="custom-input-bg"
                 :show-password="field.type === 'password'">
               </el-input>
@@ -129,6 +130,7 @@ export default {
       dialogVisible: this.visible,
       providers: [],
       providersLoaded: false,
+      dynamicCallInfoFields: [],
       form: {
         id: "",
         modelType: "",
@@ -144,53 +146,11 @@ export default {
     };
   },
   computed: {
-    callInfoFields() {
-      const fieldsMap = {
-        llm: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        vad: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '模型目录', prop: 'model_dir', placeholder: '请输入model_dir' },
-            { label: '阈值', prop: 'threshold', placeholder: '请输入threshold' },
-            { label: '静音时长', prop: 'min_silence_duration_ms', placeholder: '请输入min_silence_duration_ms' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        asr: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '集群', prop: 'cluster', placeholder: '请输入cluster' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        intent: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: 'LLM模型', prop: 'llm', placeholder: '请输入llm' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        tts: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '语音ID', prop: 'voice_id', placeholder: '请输入voice_id' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ],
-        memory: [
-            { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
-            { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
-            { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
-        ]
-      };
-
-      return fieldsMap[this.modelType] || [];
-    },
     chunkedCallInfoFields() {
       const chunkSize = 2;
       const result = [];
-      for (let i = 0; i < this.callInfoFields.length; i += chunkSize) {
-        result.push(this.callInfoFields.slice(i, i + chunkSize));
+      for (let i = 0; i < this.dynamicCallInfoFields.length; i += chunkSize) {
+        result.push(this.dynamicCallInfoFields.slice(i, i + chunkSize));
       }
       return result;
     },
@@ -209,7 +169,12 @@ export default {
     },
     visible(val) {
       this.dialogVisible = val;
+    },
+    'form.configJson.type'(newVal) {
+    if (newVal) {
+      this.loadProviderFields(newVal);
     }
+  }
   },
   methods: {
     resetForm() {
@@ -230,19 +195,18 @@ export default {
       this.providers = [];
       this.providersLoaded = false;
     },
-    loadModelData() {
+    async loadModelData() {
       if (this.modelData.id) {
-        Api.model.getModelConfig(this.modelData.id, ({ data }) => {
+        Api.model.getModelConfig(this.modelData.id, async ({ data }) => {
           if (data.code === 0 && data.data) {
             const model = data.data;
 
-            let configJson = model.configJson || {};
-            if (typeof configJson !== 'object' || Array.isArray(configJson)) {
-              console.warn('Invalid configJson format, using default');
-              configJson = {};
-            }
+            // 获取供应器字段配置
+            await this.loadProviderFields(model.configJson.type);
 
-            this.callInfoFields.forEach(field => {
+            // 初始化configJson
+            let configJson = model.configJson || {};
+            this.dynamicCallInfoFields.forEach(field => {
               if (!configJson.hasOwnProperty(field.prop)) {
                 configJson[field.prop] = '';
               }
@@ -306,6 +270,19 @@ export default {
         this.providersLoaded = true;
       });
     },
+    async loadProviderFields(providerCode) {
+      Api.model.getModelProviders(this.modelType, (data) => {
+        const provider = data.find(p => p.providerCode === providerCode);
+        if (provider) {
+          this.dynamicCallInfoFields = JSON.parse(provider.fields || '[]').map(f => ({
+            label: f.label,
+            prop: f.key,
+            type: f.type === 'password' ? 'password' : 'text',
+            placeholder: `请输入${f.label}`
+          }));
+        }
+      });
+    }
   }
 };
 </script>

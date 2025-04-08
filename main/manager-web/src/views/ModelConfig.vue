@@ -69,7 +69,7 @@
             <el-table-column label="模型编码" prop="modelCode" align="center"></el-table-column>
             <el-table-column label="提供商" align="center">
               <template slot-scope="scope">
-                {{ scope.row.configJson?.provider || '未知' }}
+                {{ scope.row.configJson.type || '未知' }}
               </template>
             </el-table-column>
             <el-table-column label="是否启用" align="center">
