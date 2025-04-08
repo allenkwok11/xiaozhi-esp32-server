@@ -53,7 +53,7 @@
             </div>
             <div class="action-group">
               <div class="search-group">
-                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable />
+                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable @keyup.enter="handleSearch" />
                 <el-button type="primary" size="small" class="search-btn" @click="handleSearch">
                   查询
                 </el-button>
@@ -212,8 +212,8 @@ export default {
       this.loadData();
     },
     handleSearch() {
-      // TODO: 查询
-      console.log('查询：', this.search);
+      this.currentPage = 1;
+      this.loadData();
     },
     // 批量删除
     batchDelete() {
@@ -301,9 +301,21 @@ export default {
       // TODO: 导出配置
       console.log('导出配置');
     },
-    handleModelSave(formData) {
-      // TODO: 保存模型数据
-      console.log('保存的模型数据：', formData);
+    handleModelSave({ provideCode, formData }) {
+      const modelType = this.activeTab;
+      const id = formData.id;
+      Api.model.updateModel(
+        { modelType, provideCode, id, formData },
+        ({ data }) => {
+          if (data.code === 0) {
+            this.$message.success('保存成功');
+            this.loadData();
+            this.editDialogVisible = false;
+          } else {
+            this.$message.error(data.msg || '保存失败');
+          }
+        }
+      );
     },
     selectAll() {
       if (this.isAllSelected) {
