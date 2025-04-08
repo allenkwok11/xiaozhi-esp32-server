@@ -15,11 +15,11 @@
         <div style="display: flex; align-items: center; gap: 20px;">
           <div style="display: flex; align-items: center;">
             <span style="margin-right: 8px;">是否启用</span>
-                <el-switch v-model="form.isEnabled" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
+            <el-switch v-model="form.isEnabled" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
           <div style="display: flex; align-items: center;">
             <span style="margin-right: 8px;">设为默认</span>
-                <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
+            <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
         </div>
       </div>
@@ -59,21 +59,26 @@
       </el-form>
 
       <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">调用信息</div>
-      <div style="height: 2px; background: #e9e9e9; margin-bottom: 15px;"></div>
+      <div style="height: 2px; background: #e9e9e9; margin-bottom: 22px;"></div>
 
-      <el-form :model="form" label-width="100px" label-position="left" class="custom-form">
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-          <el-form-item label="模型名称" prop="modelName" style="flex: 0.5; margin-bottom: 0;">
-            <el-input v-model="form.name" placeholder="请输入model_name" class="custom-input-bg"></el-input>
-          </el-form-item>
-          <el-form-item label="接口地址" prop="apiUrl" style="flex: 1; margin-bottom: 0;">
-            <el-input v-model="form.apiUrl" placeholder="请输入base_url" class="custom-input-bg"></el-input>
-          </el-form-item>
-        </div>
-
-        <el-form-item label="秘钥信息" prop="apiKey">
-          <el-input v-model="form.apiKey" placeholder="请输入api_key" show-password class="custom-input-bg"></el-input>
-        </el-form-item>
+      <el-form :model="form.configJson" ref="callInfoForm" label-width="100px" label-position="left" class="custom-form">
+        <template v-for="(row, rowIndex) in chunkedCallInfoFields">
+          <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
+            <el-form-item v-for="field in row"
+              :key="field.prop"
+              :label="field.label"
+              :prop="field.prop"
+              style="flex: 1;">
+              <el-input
+                v-model="form.configJson[field.prop]"
+                :placeholder="field.placeholder"
+                :type="field.type || 'text'"
+                class="custom-input-bg"
+                :show-password="field.type === 'password'">
+              </el-input>
+            </el-form-item>
+          </div>
+        </template>
       </el-form>
     </div>
 
@@ -111,7 +116,7 @@ const DEFAULT_CONFIG_JSON = {
 
 export default {
   name: "ModelEditDialog",
-    props: {
+  props: {
     visible: { type: Boolean, default: false },
     modelData: {
       type: Object,
@@ -135,11 +140,55 @@ export default {
         docLink: "",
         remark: "",
         sort: 0,
-        apiKey: "",
-        apiUrl: "",
         configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
       }
     };
+  },
+  computed: {
+    callInfoFields() {
+      const fieldsMap = {
+        llm: [
+          { label: '模型名称', prop: 'model_name', placeholder: '请输入model_name' },
+          { label: '接口地址', prop: 'base_url', placeholder: '请输入base_url' },
+          { label: '秘钥信息', prop: 'api_key', placeholder: '请输入api_key', type: 'password' }
+        ],
+        vad: [
+          { label: '模型目录', prop: 'model_dir', placeholder: '请输入model_dir' },
+          { label: '阈值', prop: 'threshold', placeholder: '请输入threshold' },
+          { label: '静音时长', prop: 'min_silence_duration_ms', placeholder: '请输入min_silence_duration_ms' }
+        ],
+        asr: [
+          { label: 'App ID', prop: 'appid', placeholder: '请输入appid' },
+          { label: '集群', prop: 'cluster', placeholder: '请输入cluster' },
+          { label: '访问令牌', prop: 'access_token', placeholder: '请输入access_token', type: 'password' },
+          { label: '输出目录', prop: 'output_dir', placeholder: '请输入output_dir' }
+        ],
+        intent: [
+          { label: '模型', prop: 'llm', placeholder: '请输入model' },
+          { label: '类型', prop: 'type', placeholder: '请输入类型' }
+        ],
+        tts: [
+          { label: '模型', prop: 'model', placeholder: '请输入model' },
+          { label: '语音ID', prop: 'voice_id', placeholder: '请输入voice_id' },
+          { label: 'Group ID', prop: 'group_id', placeholder: '请输入group_id' },
+          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
+        ],
+        memory: [
+          { label: 'API Key', prop: 'api_key', placeholder: '请输入api_key', type: 'password' },
+          { label: '类型', prop: 'type', placeholder: '请输入类型' }
+        ]
+      };
+
+      return fieldsMap[this.modelType] || [];
+    },
+    chunkedCallInfoFields() {
+      const chunkSize = 2;
+      const result = [];
+      for (let i = 0; i < this.callInfoFields.length; i += chunkSize) {
+        result.push(this.callInfoFields.slice(i, i + chunkSize));
+      }
+      return result;
+    },
   },
   watch: {
     modelType() {
@@ -169,8 +218,6 @@ export default {
         docLink: "",
         remark: "",
         sort: 0,
-        apiKey: "",
-        apiUrl: "",
         configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
       };
     },
@@ -184,12 +231,17 @@ export default {
           if (data.code === 0 && data.data) {
             const model = data.data;
 
-
             let configJson = model.configJson || {};
             if (typeof configJson !== 'object' || Array.isArray(configJson)) {
               console.warn('Invalid configJson format, using default');
               configJson = {};
             }
+
+            this.callInfoFields.forEach(field => {
+              if (!configJson.hasOwnProperty(field.prop)) {
+                configJson[field.prop] = '';
+              }
+            });
 
             this.form = {
               id: model.id || "",
@@ -201,9 +253,6 @@ export default {
               docLink: model.docLink || "",
               remark: model.remark || "",
               sort: model.sort || 0,
-              apiKey: configJson.api_key || "",
-              apiUrl: configJson.base_url || "",
-              name:configJson.model_name,
               configJson: {
                 ...JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON)),
                 ...configJson,
@@ -219,21 +268,19 @@ export default {
     },
     handleSave() {
       const formData = {
-        modelCode: this.form.code,
-        modelName: this.form.name,
-        supplier: this.form.supplier,
+        modelCode: this.form.modelCode,
+        modelName: this.form.modelName,
         isDefault: this.form.isDefault ? 1 : 0,
-        isEnabled: this.form.isEnable ? 1 : 0,
-        docLink: this.form.docUrl,
-        sort: this.form.sort,
+        isEnabled: this.form.isEnabled ? 1 : 0,
+        docLink: this.form.docLink,
         remark: this.form.remark,
+        sort: this.form.sort || 0,
         configJson: {
-          provider: this.form.supplier,
-          modelName: this.form.modelName,
-          apiUrl: this.form.apiUrl,
-          apiKey: this.form.apiKey
+          ...this.form.configJson,
+          type: this.form.configJson.type || this.modelType
         }
       };
+
       this.$emit("save", formData);
       this.dialogVisible = false;
     },
@@ -248,7 +295,6 @@ export default {
         this.providersLoaded = true;
       });
     },
-
   }
 };
 </script>
@@ -412,5 +458,23 @@ export default {
 
 .custom-input-bg .el-input__inner {
   height: 32px;
+}
+
+
+.custom-form .el-form-item {
+  margin-bottom: 20px;
+}
+
+
+.custom-input-bg .el-input__inner {
+  height: 32px;
+}
+
+
+.custom-form .el-form-item__label {
+  color: #3d4566;
+  font-weight: normal;
+  text-align: right;
+  padding-right: 20px;
 }
 </style>
