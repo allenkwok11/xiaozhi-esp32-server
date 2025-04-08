@@ -301,9 +301,21 @@ export default {
       // TODO: 导出配置
       console.log('导出配置');
     },
-    handleModelSave(formData) {
-      // TODO: 保存模型数据
-      console.log('保存的模型数据：', formData);
+    handleModelSave({ provideCode, formData }) {
+      const modelType = this.activeTab;
+      const id = formData.id;
+      Api.model.updateModel(
+        { modelType, provideCode, id, formData },
+        ({ data }) => {
+          if (data.code === 0) {
+            this.$message.success('保存成功');
+            this.loadData();
+            this.editDialogVisible = false;
+          } else {
+            this.$message.error(data.msg || '保存失败');
+          }
+        }
+      );
     },
     selectAll() {
       if (this.isAllSelected) {

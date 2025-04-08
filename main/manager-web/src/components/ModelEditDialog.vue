@@ -94,7 +94,6 @@
 import Api from '@/apis/api';
 
 const DEFAULT_CONFIG_JSON = {
-  provider: "",
   type: "",
   base_url: "",
   model_name: "",
@@ -102,8 +101,8 @@ const DEFAULT_CONFIG_JSON = {
   raw: {},
   config: {
     keyComparator: {},
-    ignoreError: 0,
-    ignoreCase: 0,
+    ignoreError: false,
+    ignoreCase: false,
     dateFormat: "",
     ignoreNullValue: false,
     transientSupport: false,
@@ -267,7 +266,10 @@ export default {
       }
     },
     handleSave() {
+      const provideCode = this.form.configJson.type;
+      const { provider, ...restConfigJson } = this.form.configJson;
       const formData = {
+        id: this.form.id,
         modelCode: this.form.modelCode,
         modelName: this.form.modelName,
         isDefault: this.form.isDefault ? 1 : 0,
@@ -276,12 +278,15 @@ export default {
         remark: this.form.remark,
         sort: this.form.sort || 0,
         configJson: {
-          ...this.form.configJson,
-          type: this.form.configJson.type || this.modelType
+          ...restConfigJson,
+          config: {
+            ...restConfigJson.config,
+            ignoreError: !!restConfigJson.config?.ignoreError,
+            ignoreCase: !!restConfigJson.config?.ignoreCase,
+          }
         }
       };
-
-      this.$emit("save", formData);
+      this.$emit("save", { provideCode, formData });
       this.dialogVisible = false;
     },
     loadProviders() {

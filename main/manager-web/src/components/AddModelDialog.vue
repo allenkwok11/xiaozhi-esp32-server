@@ -5,7 +5,7 @@
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
         添加模型
       </div>
-      
+
       <button class="custom-close-btn" @click="handleClose">
         ×
       </button>
