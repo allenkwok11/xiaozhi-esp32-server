@@ -28,7 +28,7 @@ async def sendAudioMessage(conn, ttsMessageDTO: TTSMessageDTO):
 
     # 流控参数优化
     original_frame_duration = 60  # 原始帧时长（毫秒）
-    adjusted_frame_duration = int(original_frame_duration * 0.8)  # 缩短20%
+    adjusted_frame_duration = int(original_frame_duration * 1)  # 缩短20%
     total_frames = len(ttsMessageDTO.content)  # 获取总帧数
     compensation = (
         total_frames * (original_frame_duration - adjusted_frame_duration) / 1000
@@ -54,8 +54,8 @@ async def sendAudioMessage(conn, ttsMessageDTO: TTSMessageDTO):
         play_position += adjusted_frame_duration  # 使用调整后的帧时长
 
     # 补偿因加速损失的时长
-    if compensation > 0:
-        await asyncio.sleep(compensation)
+    # if compensation > 0:
+    #     await asyncio.sleep(compensation)
     if SentenceType.SENTENCE_END == ttsMessageDTO.sentence_type:
         logger.bind(tag=TAG).info(f"发送最后一段语音: {ttsMessageDTO.tts_finish_text}")
         await send_tts_message(conn, "sentence_end", ttsMessageDTO.tts_finish_text)

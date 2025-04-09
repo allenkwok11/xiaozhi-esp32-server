@@ -16,6 +16,7 @@ import opuslib_next
 from pydub import AudioSegment
 from abc import ABC, abstractmethod
 from core.utils import textUtils
+from core.opus import opus_encoder_utils
 import queue
 
 from core.providers.tts.dto.dto import MsgType, TTSMessageDTO, SentenceType
@@ -33,6 +34,7 @@ class TTSProviderBase(ABC):
         self.tts_audio_queue = queue.Queue()
         self.enable_two_way = False
         self.stop_event = threading.Event()
+        self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(sample_rate=16000, channels=1, frame_size_ms=60)
 
         self.tts_text_buff = []
         self.punctuations = (
@@ -70,25 +72,18 @@ class TTSProviderBase(ABC):
         )
         tts_priority.start()
 
-    async def stop_listen_resource(self):
-        """资源清理方法"""
-        self.stop_event.set()
-        self.tts_text_queue = None
-        self.tts_audio_queue = None
-        gc.collect()  # 强制执行垃圾回收
-
     async def close(self):
-        pass
+        self.stop_event
 
     def _get_segment_text(self):
         # 合并当前全部文本并处理未分割部分
         full_text = "".join(self.tts_text_buff)
-        current_text = full_text[self.processed_chars :]  # 从未处理的位置开始
+        current_text = full_text[self.processed_chars:]  # 从未处理的位置开始
         last_punct_pos = -1
         for punct in self.punctuations:
             pos = current_text.rfind(punct)
             if (pos != -1 and last_punct_pos == -1) or (
-                pos != -1 and pos < last_punct_pos
+                    pos != -1 and pos < last_punct_pos
             ):
                 last_punct_pos = pos
         if last_punct_pos != -1:
@@ -118,7 +113,7 @@ class TTSProviderBase(ABC):
     async def finish_session(self, session_id):
         pass
 
-    def tts_one_sentence(self,conn, text, u_id=None):
+    def tts_one_sentence(self, conn, text, u_id=None):
         if not u_id:
             u_id = str(uuid.uuid4()).replace("-", "")
         conn.u_id = u_id
@@ -214,7 +209,6 @@ class TTSProviderBase(ABC):
                             )
                             self.active_tasks.add(future)
                         if self.active_tasks:
-
                             async def wrap_future(future):
                                 return await asyncio.wrap_future(future)
 
@@ -315,7 +309,7 @@ class TTSProviderBase(ABC):
         # 按帧处理所有音频数据（包括最后一帧可能补零）
         for i in range(0, len(raw_data), frame_size * 2):  # 16bit=2bytes/sample
             # 获取当前帧的二进制数据
-            chunk = raw_data[i : i + frame_size * 2]
+            chunk = raw_data[i: i + frame_size * 2]
 
             # 如果最后一帧不足，补零
             if len(chunk) < frame_size * 2:
@@ -341,36 +335,5 @@ class TTSProviderBase(ABC):
         return audio
 
     def wav_to_opus_data_audio_raw(self, raw_data_var, is_end=False):
-        raw_data = self.last_to_opus_raw + raw_data_var
-        self.last_to_opus_raw = b""
-        # 初始化Opus编码器
-        encoder = opuslib_next.Encoder(16000, 1, opuslib_next.APPLICATION_AUDIO)
-
-        # 编码参数
-        frame_duration = 60  # 60ms per frame
-        frame_size = int(16000 * frame_duration / 1000)  # 960 samples/frame
-
-        opus_datas = []
-        # 按帧处理所有音频数据（包括最后一帧可能补零）
-        for i in range(0, len(raw_data), frame_size * 2):  # 16bit=2bytes/sample
-            # 获取当前帧的二进制数据
-            chunk = raw_data[i : i + frame_size * 2]
-
-            # 如果最后一帧不足，补零
-            # 缓存记录一下
-            if len(chunk) < frame_size * 2 and not is_end:
-                logger.bind(tag=TAG).info("如果最后一帧不足,缓存记录一下")
-                self.last_to_opus_raw = chunk
-                break
-            if len(chunk) < frame_size * 2 and is_end:
-                logger.bind(tag=TAG).info("是最后一句了，补零")
-                chunk += b"\x00" * (frame_size * 2 - len(chunk))
-
-            # 转换为numpy数组处理
-            np_frame = np.frombuffer(chunk, dtype=np.int16)
-
-            # 编码Opus数据
-            opus_data = encoder.encode(np_frame.tobytes(), frame_size)
-            opus_datas.append(opus_data)
-
+        opus_datas = self.opus_encoder.encode_pcm_to_opus(raw_data_var, is_end)
         return opus_datas
