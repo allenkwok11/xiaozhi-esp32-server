@@ -8,7 +8,6 @@
                 <el-input placeholder="请输入参数编码查询" v-model="searchCode" class="search-input"
                     @keyup.enter.native="handleSearch" />
                 <el-button class="btn-search" @click="handleSearch">搜索</el-button>
-                <el-button type="primary" @click="showAddDialog">新增参数</el-button>
             </div>
         </div>
 
@@ -36,6 +35,7 @@
                                     @click="handleSelectAll">全选</el-button>
                                 <el-button size="mini" type="danger" icon="el-icon-delete"
                                     @click="batchDelete">删除</el-button>
+                                <el-button size="mini" type="primary" @click="showAddDialog">新增参数</el-button>
                             </div>
                             <div class="custom-pagination">
                                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
@@ -60,23 +60,7 @@
         </div>
 
         <!-- 新增/编辑参数对话框 -->
-        <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="500px">
-            <el-form :model="paramForm" :rules="rules" ref="paramForm" label-width="100px">
-                <el-form-item label="参数编码" prop="paramCode">
-                    <el-input v-model="paramForm.paramCode" placeholder="请输入参数编码"></el-input>
-                </el-form-item>
-                <el-form-item label="参数值" prop="paramValue">
-                    <el-input v-model="paramForm.paramValue" placeholder="请输入参数值"></el-input>
-                </el-form-item>
-                <el-form-item label="备注" prop="remark">
-                    <el-input type="textarea" v-model="paramForm.remark" placeholder="请输入备注"></el-input>
-                </el-form-item>
-            </el-form>
-            <div slot="footer" class="dialog-footer">
-                <el-button @click="dialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="submitForm">确 定</el-button>
-            </div>
-        </el-dialog>
+        <param-dialog :title="dialogTitle" :visible.sync="dialogVisible" :form="paramForm" @submit="handleSubmit" @cancel="dialogVisible = false"/>
 
         <div class="copyright">©2025 xiaozhi-esp32-server</div>
     </div>
@@ -85,9 +69,10 @@
 <script>
 import Api from "@/apis/api";
 import HeaderBar from "@/components/HeaderBar.vue";
+import ParamDialog from "@/components/ParamDialog.vue";
 
 export default {
-    components: { HeaderBar },
+    components: { HeaderBar, ParamDialog },
     data() {
         return {
             searchCode: "",
@@ -102,14 +87,6 @@ export default {
                 paramCode: "",
                 paramValue: "",
                 remark: ""
-            },
-            rules: {
-                paramCode: [
-                    { required: true, message: "请输入参数编码", trigger: "blur" }
-                ],
-                paramValue: [
-                    { required: true, message: "请输入参数值", trigger: "blur" }
-                ]
             }
         };
     },
@@ -174,30 +151,26 @@ export default {
             this.paramForm = { ...row };
             this.dialogVisible = true;
         },
-        submitForm() {
-            this.$refs.paramForm.validate((valid) => {
-                if (valid) {
-                    if (this.paramForm.id) {
-                        // 编辑
-                        Api.admin.updateParam(this.paramForm, ({ data }) => {
-                            if (data.code === 0) {
-                                this.$message.success("修改成功");
-                                this.dialogVisible = false;
-                                this.fetchParams();
-                            }
-                        });
-                    } else {
-                        // 新增
-                        Api.admin.addParam(this.paramForm, ({ data }) => {
-                            if (data.code === 0) {
-                                this.$message.success("新增成功");
-                                this.dialogVisible = false;
-                                this.fetchParams();
-                            }
-                        });
+        handleSubmit(form) {
+            if (form.id) {
+                // 编辑
+                Api.admin.updateParam(form, ({ data }) => {
+                    if (data.code === 0) {
+                        this.$message.success("修改成功");
+                        this.dialogVisible = false;
+                        this.fetchParams();
                     }
-                }
-            });
+                });
+            } else {
+                // 新增
+                Api.admin.addParam(form, ({ data }) => {
+                    if (data.code === 0) {
+                        this.$message.success("新增成功");
+                        this.dialogVisible = false;
+                        this.fetchParams();
+                    }
+                });
+            }
         },
         deleteParam(row) {
             this.$confirm("确定要删除该参数吗？", "警告", {

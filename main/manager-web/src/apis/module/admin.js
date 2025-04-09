@@ -57,6 +57,7 @@ export default {
                 })
             }).send()
     },
+    // 获取参数列表
     getParamsList(params, callback) {
         const queryParams = new URLSearchParams({
             page: params.page,
@@ -77,6 +78,7 @@ export default {
                 })
             }).send()
     },
+    // 保存
     addParam(data, callback) {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/admin/params`)
@@ -93,6 +95,7 @@ export default {
                 })
             }).send()
     },
+    // 修改
     updateParam(data, callback) {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/admin/params`)
@@ -109,6 +112,7 @@ export default {
                 })
             }).send()
     },
+    // 删除
     deleteParam(id, callback) {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/admin/params`)
@@ -125,6 +129,7 @@ export default {
                 })
             }).send()
     },
+    // 批量删除
     batchDeleteParams(ids, callback) {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/admin/params`)
