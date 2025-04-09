@@ -80,7 +80,11 @@
             </el-table-column>
             <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
               <template slot-scope="scope">
-                <el-button type="text" size="mini" @click="ttsDialogVisible = true" class="voice-management-btn">
+                <el-button
+                  type="text"
+                  size="mini"
+                  @click="openTtsDialog(scope.row)"
+                  class="voice-management-btn">
                   音色管理
                 </el-button>
               </template>
@@ -124,7 +128,7 @@
 
       <ModelEditDialog :modelType="activeTab" :visible.sync="editDialogVisible" :modelData="editModelData"
         @save="handleModelSave" />
-      <TtsModel :visible.sync="ttsDialogVisible" />
+        <TtsModel :visible.sync="ttsDialogVisible" :ttsModelId="selectedTtsModelId"/>
       <AddModelDialog :modelType="activeTab" :visible.sync="addDialogVisible" @confirm="handleAddConfirm" />
     </div>
 
@@ -151,6 +155,7 @@ export default {
       editDialogVisible: false,
       editModelData: {},
       ttsDialogVisible: false,
+      selectedTtsModelId: '',
       modelList: [],
       currentPage: 1,
       pageSize: 5,
@@ -200,6 +205,10 @@ export default {
   },
 
   methods: {
+    openTtsDialog(row) {
+      this.selectedTtsModelId = row.id;
+      this.ttsDialogVisible = true;
+    },
     headerCellClassName({ column, columnIndex }) {
       if (columnIndex === 0) {
         return 'custom-selection-header';

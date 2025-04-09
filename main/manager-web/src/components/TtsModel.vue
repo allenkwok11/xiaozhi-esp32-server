@@ -4,7 +4,8 @@
       width="75%"
       @close="handleClose"
       :show-close="false"
-      :append-to-body="true">
+      :append-to-body="true"
+      :close-on-click-modal="true">
     <button class="custom-close-btn" @click="handleClose">
       ×
     </button>
@@ -15,6 +16,7 @@
           @scroll="handleScroll"
       >
         <el-table
+            v-loading="loading"
             :data="filteredTtsModels"
             style="width: 100%;"
             class="data-table"
@@ -46,7 +48,8 @@
           <el-table-column label="试听" align="center" min-width="225" class-name="audio-column">
             <template slot-scope="scope">
               <div class="custom-audio-container">
-                <AudioPlayer :audioUrl="getAudioUrl(scope.row.voiceCode)"/>
+                <AudioPlayer :audioUrl="scope.row.voiceDemo"/>
+<!--                <AudioPlayer :audioUrl="'https://music.163.com/song/media/outer/url?id=5257138.mp3'"/>-->
               </div>
             </template>
           </el-table-column>
@@ -104,6 +107,7 @@
 
 <script>
 import AudioPlayer from './AudioPlayer.vue'
+import Api from "@/apis/api";
 
 export default {
   components: {AudioPlayer},
@@ -111,49 +115,36 @@ export default {
     visible: {
       type: Boolean,
       default: false
+    },
+    ttsModelId: {
+      type: String,
+      required: true
     }
   },
   data() {
     return {
       localVisible: this.visible,
-      activeModel: 'EdgeTTS',
       searchQuery: '',
       editDialogVisible: false,
       editVoiceData: {},
-      ttsModels: [
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: 'AAAA国少', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-        {voiceCode: 'wawaxiaohe', voiceName: '湾湾小何', languageType: '中文', remark: '', selected: false},
-      ],
+      ttsModels: [],
       currentPage: 1,
-      pageSize: 4,
-      total: 20,
+      pageSize: 100,
+      total: 0,
       isDragging: false,
       startY: 0,
       scrollTop: 0,
       selectAll: false,
-      selectedRows: []
+      selectedRows: [],
+      loading: false,
     };
   },
   watch: {
     visible(newVal) {
       this.localVisible = newVal;
       if (newVal) {
+        this.currentPage = 1;
+        this.loadData(); // 对话框显示时加载数据
         this.$nextTick(() => {
           this.updateScrollbar();
         });
@@ -184,15 +175,45 @@ export default {
     window.removeEventListener('mousemove', this.handleDrag);
   },
   methods: {
-    handleClose() {
-      this.localVisible = false;
-      this.$emit('update:visible', false);
-      this.ttsModels.forEach(model => {
-        model.remark = '';
+    loadData() {
+      const params = {
+        ttsModelId: this.ttsModelId,
+        page: this.currentPage,
+        limit: this.pageSize,
+        name: this.searchQuery
+      };
+      Api.timbre.getVoiceList(params, (data) => {
+        console.log(data.data.list);
+        if (data.code === 0) {
+          this.ttsModels = data.data.list.map(item => ({
+            id: item.id || '',
+            voiceCode: item.ttsVoice || '',
+            voiceName: item.name || '未命名音色',
+            languageType: item.languages || '',
+            remark: item.remark || '',
+            voiceDemo: item.voiceDemo || '',
+            selected: false,
+            editing: false
+          }));
+          this.total = data.total;
+        } else {
+          this.$message.error(data.msg || '获取音色列表失败');
+        }
+      }, (err) => {
+        console.error('加载失败:', err);
+        this.$message.error('加载音色数据失败');
       });
     },
-    getAudioUrl(voiceCode) {
-      return `https://music.163.com/song/media/outer/url?id=5257138.mp3`;
+    handleClose() {
+      // 重置状态
+      this.ttsModels = [];
+      this.currentPage = 1;
+      this.total = 0;
+      this.selectAll = false;
+      this.searchQuery = '';
+
+      this.localVisible = false;
+      this.$emit('update:visible', false);
     },
     updateScrollbar() {
       const container = this.$refs.tableContainer;
@@ -224,6 +245,13 @@ export default {
       scrollbarThumb.style.top = `${Math.min(thumbTop, maxTop)}px`;
     },
     handleScroll() {
+      const container = this.$refs.tableContainer;
+      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) {
+        if (this.currentPage * this.pageSize < this.total) {
+          this.currentPage++;
+          this.loadData();
+        }
+      }
       this.updateThumbPosition();
     },
     startDrag(e) {
