@@ -44,7 +44,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="排序号" prop="sort" style="flex: 1;">
-            <el-input v-model="form.sort" placeholder="请输入排序号" class="custom-input-bg"></el-input>
+            <el-input v-model.number="form.sort" type="number" placeholder="请输入排序号" class="custom-input-bg"></el-input>
           </el-form-item>
         </div>
 
@@ -61,7 +61,7 @@
       <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">调用信息</div>
       <div style="height: 2px; background: #e9e9e9; margin-bottom: 22px;"></div>
 
-      <el-form :model="form.configJson" ref="callInfoForm" label-width="100px" class="custom-form">
+      <el-form :model="form.configJson" ref="callInfoForm" label-width="auto" class="custom-form">
         <template v-for="(row, rowIndex) in chunkedCallInfoFields">
           <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
             <el-form-item
@@ -130,6 +130,9 @@ export default {
       dialogVisible: this.visible,
       providers: [],
       providersLoaded: false,
+      allProvidersData: null,
+      pendingProviderType: null,
+      pendingModelData: null,
       dynamicCallInfoFields: [],
       form: {
         id: "",
@@ -157,7 +160,8 @@ export default {
   },
   watch: {
     modelType() {
-      this.resetProviders()
+      this.resetProviders();
+      this.loadProviders();
     },
     dialogVisible(val) {
       this.$emit('update:visible', val);
@@ -169,12 +173,15 @@ export default {
     },
     visible(val) {
       this.dialogVisible = val;
+      if (val) {
+        this.loadProviders();
+      }
     },
     'form.configJson.type'(newVal) {
-    if (newVal) {
-      this.loadProviderFields(newVal);
+      if (newVal && this.providersLoaded) {
+        this.loadProviderFields(newVal);
+      }
     }
-  }
   },
   methods: {
     resetForm() {
@@ -187,7 +194,7 @@ export default {
         isEnabled: false,
         docLink: "",
         remark: "",
-        sort: 0,
+        sort: "",
         configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
       };
     },
@@ -195,42 +202,19 @@ export default {
       this.providers = [];
       this.providersLoaded = false;
     },
-    async loadModelData() {
+    loadModelData() {
       if (this.modelData.id) {
-        Api.model.getModelConfig(this.modelData.id, async ({ data }) => {
+        Api.model.getModelConfig(this.modelData.id, ({ data }) => {
           if (data.code === 0 && data.data) {
             const model = data.data;
+            this.pendingProviderType = model.configJson.type;
+            this.pendingModelData = model;
 
-            // 获取供应器字段配置
-            await this.loadProviderFields(model.configJson.type);
-
-            // 初始化configJson
-            let configJson = model.configJson || {};
-            this.dynamicCallInfoFields.forEach(field => {
-              if (!configJson.hasOwnProperty(field.prop)) {
-                configJson[field.prop] = '';
-              }
-            });
-
-            this.form = {
-              id: model.id || "",
-              modelType: model.modelType || "",
-              modelCode: model.modelCode || "",
-              modelName: model.modelName || "",
-              isDefault: model.isDefault || 0,
-              isEnabled: model.isEnabled || 0,
-              docLink: model.docLink || "",
-              remark: model.remark || "",
-              sort: model.sort || 0,
-              configJson: {
-                ...JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON)),
-                ...configJson,
-                config: {
-                  ...DEFAULT_CONFIG_JSON.config,
-                  ...(configJson.config || {})
-                }
-              }
-            };
+            if (this.providersLoaded) {
+              this.loadProviderFields(model.configJson.type);
+            } else {
+              this.loadProviders();
+            }
           }
         });
       }
@@ -268,11 +252,17 @@ export default {
           value: item.providerCode
         }));
         this.providersLoaded = true;
+
+        this.allProvidersData = data;
+
+        if (this.pendingProviderType) {
+          this.loadProviderFields(this.pendingProviderType);
+        }
       });
     },
-    async loadProviderFields(providerCode) {
-      Api.model.getModelProviders(this.modelType, (data) => {
-        const provider = data.find(p => p.providerCode === providerCode);
+    loadProviderFields(providerCode) {
+      if (this.allProvidersData) {
+        const provider = this.allProvidersData.find(p => p.providerCode === providerCode);
         if (provider) {
           this.dynamicCallInfoFields = JSON.parse(provider.fields || '[]').map(f => ({
             label: f.label,
@@ -280,9 +270,44 @@ export default {
             type: f.type === 'password' ? 'password' : 'text',
             placeholder: `请输入${f.label}`
           }));
+
+          if (this.pendingModelData && this.pendingProviderType === providerCode) {
+            this.processModelData(this.pendingModelData);
+            this.pendingModelData = null;
+            this.pendingProviderType = null;
+          }
+        }
+      }
+    },
+    processModelData(model) {
+      let configJson = model.configJson || {};
+      this.dynamicCallInfoFields.forEach(field => {
+        if (!configJson.hasOwnProperty(field.prop)) {
+          configJson[field.prop] = '';
         }
       });
+
+      this.form = {
+        id: model.id || "",
+        modelType: model.modelType || "",
+        modelCode: model.modelCode || "",
+        modelName: model.modelName || "",
+        isDefault: model.isDefault || 0,
+        isEnabled: model.isEnabled || 0,
+        docLink: model.docLink || "",
+        remark: model.remark || "",
+        sort: Number(model.sort) || 0,
+        configJson: {
+          ...JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON)),
+          ...configJson,
+          config: {
+            ...DEFAULT_CONFIG_JSON.config,
+            ...(configJson.config || {})
+          }
+        }
+      };
     }
+
   }
 };
 </script>

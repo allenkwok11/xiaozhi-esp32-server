@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :visible.sync="visible" width="975px" center custom-class="custom-dialog" :show-close="false"
+  <el-dialog :visible="dialogVisible" @update:visible="handleVisibleChange" width="975px" center custom-class="custom-dialog" :show-close="false"
     class="center-dialog">
     <div style="margin: 0 18px; text-align: left; padding: 10px; border-radius: 10px;">
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
@@ -63,7 +63,7 @@
       <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">调用信息</div>
       <div style="height: 2px; background: #e9e9e9; margin-bottom: 22px;"></div>
 
-      <el-form :model="formData.configJson" label-width="100px" label-position="left" class="custom-form">
+      <el-form :model="formData.configJson" label-width="auto" label-position="left" class="custom-form">
         <template v-for="(row, rowIndex) in chunkedCallInfoFields">
           <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
             <el-form-item
@@ -104,6 +104,7 @@ export default {
   data() {
     return {
       providers: [],
+      dialogVisible: false,
       providersLoaded: false,
       providerFields: [],
       currentProvider: null,
@@ -122,8 +123,11 @@ export default {
   },
   watch: {
     visible(val) {
+      this.dialogVisible = val;
       if(val) {
         this.initConfigJson();
+      } else {
+        this.resetForm();
       }
     },
     'formData.supplier'(newVal) {
@@ -170,6 +174,17 @@ export default {
         defaultConfig[field.prop] = '';
       });
       this.formData.configJson = { ...defaultConfig };
+    },
+    handleVisibleChange(val) {
+      this.dialogVisible = val;
+      this.$emit('update:visible', val);
+      if (!val) {
+        this.resetForm();
+      }
+    },
+
+    handleClose() {
+      this.$emit('update:visible', false);
     },
     initDynamicConfig() {
       const newConfig = {};
@@ -223,10 +238,6 @@ export default {
       this.providerFields = [];
       this.currentProvider = null;
     },
-    handleClose() {
-      this.resetForm();
-      this.$emit('update:visible', false);
-    }
   }
 }
 </script>
