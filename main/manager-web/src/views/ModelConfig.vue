@@ -4,16 +4,16 @@
 
     <div class="operation-bar">
       <h2 class="page-title">模型配置</h2>
-      <div class="right-operations">
-        <el-button plain size="small" @click="handleImport" style="background: #7b9de5; color: white;">
-          <img loading="lazy" alt="" src="@/assets/model/inner_conf.png">
-          导入配置
-        </el-button>
-        <el-button plain size="small" @click="handleExport" style="background: #71c9d1; color: white;">
-          <img loading="lazy" alt="" src="@/assets/model/output_conf.png">
-          导出配置
-        </el-button>
-      </div>
+<!--      <div class="right-operations">-->
+<!--        <el-button plain size="small" @click="handleImport" style="background: #7b9de5; color: white;">-->
+<!--          <img loading="lazy" alt="" src="@/assets/model/inner_conf.png">-->
+<!--          导入配置-->
+<!--        </el-button>-->
+<!--        <el-button plain size="small" @click="handleExport" style="background: #71c9d1; color: white;">-->
+<!--          <img loading="lazy" alt="" src="@/assets/model/output_conf.png">-->
+<!--          导出配置-->
+<!--        </el-button>-->
+<!--      </div>-->
     </div>
 
     <!-- 主体内容 -->
@@ -53,7 +53,7 @@
             </div>
             <div class="action-group">
               <div class="search-group">
-                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable @keyup.enter="handleSearch" />
+                <el-input placeholder="请输入模型名称查询" v-model="search" size="small" class="search-input" clearable @keyup.enter.native="handleSearch" />
                 <el-button type="primary" size="small" class="search-btn" @click="handleSearch">
                   查询
                 </el-button>
@@ -69,7 +69,7 @@
             <el-table-column label="模型编码" prop="modelCode" align="center"></el-table-column>
             <el-table-column label="提供商" align="center">
               <template slot-scope="scope">
-                {{ scope.row.configJson?.provider || '未知' }}
+                {{ scope.row.configJson.type || '未知' }}
               </template>
             </el-table-column>
             <el-table-column label="是否启用" align="center">
