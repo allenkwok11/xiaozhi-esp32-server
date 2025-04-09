@@ -12,7 +12,7 @@ class WebSocketServer:
     def __init__(self, config: dict):
         self.config = config
         self.logger = setup_logging()
-        self._vad, self._asr, self._llm, self._tts, self._memory, self.intent = (
+        self._vad, self._asr, self._llm, self._memory, self.intent = (
             self._create_processing_instances()
         )
         self.active_connections = set()  # 添加全局连接记录
@@ -22,7 +22,7 @@ class WebSocketServer:
             "Memory", "nomem"
         )  # 默认使用nomem
         has_memory_cfg = (
-            self.config.get("Memory") and memory_cls_name in self.config["Memory"]
+                self.config.get("Memory") and memory_cls_name in self.config["Memory"]
         )
         memory_cfg = self.config["Memory"][memory_cls_name] if has_memory_cfg else {}
 
@@ -36,7 +36,7 @@ class WebSocketServer:
                 (
                     self.config["selected_module"]["ASR"]
                     if not "type"
-                    in self.config["ASR"][self.config["selected_module"]["ASR"]]
+                           in self.config["ASR"][self.config["selected_module"]["ASR"]]
                     else self.config["ASR"][self.config["selected_module"]["ASR"]][
                         "type"
                     ]
@@ -48,31 +48,19 @@ class WebSocketServer:
                 (
                     self.config["selected_module"]["LLM"]
                     if not "type"
-                    in self.config["LLM"][self.config["selected_module"]["LLM"]]
+                           in self.config["LLM"][self.config["selected_module"]["LLM"]]
                     else self.config["LLM"][self.config["selected_module"]["LLM"]][
                         "type"
                     ]
                 ),
                 self.config["LLM"][self.config["selected_module"]["LLM"]],
             ),
-            tts.create_instance(
-                (
-                    self.config["selected_module"]["TTS"]
-                    if not "type"
-                    in self.config["TTS"][self.config["selected_module"]["TTS"]]
-                    else self.config["TTS"][self.config["selected_module"]["TTS"]][
-                        "type"
-                    ]
-                ),
-                self.config["TTS"][self.config["selected_module"]["TTS"]],
-                self.config["delete_audio"],
-            ),
             memory.create_instance(memory_cls_name, memory_cfg),
             intent.create_instance(
                 (
                     self.config["selected_module"]["Intent"]
                     if not "type"
-                    in self.config["Intent"][self.config["selected_module"]["Intent"]]
+                           in self.config["Intent"][self.config["selected_module"]["Intent"]]
                     else self.config["Intent"][
                         self.config["selected_module"]["Intent"]
                     ]["type"]
@@ -104,12 +92,24 @@ class WebSocketServer:
     async def _handle_connection(self, websocket):
         """处理新连接，每次创建独立的ConnectionHandler"""
         # 创建ConnectionHandler时传入当前server实例
+        _tts = tts.create_instance(
+            (
+                self.config["selected_module"]["TTS"]
+                if not "type"
+                       in self.config["TTS"][self.config["selected_module"]["TTS"]]
+                else self.config["TTS"][self.config["selected_module"]["TTS"]][
+                    "type"
+                ]
+            ),
+            self.config["TTS"][self.config["selected_module"]["TTS"]],
+            self.config["delete_audio"],
+        )
         handler = ConnectionHandler(
             self.config,
             self._vad,
             self._asr,
             self._llm,
-            self._tts,
+            _tts,
             self._memory,
             self.intent,
         )

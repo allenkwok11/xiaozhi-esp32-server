@@ -356,6 +356,7 @@ class TTSProvider(TTSProviderBase):
         await super().reset()
 
     async def close(self):
+        super().close()
         """资源清理方法"""
         await self.finish_connection()
         await self.ws.close()
@@ -373,7 +374,7 @@ class TTSProvider(TTSProviderBase):
 
     async def _start_monitor_tts_response(self):
         chunk_total = b""
-        while True:
+        while not self.stop_event.is_set():
             try:
                 msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
                 res = self.parser_response(msg)
@@ -385,6 +386,7 @@ class TTSProvider(TTSProviderBase):
                 ):
                     logger.bind(tag=TAG).info(f"推送数据到队列里面～～")
                     opus_datas = self.wav_to_opus_data_audio_raw(res.payload)
+                    logger.bind(tag=TAG).info(f"推送数据到队列里面帧数～～{len(opus_datas)}")
                     self.tts_audio_queue.put(
                         TTSMessageDTO(
                             u_id=self.u_id,
