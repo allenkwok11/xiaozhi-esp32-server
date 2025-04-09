@@ -48,8 +48,14 @@
           <el-table-column label="试听" align="center" min-width="225" class-name="audio-column">
             <template slot-scope="scope">
               <div class="custom-audio-container">
-                <AudioPlayer :audioUrl="scope.row.voiceDemo"/>
-<!--                <AudioPlayer :audioUrl="'https://music.163.com/song/media/outer/url?id=5257138.mp3'"/>-->
+                <el-input
+                    v-if="scope.row.editing"
+                    v-model="scope.row.voiceDemo"
+                    placeholder="请输入MP3地址"
+                    size="mini"
+                    class="audio-input"
+                ></el-input>
+                <AudioPlayer v-else-if="isValidAudioUrl(scope.row.voiceDemo)" :audioUrl="scope.row.voiceDemo"/>
               </div>
             </template>
           </el-table-column>
@@ -99,7 +105,9 @@
       <el-button type="primary" size="mini" @click="toggleSelectAll" style="background: #606ff3;border: None">
         {{ selectAll ? '取消全选' : '全选' }}
       </el-button>
-      <el-button type="primary" size="mini" @click="addNew" style="background: #f6cf79;border: None; color: #000012">新增</el-button>
+      <el-button type="primary" size="mini" @click="addNew" style="background: #f6cf79;border: None; color: #000012">
+        新增
+      </el-button>
       <el-button type="primary" size="mini" @click="batchDelete" style="background: red;border:None">删除</el-button>
     </div>
   </el-dialog>
@@ -129,7 +137,7 @@ export default {
       editVoiceData: {},
       ttsModels: [],
       currentPage: 1,
-      pageSize: 100,
+      pageSize: 10000,
       total: 0,
       isDragging: false,
       startY: 0,
@@ -182,28 +190,38 @@ export default {
         limit: this.pageSize,
         name: this.searchQuery
       };
+
       Api.timbre.getVoiceList(params, (data) => {
-        console.log(data.data.list);
         if (data.code === 0) {
-          this.ttsModels = data.data.list.map(item => ({
-            id: item.id || '',
-            voiceCode: item.ttsVoice || '',
-            voiceName: item.name || '未命名音色',
-            languageType: item.languages || '',
-            remark: item.remark || '',
-            voiceDemo: item.voiceDemo || '',
-            selected: false,
-            editing: false
-          }));
+          this.ttsModels = data.data.list
+              .map(item => ({
+                id: item.id || '',
+                voiceCode: item.ttsVoice || '',
+                voiceName: item.name || '未命名音色',
+                languageType: item.languages || '',
+                remark: item.remark || '',
+                voiceDemo: item.voiceDemo || '',
+                selected: false,
+                editing: false,
+                sort: Number(item.sort)
+              }))
+              .sort((a, b) => a.sort - b.sort);
           this.total = data.total;
         } else {
-          this.$message.error(data.msg || '获取音色列表失败');
+          this.$message.error({
+            message: data.msg || '获取音色列表失败',
+            showClose: true
+          });
         }
       }, (err) => {
         console.error('加载失败:', err);
-        this.$message.error('加载音色数据失败');
+        this.$message.error({
+          message: '加载音色数据失败',
+          showClose: true
+        });
       });
     },
+
     handleClose() {
       // 重置状态
       this.ttsModels = [];
@@ -215,6 +233,7 @@ export default {
       this.localVisible = false;
       this.$emit('update:visible', false);
     },
+
     updateScrollbar() {
       const container = this.$refs.tableContainer;
       const scrollbarThumb = this.$refs.scrollbarThumb;
@@ -229,6 +248,7 @@ export default {
       scrollbarThumb.style.height = `${thumbHeight}px`;
       this.updateThumbPosition();
     },
+
     updateThumbPosition() {
       const container = this.$refs.tableContainer;
       const scrollbarThumb = this.$refs.scrollbarThumb;
@@ -244,6 +264,7 @@ export default {
 
       scrollbarThumb.style.top = `${Math.min(thumbTop, maxTop)}px`;
     },
+
     handleScroll() {
       const container = this.$refs.tableContainer;
       if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) {
@@ -254,15 +275,18 @@ export default {
       }
       this.updateThumbPosition();
     },
+
     startDrag(e) {
       this.isDragging = true;
       this.startY = e.clientY;
       this.scrollTop = this.$refs.tableContainer.scrollTop;
       e.preventDefault();
     },
+
     stopDrag() {
       this.isDragging = false;
     },
+
     handleDrag(e) {
       if (!this.isDragging) return;
 
@@ -277,6 +301,7 @@ export default {
       const scrollRatio = (trackHeight - thumbHeight) / maxScrollTop;
       container.scrollTop = this.scrollTop + deltaY / scrollRatio;
     },
+
     handleTrackClick(e) {
       const container = this.$refs.tableContainer;
       const scrollbarTrack = this.$refs.scrollbarTrack;
@@ -296,16 +321,75 @@ export default {
       scrollbarThumb.style.top = `${newTop}px`;
       container.scrollTop = (newTop / (trackHeight - thumbHeight)) * (container.scrollHeight - container.clientHeight);
     },
-    // 按钮组
+
     startEdit(row) {
       row.editing = true;
       this.$set(row, 'originalData', {...row});
     },
 
     saveEdit(row) {
-      row.editing = false;
-      delete row.originalData;
-      // 这里可以添加保存到服务器的逻辑
+      try {
+        const params = {
+          id: row.id,
+          voiceCode: row.voiceCode,
+          voiceName: row.voiceName,
+          languageType: row.languageType,
+          remark: row.remark,
+          ttsModelId: this.ttsModelId,
+          voiceDemo: row.voiceDemo || '',
+          sort: row.sort
+        };
+
+        let res;
+        if (row.id) {
+          // 已有ID，执行更新操作
+          Api.timbre.updateVoice(params, (response) => {
+            res = response;
+            this.handleResponse(res, row);
+          });
+        } else {
+          // 没有ID，执行新增操作
+          Api.timbre.saveVoice(params, (response) => {
+            res = response;
+            this.handleResponse(res, row);
+          });
+        }
+      } catch (error) {
+        console.error('操作失败:', error);
+        // 异常情况下也恢复原始数据
+        if (row.originalData) {
+          Object.assign(row, row.originalData);
+          row.editing = false;
+          delete row.originalData;
+        }
+        this.$message.error({
+          message: '操作失败，请重试',
+          showClose: true
+        });
+      }
+    },
+
+    handleResponse(res, row) {
+      if (res.code === 0) {
+        this.$message.success({
+          message: row.id ? '修改成功' : '保存成功',
+          showClose: true
+        });
+        row.editing = false;
+        delete row.originalData;
+        this.loadData(); // 刷新数据
+      } else {
+        // 保存失败时恢复原始数据
+        if (row.originalData) {
+          Object.assign(row, row.originalData);
+          row.editing = false;
+          delete row.originalData;
+        }
+        this.$message.error({
+          message: res.msg || (row.id ? '修改失败' : '保存失败'),
+          showClose: true
+        });
+      }
     },
 
     toggleSelectAll() {
@@ -316,24 +400,128 @@ export default {
     },
 
     addNew() {
+      const maxSort = this.ttsModels.length > 0
+          ? Math.max(...this.ttsModels.map(item => Number(item.sort) || 0))
+          : 0;
+
       const newRow = {
-        voiceCode: '新编码',
-        voiceName: '新音色',
+        voiceCode: '',
+        voiceName: '',
         languageType: '中文',
+        voiceDemo: '',
         remark: '',
         selected: false,
-        editing: true
+        editing: true,
+        sort: maxSort + 1
       };
+
       this.ttsModels.unshift(newRow);
     },
 
     deleteRow(row) {
-      const index = this.ttsModels.indexOf(row);
-      this.ttsModels.splice(index, 1);
+      this.$confirm("确定要删除该音色吗？", "警告", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          Api.timbre.deleteVoice(row.id, (response) => {
+            if (response.code === 0) {
+              this.$message.success({
+                message: "删除成功",
+                showClose: true
+              });
+              this.loadData(); // 刷新数据
+            } else {
+              this.$message.error({
+                message: response.msg || "删除失败",
+                showClose: true
+              });
+            }
+          });
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
     },
 
     batchDelete() {
-      this.ttsModels = this.ttsModels.filter(row => !row.selected);
+      const selectedRows = this.filteredTtsModels.filter(row => row.selected);
+      if (selectedRows.length === 0) {
+        this.$message.warning("请先选择需要删除的音色");
+        return;
+      }
+
+      this.$confirm(`确定要删除选中的${selectedRows.length}个音色吗？`, "警告", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(async () => {
+          const loading = this.$loading({
+            lock: true,
+            text: "正在删除中...",
+            spinner: "el-icon-loading",
+            background: "rgba(0, 0, 0, 0.7)",
+          });
+
+          try {
+            const results = await Promise.all(
+              selectedRows.map((row) => {
+                return new Promise((resolve) => {
+                  Api.timbre.deleteVoice(row.id, (response) => {
+                    if (response.code === 0) {
+                      resolve({ success: true, id: row.id });
+                    } else {
+                      resolve({
+                        success: false,
+                        id: row.id,
+                        msg: response.msg || '删除失败'
+                      });
+                    }
+                  });
+                });
+              })
+            );
+
+            const successCount = results.filter(r => r.success).length;
+            const failCount = results.length - successCount;
+
+            if (failCount === 0) {
+              this.$message.success({
+                message: `成功删除${successCount}个音色`,
+                showClose: true
+              });
+            } else if (successCount === 0) {
+              this.$message.error({
+                message: '删除失败，请重试',
+                showClose: true
+              });
+            } else {
+              this.$message.warning({
+                message: `成功删除${successCount}个音色，${failCount}个删除失败`,
+                showClose: true
+              });
+            }
+
+            this.loadData(); // 刷新数据
+          } catch (error) {
+            console.error('批量删除出错:', error);
+            this.$message.error({
+              message: '删除过程中发生错误',
+              showClose: true
+            });
+          } finally {
+            loading.close();
+          }
+        })
+        .catch(() => {
+          this.$message.info("已取消删除");
+        });
+    },
+
+    isValidAudioUrl(url) {
+      return url && (url.endsWith('.mp3') || url.endsWith('.ogg') || url.endsWith('.wav'));
     }
   }
 };
