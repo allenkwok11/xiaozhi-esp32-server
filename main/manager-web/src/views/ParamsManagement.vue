@@ -33,9 +33,9 @@
                             <div class="ctrl_btn">
                                 <el-button size="mini" type="primary" class="select-all-btn"
                                     @click="handleSelectAll">全选</el-button>
+                                <el-button size="mini" type="success" @click="showAddDialog">新增</el-button>
                                 <el-button size="mini" type="danger" icon="el-icon-delete"
                                     @click="batchDelete">删除</el-button>
-                                <el-button size="mini" type="primary" @click="showAddDialog">新增参数</el-button>
                             </div>
                             <div class="custom-pagination">
                                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
@@ -486,24 +486,36 @@ export default {
 }
 
 @media (min-width: 1144px) {
-    .table_bottom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 40px;
-    }
+  .table_bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 40px;
+  }
 
-    :deep(.transparent-table) {
-        .el-table__body tr {
-            td {
-                padding-top: 16px;
-                padding-bottom: 16px;
-            }
+  :deep(.transparent-table) {
+    .el-table__body tr {
+      td {
+        padding-top: 16px;
+        padding-bottom: 16px;
+      }
 
-            &+tr {
-                margin-top: 10px;
-            }
-        }
+      & + tr {
+        margin-top: 10px;
+      }
     }
+  }
 }
+  :deep(.el-table .el-button--text) {
+  color: #7079aa;
+  }
+
+  :deep(.el-table .el-button--text:hover) {
+    color: #5a64b5;
+  }
+
+  .el-button--success {
+    background: #5bc98c;
+    color: white;
+  }
 </style>
