@@ -113,37 +113,22 @@ export default {
             }).send()
     },
     // 删除
-    deleteParam(id, callback) {
+    deleteParam(ids, callback) {
+        console.log(4444,ids )
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/admin/params`)
-            .method('DELETE')
-            .data({ ids: [id] })
+            .url(`${getServiceUrl()}/admin/params/delete`)
+            .method('POST')
+            .data(ids)
             .success((res) => {
                 RequestService.clearRequestTime()
-                callback(res)
+                callback(res);
             })
             .fail((err) => {
                 console.error('删除参数失败:', err)
                 RequestService.reAjaxFun(() => {
-                    this.deleteParam(id, callback)
+                    this.deleteParam(ids, callback)
                 })
             }).send()
     },
-    // 批量删除
-    batchDeleteParams(ids, callback) {
-        RequestService.sendRequest()
-            .url(`${getServiceUrl()}/admin/params`)
-            .method('DELETE')
-            .data({ ids })
-            .success((res) => {
-                RequestService.clearRequestTime()
-                callback(res)
-            })
-            .fail((err) => {
-                console.error('批量删除参数失败:', err)
-                RequestService.reAjaxFun(() => {
-                    this.batchDeleteParams(ids, callback)
-                })
-            }).send()
-    }
+
 }

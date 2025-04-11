@@ -1,7 +1,7 @@
 <template>
   <el-dialog :title="title"
     :visible.sync="visible"
-    width="500px"
+    width="520px"
     class="param-dialog-wrapper"
     :append-to-body="true"
     :close-on-click-modal="false"
@@ -12,10 +12,14 @@
     <div class="dialog-container">
       <div class="dialog-header">
         <h2 class="dialog-title">{{ title }}</h2>
-        <button class="custom-close-btn" @click="cancel">×</button>
+        <button class="custom-close-btn" @click="cancel">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 1L1 13M1 1L13 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
 
-      <el-form :model="form" :rules="rules" ref="form" label-width="100px" label-position="left" class="param-form">
+      <el-form :model="form" :rules="rules" ref="form" label-width="110px" label-position="left" class="param-form">
         <el-form-item label="参数编码" prop="paramCode" class="form-item">
           <el-input v-model="form.paramCode" placeholder="请输入参数编码" class="custom-input"></el-input>
         </el-form-item>
@@ -115,8 +119,10 @@ export default {
 
 <style>
 .custom-param-dialog {
-  border-radius: 20px !important;
+  border-radius: 16px !important;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
 
   .el-dialog__header {
     display: none;
@@ -124,7 +130,7 @@ export default {
 
   .el-dialog__body {
     padding: 0 !important;
-    border-radius: 20px;
+    border-radius: 16px;
   }
 }
 </style>
@@ -132,45 +138,53 @@ export default {
 <style scoped lang="scss">
 .param-dialog-wrapper {
   .dialog-container {
-    padding: 20px 30px;
+    padding: 24px 32px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   }
 
   .dialog-header {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     text-align: center;
   }
 
   .dialog-title {
-    font-size: 24px;
-    color: #3d4566;
+    font-size: 20px;
+    color: #1e293b;
     margin: 0;
     padding: 0;
-    font-weight: normal;
+    font-weight: 600;
+    letter-spacing: 0.5px;
   }
 
   .custom-close-btn {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 35px;
-    height: 35px;
+    top: -8px;
+    right: -8px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    border: 2px solid #cfcfcf;
-    background: none;
-    font-size: 24px;
-    color: #cfcfcf;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     outline: none;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     &:hover {
-      color: #409EFF;
-      border-color: #409EFF;
+      color: #ffffff;
+      background: #ef4444;
+      transform: rotate(90deg);
+      box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
+    }
+
+    svg {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
 
@@ -179,30 +193,36 @@ export default {
       margin-bottom: 20px;
 
       :deep(.el-form-item__label) {
-        color: #3d4566;
-        font-weight: normal;
-        padding-right: 20px;
+        color: #475569;
+        font-weight: 500;
+        padding-right: 12px;
         text-align: right;
+        font-size: 14px;
+        letter-spacing: 0.2px;
       }
     }
 
     .custom-input {
       :deep(.el-input__inner) {
-        background-color: #f6f8fc;
+        background-color: #ffffff;
         border-radius: 8px;
-        border: 1px solid #e0e3e9;
-        height: 40px;
-        padding: 0 12px;
-        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+        height: 42px;
+        padding: 0 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 14px;
+        color: #334155;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
         &:focus {
-          border-color: #5b8cff;
-          box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.2);
-          background-color: #fff;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+          background-color: #ffffff;
         }
 
         &::placeholder {
-          color: #9c9f9e;
+          color: #94a3b8;
+          font-weight: 400;
         }
       }
     }
@@ -211,40 +231,49 @@ export default {
       width: 100%;
 
       :deep(.el-input__inner) {
-        background-color: #f6f8fc;
+        background-color: #ffffff;
         border-radius: 8px;
-        border: 1px solid #e0e3e9;
-        height: 40px;
-        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+        height: 42px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 14px;
+        color: #334155;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
         &:focus {
-          border-color: #5b8cff;
-          box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.2);
-          background-color: #fff;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+          background-color: #ffffff;
         }
 
         &::placeholder {
-          color: #9c9f9e;
+          color: #94a3b8;
+          font-weight: 400;
         }
       }
     }
 
     .custom-textarea {
       :deep(.el-textarea__inner) {
-        background-color: #f6f8fc;
+        background-color: #ffffff;
         border-radius: 8px;
-        border: 1px solid #e0e3e9;
-        padding: 12px;
-        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+        padding: 12px 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 14px;
+        color: #334155;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        line-height: 1.5;
 
         &:focus {
-          border-color: #5b8cff;
-          box-shadow: 0 0 0 2px rgba(91, 140, 255, 0.2);
-          background-color: #fff;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+          background-color: #ffffff;
         }
 
         &::placeholder {
-          color: #9c9f9e;
+          color: #94a3b8;
+          font-weight: 400;
         }
       }
     }
@@ -257,40 +286,59 @@ export default {
   .dialog-footer {
     display: flex;
     justify-content: center;
-    padding: 15px 0 0;
-    margin-top: 10px;
+    padding: 16px 0 0;
+    margin-top: 16px;
 
     .save-btn {
       width: 120px;
-      height: 40px;
-      font-size: 16px;
+      height: 42px;
+      font-size: 14px;
+      font-weight: 500;
       border-radius: 8px;
-      transition: all 0.3s ease;
-      background: #e6f0fd;
-      color: #237ff4;
-      border: 1px solid #b3d1ff;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: #3b82f6;
+      color: white;
+      border: none;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 
       &:hover {
-        background: #237ff4;
-        color: white;
-        border: none;
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+      }
+
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 3px rgba(59, 130, 246, 0.2);
       }
     }
 
     .cancel-btn {
       width: 120px;
-      height: 40px;
-      font-size: 16px;
+      height: 42px;
+      font-size: 14px;
+      font-weight: 500;
       border-radius: 8px;
-      transition: all 0.3s ease;
-      background: #f6f8fc;
-      color: #3d4566;
-      border: 1px solid #e0e3e9;
-      margin-left: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: #ffffff;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      margin-left: 16px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
       &:hover {
-        background: #e9e9e9;
-        border-color: #d9d9d9;
+        background: #f8fafc;
+        color: #475569;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
     }
   }
