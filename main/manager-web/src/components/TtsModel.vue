@@ -1,7 +1,7 @@
 <template>
   <el-dialog
       :visible.sync="localVisible"
-      width="75%"
+      width="85%"
       @close="handleClose"
       :show-close="false"
       :append-to-body="true"
@@ -13,8 +13,7 @@
       <div
           class="table-container"
           ref="tableContainer"
-          @scroll="handleScroll"
-      >
+          @scroll="handleScroll">
         <el-table
             v-loading="loading"
             :data="filteredTtsModels"
@@ -45,7 +44,7 @@
               <span v-else>{{ scope.row.languageType }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="试听" align="center" min-width="225" class-name="audio-column">
+          <el-table-column label="试听" align="center" min-width="100px" class-name="audio-column">
             <template slot-scope="scope">
               <div class="custom-audio-container">
                 <el-input
@@ -53,13 +52,13 @@
                     v-model="scope.row.voiceDemo"
                     placeholder="请输入MP3地址"
                     size="mini"
-                    class="audio-input"
-                ></el-input>
+                    class="audio-input">
+                </el-input>
                 <AudioPlayer v-else-if="isValidAudioUrl(scope.row.voiceDemo)" :audioUrl="scope.row.voiceDemo"/>
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="备注" align="center" min-width="120">
+          <el-table-column label="备注" align="center">
             <template slot-scope="scope">
               <el-input
                   v-if="scope.row.editing"
@@ -75,10 +74,10 @@
           <el-table-column label="操作" align="center" width="150">
             <template slot-scope="scope">
               <template v-if="!scope.row.editing">
-                <el-button type="primary" size="mini" @click="startEdit(scope.row)"
-                           style="background: #5cca8e;border:None">编辑
+                <el-button type="text" size="mini" @click="startEdit(scope.row)" class="edit-btn">
+                  编辑
                 </el-button>
-                <el-button type="primary" size="mini" @click="deleteRow(scope.row)" style="background: red;border:None">
+                <el-button type="text" size="mini" @click="deleteRow(scope.row)" class="delete-btn">
                   删除
                 </el-button>
               </template>
@@ -105,7 +104,7 @@
       <el-button type="primary" size="mini" @click="toggleSelectAll" style="background: #606ff3;border: None">
         {{ selectAll ? '取消全选' : '全选' }}
       </el-button>
-      <el-button type="primary" size="mini" @click="addNew" style="background: #f6cf79;border: None; color: #000012">
+      <el-button type="primary" size="mini" @click="addNew" style="background: #5bc98c;border: None;">
         新增
       </el-button>
       <el-button type="primary"
@@ -488,7 +487,7 @@ export default {
 ::v-deep .el-dialog {
   border-radius: 8px !important;
   overflow: hidden;
-  top: 8vh !important;
+  top: 1vh !important;
 }
 
 ::v-deep .el-dialog__header {
@@ -584,13 +583,13 @@ export default {
 .table-container {
   flex: 1;
   overflow-y: scroll;
-  scrollbar-width: none; /* Firefox */
-  padding-right: 15px; /* 为滚动条留出空间 */
-  width: calc(100% - 16px); /* 减去滚动条宽度 */
+  scrollbar-width: none;
+  padding-right: 15px;
+  width: calc(100% - 16px);
 }
 
 .table-container::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
 }
 
 /* 自定义滚动条 */
@@ -640,10 +639,33 @@ export default {
   display: none;
 }
 
+/* 音频播放器容器样式 */
+.custom-audio-container {
+  width: 280px;
+  margin: auto;
+}
+
 /* 新增按钮组样式 */
 .action-buttons {
   bottom: 20px;
   padding-top: 10px;
 }
+.edit-btn,
+.delete-btn,
+.save-btn {
+  margin: 0 8px;
+  color: #7079aa !important;
+  transition: all 0.3s;
+}
 
+.edit-btn:hover,
+.delete-btn:hover,
+.save-btn:hover {
+  color: #5f70f3 !important;
+  transform: scale(1.05);
+}
+
+.save-btn {
+  color: #5cca8e !important;
+}
 </style>
