@@ -775,8 +775,8 @@ export default {
 }
 
 ::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #409EFF !important;
-  border-color: #409EFF !important;
+  background-color: #5f70f3;
+  border-color: #5f70f3;
 }
 
 .voice-management-btn {
