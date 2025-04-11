@@ -108,7 +108,11 @@
       <el-button type="primary" size="mini" @click="addNew" style="background: #f6cf79;border: None; color: #000012">
         新增
       </el-button>
-      <el-button type="primary" size="mini" @click="batchDelete" style="background: red;border:None">删除</el-button>
+      <el-button type="primary"
+                 size="mini"
+                 @click="deleteRow(filteredTtsModels.filter(row => row.selected))"
+                 style="background: red;border:None">删除
+      </el-button>
     </div>
   </el-dialog>
 </template>
@@ -419,105 +423,57 @@ export default {
     },
 
     deleteRow(row) {
-      this.$confirm("确定要删除该音色吗？", "警告", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
-        .then(() => {
-          Api.timbre.deleteVoice(row.id, (response) => {
-            if (response.code === 0) {
-              this.$message.success({
-                message: "删除成功",
-                showClose: true
-              });
-              this.loadData(); // 刷新数据
-            } else {
-              this.$message.error({
-                message: response.msg || "删除失败",
-                showClose: true
-              });
+        // 处理单个音色或音色数组
+        const voices = Array.isArray(row) ? row : [row];
+
+        if (Array.isArray(row) && row.length === 0) {
+            this.$message.warning("请先选择需要删除的音色");
+            return;
+        }
+
+
+        const voiceCount = voices.length;
+        this.$confirm(`确定要删除选中的${voiceCount}个音色吗？`, "警告", {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+            distinguishCancelAndClose: true
+        }).then(() => {
+            const ids = voices.map(voice => voice.id);
+            if (ids.some(id => !id)) {
+                this.$message.error("存在无效的音色ID");
+                return;
             }
-          });
-        })
-        .catch(() => {
-          this.$message.info("已取消删除");
-        });
-    },
 
-    batchDelete() {
-      const selectedRows = this.filteredTtsModels.filter(row => row.selected);
-      if (selectedRows.length === 0) {
-        this.$message.warning("请先选择需要删除的音色");
-        return;
-      }
-
-      this.$confirm(`确定要删除选中的${selectedRows.length}个音色吗？`, "警告", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
-        .then(async () => {
-          const loading = this.$loading({
-            lock: true,
-            text: "正在删除中...",
-            spinner: "el-icon-loading",
-            background: "rgba(0, 0, 0, 0.7)",
-          });
-
-          try {
-            const results = await Promise.all(
-              selectedRows.map((row) => {
-                return new Promise((resolve) => {
-                  Api.timbre.deleteVoice(row.id, (response) => {
-                    if (response.code === 0) {
-                      resolve({ success: true, id: row.id });
-                    } else {
-                      resolve({
-                        success: false,
-                        id: row.id,
-                        msg: response.msg || '删除失败'
-                      });
-                    }
-                  });
+        Api.timbre.deleteVoice(ids, ({data}) => {
+            if (data.code === 0) {
+                this.$message.success({
+                    message: `成功删除${voiceCount}个参数`,
+                    showClose: true
                 });
-              })
-            );
-
-            const successCount = results.filter(r => r.success).length;
-            const failCount = results.length - successCount;
-
-            if (failCount === 0) {
-              this.$message.success({
-                message: `成功删除${successCount}个音色`,
-                showClose: true
-              });
-            } else if (successCount === 0) {
-              this.$message.error({
-                message: '删除失败，请重试',
-                showClose: true
-              });
+                this.loadData(); // 刷新参数列表
             } else {
-              this.$message.warning({
-                message: `成功删除${successCount}个音色，${failCount}个删除失败`,
-                showClose: true
-              });
+                this.$message.error({
+                    message: data.msg || '删除失败，请重试',
+                    showClose: true
+                });
             }
-
-            this.loadData(); // 刷新数据
-          } catch (error) {
-            console.error('批量删除出错:', error);
-            this.$message.error({
-              message: '删除过程中发生错误',
-              showClose: true
-            });
-          } finally {
-            loading.close();
-          }
-        })
-        .catch(() => {
-          this.$message.info("已取消删除");
         });
+      }).catch(action => {
+          if (action === 'cancel') {
+              this.$message({
+                  type: 'info',
+                  message: '已取消删除操作',
+                  duration: 1000
+              });
+          } else {
+              this.$message({
+                  type: 'info',
+                  message: '操作已关闭',
+                  duration: 1000
+              });
+          }
+      });
     },
 
     isValidAudioUrl(url) {

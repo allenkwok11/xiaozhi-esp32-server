@@ -115,7 +115,6 @@ export default {
     },
     // 删除
     deleteParam(ids, callback) {
-        console.log(4444,ids )
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/admin/params/delete`)
             .method('POST')
