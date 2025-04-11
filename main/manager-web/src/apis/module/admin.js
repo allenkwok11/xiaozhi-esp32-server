@@ -61,7 +61,8 @@ export default {
     getParamsList(params, callback) {
         const queryParams = new URLSearchParams({
             page: params.page,
-            limit: params.limit
+            limit: params.limit,
+            paramCode: params.paramCode || ''
         }).toString();
 
         RequestService.sendRequest()

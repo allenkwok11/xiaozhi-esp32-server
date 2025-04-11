@@ -6,7 +6,7 @@
             <h2 class="page-title">参数管理</h2>
             <div class="right-operations">
                 <el-input placeholder="请输入参数编码查询" v-model="searchCode" class="search-input"
-                    @keyup.enter.native="handleSearch" />
+                    @keyup.enter.native="handleSearch" clearable />
                 <el-button class="btn-search" @click="handleSearch">搜索</el-button>
             </div>
         </div>
@@ -87,7 +87,7 @@ export default {
                 paramCode: "",
                 paramValue: "",
                 remark: ""
-            }
+            },
         };
     },
     created() {
@@ -125,6 +125,8 @@ export default {
                     if (data.code === 0) {
                         this.paramsList = data.data.list;
                         this.total = data.data.total;
+                    } else {
+                        this.$message.error(data.msg || '获取参数列表失败');
                     }
                 }
             );
