@@ -80,7 +80,8 @@ export default {
         { value: 'string', label: '字符串(string)' },
         { value: 'number', label: '数字(number)' },
         { value: 'boolean', label: '布尔值(boolean)' },
-        { value: 'array', label: '数组(array)' }
+        { value: 'array', label: '数组(array)' },
+        { value: 'json', label: 'JSON对象(json)' }
       ],
       rules: {
         paramCode: [
