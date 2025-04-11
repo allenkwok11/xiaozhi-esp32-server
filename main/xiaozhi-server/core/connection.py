@@ -622,6 +622,10 @@ class ConnectionHandler:
             self.recode_first_last_text(text, text_index)
             self.tts.tts_one_sentence(self, text)
             self.dialogue.put(Message(role="assistant", content=text))
+        elif result.action == Action.NONE:
+            # 啥也不干
+            text = result.result
+            self.dialogue.put(Message(role="assistant", content=text))
         else:
             text = result.result
             self.recode_first_last_text(text, text_index)

@@ -53,6 +53,7 @@ class TTSProviderBase(ABC):
             "，",
         )
         self.tts_request = False
+        self.tts_stop_request = False
         self.processed_chars = 0
         self.stream = False
         self.last_to_opus_raw = b""
@@ -93,6 +94,9 @@ class TTSProviderBase(ABC):
             )
             self.processed_chars += len(segment_text_raw)  # 更新已处理字符位置
             return segment_text
+        elif self.tts_stop_request and current_text:
+            segment_text = current_text
+            return segment_text
         else:
             return None
 
@@ -115,8 +119,11 @@ class TTSProviderBase(ABC):
 
     def tts_one_sentence(self, conn, text, u_id=None):
         if not u_id:
-            u_id = str(uuid.uuid4()).replace("-", "")
-        conn.u_id = u_id
+            if conn.u_id:
+                u_id = conn.u_id
+            else:
+                u_id = str(uuid.uuid4()).replace("-", "")
+                conn.u_id = u_id
         self.tts_text_queue.put(
             TTSMessageDTO(u_id=u_id, msg_type=MsgType.START_TTS_REQUEST, content="")
         )
@@ -135,6 +142,7 @@ class TTSProviderBase(ABC):
                 if msg_type == MsgType.START_TTS_REQUEST:
                     # 开始传输tts文本
                     self.tts_request = True
+                    self.tts_stop_request = False
                     self.u_id = ttsMessageDTO.u_id
                     # 开启session
                     future = asyncio.run_coroutine_threadsafe(
@@ -152,6 +160,7 @@ class TTSProviderBase(ABC):
                     future.result()
                 elif msg_type == MsgType.STOP_TTS_REQUEST:
                     self.tts_request = False
+                    self.tts_stop_request = True
                     future = asyncio.run_coroutine_threadsafe(
                         self.finish_session(ttsMessageDTO.u_id), loop=self.loop
                     )
@@ -183,6 +192,7 @@ class TTSProviderBase(ABC):
                     if msg_type == MsgType.START_TTS_REQUEST:
                         # 开始传输tts文本
                         self.tts_request = True
+                        self.tts_stop_request = False
                         self.processed_chars = 0
                         self.tts_text_buff = []
                     elif self.tts_request and msg_type == MsgType.TTS_TEXT_REQUEST:
@@ -190,6 +200,7 @@ class TTSProviderBase(ABC):
                     elif msg_type == MsgType.STOP_TTS_REQUEST:
                         # 结束传输tts文本,处理最尾巴的数据
                         self.tts_request = False
+                        self.tts_stop_request = True
                         segment_text = self._get_segment_text()
                         if segment_text:
                             # 修改部分：创建协程对象

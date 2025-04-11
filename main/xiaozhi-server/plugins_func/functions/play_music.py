@@ -67,7 +67,7 @@ def play_music(conn, song_name: str):
         future.add_done_callback(handle_done)
 
         return ActionResponse(
-            action=Action.RESPONSE, result="指令已接收", response="正在为您播放音乐"
+            action=Action.NONE, result="指令已接收", response="正在为您播放音乐"
         )
     except Exception as e:
         logger.bind(tag=TAG).error(f"处理音乐意图错误: {e}")
