@@ -31,11 +31,12 @@
 
                         <div class="table_bottom">
                             <div class="ctrl_btn">
-                                <el-button size="mini" type="primary" class="select-all-btn"
-                                    @click="handleSelectAll">全选</el-button>
+                                <el-button size="mini" type="primary" class="select-all-btn" @click="handleSelectAll">
+                                    {{ isAllSelected ? '取消全选' : '全选' }}
+                                </el-button>
                                 <el-button size="mini" type="success" @click="showAddDialog">新增</el-button>
                                 <el-button size="mini" type="danger" icon="el-icon-delete"
-                                   @click="deleteParam($refs.paramsTable.selection)">删除</el-button>
+                                    @click="deleteParam($refs.paramsTable.selection)">删除</el-button>
                             </div>
                             <div class="custom-pagination">
                                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
@@ -82,6 +83,7 @@ export default {
             total: 0,
             dialogVisible: false,
             dialogTitle: "新增参数",
+            isAllSelected: false,
             paramForm: {
                 id: null,
                 paramCode: "",
@@ -136,7 +138,12 @@ export default {
             this.fetchParams();
         },
         handleSelectAll() {
-            this.$refs.paramsTable.toggleAllSelection();
+            if (this.isAllSelected) {
+                this.$refs.paramsTable.clearSelection();
+            } else {
+                this.$refs.paramsTable.toggleAllSelection();
+            }
+            this.isAllSelected = !this.isAllSelected;
         },
         showAddDialog() {
             this.dialogTitle = "新增参数";
