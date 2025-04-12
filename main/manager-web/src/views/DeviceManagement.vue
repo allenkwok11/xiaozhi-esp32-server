@@ -7,7 +7,7 @@
         <el-button type="primary" class="add-device-btn" @click="handleAddDevice">
           + 添加设备
         </el-button>
-        <el-table :data="paginatedDeviceList" style="width: 100%; margin-top: 20px" border stripe>
+        <el-table :data="paginatedDeviceList"  style="width: 100%; margin-top: 20px" border stripe>
           <el-table-column label="设备型号" prop="model" flex></el-table-column>
           <el-table-column label="固件版本" prop="firmwareVersion" width="120"></el-table-column>
           <el-table-column label="Mac地址" prop="macAddress"></el-table-column>
@@ -39,9 +39,26 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-pagination class="pagination" @size-change="handleSizeChange" @current-change="handleCurrentChange"
-          :current-page="currentPage" :page-sizes="[5, 10, 20, 50]" :page-size="pageSize"
-          layout="total, sizes, prev, pager, next, jumper" :total="deviceList.length"></el-pagination>
+        <div class="table_bottom">
+          <div class="ctrl_btn">
+            <!-- 这里后续会添加全选按钮 -->
+          </div>
+          <div class="custom-pagination">
+            <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
+            <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
+            <button
+              v-for="page in visiblePages"
+              :key="page"
+              class="pagination-btn"
+              :class="{ active: page === currentPage }"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+            <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">下一页</button>
+            <span class="total-text">共{{ deviceList.length }}条记录</span>
+          </div>
+        </div>
       </div>
       <div class="copyright">
         ©2025 xiaozhi-esp32-server
@@ -75,7 +92,25 @@ export default {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
       return this.deviceList.slice(start, end);
-    }
+    },
+    pageCount() {
+    return Math.ceil(this.deviceList.length / this.pageSize);
+    },
+    visiblePages() {
+      const pages = [];
+      const maxVisible = 3;
+      let start = Math.max(1, this.currentPage - 1);
+      let end = Math.min(this.pageCount, start + maxVisible - 1);
+
+      if (end - start + 1 < maxVisible) {
+        start = Math.max(1, end - maxVisible + 1);
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      return pages;
+    },
   },
   mounted() {
     const agentId = this.$route.query.agentId;
@@ -115,12 +150,19 @@ export default {
         });
       });
     },
-    handleSizeChange(val) {
-      this.pageSize = val;
+    goFirst() {
+      this.currentPage = 1;
     },
-    handleCurrentChange(val) {
-      this.currentPage = val;
+    goPrev() {
+      if (this.currentPage > 1) this.currentPage--;
     },
+    goNext() {
+      if (this.currentPage < this.pageCount) this.currentPage++;
+    },
+    goToPage(page) {
+      this.currentPage = page;
+    },
+
     fetchBindDevices(agentId) {
       this.loading = true;
       Api.device.getAgentBindDevices(agentId, ({ data }) => {
@@ -213,8 +255,50 @@ export default {
   vertical-align: middle;
 }
 
-.pagination {
-  margin-top: 20px;
-  text-align: right;
+.custom-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.pagination-btn {
+  min-width: 28px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+  background: #dee7ff;
+  color: #606266;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:first-child,
+.pagination-btn:nth-child(2),
+.pagination-btn:nth-last-child(2) {
+  min-width: 60px;
+}
+
+.pagination-btn:hover {
+  background: #d7dce6;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pagination-btn.active {
+  background: #5f70f3 !important;
+  color: #ffffff !important;
+  border-color: #5f70f3 !important;
+}
+
+.total-text {
+  color: #909399;
+  font-size: 14px;
+  margin-left: 10px;
 }
 </style>
