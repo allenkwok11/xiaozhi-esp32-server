@@ -4,10 +4,8 @@
     <el-main style="padding: 20px; display: flex; flex-direction: column;">
       <div class="table-container">
         <h3 class="device-list-title">设备列表</h3>
-        <el-button type="primary" class="add-device-btn" @click="handleAddDevice">
-          + 添加设备
-        </el-button>
-        <el-table :data="paginatedDeviceList"  style="width: 100%; margin-top: 20px" border stripe>
+        <el-table ref="deviceTable" :data="paginatedDeviceList" @selection-change="handleSelectionChange" style="width: 100%; margin-top: 20px" border stripe>
+          <el-table-column type="selection" align="center" width="60"></el-table-column>
           <el-table-column label="设备型号" prop="model" flex></el-table-column>
           <el-table-column label="固件版本" prop="firmwareVersion" width="120"></el-table-column>
           <el-table-column label="Mac地址" prop="macAddress"></el-table-column>
@@ -41,7 +39,12 @@
         </el-table>
         <div class="table_bottom">
           <div class="ctrl_btn">
-            <!-- 这里后续会添加全选按钮 -->
+            <el-button size="mini" type="primary" class="select-all-btn" @click="toggleAllSelection">
+                {{ isAllSelected ? '取消全选' : '全选' }}
+            </el-button>
+            <el-button type="primary" size="mini" class="add-device-btn" @click="handleAddDevice">
+                新增
+            </el-button>
           </div>
           <div class="custom-pagination">
             <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
@@ -79,6 +82,8 @@ export default {
   data() {
     return {
       addDeviceDialogVisible: false,
+       selectedDevices: [],
+      isAllSelected: false,
       currentAgentId: this.$route.query.agentId || '',
       currentPage: 1,
       pageSize: 5,
@@ -119,6 +124,16 @@ export default {
     }
   },
   methods: {
+
+    handleSelectionChange(val) {
+      this.selectedDevices = val;
+      this.isAllSelected = val.length === this.paginatedDeviceList.length;
+    },
+    toggleAllSelection() {
+      this.$refs.deviceTable.toggleAllSelection();
+    },
+
+
     handleAddDevice() {
       this.addDeviceDialogVisible = true;
     },
@@ -222,21 +237,18 @@ export default {
 }
 
 .add-device-btn {
-  float: right;
-  background: #409eff;
-  border: none;
-  border-radius: 10px;
-  width: 105px;
+  background: linear-gradient(135deg, #6b8cff, #a966ff) !important;
+  border: none !important;
+  color: white !important;
+  margin-left: 10px;
   height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  gap: 8px;
-  margin-bottom: 15px;
+  padding: 7px 12px;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    background: #3a8ee6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -301,4 +313,39 @@ export default {
   font-size: 14px;
   margin-left: 10px;
 }
+
+.table_bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.ctrl_btn {
+  display: flex;
+  gap: 8px;
+  padding-left: 26px;
+
+  .el-button {
+    min-width: 72px;
+    height: 32px;
+    padding: 7px 12px;
+    border-radius: 4px;
+    border: none;
+    transition: all 0.3s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  .el-button--primary {
+    background: #5f70f3;
+    color: white;
+  }
+}
+
+
 </style>
