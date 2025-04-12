@@ -4,16 +4,6 @@
 
     <div class="operation-bar">
         <h2 class="page-title">{{ modelTypeText }}</h2>
-<!--      <div class="right-operations">-->
-<!--        <el-button plain size="small" @click="handleImport" style="background: #7b9de5; color: white;">-->
-<!--          <img loading="lazy" alt="" src="@/assets/model/inner_conf.png">-->
-<!--          导入配置-->
-<!--        </el-button>-->
-<!--        <el-button plain size="small" @click="handleExport" style="background: #71c9d1; color: white;">-->
-<!--          <img loading="lazy" alt="" src="@/assets/model/output_conf.png">-->
-<!--          导出配置-->
-<!--        </el-button>-->
-<!--      </div>-->
       <div class="action-group">
             <div class="search-group">
                 <el-input
@@ -76,13 +66,15 @@
                   @change="handleStatusChange(scope.row)" />
               </template>
             </el-table-column>
+            <el-table-column label="是否默认" align="center">
+              <template slot-scope="scope">
+                <el-switch v-model="scope.row.isDefault" class="custom-switch" :active-value="1" :inactive-value="0"
+                  @change="handleDefaultChange(scope.row)" />
+              </template>
+            </el-table-column>
             <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
               <template slot-scope="scope">
-                <el-button
-                  type="text"
-                  size="mini"
-                  @click="openTtsDialog(scope.row)"
-                  class="voice-management-btn">
+                <el-button type="text" size="mini" @click="openTtsDialog(scope.row)" class="voice-management-btn">
                   音色管理
                 </el-button>
               </template>
@@ -130,7 +122,7 @@
 
       <ModelEditDialog :modelType="activeTab" :visible.sync="editDialogVisible" :modelData="editModelData"
         @save="handleModelSave" />
-        <TtsModel :visible.sync="ttsDialogVisible" :ttsModelId="selectedTtsModelId"/>
+      <TtsModel :visible.sync="ttsDialogVisible" :ttsModelId="selectedTtsModelId" />
       <AddModelDialog :modelType="activeTab" :visible.sync="addDialogVisible" @confirm="handleAddConfirm" />
     </div>
 
@@ -304,14 +296,6 @@ export default {
       this.currentPage = page;
       this.$refs.modelTable.clearSelection();
     },
-    handleImport() {
-      // TODO: 导入配置
-      console.log('导入配置');
-    },
-    handleExport() {
-      // TODO: 导出配置
-      console.log('导出配置');
-    },
     handleModelSave({ provideCode, formData }) {
       const modelType = this.activeTab;
       const id = formData.id;
@@ -412,11 +396,11 @@ export default {
         }
       });
     },
-     // 处理启用/禁用状态变更
+    // 处理启用/禁用状态变更
     handleStatusChange(model) {
       const newStatus = model.isEnabled ? 1 : 0
       const originalStatus = model.isEnabled
-      
+
       model.isEnabled = !model.isEnabled
 
       Api.model.updateModelStatus(
@@ -434,12 +418,24 @@ export default {
           }
         }
       )
+    },
+    handleDefaultChange(model) {
+      Api.model.setDefaultModel(model.id, ({ data }) => {
+        if (data.code === 0) {
+          this.$message.success('设置默认模型成功')
+          this.loadData()
+        }
+      })
     }
   },
 };
 </script>
 
 <style scoped>
+.el-switch {
+  height: 23px;
+}
+
 ::v-deep .el-table tr {
   background: transparent;
 }

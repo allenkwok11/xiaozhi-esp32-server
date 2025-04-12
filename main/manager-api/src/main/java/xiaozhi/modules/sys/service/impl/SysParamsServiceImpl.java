@@ -125,6 +125,13 @@ public class SysParamsServiceImpl extends BaseServiceImpl<SysParamsDao, SysParam
                     throw new RenException(ErrorCode.PARAM_BOOLEAN_INVALID);
                 }
                 break;
+            case "json":
+                try {
+                    JsonUtils.parseObject(paramValue, Object.class);
+                } catch (Exception e) {
+                    throw new RenException(ErrorCode.PARAM_JSON_INVALID);
+                }
+                break;
             default:
                 throw new RenException(ErrorCode.PARAM_TYPE_INVALID);
         }

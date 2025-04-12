@@ -564,6 +564,7 @@ export default {
     }
   }
 }
+
 :deep(.el-table .el-button--text) {
   color: #7079aa !important;
 }
