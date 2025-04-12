@@ -1,7 +1,6 @@
 import { getServiceUrl } from '../api';
 import RequestService from '../httpRequest';
 
-
 export default {
   // 获取模型配置列表
   getModelList(params, callback) {
@@ -162,21 +161,25 @@ export default {
   // 更新模型配置
   updateModel(params, callback) {
     const { modelType, provideCode, id, formData } = params;
+    const payload = {
+      ...formData,
+      configJson: formData.configJson
+    };
     RequestService.sendRequest()
-      .url(`${getServiceUrl()}/models/${modelType}/${provideCode}/${id}`)
-      .method('PUT')
-      .data(formData)
-      .success((res) => {
-        RequestService.clearRequestTime();
-        callback(res);
-      })
-      .fail((err) => {
-        console.error('更新模型失败:', err);
-        this.$message.error(err.msg || '更新模型失败');
-        RequestService.reAjaxFun(() => {
-          this.updateModel(params, callback);
-        });
-      }).send();
+        .url(`${getServiceUrl()}/models/${modelType}/${provideCode}/${id}`)
+        .method('PUT')
+        .data(payload)
+        .success((res) => {
+            RequestService.clearRequestTime();
+            callback(res);
+        })
+        .fail((err) => {
+            console.error('更新模型失败:', err);
+            this.$message.error(err.msg || '更新模型失败');
+            RequestService.reAjaxFun(() => {
+                this.updateModel(params, callback);
+            });
+        }).send();
   },
   // 设置默认模型
   setDefaultModel(id, callback) {
