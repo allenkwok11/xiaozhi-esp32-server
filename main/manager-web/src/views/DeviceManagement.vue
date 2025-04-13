@@ -11,73 +11,86 @@
       </div>
     </div>
 
-    <el-main style="padding: 20px; display: flex; flex-direction: column;">
-      <div class="table-container">
-        <el-table ref="deviceTable" :data="paginatedDeviceList" @selection-change="handleSelectionChange" style="width: 100%; margin-top: 20px" border stripe>
-          <el-table-column type="selection" align="center" width="60"></el-table-column>
-          <el-table-column label="设备型号" prop="model" flex></el-table-column>
-          <el-table-column label="固件版本" prop="firmwareVersion" width="120"></el-table-column>
-          <el-table-column label="Mac地址" prop="macAddress"></el-table-column>
-          <el-table-column label="绑定时间" prop="bindTime" width="200"></el-table-column>
-          <el-table-column label="最近对话" prop="lastConversation" width="140"></el-table-column>
-          <el-table-column label="备注" width="180">
-            <template slot-scope="scope">
-              <el-input v-if="scope.row.isEdit" v-model="scope.row.remark" size="mini"
-                @blur="stopEditRemark(scope.$index)"></el-input>
-              <span v-else>
-                <i v-if="!scope.row.remark" class="el-icon-edit" @click="startEditRemark(scope.$index, scope.row)"></i>
-                <span v-else @click="startEditRemark(scope.$index, scope.row)">
-                  {{ scope.row.remark }}
-                </span>
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column label="OTA升级" width="120">
-            <template slot-scope="scope">
-              <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66"
-                inactive-color="#ff4949"></el-switch>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="80">
-            <template slot-scope="scope">
-              <el-button size="mini" type="text" @click="handleUnbind(scope.row.device_id)" style="color: #ff4949">
-                解绑
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="table_bottom">
-          <div class="ctrl_btn">
-            <el-button size="mini" type="primary" class="select-all-btn" @click="toggleAllSelection">
-                {{ isAllSelected ? '取消全选' : '全选' }}
-            </el-button>
-            <el-button type="primary" size="mini" class="add-device-btn" @click="handleAddDevice">
-                新增
-            </el-button>
-          </div>
-          <div class="custom-pagination">
-            <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
-            <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
-            <button
-              v-for="page in visiblePages"
-              :key="page"
-              class="pagination-btn"
-              :class="{ active: page === currentPage }"
-              @click="goToPage(page)"
-            >
-              {{ page }}
-            </button>
-            <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">下一页</button>
-            <span class="total-text">共{{ deviceList.length }}条记录</span>
-          </div>
+    <div class="main-wrapper">
+      <div class="content-panel">
+        <div class="content-area">
+          <el-card class="params-card" shadow="never">
+            <el-table
+              ref="deviceTable"
+              :data="paginatedDeviceList"
+              @selection-change="handleSelectionChange"
+              class="transparent-table"
+              :header-cell-class-name="headerCellClassName"
+              border
+              stripe>
+              <el-table-column type="selection" align="center" width="120"></el-table-column>
+              <el-table-column label="设备型号" prop="model" align="center"></el-table-column>
+              <el-table-column label="固件版本" prop="firmwareVersion" align="center" width="120"></el-table-column>
+              <el-table-column label="Mac地址" prop="macAddress" align="center"></el-table-column>
+              <el-table-column label="绑定时间" prop="bindTime" align="center" width="200"></el-table-column>
+              <el-table-column label="最近对话" prop="lastConversation" align="center" width="140"></el-table-column>
+              <el-table-column label="备注" align="center" width="180">
+                <template slot-scope="scope">
+                  <el-input v-if="scope.row.isEdit" v-model="scope.row.remark" size="mini"
+                    @blur="stopEditRemark(scope.$index)"></el-input>
+                  <span v-else>
+                    <i v-if="!scope.row.remark" class="el-icon-edit" @click="startEditRemark(scope.$index, scope.row)"></i>
+                    <span v-else @click="startEditRemark(scope.$index, scope.row)">
+                      {{ scope.row.remark }}
+                    </span>
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="OTA升级" align="center" width="120">
+                <template slot-scope="scope">
+                  <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66"
+                    inactive-color="#ff4949"></el-switch>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" align="center" width="80">
+                <template slot-scope="scope">
+                  <el-button size="mini" type="text" @click="handleUnbind(scope.row.device_id)" style="color: #ff4949">
+                    解绑
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <div class="table_bottom">
+              <div class="ctrl_btn">
+                <el-button size="mini" type="primary" class="select-all-btn" @click="toggleAllSelection">
+                  {{ isAllSelected ? '取消全选' : '全选' }}
+                </el-button>
+                <el-button type="success" size="mini" class="add-device-btn" @click="handleAddDevice">
+                  新增
+                </el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete"
+                  @click="deleteSelected">删除</el-button>
+              </div>
+              <div class="custom-pagination">
+                <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
+                <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
+                <button
+                  v-for="page in visiblePages"
+                  :key="page"
+                  class="pagination-btn"
+                  :class="{ active: page === currentPage }"
+                  @click="goToPage(page)"
+                >
+                  {{ page }}
+                </button>
+                <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">下一页</button>
+                <span class="total-text">共{{ deviceList.length }}条记录</span>
+              </div>
+            </div>
+          </el-card>
         </div>
       </div>
-      <div class="copyright">
-        ©2025 xiaozhi-esp32-server
-      </div>
-      <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId"
-        @refresh="fetchBindDevices(currentAgentId)" />
-    </el-main>
+    </div>
+
+    <div class="copyright">©2025 xiaozhi-esp32-server</div>
+    <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId"
+      @refresh="fetchBindDevices(currentAgentId)" />
   </div>
 </template>
 
@@ -156,6 +169,28 @@ export default {
       this.$refs.deviceTable.toggleAllSelection();
     },
 
+    deleteSelected() {
+      if (this.selectedDevices.length === 0) {
+        this.$message.warning("请先选择需要删除的设备");
+        return;
+      }
+
+      this.$confirm(`确定要删除选中的${this.selectedDevices.length}个设备吗？`, '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        const ids = this.selectedDevices.map(device => device.device_id);
+        Api.device.batchDeleteDevices(ids, ({ data }) => {
+          if (data.code === 0) {
+            this.$message.success(`成功删除${this.selectedDevices.length}个设备`);
+            this.fetchBindDevices(this.currentAgentId);
+          } else {
+            this.$message.error(data.msg || '删除失败');
+          }
+        });
+      });
+    },
 
     handleAddDevice() {
       this.addDeviceDialogVisible = true;
@@ -214,25 +249,28 @@ export default {
               model: device.board,
               firmwareVersion: device.appVersion,
               macAddress: device.macAddress,
-              bindTime: formattedBindTime, // 使用格式化后的时间
+              bindTime: formattedBindTime,
               lastConversation: device.lastConnectedAt,
               remark: device.alias,
               isEdit: false,
               otaSwitch: device.autoUpdate === 1,
-              // 添加原始时间用于排序
               rawBindTime: new Date(device.createDate).getTime()
             };
           })
-            // 按照绑定时间降序排序
             .sort((a, b) => a.rawBindTime - b.rawBindTime);
         } else {
           this.$message.error(data.msg || '获取设备列表失败');
         }
       });
     },
+    headerCellClassName({ columnIndex }) {
+      if (columnIndex === 0) {
+        return "custom-selection-header";
+      }
+      return "";
+    }
   }
 };
-
 </script>
 
 <style scoped>
@@ -241,6 +279,7 @@ export default {
   min-height: 506px;
   height: 100vh;
   display: flex;
+  position: relative;
   flex-direction: column;
   background: linear-gradient(to bottom right, #dce8ff, #e4eeff, #e6cbfd);
   background-size: cover;
@@ -248,35 +287,111 @@ export default {
   -o-background-size: cover;
 }
 
-.table-container {
-  background: #f9fafc;
-  padding: 20px;
-  border-radius: 20px;
+.main-wrapper {
+  margin: 5px 22px;
+  border-radius: 15px;
+  min-height: 600px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 15px;
+  position: relative;
+  background: rgba(237, 242, 255, 0.5);
 }
 
-.add-device-btn {
-  background: linear-gradient(135deg, #6b8cff, #a966ff) !important;
-  border: none !important;
-  color: white !important;
-  margin-left: 10px;
+.operation-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  margin: 0;
+  color: #2c3e50;
+}
+
+.right-operations {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.search-input {
+  width: 280px;
+  border-radius: 4px;
+}
+
+.btn-search {
+  background: linear-gradient(135deg, #6b8cff, #a966ff);
+  border: none;
+  color: white;
+}
+
+.content-panel {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  height: 100%;
+  border-radius: 15px;
+  background: transparent;
+  border: 1px solid #fff;
+}
+
+.content-area {
+  flex: 1;
+  height: 100%;
+  min-width: 600px;
+  overflow-x: auto;
+  background-color: white;
+}
+
+.params-card {
+  background: white;
+  border: none;
+  box-shadow: none;
+}
+
+.table_bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding: 0 20px;
+}
+
+.ctrl_btn {
+  display: flex;
+  gap: 8px;
+  padding-left: 26px;
+}
+
+.ctrl_btn .el-button {
+  min-width: 72px;
   height: 32px;
   padding: 7px 12px;
-  border-radius: 4px !important;
+  border-radius: 4px;
+  border: none;
+  transition: all 0.3s;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
 }
 
-.el-icon-edit {
-  color: #409eff;
-  cursor: pointer;
-  font-size: 14px;
-  vertical-align: middle;
+.ctrl_btn .el-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ctrl_btn .el-button--primary {
+  background: #5f70f3;
+  color: white;
+}
+
+.ctrl_btn .el-button--success {
+  background: #5bc98c;
+  color: white;
+}
+
+.ctrl_btn .el-button--danger {
+  background: #fd5b63;
+  color: white;
 }
 
 .custom-pagination {
@@ -326,78 +441,53 @@ export default {
   margin-left: 10px;
 }
 
-.table_bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20px;
+.copyright {
+  text-align: center;
+  color: #979db1;
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: auto;
+  padding: 30px 0 20px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
 }
 
-.ctrl_btn {
-  display: flex;
-  gap: 8px;
-  padding-left: 26px;
-
-  .el-button {
-    min-width: 72px;
-    height: 32px;
-    padding: 7px 12px;
-    border-radius: 4px;
-    border: none;
-    transition: all 0.3s;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-  }
-
-  .el-button--primary {
-    background: #5f70f3;
-    color: white;
-  }
+/* 表格样式覆盖 */
+:deep(.transparent-table) {
+  background: white;
 }
 
-
-.operation-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  margin-top: 15px;
+:deep(.transparent-table .el-table__header th) {
+  background: white !important;
+  color: black;
 }
 
-.page-title {
-  font-size: 24px;
-  margin: 0;
-  color: #2c3e50;
+:deep(.transparent-table .el-table__body tr td) {
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.right-operations {
-  display: flex;
-  gap: 10px;
-  margin-left: auto;
+:deep(.el-icon-edit) {
+  color: #7079aa;
+  cursor: pointer;
 }
 
-.search-input {
-  width: 280px;
-  border-radius: 4px;
-  transition: all 0.3s;
+:deep(.el-icon-edit:hover) {
+  color: #5a64b5;
 }
 
-.btn-search {
-  background: linear-gradient(135deg, #6b8cff, #a966ff);
-  border: none;
-  color: white;
-  transition: all 0.3s;
-
-  &:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(107, 140, 255, 0.4);
-  }
+:deep(.custom-selection-header .el-checkbox) {
+  display: none !important;
 }
 
-
+:deep(.custom-selection-header::after) {
+  content: "选择";
+  display: inline-block;
+  color: black;
+  font-weight: bold;
+  padding-bottom: 18px;
+}
 </style>
