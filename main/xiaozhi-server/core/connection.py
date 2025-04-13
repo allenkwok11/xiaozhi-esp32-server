@@ -104,8 +104,6 @@ class ConnectionHandler:
 
         self.close_after_chat = False  # 是否在聊天结束后关闭连接
         self.use_function_call_mode = False
-        if self.config["selected_module"]["Intent"] == "function_call":
-            self.use_function_call_mode = True
 
     async def handle_connection(self, ws):
         try:
@@ -222,37 +220,37 @@ class ConnectionHandler:
         )
         if private_config.get("VAD", None) is not None:
             init_vad = True
-            self.config["vad"] = private_config["VAD"]
+            self.config["VAD"] = private_config["VAD"]
             self.config["selected_module"]["VAD"] = private_config["selected_module"][
                 "VAD"
             ]
         if private_config.get("ASR", None) is not None:
             init_asr = True
-            self.config["asr"] = private_config["ASR"]
+            self.config["ASR"] = private_config["ASR"]
             self.config["selected_module"]["ASR"] = private_config["selected_module"][
                 "ASR"
             ]
         if private_config.get("LLM", None) is not None:
             init_llm = True
-            self.config["llm"] = private_config["LLM"]
+            self.config["LLM"] = private_config["LLM"]
             self.config["selected_module"]["LLM"] = private_config["selected_module"][
                 "LLM"
             ]
         if private_config.get("TTS", None) is not None:
             init_tts = True
-            self.config["tts"] = private_config["TTS"]
+            self.config["TTS"] = private_config["TTS"]
             self.config["selected_module"]["TTS"] = private_config["selected_module"][
                 "TTS"
             ]
         if private_config.get("Memory", None) is not None:
             init_memory = True
-            self.config["memory"] = private_config["Memory"]
+            self.config["Memory"] = private_config["Memory"]
             self.config["selected_module"]["Memory"] = private_config[
                 "selected_module"
             ]["Memory"]
         if private_config.get("Intent", None) is not None:
             init_intent = True
-            self.config["intent"] = private_config["Intent"]
+            self.config["Intent"] = private_config["Intent"]
             self.config["selected_module"]["Intent"] = private_config[
                 "selected_module"
             ]["Intent"]
@@ -287,17 +285,26 @@ class ConnectionHandler:
         self.memory.init_memory(device_id, self.llm)
 
     def _initialize_intent(self):
+        if (
+            self.config["Intent"][self.config["selected_module"]["Intent"]]["type"]
+            == "function_call"
+        ):
+            self.use_function_call_mode = True
         """初始化意图识别模块"""
         # 获取意图识别配置
         intent_config = self.config["Intent"]
-        intent_type = self.config["selected_module"]["Intent"]
+        intent_type = self.config["Intent"][self.config["selected_module"]["Intent"]][
+            "type"
+        ]
 
         # 如果使用 nointent，直接返回
         if intent_type == "nointent":
             return
         # 使用 intent_llm 模式
         elif intent_type == "intent_llm":
-            intent_llm_name = intent_config["intent_llm"]["llm"]
+            intent_llm_name = intent_config[self.config["selected_module"]["Intent"]][
+                "llm"
+            ]
 
             if intent_llm_name and intent_llm_name in self.config["LLM"]:
                 # 如果配置了专用LLM，则创建独立的LLM实例
