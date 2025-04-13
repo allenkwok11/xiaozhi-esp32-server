@@ -1,9 +1,18 @@
 <template>
   <div class="welcome">
     <HeaderBar />
+
+    <div class="operation-bar">
+      <h2 class="page-title">设备管理</h2>
+      <div class="right-operations">
+        <el-input placeholder="请输入设备型号或Mac地址查询" v-model="searchKeyword"
+                 class="search-input" @keyup.enter.native="handleSearch" clearable />
+        <el-button class="btn-search" @click="handleSearch">搜索</el-button>
+      </div>
+    </div>
+
     <el-main style="padding: 20px; display: flex; flex-direction: column;">
       <div class="table-container">
-        <h3 class="device-list-title">设备列表</h3>
         <el-table ref="deviceTable" :data="paginatedDeviceList" @selection-change="handleSelectionChange" style="width: 100%; margin-top: 20px" border stripe>
           <el-table-column type="selection" align="center" width="60"></el-table-column>
           <el-table-column label="设备型号" prop="model" flex></el-table-column>
@@ -82,8 +91,9 @@ export default {
   data() {
     return {
       addDeviceDialogVisible: false,
-       selectedDevices: [],
+      selectedDevices: [],
       isAllSelected: false,
+      searchKeyword: "",
       currentAgentId: this.$route.query.agentId || '',
       currentPage: 1,
       pageSize: 5,
@@ -93,13 +103,22 @@ export default {
     };
   },
   computed: {
+    filteredDeviceList() {
+      const keyword = this.searchKeyword.toLowerCase();
+      if (!keyword) return this.deviceList;
+      return this.deviceList.filter(device =>
+        (device.model && device.model.toLowerCase().includes(keyword)) ||
+        (device.macAddress && device.macAddress.toLowerCase().includes(keyword))
+      );
+    },
+
     paginatedDeviceList() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.deviceList.slice(start, end);
+      return this.filteredDeviceList.slice(start, end);
     },
     pageCount() {
-    return Math.ceil(this.deviceList.length / this.pageSize);
+      return Math.ceil(this.filteredDeviceList.length / this.pageSize);
     },
     visiblePages() {
       const pages = [];
@@ -115,7 +134,7 @@ export default {
         pages.push(i);
       }
       return pages;
-    },
+    }
   },
   mounted() {
     const agentId = this.$route.query.agentId;
@@ -124,6 +143,10 @@ export default {
     }
   },
   methods: {
+    handleSearch() {
+      this.currentPage = 1;
+      this.fetchBindDevices(this.currentAgentId);
+    },
 
     handleSelectionChange(val) {
       this.selectedDevices = val;
@@ -183,9 +206,7 @@ export default {
       Api.device.getAgentBindDevices(agentId, ({ data }) => {
         this.loading = false;
         if (data.code === 0) {
-          // 格式化日期并按照绑定时间降序排列
           this.deviceList = data.data.map(device => {
-            // 格式化绑定时间
             const bindDate = new Date(device.createDate);
             const formattedBindTime = `${bindDate.getFullYear()}-${(bindDate.getMonth() + 1).toString().padStart(2, '0')}-${bindDate.getDate().toString().padStart(2, '0')} ${bindDate.getHours().toString().padStart(2, '0')}:${bindDate.getMinutes().toString().padStart(2, '0')}:${bindDate.getSeconds().toString().padStart(2, '0')}`;
             return {
@@ -221,9 +242,8 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(145deg, #e6eeff, #eff0ff);
+  background: linear-gradient(to bottom right, #dce8ff, #e4eeff, #e6cbfd);
   background-size: cover;
-  background-position: center;
   -webkit-background-size: cover;
   -o-background-size: cover;
 }
@@ -250,14 +270,6 @@ export default {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
-}
-
-.device-list-title {
-  float: left;
-  font-size: 18px;
-  font-weight: 700;
-  margin: 5px;
-  color: #2c3e50;
 }
 
 .el-icon-edit {
@@ -344,6 +356,46 @@ export default {
   .el-button--primary {
     background: #5f70f3;
     color: white;
+  }
+}
+
+
+.operation-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  margin-top: 15px;
+}
+
+.page-title {
+  font-size: 24px;
+  margin: 0;
+  color: #2c3e50;
+}
+
+.right-operations {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.search-input {
+  width: 280px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.btn-search {
+  background: linear-gradient(135deg, #6b8cff, #a966ff);
+  border: none;
+  color: white;
+  transition: all 0.3s;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(107, 140, 255, 0.4);
   }
 }
 
