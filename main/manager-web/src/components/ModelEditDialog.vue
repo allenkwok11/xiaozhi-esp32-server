@@ -94,14 +94,6 @@
 <script>
 import Api from '@/apis/api';
 
-const DEFAULT_CONFIG_JSON = {
-    type: "",
-    base_url: "",
-    model_name: "",
-    api_key: "",
-    empty: false
-};
-
 export default {
   name: "ModelEditDialog",
   props: {
@@ -132,7 +124,7 @@ export default {
         docLink: "",
         remark: "",
         sort: 0,
-        configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
+        configJson: {}
       }
     };
   },
@@ -183,8 +175,11 @@ export default {
             docLink: "",
             remark: "",
             sort: 0,
-            configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
+            configJson: {}
         };
+        this.dynamicCallInfoFields.forEach(field => {
+          this.$set(this.form.configJson, field.prop, '');
+        });
     },
     resetProviders() {
       this.providers = [];
@@ -266,6 +261,8 @@ export default {
       this.dynamicCallInfoFields.forEach(field => {
         if (!configJson.hasOwnProperty(field.prop)) {
           configJson[field.prop] = '';
+        } else if (typeof configJson[field.prop] !== 'string') {
+          configJson[field.prop] = String(configJson[field.prop]);
         }
       });
 
@@ -280,7 +277,6 @@ export default {
         remark: model.remark,
         sort: Number(model.sort) || 0,
         configJson: {
-          ...DEFAULT_CONFIG_JSON,
           ...configJson
         }
       };
