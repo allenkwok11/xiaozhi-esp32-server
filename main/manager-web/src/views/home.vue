@@ -25,7 +25,7 @@
               </div>
               <div style="width: 23px;height: 13px;background: #5778ff;margin-left: -10px;" />
               <div class="right-add">
-                <i class="el-icon-right" style="font-size: 20px;color: #fff;" />
+                <i class="el-icon-right" @click="showAddDialog" style="font-size: 20px;color: #fff;" />
               </div>
             </div>
           </div>

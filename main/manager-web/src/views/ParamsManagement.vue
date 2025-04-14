@@ -410,7 +410,8 @@ export default {
 
     .pagination-btn:first-child,
     .pagination-btn:nth-child(2),
-    .pagination-btn:nth-last-child(2) {
+    .pagination-btn:nth-last-child(2),
+    .pagination-btn:nth-child(3) {
         min-width: 60px;
         height: 32px;
         padding: 0 12px;
@@ -432,7 +433,7 @@ export default {
         }
     }
 
-    .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)) {
+    .pagination-btn:not(:first-child):not(:nth-child(3)):not(:nth-child(2)):not(:nth-last-child(2)) {
         min-width: 28px;
         height: 32px;
         padding: 0;
