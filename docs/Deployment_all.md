@@ -106,7 +106,7 @@ docker run --name xiaozhi-esp32-server-redis -d -p 6379:6379 redis
 接下来打开命令行工具，使用`终端`或`命令行`工具 进入到你的`xiaozhi-server`，执行以下命令
 
 ```
-docker-compose -f docker-compose_all.yml up -d
+docker compose -f docker-compose_all.yml up -d
 ```
 
 执行完后，再执行以下命令，查看日志信息。
