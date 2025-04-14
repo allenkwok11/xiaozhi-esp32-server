@@ -21,15 +21,14 @@
               @selection-change="handleSelectionChange"
               class="transparent-table"
               :header-cell-class-name="headerCellClassName"
-              border
               stripe>
               <el-table-column type="selection" align="center" width="120"></el-table-column>
               <el-table-column label="设备型号" prop="model" align="center"></el-table-column>
-              <el-table-column label="固件版本" prop="firmwareVersion" align="center" width="120"></el-table-column>
+              <el-table-column label="固件版本" prop="firmwareVersion" align="center" ></el-table-column>
               <el-table-column label="Mac地址" prop="macAddress" align="center"></el-table-column>
-              <el-table-column label="绑定时间" prop="bindTime" align="center" width="200"></el-table-column>
-              <el-table-column label="最近对话" prop="lastConversation" align="center" width="140"></el-table-column>
-              <el-table-column label="备注" align="center" width="180">
+              <el-table-column label="绑定时间" prop="bindTime" align="center" width="180"></el-table-column>
+              <el-table-column label="最近对话" prop="lastConversation" align="center" width="120"></el-table-column>
+              <el-table-column label="备注" align="center" width="160">
                 <template slot-scope="scope">
                   <el-input v-if="scope.row.isEdit" v-model="scope.row.remark" size="mini"
                     @blur="stopEditRemark(scope.$index)"></el-input>
@@ -65,7 +64,7 @@
                   新增
                 </el-button>
                 <el-button size="mini" type="danger" icon="el-icon-delete"
-                  @click="deleteSelected">删除</el-button>
+                  @click="deleteSelected">解绑</el-button>
               </div>
               <div class="custom-pagination">
                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
@@ -75,8 +74,7 @@
                   :key="page"
                   class="pagination-btn"
                   :class="{ active: page === currentPage }"
-                  @click="goToPage(page)"
-                >
+                  @click="goToPage(page)">
                   {{ page }}
                 </button>
                 <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">下一页</button>
@@ -170,26 +168,7 @@ export default {
     },
 
     deleteSelected() {
-      if (this.selectedDevices.length === 0) {
-        this.$message.warning("请先选择需要删除的设备");
-        return;
-      }
-
-      this.$confirm(`确定要删除选中的${this.selectedDevices.length}个设备吗？`, '警告', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        const ids = this.selectedDevices.map(device => device.device_id);
-        Api.device.batchDeleteDevices(ids, ({ data }) => {
-          if (data.code === 0) {
-            this.$message.success(`成功删除${this.selectedDevices.length}个设备`);
-            this.fetchBindDevices(this.currentAgentId);
-          } else {
-            this.$message.error(data.msg || '删除失败');
-          }
-        });
-      });
+      console.log("批量解绑")
     },
 
     handleAddDevice() {
@@ -257,13 +236,13 @@ export default {
               rawBindTime: new Date(device.createDate).getTime()
             };
           })
-            .sort((a, b) => a.rawBindTime - b.rawBindTime);
+              .sort((a, b) => a.rawBindTime - b.rawBindTime);
         } else {
           this.$message.error(data.msg || '获取设备列表失败');
         }
       });
     },
-    headerCellClassName({ columnIndex }) {
+    headerCellClassName({columnIndex}) {
       if (columnIndex === 0) {
         return "custom-selection-header";
       }
@@ -354,23 +333,26 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
+  margin-top: 40px;
   padding: 0 20px;
 }
 
 .ctrl_btn {
   display: flex;
   gap: 8px;
-  padding-left: 26px;
+  padding-left: 6px;
 }
 
 .ctrl_btn .el-button {
   min-width: 72px;
   height: 32px;
-  padding: 7px 12px;
+  padding: 7px 12px 7px 10px;
+  font-size: 12px;
   border-radius: 4px;
+  line-height: 1;
+  font-weight: 500;
   border: none;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -455,19 +437,26 @@ export default {
   width: 100%;
 }
 
-/* 表格样式覆盖 */
 :deep(.transparent-table) {
   background: white;
+  border: none;
 }
 
 :deep(.transparent-table .el-table__header th) {
   background: white !important;
   color: black;
+  border-right: none !important;
 }
 
 :deep(.transparent-table .el-table__body tr td) {
   border-top: 1px solid rgba(0, 0, 0, 0.04);
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-right: none !important;
+}
+
+:deep(.transparent-table .el-table__header tr th:first-child .cell),
+:deep(.transparent-table .el-table__body tr td:first-child .cell) {
+  padding-left: 10px;
 }
 
 :deep(.el-icon-edit) {
