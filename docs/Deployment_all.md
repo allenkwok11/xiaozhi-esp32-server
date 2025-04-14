@@ -198,7 +198,11 @@ ws://你电脑局域网的ip:8000/xiaozhi/v1/
 5.1、执行以下命令
 
 ```
-docker compose down
+docker-compose down
+docker stop xiaozhi-esp32-server
+docker rm xiaozhi-esp32-server
+docker stop xiaozhi-esp32-server-web
+docker rm xiaozhi-esp32-server-web
 docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:server_latest
 docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:web_latest
 docker compose pull
@@ -372,6 +376,9 @@ pip install -r requirements.txt
 使用超级管理员账号，登录智控台 http://127.0.0.1:8001 ，在顶部菜单找到`参数管理`，找到列表中第三条数据，参数编码是`server.secret`，复制它到`参数值`。
 
 `server.secret`需要说明一下，这个`参数值`很重要，作用是让我们的`Server`端连接`manager-api`。`server.secret`是每次从零部署manager模块时，会自动随机生成的密钥。
+
+如果你的`xiaozhi-server`目录没有`data`，你需要创建`data`目录。
+如果你的`data`下面没有`.config.yaml`文件，你可以把`xiaozhi-server`目录下的`config_from_api.yaml`文件复制到`data`，并重命名为`.config.yaml`
 
 复制`参数值`后，打开`xiaozhi-server`下的`data`目录的`.config.yaml`文件。此刻你的配置文件内容应该是这样的：
 
