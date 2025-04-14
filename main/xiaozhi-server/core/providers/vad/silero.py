@@ -21,8 +21,8 @@ class VADProvider(VADProviderBase):
         (get_speech_timestamps, _, _, _, _) = self.utils
 
         self.decoder = opuslib_next.Decoder(16000, 1)
-        self.vad_threshold = config.get("threshold")
-        self.silence_threshold_ms = config.get("min_silence_duration_ms")
+        self.vad_threshold = float(config.get("threshold", 0.5))
+        self.silence_threshold_ms = int(config.get("min_silence_duration_ms", 1000))
 
     def is_vad(self, conn, opus_packet):
         try:

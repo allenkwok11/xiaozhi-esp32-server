@@ -171,7 +171,13 @@ public class ConfigServiceImpl implements ConfigService {
             switch (param.getValueType().toLowerCase()) {
                 case "number":
                     try {
-                        current.put(lastKey, Double.parseDouble(value));
+                        double doubleValue = Double.parseDouble(value);
+                        // 如果数值是整数形式，则转换为Integer
+                        if (doubleValue == (int) doubleValue) {
+                            current.put(lastKey, (int) doubleValue);
+                        } else {
+                            current.put(lastKey, doubleValue);
+                        }
                     } catch (NumberFormatException e) {
                         current.put(lastKey, value);
                     }
