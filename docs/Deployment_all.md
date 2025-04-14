@@ -71,39 +71,34 @@ xiaozhi-server
 
 如果你的文件目录结构也是上面的，就继续往下。如果不是，你就再仔细看看是不是漏操作了什么。
 
-## 2. 手动安装Mysql和Redis（可选）
+## 2. 备份数据
 
-### 2.1 安装Mysql数据库
-如果本机已经安装了MySQL，可以直接在数据库中创建名为`xiaozhi_esp32_server`的数据库。然后把 docker-compose.yml 文件中的 xiaozhi-esp32-server-db 部分注释或者删除掉，同时修改 `jdbc:mysql://xiaozhi-esp32-server-db:3306/xiaozhi_esp32_server?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai` xiaozhi-esp32-server-db 为自己的局域网 IP 地址。
+如果你之前已经成功运行智控台，如果上面保存有你的密钥信息，请先从智控台上拷贝重要数据下来。因为升级过程中，有可能会覆盖原来的数据。
 
-```sql
-CREATE DATABASE xiaozhi_esp32_server CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 2.2 安装Redis
-如果还没有Redis，你可以通过docker安装redis
+## 3. 清除历史版本镜像和容器
+接下来打开命令行工具，使用`终端`或`命令行`工具 进入到你的`xiaozhi-server`，执行以下命令
 
 ```
-docker run --name xiaozhi-esp32-server-redis -d -p 6379:6379 redis
+docker compose -f docker-compose_all.yml down
+
+docker stop xiaozhi-esp32-server
+docker rm xiaozhi-esp32-server
+
+docker stop xiaozhi-esp32-server-web
+docker rm xiaozhi-esp32-server-web
+
+docker stop xiaozhi-esp32-server-db
+docker rm xiaozhi-esp32-server-db
+
+docker stop xiaozhi-esp32-server-redis
+docker rm xiaozhi-esp32-server-redis
+
+docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:server_latest
+docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:web_latest
 ```
-
-### 2.3 配置docker-compose_all.yml文件使用本地的 MySQL 与 Redis
-
-在`xiaozhi-server`目录，打开docker-compose_all.yml，
-
-1、修改`SPRING_DATASOURCE_DRUID_URL`里，把`192.168.1.25`修改成部署mysql的电脑局域网ip，如果是你本地，你要查看一下你本机的局域网ip是什么
-
-2、修改`SPRING_DATA_REDIS_HOST`里，把`192.168.1.25`修改成部署redis的电脑局域网ip，如果是你本地，你要查看一下你本机的局域网ip是什么
-
-3、确认一下mysql的用户名`SPRING_DATASOURCE_DRUID_USERNAME`和密码`SPRING_DATASOURCE_DRUID_PASSWORD`
-
-## 3 配置docker-compose_all.yml（可选）
-
-你可以修改配置文件中的数据库密码环境变量 `SPRING_DATASOURCE_DRUID_PASSWORD` 与 `MYSQL_ROOT_PASSWORD` 为强密码。
 
 ## 4. 运行程序
-
-接下来打开命令行工具，使用`终端`或`命令行`工具 进入到你的`xiaozhi-server`，执行以下命令
+执行以下命令启动新版本容器
 
 ```
 docker compose -f docker-compose_all.yml up -d
@@ -139,10 +134,11 @@ http://localhost:8002/xiaozhi/doc.html
 
 ```
 manager-api:
-  url: http://xiaozhi-esp32-server-web:8002/xiaozhi
+  url:  http://127.0.0.1:8002/xiaozhi
   secret: 你的server.secret值
 ```
 1、把你刚才从`智控台`复制过来的`server.secret`的`参数值`复制到`.config.yaml`文件里的`secret`里。
+2、注意，把`url`改成下面的`http://xiaozhi-esp32-server-web/xiaozhi`
 
 类似这样的效果
 ```
@@ -188,26 +184,6 @@ ws://你电脑局域网的ip:8000/xiaozhi/v1/
 
 接下来，你就可以开始 [编译esp32固件](firmware-build.md)了。
 
-
-## 6. 版本升级操作
-
-如果后期想升级版本，先备份你的模型密钥。
-
-进入`xiaozhi-server`目录
-
-5.1、执行以下命令
-
-```
-docker-compose down
-docker stop xiaozhi-esp32-server
-docker rm xiaozhi-esp32-server
-docker stop xiaozhi-esp32-server-web
-docker rm xiaozhi-esp32-server-web
-docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:server_latest
-docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:web_latest
-docker compose pull
-docker compose up -d
-```
 
 # 方式二：本地源码运行全模块
 

@@ -33,15 +33,17 @@ services:
     networks:
       - default
     depends_on:
-      - xiaozhi-esp32-server-db
-      - xiaozhi-esp32-server-redis
+      xiaozhi-esp32-server-db:
+        condition: service_healthy
+      xiaozhi-esp32-server-redis:
+        condition: service_healthy
     ports:
       # 智控台
       - "8002:8002"
     environment:
       - TZ=Asia/Shanghai
       ##记得改mysql和redis IP 密码
-      - SPRING_DATASOURCE_DRUID_URL=jdbc:mysql://xiaozhi-esp32-server-db:3306/xiaozhi_esp32_server?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      - SPRING_DATASOURCE_DRUID_URL=jdbc:mysql://xiaozhi-esp32-server-db:3306/xiaozhi_esp32_server?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true&connectTimeout=30000&socketTimeout=30000&autoReconnect=true&failOverReadOnly=false&maxReconnects=10
       - SPRING_DATASOURCE_DRUID_USERNAME=root
       - SPRING_DATASOURCE_DRUID_PASSWORD=123456
       - SPRING_DATA_REDIS_HOST=xiaozhi-esp32-server-redis
@@ -58,7 +60,7 @@ services:
     networks:
       - default
     expose:
-      - 3306
+      - "3306:3306"
     volumes:
       - ./mysql/data:/var/lib/mysql
     environment:
