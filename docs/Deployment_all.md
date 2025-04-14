@@ -71,22 +71,16 @@ xiaozhi-server
 
 如果你的文件目录结构也是上面的，就继续往下。如果不是，你就再仔细看看是不是漏操作了什么。
 
-## 2. 安装Mysql和Redis
+## 2. 安装Mysql和Redis（可选）
 
 ### 2.1 安装Mysql数据库
-如果本机已经安装了MySQL，可以直接在数据库中创建名为`xiaozhi_esp32_server`的数据库。
+如果本机已经安装了MySQL，可以直接在数据库中创建名为`xiaozhi_esp32_server`的数据库。然后把 docker-compose.yml 文件中的 xiaozhi-esp32-server-db 部分注释或者删除掉，同时修改 `jdbc:mysql://xiaozhi-esp32-server-db:3306/xiaozhi_esp32_server?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai` xiaozhi-esp32-server-db 为自己的局域网 IP 地址。
 
 ```sql
 CREATE DATABASE xiaozhi_esp32_server CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-如果还没有MySQL，你可以通过docker安装mysql
-
-```
-docker run --name xiaozhi-esp32-server-db -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -e MYSQL_DATABASE=xiaozhi_esp32_server -e MYSQL_INITDB_ARGS="--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci" -d mysql:latest
-```
-
-### 2.2 安装Redis
+### 2.2 安装Redis（可选）
 
 如果还没有Redis，你可以通过docker安装redis
 
@@ -94,7 +88,7 @@ docker run --name xiaozhi-esp32-server-db -e MYSQL_ROOT_PASSWORD=123456 -p 3306:
 docker run --name xiaozhi-esp32-server-redis -d -p 6379:6379 redis
 ```
 
-## 3. 配置docker-compose_all.yml文件文件
+### 2.3 配置docker-compose_all.yml文件使用本地的 MySQL 与 Redis
 
 在`xiaozhi-server`目录，打开docker-compose_all.yml，
 
@@ -104,19 +98,11 @@ docker run --name xiaozhi-esp32-server-redis -d -p 6379:6379 redis
 
 3、确认一下mysql的用户名`SPRING_DATASOURCE_DRUID_USERNAME`和密码`SPRING_DATASOURCE_DRUID_PASSWORD`
 
+## 3 配置docker-compose_all.yml（可选）
+
+你可以修改配置文件中的数据库密码环境变量 `SPRING_DATASOURCE_DRUID_PASSWORD` 与 `MYSQL_ROOT_PASSWORD` 为强密码。
+
 ## 4. 运行程序
-
-确认mysql和redis是否运行正常，输入
-```
-docker ps
-```
-如果你能看到`xiaozhi-esp32-server-redis`和`xiaozhi-esp32-server-db`信息，就可以继续往下，如果看不到，说明你的`mysql`和`redis`没有安装或没有启动。需要继续回到上面的教程，看看哪一步漏了。
-
-```
-CONTAINER ID             IMAGE   COMMAND   CREATED  TATUS   PORTS               NAMES
-xxx       redis          "xx"   xxx   xxx   0.0.0.0:6379->6379/tcp              xiaozhi-esp32-server-redis
-xxx       mysql:latest   "xx"   xxx   xxx   0.0.0.0:3306->3306/tcp, 33060/tcp   xiaozhi-esp32-server-db
-```
 
 接下来打开命令行工具，使用`终端`或`命令行`工具 进入到你的`xiaozhi-server`，执行以下命令
 
@@ -154,17 +140,15 @@ http://localhost:8002/xiaozhi/doc.html
 
 ```
 manager-api:
-  url: http://127.0.0.1:8002/xiaozhi
+  url: http://xiaozhi-esp32-server-web:8002/xiaozhi
   secret: 你的server.secret值
 ```
 1、把你刚才从`智控台`复制过来的`server.secret`的`参数值`复制到`.config.yaml`文件里的`secret`里。
 
-2、把`url`里的`127.0.0.1`改成你电脑局域网内的ip
-
 类似这样的效果
 ```
 manager-api:
-  url: http://192.168.1.25:8002/xiaozhi
+  url: http://xiaozhi-esp32-server-web/xiaozhi
   secret: 12345678-xxxx-xxxx-xxxx-123456789000
 ```
 
@@ -215,14 +199,12 @@ ws://你电脑局域网的ip:8000/xiaozhi/v1/
 5.1、执行以下命令
 
 ```
-docker-compose down
+docker compose down
 docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:server_latest
 docker rmi ghcr.nju.edu.cn/xinnan-tech/xiaozhi-esp32-server:web_latest
+docker compose pull
+docker compose up -d
 ```
-
-5.2、删掉`docker-compose_all.yaml`文件
-
-5.3、重新按1.1开始部署
 
 # 方式二：本地源码运行全模块
 
