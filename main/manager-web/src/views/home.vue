@@ -260,4 +260,7 @@ export default {
   text-align: center;
   /* 居中显示 */
 }
+
+
+
 </style>

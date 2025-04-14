@@ -86,7 +86,7 @@
       </div>
     </div>
 
-    <div class="copyright">©2025 xiaozhi-esp32-server</div>
+<!-- <div class="copyright">©2025 xiaozhi-esp32-server</div> -->
     <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId"
       @refresh="fetchBindDevices(currentAgentId)" />
   </div>
@@ -421,20 +421,6 @@ export default {
   color: #909399;
   font-size: 14px;
   margin-left: 10px;
-}
-
-.copyright {
-  text-align: center;
-  color: #979db1;
-  font-size: 12px;
-  font-weight: 400;
-  margin-top: auto;
-  padding: 30px 0 20px;
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
 }
 
 :deep(.transparent-table) {
