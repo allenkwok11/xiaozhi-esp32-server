@@ -204,7 +204,7 @@ class ConnectionHandler:
                 self.headers.get("device-id", None),
                 self.headers.get("client-id", None),
             )
-            private_config["delete_audio"] = bool(self.config["delete_audio"], True)
+            private_config["delete_audio"] = bool(self.config.get("delete_audio", True))
             self.logger.bind(tag=TAG).info(f"获取差异化配置成功: {private_config}")
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"获取差异化配置失败: {e}")
