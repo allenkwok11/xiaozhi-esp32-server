@@ -26,9 +26,9 @@
               <el-table-column label="设备型号" prop="model" align="center"></el-table-column>
               <el-table-column label="固件版本" prop="firmwareVersion" align="center" ></el-table-column>
               <el-table-column label="Mac地址" prop="macAddress" align="center"></el-table-column>
-              <el-table-column label="绑定时间" prop="bindTime" align="center" width="180"></el-table-column>
-              <el-table-column label="最近对话" prop="lastConversation" align="center" width="120"></el-table-column>
-              <el-table-column label="备注" align="center" width="160">
+              <el-table-column label="绑定时间" prop="bindTime" align="center"></el-table-column>
+              <el-table-column label="最近对话" prop="lastConversation" align="center"></el-table-column>
+              <el-table-column label="备注" align="center">
                 <template slot-scope="scope">
                   <el-input v-if="scope.row.isEdit" v-model="scope.row.remark" size="mini"
                     @blur="stopEditRemark(scope.$index)"></el-input>
@@ -40,15 +40,15 @@
                   </span>
                 </template>
               </el-table-column>
-              <el-table-column label="OTA升级" align="center" width="120">
+              <el-table-column label="OTA升级" align="center">
                 <template slot-scope="scope">
                   <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66"
                     inactive-color="#ff4949"></el-switch>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" align="center" width="80">
+              <el-table-column label="操作" align="center">
                 <template slot-scope="scope">
-                  <el-button size="mini" type="text" @click="handleUnbind(scope.row.device_id)" style="color: #ff4949">
+                  <el-button size="mini" type="text" @click="handleUnbind(scope.row.device_id)">
                     解绑
                   </el-button>
                 </template>
@@ -86,7 +86,6 @@
       </div>
     </div>
 
-<!-- <div class="copyright">©2025 xiaozhi-esp32-server</div> -->
     <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId"
       @refresh="fetchBindDevices(currentAgentId)" />
   </div>
@@ -105,17 +104,19 @@ export default {
       selectedDevices: [],
       isAllSelected: false,
       searchKeyword: "",
+      activeSearchKeyword: "",
       currentAgentId: this.$route.query.agentId || '',
       currentPage: 1,
       pageSize: 5,
       deviceList: [],
       loading: false,
       userApi: null,
+
     };
   },
   computed: {
     filteredDeviceList() {
-      const keyword = this.searchKeyword.toLowerCase();
+      const keyword = this.activeSearchKeyword.toLowerCase();
       if (!keyword) return this.deviceList;
       return this.deviceList.filter(device =>
         (device.model && device.model.toLowerCase().includes(keyword)) ||
@@ -155,8 +156,8 @@ export default {
   },
   methods: {
     handleSearch() {
+      this.activeSearchKeyword = this.searchKeyword;
       this.currentPage = 1;
-      this.fetchBindDevices(this.currentAgentId);
     },
 
     handleSelectionChange(val) {
@@ -168,7 +169,53 @@ export default {
     },
 
     deleteSelected() {
-      console.log("批量解绑")
+      if (this.selectedDevices.length === 0) {
+        this.$message.warning({
+          message: '请至少选择一条记录',
+          showClose: true
+        });
+        return;
+      }
+
+      this.$confirm(`确认要解绑选中的 ${this.selectedDevices.length} 台设备吗？`, '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        const deviceIds = this.selectedDevices.map(device => device.device_id);
+        this.batchUnbindDevices(deviceIds);
+      });
+    },
+
+    batchUnbindDevices(deviceIds) {
+      const promises = deviceIds.map(id => {
+        return new Promise((resolve, reject) => {
+          Api.device.unbindDevice(id, ({ data }) => {
+            if (data.code === 0) {
+              resolve();
+            } else {
+              reject(data.msg || '解绑失败');
+            }
+          });
+        });
+      });
+
+      Promise.all(promises)
+        .then(() => {
+          this.$message.success({
+            message: `成功解绑 ${deviceIds.length} 台设备`,
+            showClose: true
+          });
+          this.fetchBindDevices(this.currentAgentId);
+          this.selectedDevices = [];
+          this.isAllSelected = false;
+        })
+        .catch(error => {
+          this.$message.error({
+            message: error || '批量解绑过程中出现错误',
+            showClose: true
+          });
+        });
     },
 
     handleAddDevice() {
@@ -237,6 +284,8 @@ export default {
             };
           })
               .sort((a, b) => a.rawBindTime - b.rawBindTime);
+          this.activeSearchKeyword = "";
+          this.searchKeyword = "";
         } else {
           this.$message.error(data.msg || '获取设备列表失败');
         }
@@ -465,4 +514,13 @@ export default {
   font-weight: bold;
   padding-bottom: 18px;
 }
+
+:deep(.el-table .el-button--text) {
+  color: #7079aa;
+}
+
+:deep(.el-table .el-button--text:hover) {
+  color: #5a64b5;
+}
+
 </style>

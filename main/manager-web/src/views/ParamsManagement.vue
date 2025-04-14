@@ -73,7 +73,6 @@
         <param-dialog :title="dialogTitle" :visible.sync="dialogVisible" :form="paramForm" @submit="handleSubmit"
             @cancel="dialogVisible = false" />
 
-<!-- <div class="copyright">©2025 xiaozhi-esp32-server </div>-->
     </div>
 </template>
 
