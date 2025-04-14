@@ -58,7 +58,8 @@ class LLMProvider(LLMProviderBase):
                                 self.session_conversation_map[session_id] = (
                                     conversation_id  # 更新映射
                                 )
-                            if event.get("answer"):
+                            # 过滤 message_replace 事件，此事件会全量推一次
+                            if event.get("event") != "message_replace" and event.get("answer"):
                                 yield event["answer"]
                 elif self.mode == "workflows/run":
                     for line in r.iter_lines():
@@ -73,7 +74,8 @@ class LLMProvider(LLMProviderBase):
                     for line in r.iter_lines():
                         if line.startswith(b"data: "):
                             event = json.loads(line[6:])
-                            if event.get("answer"):
+                            # 过滤 message_replace 事件，此事件会全量推一次
+                            if event.get("event") != "message_replace" and event.get("answer"):
                                 yield event["answer"]
 
         except Exception as e:

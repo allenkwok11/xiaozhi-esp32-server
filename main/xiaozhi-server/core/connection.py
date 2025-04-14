@@ -204,7 +204,7 @@ class ConnectionHandler:
                 self.headers.get("device-id", None),
                 self.headers.get("client-id", None),
             )
-            private_config["delete_audio"] = self.config["delete_audio"]
+            private_config["delete_audio"] = bool(self.config.get("delete_audio", True))
             self.logger.bind(tag=TAG).info(f"获取差异化配置成功: {private_config}")
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"获取差异化配置失败: {e}")
@@ -335,10 +335,8 @@ class ConnectionHandler:
 
     def change_system_prompt(self, prompt):
         self.prompt = prompt
-        # 找到原来的role==system，替换原来的系统提示
-        for m in self.dialogue.dialogue:
-            if m.role == "system":
-                m.content = prompt
+        # 更新系统prompt至上下文
+        self.dialogue.update_system_message(self.prompt)
 
     def chat(self, query):
 
@@ -702,7 +700,7 @@ class ConnectionHandler:
                 opus_datas, text_index, tts_file = [], 0, None
                 try:
                     self.logger.bind(tag=TAG).debug("正在处理TTS任务...")
-                    tts_timeout = self.config.get("tts_timeout", 10)
+                    tts_timeout = int(self.config.get("tts_timeout", 10))
                     tts_file, text, text_index = future.result(timeout=tts_timeout)
                     if text is None or len(text) <= 0:
                         self.logger.bind(tag=TAG).error(

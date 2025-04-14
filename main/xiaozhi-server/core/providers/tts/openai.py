@@ -21,7 +21,7 @@ class TTSProvider(TTSProviderBase):
         else:
             self.voice = config.get("voice", "alloy")
         self.response_format = "wav"
-        self.speed = config.get("speed", 1.0)
+        self.speed = float(config.get("speed", 1.0))
         self.output_file = config.get("output_dir", "tmp/")
         check_model_key("TTS", self.api_key)
 
