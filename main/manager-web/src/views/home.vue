@@ -19,8 +19,8 @@
             <div class="hi-hint">
               Hello, Let's have a wonderful day!
             </div>
-            <div class="add-device-btn" @click="showAddDialog">
-              <div class="left-add">
+            <div class="add-device-btn">
+              <div class="left-add" @click="showAddDialog">
                 添加智能体
               </div>
               <div style="width: 23px;height: 13px;background: #5778ff;margin-left: -10px;" />
