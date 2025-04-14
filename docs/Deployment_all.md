@@ -71,7 +71,7 @@ xiaozhi-server
 
 如果你的文件目录结构也是上面的，就继续往下。如果不是，你就再仔细看看是不是漏操作了什么。
 
-## 2. 安装Mysql和Redis（可选）
+## 2. 手动安装Mysql和Redis（可选）
 
 ### 2.1 安装Mysql数据库
 如果本机已经安装了MySQL，可以直接在数据库中创建名为`xiaozhi_esp32_server`的数据库。然后把 docker-compose.yml 文件中的 xiaozhi-esp32-server-db 部分注释或者删除掉，同时修改 `jdbc:mysql://xiaozhi-esp32-server-db:3306/xiaozhi_esp32_server?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai` xiaozhi-esp32-server-db 为自己的局域网 IP 地址。
@@ -80,8 +80,7 @@ xiaozhi-server
 CREATE DATABASE xiaozhi_esp32_server CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### 2.2 安装Redis（可选）
-
+### 2.2 安装Redis
 如果还没有Redis，你可以通过docker安装redis
 
 ```
