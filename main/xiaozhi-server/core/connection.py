@@ -335,10 +335,8 @@ class ConnectionHandler:
 
     def change_system_prompt(self, prompt):
         self.prompt = prompt
-        # 找到原来的role==system，替换原来的系统提示
-        for m in self.dialogue.dialogue:
-            if m.role == "system":
-                m.content = prompt
+        # 更新系统prompt至上下文
+        self.dialogue.update_system_message(self.prompt)
 
     def chat(self, query):
 
