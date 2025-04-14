@@ -25,6 +25,12 @@ def build_module_string(selected_module):
     )
 
 
+def formatter(record):
+    """为没有 tag 的日志添加默认值"""
+    record["extra"].setdefault("tag", record["name"])
+    return record["message"]
+
+
 def setup_logging():
     """从配置文件中读取日志配置，并设置日志输出格式和级别"""
     config = load_config()
@@ -56,9 +62,9 @@ def setup_logging():
     logger.remove()
 
     # 输出到控制台
-    logger.add(sys.stdout, format=log_format, level=log_level)
+    logger.add(sys.stdout, format=log_format, level=log_level, filter=formatter)
 
     # 输出到文件
-    logger.add(os.path.join(log_dir, log_file), format=log_format_file, level=log_level)
+    logger.add(os.path.join(log_dir, log_file), format=log_format_file, level=log_level, filter=formatter)
 
     return logger
