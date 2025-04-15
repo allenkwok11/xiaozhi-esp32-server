@@ -237,7 +237,7 @@ def initialize_modules(
 
     # 初始化LLM模块
     if init_llm:
-        select_llm_module = config["selected_module"]["TTS"]
+        select_llm_module = config["selected_module"]["LLM"]
         llm_type = (
             select_llm_module
             if "type" not in config["LLM"][select_llm_module]
@@ -307,8 +307,8 @@ def initialize_modules(
         logger.bind(tag=TAG).info(f"初始化组件: asr成功 {select_asr_module}")
 
     # 初始化自定义prompt
-    if config["prompt"]:
+    if config.get("prompt", None) is not None:
         modules["prompt"] = config["prompt"]
-        logger.bind(tag=TAG).info(f"初始化组件: prompt成功 {modules['prompt'][:30]}")
+        logger.bind(tag=TAG).info(f"初始化组件: prompt成功 {modules['prompt'][:50]}...")
 
     return modules
