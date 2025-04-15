@@ -20,8 +20,7 @@
               :data="paginatedDeviceList"
               @selection-change="handleSelectionChange"
               class="transparent-table"
-              :header-cell-class-name="headerCellClassName"
-              stripe>
+              :header-cell-class-name="headerCellClassName">
               <el-table-column type="selection" align="center" width="120"></el-table-column>
               <el-table-column label="设备型号" prop="model" align="center"></el-table-column>
               <el-table-column label="固件版本" prop="firmwareVersion" align="center" ></el-table-column>
