@@ -42,7 +42,7 @@
             <div class="table_bottom">
               <div class="ctrl_btn">
                 <el-button size="mini" type="primary" class="select-all-btn" @click="handleSelectAll">
-                    {{ isAllSelected ? '取消全选' : '全选' }}
+                  {{ isAllSelected ? '取消全选' : '全选' }}
                 </el-button>
                 <el-button size="mini" type="success" icon="el-icon-circle-check" @click="batchEnable">启用</el-button>
                 <el-button size="mini" type="warning" @click="batchDisable"><i
@@ -70,7 +70,6 @@
       </div>
     </div>
 
-<!-- <div class="copyright">©2025 xiaozhi-esp32-server</div> -->
     <view-password-dialog :visible.sync="showViewPassword" :password="currentPassword" />
   </div>
 </template>

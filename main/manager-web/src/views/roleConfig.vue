@@ -81,9 +81,7 @@
           </div>
         </div>
       </div>
-<!--      <div class="copyright">-->
-<!--        ©2025 xiaozhi-esp32-server-->
-<!--      </div>-->
+
     </el-main>
   </div>
 </template>

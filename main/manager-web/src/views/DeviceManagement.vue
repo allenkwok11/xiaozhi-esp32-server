@@ -88,6 +88,7 @@
 
     <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId"
       @refresh="fetchBindDevices(currentAgentId)" />
+
   </div>
 </template>
 
@@ -131,6 +132,7 @@ export default {
     },
     pageCount() {
       return Math.ceil(this.filteredDeviceList.length / this.pageSize);
+
     },
     visiblePages() {
       const pages = [];
@@ -522,5 +524,6 @@ export default {
 :deep(.el-table .el-button--text:hover) {
   color: #5a64b5;
 }
+
 
 </style>

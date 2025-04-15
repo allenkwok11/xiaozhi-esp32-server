@@ -20,13 +20,13 @@ class TTSProvider(TTSProviderBase):
             self.voice_id = int(config.get("voice_id", 1695))
         self.token = config.get("token")
         self.to_lang = config.get("to_lang")
-        self.volume_change_dB = config.get("volume_change_dB", 0)
-        self.speed_factor = config.get("speed_factor", 1)
-        self.stream = config.get("stream", False)
+        self.volume_change_dB = int(config.get("volume_change_dB", 0))
+        self.speed_factor = int(config.get("speed_factor", 1))
+        self.stream = bool(config.get("stream", False))
         self.output_file = config.get("output_dir")
-        self.pitch_factor = config.get("pitch_factor", 0)
+        self.pitch_factor = int(config.get("pitch_factor", 0))
         self.format = config.get("format", "mp3")
-        self.emotion = config.get("emotion", 1)
+        self.emotion = int(config.get("emotion", 1))
         self.header = {"Content-Type": "application/json"}
 
     def generate_filename(self, extension=".mp3"):
