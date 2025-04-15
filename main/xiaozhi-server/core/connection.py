@@ -269,8 +269,6 @@ class ConnectionHandler:
             self.config["selected_module"]["Intent"] = private_config[
                 "selected_module"
             ]["Intent"]
-        if private_config.get("prompt", None) is not None:
-            self.config["prompt"] = private_config["prompt"]
         try:
             modules = initialize_modules(
                 self.logger,
@@ -285,6 +283,10 @@ class ConnectionHandler:
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"初始化组件失败: {e}")
             modules = {}
+        if modules.get("vad", None) is not None:
+            self.vad = modules["vad"]
+        if modules.get("asr", None) is not None:
+            self.asr = modules["asr"]
         if modules.get("tts", None) is not None:
             self.tts = modules["tts"]
         if modules.get("llm", None) is not None:
@@ -293,6 +295,8 @@ class ConnectionHandler:
             self.intent = modules["intent"]
         if modules.get("memory", None) is not None:
             self.memory = modules["memory"]
+        if modules.get("prompt", None) is not None:
+            self.change_system_prompt(modules["prompt"])
 
     def _initialize_memory(self):
         """初始化记忆模块"""

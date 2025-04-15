@@ -222,80 +222,93 @@ def initialize_modules(
 
     # 初始化TTS模块
     if init_tts:
+        select_tts_module = config["selected_module"]["TTS"]
         tts_type = (
-            config["selected_module"]["TTS"]
-            if "type" not in config["TTS"][config["selected_module"]["TTS"]]
-            else config["TTS"][config["selected_module"]["TTS"]]["type"]
+            select_tts_module
+            if "type" not in config["TTS"][select_tts_module]
+            else config["TTS"][select_tts_module]["type"]
         )
         modules["tts"] = tts.create_instance(
             tts_type,
-            config["TTS"][config["selected_module"]["TTS"]],
+            config["TTS"][select_tts_module],
             bool(config.get("delete_audio", True)),
         )
-        logger.bind(tag=TAG).info(f"初始化组件: tts成功")
+        logger.bind(tag=TAG).info(f"初始化组件: tts成功 {select_tts_module}")
 
     # 初始化LLM模块
     if init_llm:
+        select_llm_module = config["selected_module"]["LLM"]
         llm_type = (
-            config["selected_module"]["LLM"]
-            if "type" not in config["LLM"][config["selected_module"]["LLM"]]
-            else config["LLM"][config["selected_module"]["LLM"]]["type"]
+            select_llm_module
+            if "type" not in config["LLM"][select_llm_module]
+            else config["LLM"][select_llm_module]["type"]
         )
         modules["llm"] = llm.create_instance(
             llm_type,
-            config["LLM"][config["selected_module"]["LLM"]],
+            config["LLM"][select_llm_module],
         )
-        logger.bind(tag=TAG).info(f"初始化组件: llm成功")
+        logger.bind(tag=TAG).info(f"初始化组件: llm成功 {select_llm_module}")
 
     # 初始化Intent模块
     if init_intent:
+        select_intent_module = config["selected_module"]["Intent"]
         intent_type = (
-            config["selected_module"]["Intent"]
-            if "type" not in config["Intent"][config["selected_module"]["Intent"]]
-            else config["Intent"][config["selected_module"]["Intent"]]["type"]
+            select_intent_module
+            if "type" not in config["Intent"][select_intent_module]
+            else config["Intent"][select_intent_module]["type"]
         )
         modules["intent"] = intent.create_instance(
             intent_type,
-            config["Intent"][config["selected_module"]["Intent"]],
+            config["Intent"][select_intent_module],
         )
-        logger.bind(tag=TAG).info(f"初始化组件: intent成功")
+        logger.bind(tag=TAG).info(f"初始化组件: intent成功 {select_intent_module}")
+
     # 初始化Memory模块
     if init_memory:
+        select_memory_module = config["selected_module"]["Memory"]
         memory_type = (
-            config["selected_module"]["Memory"]
-            if "type" not in config["Memory"][config["selected_module"]["Memory"]]
-            else config["Memory"][config["selected_module"]["Memory"]]["type"]
+            select_memory_module
+            if "type" not in config["Memory"][select_memory_module]
+            else config["Memory"][select_memory_module]["type"]
         )
         modules["memory"] = memory.create_instance(
             memory_type,
-            config["Memory"][config["selected_module"]["Memory"]],
+            config["Memory"][select_memory_module],
         )
-        logger.bind(tag=TAG).info(f"初始化组件: memory成功")
+        logger.bind(tag=TAG).info(f"初始化组件: memory成功 {select_memory_module}")
 
     # 初始化VAD模块
     if init_vad:
+        select_vad_module = config["selected_module"]["VAD"]
         vad_type = (
-            config["selected_module"]["VAD"]
-            if "type" not in config["VAD"][config["selected_module"]["VAD"]]
-            else config["VAD"][config["selected_module"]["VAD"]]["type"]
+            select_vad_module
+            if "type" not in config["VAD"][select_vad_module]
+            else config["VAD"][select_vad_module]["type"]
         )
         modules["vad"] = vad.create_instance(
             vad_type,
-            config["VAD"][config["selected_module"]["VAD"]],
+            config["VAD"][select_vad_module],
         )
-        logger.bind(tag=TAG).info(f"初始化组件: vad成功")
+        logger.bind(tag=TAG).info(f"初始化组件: vad成功 {select_vad_module}")
+
     # 初始化ASR模块
     if init_asr:
+        select_asr_module = config["selected_module"]["ASR"]
         asr_type = (
-            config["selected_module"]["ASR"]
-            if "type" not in config["ASR"][config["selected_module"]["ASR"]]
-            else config["ASR"][config["selected_module"]["ASR"]]["type"]
+            select_asr_module
+            if "type" not in config["ASR"][select_asr_module]
+            else config["ASR"][select_asr_module]["type"]
         )
         modules["asr"] = asr.create_instance(
             asr_type,
-            config["ASR"][config["selected_module"]["ASR"]],
+            config["ASR"][select_asr_module],
             bool(config.get("delete_audio", True)),
         )
-        logger.bind(tag=TAG).info(f"初始化组件: asr成功")
+        logger.bind(tag=TAG).info(f"初始化组件: asr成功 {select_asr_module}")
+
+    # 初始化自定义prompt
+    if config.get("prompt", None) is not None:
+        modules["prompt"] = config["prompt"]
+        logger.bind(tag=TAG).info(f"初始化组件: prompt成功 {modules['prompt'][:50]}...")
 
     return modules
