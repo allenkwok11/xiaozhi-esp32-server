@@ -16,7 +16,7 @@
                 <div class="content-area">
                     <el-card class="params-card" shadow="never">
                         <el-table ref="paramsTable" :data="paramsList" class="transparent-table"
-                            :header-cell-class-name="headerCellClassName">
+                            :header-cell-class-name="headerCellClassName" :max-height="tableMaxHeight">
                             <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
                             <el-table-column label="参数编码" prop="paramCode" align="center"></el-table-column>
                             <el-table-column label="参数值" prop="paramValue" align="center"
@@ -40,6 +40,14 @@
                                     @click="deleteParam($refs.paramsTable.selection)">删除</el-button>
                             </div>
                             <div class="custom-pagination">
+                                <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
+                                    <el-option
+                                        v-for="item in pageSizeOptions"
+                                        :key="item"
+                                        :label="`${item}条/页`"
+                                        :value="item">
+                                    </el-option>
+                                </el-select>
                                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
                                     首页
                                 </button>
@@ -64,6 +72,7 @@
         <!-- 新增/编辑参数对话框 -->
         <param-dialog :title="dialogTitle" :visible.sync="dialogVisible" :form="paramForm" @submit="handleSubmit"
             @cancel="dialogVisible = false" />
+
     </div>
 </template>
 
@@ -80,10 +89,12 @@ export default {
             paramsList: [],
             currentPage: 1,
             pageSize: 5,
+            pageSizeOptions: [5, 10, 20, 50, 100],
             total: 0,
             dialogVisible: false,
             dialogTitle: "新增参数",
             isAllSelected: false,
+            tableMaxHeight: 400,
             paramForm: {
                 id: null,
                 paramCode: "",
@@ -94,7 +105,9 @@ export default {
     },
     created() {
         this.fetchParams();
+
     },
+
     computed: {
         pageCount() {
             return Math.ceil(this.total / this.pageSize);
@@ -116,6 +129,11 @@ export default {
         },
     },
     methods: {
+        handlePageSizeChange(val) {
+            this.pageSize = val;
+            this.currentPage = 1;
+            this.fetchParams();
+        },
         fetchParams() {
             Api.admin.getParamsList(
                 {
@@ -190,7 +208,6 @@ export default {
                 return;
             }
 
-
             const paramCount = params.length;
             this.$confirm(`确定要删除选中的${paramCount}个参数吗？`, '警告', {
                 confirmButtonText: '确定',
@@ -210,7 +227,7 @@ export default {
                             message: `成功删除${paramCount}个参数`,
                             showClose: true
                         });
-                        this.fetchParams(); // 刷新参数列表
+                        this.fetchParams();
                     } else {
                         this.$message.error({
                             message: data.msg || '删除失败，请重试',
@@ -279,12 +296,16 @@ export default {
 }
 
 .main-wrapper {
-    margin: 5px 22px;
-    border-radius: 15px;
-    min-height: 600px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    position: relative;
-    background: rgba(237, 242, 255, 0.5);
+  margin: 5px 22px;
+  border-radius: 15px;
+  min-height: calc(100vh - 350px);
+  height: auto;
+  max-height: 80vh;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  background: rgba(237, 242, 255, 0.5);
+  display: flex;
+  flex-direction: column;
 }
 
 .operation-bar {
@@ -344,6 +365,7 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-top: 10px;
+    padding-bottom: 10px;
 }
 
 .ctrl_btn {
@@ -386,9 +408,14 @@ export default {
     gap: 8px;
     margin-top: 15px;
 
+    .el-select {
+      margin-right: 8px;
+    }
+
     .pagination-btn:first-child,
     .pagination-btn:nth-child(2),
-    .pagination-btn:nth-last-child(2) {
+    .pagination-btn:nth-last-child(2),
+    .pagination-btn:nth-child(3) {
         min-width: 60px;
         height: 32px;
         padding: 0 12px;
@@ -410,7 +437,7 @@ export default {
         }
     }
 
-    .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)) {
+    .pagination-btn:not(:first-child):not(:nth-child(3)):not(:nth-child(2)):not(:nth-last-child(2)) {
         min-width: 28px;
         height: 32px;
         padding: 0;
@@ -446,6 +473,7 @@ export default {
 
 :deep(.transparent-table) {
     background: white;
+    flex: 1;
 
     .el-table__header th {
         background: white !important;
@@ -533,5 +561,30 @@ export default {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.page-size-select {
+    width: 100px;
+    margin-right: 8px;
+
+    :deep(.el-input__inner) {
+        height: 32px;
+        line-height: 32px;
+        border-radius: 4px;
+        border: 1px solid #e4e7ed;
+        background: #dee7ff;
+        color: #606266;
+        font-size: 14px;
+    }
+
+    :deep(.el-input__suffix) {
+        line-height: 32px;
+    }
+}
+
+:deep(.el-table) {
+    .el-table__body-wrapper {
+        transition: height 0.3s ease;
+    }
 }
 </style>

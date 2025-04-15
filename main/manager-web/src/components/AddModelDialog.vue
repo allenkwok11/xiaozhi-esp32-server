@@ -6,7 +6,6 @@
         添加模型
       </div>
 
-
       <button class="custom-close-btn" @click="handleClose">
         ×
       </button>
