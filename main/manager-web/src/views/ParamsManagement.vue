@@ -17,7 +17,11 @@
                     <el-card class="params-card" shadow="never">
                         <el-table ref="paramsTable" :data="paramsList" class="transparent-table"
                             :header-cell-class-name="headerCellClassName">
-                            <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
+                            <el-table-column label="选择" align="center" width="120">
+                                <template slot-scope="scope">
+                                    <el-checkbox v-model="scope.row.selected"></el-checkbox>
+                                </template>
+                            </el-table-column>
                             <el-table-column label="参数编码" prop="paramCode" align="center"></el-table-column>
                             <el-table-column label="参数值" prop="paramValue" align="center"
                                 show-overflow-tooltip></el-table-column>
@@ -37,7 +41,7 @@
                                 </el-button>
                                 <el-button size="mini" type="success" @click="showAddDialog">新增</el-button>
                                 <el-button size="mini" type="danger" icon="el-icon-delete"
-                                    @click="deleteParam($refs.paramsTable.selection)">删除</el-button>
+                                     @click="deleteSelectedParams">删除</el-button>
                             </div>
                             <div class="custom-pagination">
                                 <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
@@ -142,12 +146,15 @@ export default {
                 },
                 ({ data }) => {
                     if (data.code === 0) {
-                        this.paramsList = data.data.list;
+                        this.paramsList = data.data.list.map(item => ({
+                            ...item,
+                            selected: false
+                        }));
                         this.total = data.data.total;
                     } else {
                         this.$message.error({
-                          message:data.msg || '获取参数列表失败',
-                          showClose:true
+                            message: data.msg || '获取参数列表失败',
+                            showClose: true
                         });
                     }
                 }
@@ -158,12 +165,10 @@ export default {
             this.fetchParams();
         },
         handleSelectAll() {
-            if (this.isAllSelected) {
-                this.$refs.paramsTable.clearSelection();
-            } else {
-                this.$refs.paramsTable.toggleAllSelection();
-            }
             this.isAllSelected = !this.isAllSelected;
+            this.paramsList.forEach(row => {
+                row.selected = this.isAllSelected;
+            });
         },
         showAddDialog() {
             this.dialogTitle = "新增参数";
@@ -206,6 +211,18 @@ export default {
                     }
                 });
             }
+        },
+
+        deleteSelectedParams() {
+            const selectedRows = this.paramsList.filter(row => row.selected);
+            if (selectedRows.length === 0) {
+                this.$message.warning({
+                    message: "请先选择需要删除的参数",
+                    showClose: true
+                });
+                return;
+            }
+            this.deleteParam(selectedRows);
         },
         deleteParam(row) {
             // 处理单个参数或参数数组
@@ -525,19 +542,6 @@ export default {
     }
 }
 
-:deep(.custom-selection-header) {
-    .el-checkbox {
-        display: none !important;
-    }
-
-    &::after {
-        content: "选择";
-        display: inline-block;
-        color: black;
-        font-weight: bold;
-        padding-bottom: 18px;
-    }
-}
 
 :deep(.el-checkbox__inner) {
     background-color: #eeeeee !important;
