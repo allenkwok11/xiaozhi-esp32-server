@@ -426,8 +426,7 @@ export default {
 .custom-pagination {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 10px;
 
     .el-select {
       margin-right: 8px;
@@ -597,7 +596,7 @@ export default {
 
 .page-size-select {
     width: 100px;
-    margin-right: 8px;
+    margin-right: 10px;
 
     :deep(.el-input__inner) {
         height: 32px;
@@ -610,7 +609,32 @@ export default {
     }
 
     :deep(.el-input__suffix) {
-        line-height: 32px;
+        right: 6px;
+        width: 15px;
+        height: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 6px;
+        border-radius: 4px;
+    }
+
+    :deep(.el-input__suffix-inner) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    :deep(.el-icon-arrow-up:before) {
+        content: "";
+        display: inline-block;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 9px solid #606266;
+        position: relative;
+        transform: rotate(0deg);
+        transition: transform 0.3s;
     }
 }
 
