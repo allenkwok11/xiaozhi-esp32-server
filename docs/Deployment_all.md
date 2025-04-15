@@ -138,12 +138,12 @@ manager-api:
   secret: 你的server.secret值
 ```
 1、把你刚才从`智控台`复制过来的`server.secret`的`参数值`复制到`.config.yaml`文件里的`secret`里。
-2、注意，把`url`改成下面的`http://xiaozhi-esp32-server-web/xiaozhi`
+2、注意，把`url`改成下面的`http://xiaozhi-esp32-server-web:8002/xiaozhi`
 
 类似这样的效果
 ```
 manager-api:
-  url: http://xiaozhi-esp32-server-web/xiaozhi
+  url: http://xiaozhi-esp32-server-web:8002/xiaozhi
   secret: 12345678-xxxx-xxxx-xxxx-123456789000
 ```
 
