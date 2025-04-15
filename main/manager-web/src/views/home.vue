@@ -19,13 +19,13 @@
             <div class="hi-hint">
               Hello, Let's have a wonderful day!
             </div>
-            <div class="add-device-btn" @click="showAddDialog">
-              <div class="left-add">
+            <div class="add-device-btn">
+              <div class="left-add" @click="showAddDialog">
                 添加智能体
               </div>
               <div style="width: 23px;height: 13px;background: #5778ff;margin-left: -10px;" />
               <div class="right-add">
-                <i class="el-icon-right" style="font-size: 20px;color: #fff;" />
+                <i class="el-icon-right" @click="showAddDialog" style="font-size: 20px;color: #fff;" />
               </div>
             </div>
           </div>
@@ -261,4 +261,7 @@ export default {
   text-align: center;
   /* 居中显示 */
 }
+
+
+
 </style>
