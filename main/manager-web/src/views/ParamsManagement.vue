@@ -16,7 +16,7 @@
                 <div class="content-area">
                     <el-card class="params-card" shadow="never">
                         <el-table ref="paramsTable" :data="paramsList" class="transparent-table"
-                            :header-cell-class-name="headerCellClassName" :max-height="tableMaxHeight">
+                            :header-cell-class-name="headerCellClassName">
                             <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
                             <el-table-column label="参数编码" prop="paramCode" align="center"></el-table-column>
                             <el-table-column label="参数值" prop="paramValue" align="center"
@@ -94,7 +94,6 @@ export default {
             dialogVisible: false,
             dialogTitle: "新增参数",
             isAllSelected: false,
-            tableMaxHeight: 400,
             paramForm: {
                 id: null,
                 paramCode: "",
@@ -146,7 +145,10 @@ export default {
                         this.paramsList = data.data.list;
                         this.total = data.data.total;
                     } else {
-                        this.$message.error(data.msg || '获取参数列表失败');
+                        this.$message.error({
+                          message:data.msg || '获取参数列表失败',
+                          showClose:true
+                        });
                     }
                 }
             );
@@ -183,7 +185,10 @@ export default {
                 // 编辑
                 Api.admin.updateParam(form, ({ data }) => {
                     if (data.code === 0) {
-                        this.$message.success("修改成功");
+                        this.$message.success({
+                          message:"修改成功",
+                          showClose:true
+                        });
                         this.dialogVisible = false;
                         this.fetchParams();
                     }
@@ -192,7 +197,10 @@ export default {
                 // 新增
                 Api.admin.addParam(form, ({ data }) => {
                     if (data.code === 0) {
-                        this.$message.success("新增成功");
+                        this.$message.success({
+                          message:"新增成功",
+                          showClose:true
+                        });
                         this.dialogVisible = false;
                         this.fetchParams();
                     }
@@ -204,7 +212,10 @@ export default {
             const params = Array.isArray(row) ? row : [row];
 
             if (Array.isArray(row) && row.length === 0) {
-                this.$message.warning("请先选择需要删除的参数");
+                this.$message.warning({
+                  message:"请先选择需要删除的参数",
+                  showClose:true
+                });
                 return;
             }
 
@@ -217,7 +228,10 @@ export default {
             }).then(() => {
                 const ids = params.map(param => param.id);
                 if (ids.some(id => isNaN(id))) {
-                    this.$message.error('存在无效的参数ID');
+                    this.$message.error({
+                      message:'存在无效的参数ID',
+                      showClose: true
+                    });
                     return;
                 }
 
@@ -293,6 +307,7 @@ export default {
     background: linear-gradient(to bottom right, #dce8ff, #e4eeff, #e6cbfd) center;
     -webkit-background-size: cover;
     -o-background-size: cover;
+    overflow: hidden;
 }
 
 .main-wrapper {
@@ -350,14 +365,20 @@ export default {
     flex: 1;
     height: 100%;
     min-width: 600px;
-    overflow-x: auto;
+    overflow: auto;
     background-color: white;
+    display: flex;
+    flex-direction: column;
 }
 
 .params-card {
     background: white;
     border: none;
     box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
 }
 
 .table_bottom {
@@ -474,7 +495,18 @@ export default {
 :deep(.transparent-table) {
     background: white;
     flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    .el-table__body-wrapper {
+      flex: 1;
+      overflow: auto;
+      max-height: none !important;
+    }
 
+    .el-table__header-wrapper {
+      flex-shrink: 0;
+    }
     .el-table__header th {
         background: white !important;
         color: black;
@@ -586,5 +618,14 @@ export default {
     .el-table__body-wrapper {
         transition: height 0.3s ease;
     }
+}
+
+.el-table {
+  --table-max-height: calc(100vh - 400px);
+  max-height: var(--table-max-height);
+
+  .el-table__body-wrapper {
+    max-height: calc(var(--table-max-height) - 40px);
+  }
 }
 </style>
