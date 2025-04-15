@@ -99,6 +99,16 @@
               </el-button>
             </div>
             <div class="custom-pagination">
+
+              <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
+                  <el-option
+                    v-for="item in pageSizeOptions"
+                    :key="item"
+                    :label="`${item}条/页`"
+                    :value="item">
+                  </el-option>
+              </el-select>
+
               <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
               <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
 
@@ -141,6 +151,7 @@ export default {
       ttsDialogVisible: false,
       selectedTtsModelId: '',
       modelList: [],
+      pageSizeOptions: [5, 10, 20, 50, 100],
       currentPage: 1,
       pageSize: 5,
       total: 0,
@@ -796,6 +807,7 @@ export default {
   /* 导航按钮样式 (首页、上一页、下一页) */
   .pagination-btn:first-child,
   .pagination-btn:nth-child(2),
+  .pagination-btn:nth-child(3),
   .pagination-btn:nth-last-child(2) {
     min-width: 60px;
     height: 32px;
@@ -819,7 +831,7 @@ export default {
   }
 
   /* 数字按钮样式 */
-  .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)) {
+  .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-last-child(2)) {
     min-width: 28px;
     height: 32px;
     padding: 0;
@@ -852,4 +864,24 @@ export default {
     margin-left: 10px;
   }
 }
+
+.page-size-select {
+  width: 100px;
+  margin-right: 8px;
+
+  :deep(.el-input__inner) {
+    height: 32px;
+    line-height: 32px;
+    border-radius: 4px;
+    border: 1px solid #e4e7ed;
+    background: #dee7ff;
+    color: #606266;
+    font-size: 14px;
+  }
+
+  :deep(.el-input__suffix) {
+    line-height: 32px;
+  }
+}
+
 </style>

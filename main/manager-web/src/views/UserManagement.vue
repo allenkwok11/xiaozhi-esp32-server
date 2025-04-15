@@ -16,7 +16,7 @@
         <div class="content-area">
           <el-card class="user-card" shadow="never">
             <el-table ref="userTable" :data="userList" class="transparent-table"
-              :header-cell-class-name="headerCellClassName">
+              :header-cell-class-name="headerCellClassName" :max-height="tableMaxHeight">
               <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
               <el-table-column label="用户Id" prop="userid" align="center"></el-table-column>
               <el-table-column label="手机号码" prop="mobile" align="center"></el-table-column>
@@ -50,6 +50,16 @@
                 <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">删除</el-button>
               </div>
               <div class="custom-pagination">
+
+                <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
+                  <el-option
+                    v-for="item in pageSizeOptions"
+                    :key="item"
+                    :label="`${item}条/页`"
+                    :value="item">
+                  </el-option>
+                </el-select>
+
                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
                   首页
                 </button>
@@ -87,9 +97,11 @@ export default {
       currentPassword: "",
       searchPhone: "",
       userList: [],
+      pageSizeOptions: [5, 10, 20, 50, 100],
       currentPage: 1,
       pageSize: 5,
       total: 0,
+      tableMaxHeight: 410,
       isAllSelected: false
     };
   },
@@ -117,6 +129,12 @@ export default {
     },
   },
   methods: {
+     handlePageSizeChange(val) {
+      this.pageSize = val;
+      this.currentPage = 1;
+      this.fetchUsers();
+    },
+
     fetchUsers() {
       Api.admin.getUserList(
         {
@@ -348,10 +366,13 @@ export default {
 .main-wrapper {
   margin: 5px 22px;
   border-radius: 15px;
-  min-height: 600px;
+  min-height: calc(100vh - 350px);
+  height: auto;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: relative;
   background: rgba(237, 242, 255, 0.5);
+  display: flex;
+  flex-direction: column;
 }
 
 .operation-bar {
@@ -470,8 +491,13 @@ export default {
   gap: 8px;
   margin-top: 15px;
 
+  .el-select {
+    margin-right: 8px;
+  }
+
   .pagination-btn:first-child,
   .pagination-btn:nth-child(2),
+  .pagination-btn:nth-child(3),
   .pagination-btn:nth-last-child(2) {
     min-width: 60px;
     height: 32px;
@@ -494,7 +520,7 @@ export default {
     }
   }
 
-  .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-last-child(2)) {
+  .pagination-btn:not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:nth-last-child(2)) {
     min-width: 28px;
     height: 32px;
     padding: 0;
@@ -607,4 +633,24 @@ export default {
     }
   }
 }
+
+.page-size-select {
+  width: 100px;
+  margin-right: 8px;
+
+  :deep(.el-input__inner) {
+    height: 32px;
+    line-height: 32px;
+    border-radius: 4px;
+    border: 1px solid #e4e7ed;
+    background: #dee7ff;
+    color: #606266;
+    font-size: 14px;
+  }
+
+  :deep(.el-input__suffix) {
+    line-height: 32px;
+  }
+}
+
 </style>
