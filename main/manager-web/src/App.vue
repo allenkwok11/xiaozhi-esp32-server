@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <router-view />
-    <cache-viewer :visible.sync="showCacheViewer" />
+    <cache-viewer v-if="isCDNEnabled" :visible.sync="showCacheViewer" />
   </div>
 </template>
 
@@ -61,8 +61,9 @@ export default {
   },
   mounted() {
     // 只有在启用CDN时才添加相关事件和功能
-    // 添加全局快捷键Alt+C用于显示缓存查看器
-    document.addEventListener('keydown', this.handleKeyDown);
+    if (this.isCDNEnabled) {
+      // 添加全局快捷键Alt+C用于显示缓存查看器
+      document.addEventListener('keydown', this.handleKeyDown);
       
       // 在全局对象上添加缓存检查方法，便于调试
       window.checkCDNCacheStatus = () => {
@@ -80,6 +81,12 @@ export default {
       
       // 检查Service Worker状态
       this.checkServiceWorkerStatus();
+    } else {
+      console.info(
+        '%c[小智服务] CDN模式已禁用，使用本地打包资源', 
+        'color: #67C23A; font-weight: bold;'
+      );
+    }
   },
   beforeDestroy() {
     // 只有在启用CDN时才需要移除事件监听
