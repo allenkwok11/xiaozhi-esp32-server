@@ -580,6 +580,11 @@ export default {
   color: white;
 }
 
+.btn-search:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
 ::v-deep .search-input .el-input__inner {
   border-radius: 4px;
   border: 1px solid #DCDFE6;
@@ -632,17 +637,6 @@ export default {
 ::v-deep .search-input .el-input__inner:focus {
   border-color: #6b8cff;
   outline: none;
-}
-
-.btn-search {
-  background: linear-gradient(135deg, #6b8cff, #a966ff);
-  border: none;
-  color: white;
-}
-
-.btn-search:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
 }
 
 .data-table {
