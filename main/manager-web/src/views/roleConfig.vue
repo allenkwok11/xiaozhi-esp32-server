@@ -426,7 +426,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 5px 0;
+  padding: 0 0 5px 0;
   font-weight: 700;
   font-size: 19px;
   color: #3d4566;
@@ -453,7 +453,7 @@ export default {
 }
 
 .form-content {
-  padding: 16px 0;
+  padding: 10px 0;
 }
 
 .form-grid {
@@ -507,6 +507,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0 0 5px 0;
 }
 
 .save-btn {
