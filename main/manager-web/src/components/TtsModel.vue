@@ -551,27 +551,25 @@ export default {
 
 /* 备注文本 */
 ::v-deep .remark-input .el-textarea__inner {
-  background-color: #f5f5f5;
   border-radius: 4px;
   border: 1px solid #e6e6e6;
   padding: 8px 12px;
   resize: none;
   max-height: 40px !important;
   line-height: 1.5;
-}
-
-::v-deep .remark-input .el-textarea__inner::placeholder {
-  color: black !important;
-  opacity: 0.7;
-}
-
-::v-deep .remark-input .el-textarea__inner {
-  background-color: #f4f6fa;
+  background-color: transparent !important;
 }
 
 ::v-deep .remark-input .el-textarea__inner:focus {
-  background-color: #edeffb;
+  border-color: #409EFF !important;
+  outline: none;
 }
+
+::v-deep .remark-input .el-textarea__inner::placeholder {
+  color: #c0c4cc !important;
+  opacity: 1;
+}
+
 
 /* 滚动容器 */
 .scroll-wrapper {
@@ -650,6 +648,12 @@ export default {
   bottom: 20px;
   padding-top: 10px;
 }
+
+.action-buttons .el-button {
+  padding: 8px 15px;
+  font-size: 11px;
+}
+
 .edit-btn,
 .delete-btn,
 .save-btn {
