@@ -115,8 +115,8 @@ export default {
       activeSearchKeyword: "",
       currentAgentId: this.$route.query.agentId || '',
       currentPage: 1,
-      pageSize: 5,
-      pageSizeOptions: [5, 10, 20, 50, 100],
+      pageSize: 10,
+      pageSizeOptions: [10, 20, 50, 100],
       deviceList: [],
       loading: false,
       userApi: null,
@@ -283,13 +283,18 @@ export default {
           this.deviceList = data.data.map(device => {
             const bindDate = new Date(device.createDate);
             const formattedBindTime = `${bindDate.getFullYear()}-${(bindDate.getMonth() + 1).toString().padStart(2, '0')}-${bindDate.getDate().toString().padStart(2, '0')} ${bindDate.getHours().toString().padStart(2, '0')}:${bindDate.getMinutes().toString().padStart(2, '0')}:${bindDate.getSeconds().toString().padStart(2, '0')}`;
+            let formattedLastConversation = '';
+            if (device.lastConnectedAt) {
+              const lastConvoDate = new Date(device.lastConnectedAt);
+              formattedLastConversation = `${lastConvoDate.getFullYear()}-${(lastConvoDate.getMonth() + 1).toString().padStart(2, '0')}-${lastConvoDate.getDate().toString().padStart(2, '0')} ${lastConvoDate.getHours().toString().padStart(2, '0')}:${lastConvoDate.getMinutes().toString().padStart(2, '0')}:${lastConvoDate.getSeconds().toString().padStart(2, '0')}`;
+            }
             return {
               device_id: device.id,
               model: device.board,
               firmwareVersion: device.appVersion,
               macAddress: device.macAddress,
               bindTime: formattedBindTime,
-              lastConversation: device.lastConnectedAt,
+              lastConversation: formattedLastConversation,
               remark: device.alias,
               isEdit: false,
               otaSwitch: device.autoUpdate === 1,
@@ -331,7 +336,7 @@ export default {
 .main-wrapper {
   margin: 5px 22px;
   border-radius: 15px;
-  min-height: calc(100vh - 200px);
+  min-height: calc(100vh - 24vh);
   height: auto;
   max-height: 80vh;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -628,12 +633,12 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 330px);
+  max-height: calc(100vh - 40vh);
 }
 
 :deep(.el-table__body-wrapper) {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
   max-height: none !important;
 }
 
