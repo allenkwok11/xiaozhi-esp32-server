@@ -1,5 +1,5 @@
 <template>
-  <div class="welcome">
+  <div class="welcome" @keyup.enter="register">
     <el-container style="height: 100%;">
       <!-- 保持相同的头部 -->
       <el-header>
