@@ -99,9 +99,9 @@ export default {
       currentPassword: "",
       searchPhone: "",
       userList: [],
-      pageSizeOptions: [5, 10, 20, 50, 100],
+      pageSizeOptions: [10, 20, 50, 100],
       currentPage: 1,
-      pageSize: 5,
+      pageSize: 10,
       total: 0,
       isAllSelected: false
     };
@@ -355,7 +355,7 @@ export default {
 .main-wrapper {
   margin: 5px 22px;
   border-radius: 15px;
-  min-height: calc(100vh - 350px);
+  min-height: calc(100vh - 24vh);
   height: auto;
   max-height: 80vh;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -557,7 +557,7 @@ export default {
   flex-direction: column;
   .el-table__body-wrapper {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
     max-height: none !important;
   }
 
@@ -674,7 +674,7 @@ export default {
 }
 
 .el-table {
-  --table-max-height: calc(100vh - 400px);
+  --table-max-height: calc(100vh - 40vh);
   max-height: var(--table-max-height);
 
   .el-table__body-wrapper {

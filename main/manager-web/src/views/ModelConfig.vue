@@ -152,7 +152,7 @@ export default {
       ttsDialogVisible: false,
       selectedTtsModelId: '',
       modelList: [],
-      pageSizeOptions: [5, 10, 20, 50, 100],
+      pageSizeOptions: [10, 20, 50, 100],
       currentPage: 1,
       pageSize: 10,
       total: 0,
@@ -461,7 +461,7 @@ export default {
 .main-wrapper {
   margin: 5px 22px;
   border-radius: 15px;
-  min-height: calc(100vh - 235px);
+  min-height: calc(100vh - 24vh);
   height: auto;
   max-height: 80vh;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -656,7 +656,6 @@ export default {
 }
 
 .table-footer {
-  margin-top: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -904,7 +903,7 @@ export default {
 }
 
 .data-table {
-  --table-max-height: calc(100vh - 450px);
+  --table-max-height: calc(100vh - 45vh);
   max-height: var(--table-max-height);
 }
 
