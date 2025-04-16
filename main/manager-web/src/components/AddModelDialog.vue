@@ -44,7 +44,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="排序号" prop="sortOrder" style="flex: 1;">
-            <el-input v-model="formData.sort" placeholder="请输入排序号" class="custom-input-bg"></el-input>
+            <el-input v-model="formData.sort" type="number" placeholder="请输入排序号" class="custom-input-bg"></el-input>
           </el-form-item>
         </div>
 
