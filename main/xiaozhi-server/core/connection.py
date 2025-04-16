@@ -548,6 +548,7 @@ class ConnectionHandler:
                         f"function call error: {content_arguments}"
                     )
             if not bHasError:
+                response_message.clear()
                 self.logger.bind(tag=TAG).info(
                     f"function_name={function_name}, function_id={function_id}, function_arguments={function_arguments}"
                 )
