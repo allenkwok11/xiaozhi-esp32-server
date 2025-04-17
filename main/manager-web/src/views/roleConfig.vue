@@ -512,20 +512,25 @@ export default {
   align-items: center;
 }
 
-.save-btn {
-  background: #5778ff;
-  color: white;
-  border: none;
-  border-radius: 18px;
-  padding: 10px 20px;
-}
+.action-bar {
+  .el-button.save-btn {
+    background: #5778ff;
+    color: white;
+    border: none;
+    border-radius: 18px;
+    padding: 10px 20px;
+    width: 100px;
+    height: 35px;
+    font-size: 14px;
+  }
 
-.reset-btn {
-  background: #e6ebff;
-  color: #5778ff;
-  border: 1px solid #adbdff;
-  border-radius: 18px;
-  padding: 10px 20px;
+  .el-button.reset-btn {
+    background: #e6ebff;
+    color: #5778ff;
+    border: 1px solid #adbdff;
+    border-radius: 18px;
+    padding: 10px 20px;
+  }
 }
 
 .hint-text {
