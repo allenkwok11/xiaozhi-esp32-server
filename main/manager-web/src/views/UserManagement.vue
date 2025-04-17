@@ -15,9 +15,12 @@
       <div class="content-panel">
         <div class="content-area">
           <el-card class="user-card" shadow="never">
-            <el-table ref="userTable" :data="userList" class="transparent-table"
-              :header-cell-class-name="headerCellClassName" :max-height="tableMaxHeight">
-              <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
+            <el-table ref="userTable" :data="userList" class="transparent-table">
+              <el-table-column label="选择" align="center" width="120">
+                  <template slot-scope="scope">
+                      <el-checkbox v-model="scope.row.selected"></el-checkbox>
+                  </template>
+              </el-table-column>
               <el-table-column label="用户Id" prop="userid" align="center"></el-table-column>
               <el-table-column label="手机号码" prop="mobile" align="center"></el-table-column>
               <el-table-column label="设备数量" prop="deviceCount" align="center"></el-table-column>
@@ -50,7 +53,6 @@
                 <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">删除</el-button>
               </div>
               <div class="custom-pagination">
-
                 <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
                   <el-option
                     v-for="item in pageSizeOptions"
@@ -97,11 +99,10 @@ export default {
       currentPassword: "",
       searchPhone: "",
       userList: [],
-      pageSizeOptions: [5, 10, 20, 50, 100],
+      pageSizeOptions: [10, 20, 50, 100],
       currentPage: 1,
-      pageSize: 5,
+      pageSize: 10,
       total: 0,
-      tableMaxHeight: 410,
       isAllSelected: false
     };
   },
@@ -136,34 +137,35 @@ export default {
     },
 
     fetchUsers() {
-      Api.admin.getUserList(
-        {
-          page: this.currentPage,
-          limit: this.pageSize,
-          mobile: this.searchPhone,
-        },
-        ({ data }) => {
-          if (data.code === 0) {
-            this.userList = data.data.list
-            this.total = data.data.total;
-          }
-        }
-      );
+        Api.admin.getUserList(
+            {
+                page: this.currentPage,
+                limit: this.pageSize,
+                mobile: this.searchPhone,
+            },
+            ({ data }) => {
+                if (data.code === 0) {
+                    this.userList = data.data.list.map(item => ({
+                        ...item,
+                        selected: false
+                    }));
+                    this.total = data.data.total;
+                }
+            }
+        );
     },
     handleSearch() {
       this.currentPage = 1;
       this.fetchUsers();
     },
     handleSelectAll() {
-      if (this.isAllSelected) {
-        this.$refs.userTable.clearSelection();
-      } else {
-        this.$refs.userTable.toggleAllSelection();
-      }
-      this.isAllSelected = !this.isAllSelected;
+        this.isAllSelected = !this.isAllSelected;
+        this.userList.forEach(row => {
+            row.selected = this.isAllSelected;
+        });
     },
     batchDelete() {
-      const selectedUsers = this.$refs.userTable.selection;
+      const selectedUsers = this.userList.filter(user => user.selected);
       if (selectedUsers.length === 0) {
         this.$message.warning("请先选择需要删除的用户");
         return;
@@ -228,20 +230,12 @@ export default {
         });
     },
     batchEnable() {
-      const selectedUsers = this.$refs.userTable.selection;
-      if (selectedUsers.length === 0) {
-        this.$message.warning("请先选择需要启用的用户");
-        return;
-      }
-      this.handleChangeStatus(selectedUsers, 1);
+        const selectedUsers = this.userList.filter(user => user.selected);
+        this.handleChangeStatus(selectedUsers, 1);
     },
     batchDisable() {
-      const selectedUsers = this.$refs.userTable.selection;
-      if (selectedUsers.length === 0) {
-        this.$message.warning("请先选择需要禁用的用户");
-        return;
-      }
-      this.handleChangeStatus(selectedUsers, 0);
+        const selectedUsers = this.userList.filter(user => user.selected);
+        this.handleChangeStatus(selectedUsers, 0);
     },
     resetPassword(row) {
       this.$confirm("重置后将会生成新密码，是否继续？", "提示", {
@@ -283,12 +277,6 @@ export default {
           });
         })
         .catch(() => { });
-    },
-    headerCellClassName({ columnIndex }) {
-      if (columnIndex === 0) {
-        return "custom-selection-header";
-      }
-      return "";
     },
     goFirst() {
       this.currentPage = 1;
@@ -361,13 +349,15 @@ export default {
   background: linear-gradient(to bottom right, #dce8ff, #e4eeff, #e6cbfd) center;
   -webkit-background-size: cover;
   -o-background-size: cover;
+  overflow: hidden;
 }
 
 .main-wrapper {
   margin: 5px 22px;
   border-radius: 15px;
-  min-height: calc(100vh - 350px);
+  min-height: calc(100vh - 24vh);
   height: auto;
+  max-height: 80vh;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: relative;
   background: rgba(237, 242, 255, 0.5);
@@ -419,12 +409,18 @@ export default {
   min-width: 600px;
   overflow-x: auto;
   background-color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .user-card {
   background: white;
   border: none;
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
 .table_bottom {
@@ -489,7 +485,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 15px;
 
   .el-select {
     margin-right: 8px;
@@ -556,6 +551,19 @@ export default {
 
 :deep(.transparent-table) {
   background: white;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  .el-table__body-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none !important;
+  }
+
+  .el-table__header-wrapper {
+    flex-shrink: 0;
+  }
 
   .el-table__header th {
     background: white !important;
@@ -584,19 +592,6 @@ export default {
   color: #5a64b5 !important;
 }
 
-:deep(.custom-selection-header) {
-  .el-checkbox {
-    display: none !important;
-  }
-
-  &::after {
-    content: "选择";
-    display: inline-block;
-    color: black;
-    font-weight: bold;
-    padding-bottom: 18px;
-  }
-}
 
 :deep(.el-checkbox__inner) {
   background-color: #eeeeee !important;
@@ -635,22 +630,57 @@ export default {
 }
 
 .page-size-select {
-  width: 100px;
-  margin-right: 8px;
+    width: 100px;
+    margin-right: 10px;
 
-  :deep(.el-input__inner) {
-    height: 32px;
-    line-height: 32px;
-    border-radius: 4px;
-    border: 1px solid #e4e7ed;
-    background: #dee7ff;
-    color: #606266;
-    font-size: 14px;
-  }
+    :deep(.el-input__inner) {
+        height: 32px;
+        line-height: 32px;
+        border-radius: 4px;
+        border: 1px solid #e4e7ed;
+        background: #dee7ff;
+        color: #606266;
+        font-size: 14px;
+    }
 
-  :deep(.el-input__suffix) {
-    line-height: 32px;
+    :deep(.el-input__suffix) {
+        right: 6px;
+        width: 15px;
+        height: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 6px;
+        border-radius: 4px;
+    }
+
+    :deep(.el-input__suffix-inner) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    :deep(.el-icon-arrow-up:before) {
+        content: "";
+        display: inline-block;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 9px solid #606266;
+        position: relative;
+        transform: rotate(0deg);
+        transition: transform 0.3s;
+    }
+}
+
+.el-table {
+  --table-max-height: calc(100vh - 40vh);
+  max-height: var(--table-max-height);
+
+  .el-table__body-wrapper {
+    max-height: calc(var(--table-max-height) - 40px);
   }
 }
+
 
 </style>

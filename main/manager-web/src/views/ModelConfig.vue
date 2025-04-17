@@ -43,49 +43,49 @@
 
         <!-- 右侧内容 -->
         <div class="content-area">
-          <el-table ref="modelTable" style="width: 100%" :header-cell-style="{ background: 'transparent' }"
-            :data="modelList" class="data-table" header-row-class-name="table-header"
-            :header-cell-class-name="headerCellClassName" @selection-change="handleSelectionChange">
-            <el-table-column type="selection" width="55" align="center"></el-table-column>
-            <el-table-column label="模型名称" prop="modelName" align="center"></el-table-column>
-            <el-table-column label="模型编码" prop="modelCode" align="center"></el-table-column>
-            <el-table-column label="提供商" align="center">
-              <template slot-scope="scope">
-                {{ scope.row.configJson.type || '未知' }}
-              </template>
-            </el-table-column>
-            <el-table-column label="是否启用" align="center">
-              <template slot-scope="scope">
-                <el-switch v-model="scope.row.isEnabled" class="custom-switch" :active-value="1" :inactive-value="0"
-                  @change="handleStatusChange(scope.row)" />
-              </template>
-            </el-table-column>
-            <el-table-column label="是否默认" align="center">
-              <template slot-scope="scope">
-                <el-switch v-model="scope.row.isDefault" class="custom-switch" :active-value="1" :inactive-value="0"
-                  @change="handleDefaultChange(scope.row)" />
-              </template>
-            </el-table-column>
-            <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
-              <template slot-scope="scope">
-                <el-button type="text" size="mini" @click="openTtsDialog(scope.row)" class="voice-management-btn">
-                  音色管理
-                </el-button>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" align="center" width="150px">
-              <template slot-scope="scope">
-                <el-button type="text" size="mini" @click="editModel(scope.row)" class="edit-btn">
-                  修改
-                </el-button>
-                <el-button type="text" size="mini" @click="deleteModel(scope.row)" class="delete-btn">
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <div class="table-footer">
+          <el-card class="model-card" shadow="never">
+            <el-table ref="modelTable" style="width: 100%" :header-cell-style="{ background: 'transparent' }"
+              :data="modelList" class="data-table" header-row-class-name="table-header"
+              :header-cell-class-name="headerCellClassName" @selection-change="handleSelectionChange">
+              <el-table-column type="selection" width="55" align="center"></el-table-column>
+              <el-table-column label="模型名称" prop="modelName" align="center"></el-table-column>
+              <el-table-column label="模型编码" prop="modelCode" align="center"></el-table-column>
+              <el-table-column label="提供商" align="center">
+                <template slot-scope="scope">
+                  {{ scope.row.configJson.type || '未知' }}
+                </template>
+              </el-table-column>
+              <el-table-column label="是否启用" align="center">
+                <template slot-scope="scope">
+                  <el-switch v-model="scope.row.isEnabled" class="custom-switch" :active-value="1" :inactive-value="0"
+                    @change="handleStatusChange(scope.row)" />
+                </template>
+              </el-table-column>
+              <el-table-column label="是否默认" align="center">
+                <template slot-scope="scope">
+                  <el-switch v-model="scope.row.isDefault" class="custom-switch" :active-value="1" :inactive-value="0"
+                    @change="handleDefaultChange(scope.row)" />
+                </template>
+              </el-table-column>
+              <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
+                <template slot-scope="scope">
+                  <el-button type="text" size="mini" @click="openTtsDialog(scope.row)" class="voice-management-btn">
+                    音色管理
+                  </el-button>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" align="center" width="150px">
+                <template slot-scope="scope">
+                  <el-button type="text" size="mini" @click="editModel(scope.row)" class="edit-btn">
+                    修改
+                  </el-button>
+                  <el-button type="text" size="mini" @click="deleteModel(scope.row)" class="delete-btn">
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="table-footer">
             <div class="batch-actions">
               <el-button size="mini" type="primary" @click="selectAll">
                 {{ isAllSelected ?
@@ -121,6 +121,7 @@
               <span class="total-text">共{{ total }}条记录</span>
             </div>
           </div>
+          </el-card>
         </div>
       </div>
 
@@ -151,9 +152,9 @@ export default {
       ttsDialogVisible: false,
       selectedTtsModelId: '',
       modelList: [],
-      pageSizeOptions: [5, 10, 20, 50, 100],
+      pageSizeOptions: [10, 20, 50, 100],
       currentPage: 1,
-      pageSize: 5,
+      pageSize: 10,
       total: 0,
       selectedModels: [],
       isAllSelected: false
@@ -165,7 +166,6 @@ export default {
   },
 
   computed: {
-
     modelTypeText() {
       const map = {
         vad: '语言活动检测模型(VAD)',
@@ -177,8 +177,6 @@ export default {
       }
       return map[this.activeTab] || '模型配置'
     },
-
-
     pageCount() {
       return Math.ceil(this.total / this.pageSize);
     },
@@ -200,6 +198,11 @@ export default {
   },
 
   methods: {
+    handlePageSizeChange(val) {
+      this.pageSize = val;
+      this.currentPage = 1;
+      this.loadData();
+    },
     openTtsDialog(row) {
       this.selectedTtsModelId = row.id;
       this.ttsDialogVisible = true;
@@ -212,7 +215,8 @@ export default {
     },
     handleMenuSelect(index) {
       this.activeTab = index;
-      this.currentPage = 1;
+      this.currentPage = 1;  // 重置到第一页
+      this.pageSize = 10;     // 可选：重置每页条数
       this.loadData();
     },
     handleSearch() {
@@ -457,7 +461,9 @@ export default {
 .main-wrapper {
   margin: 5px 22px;
   border-radius: 15px;
-  min-height: 600px;
+  min-height: calc(100vh - 24vh);
+  height: auto;
+  max-height: 80vh;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   position: relative;
   background: rgba(237, 242, 255, 0.5);
@@ -473,12 +479,6 @@ export default {
 .page-title {
   font-size: 24px;
   margin: 0;
-}
-
-.right-operations {
-  display: flex;
-  gap: 10px;
-  margin-left: auto;
 }
 
 .content-panel {
@@ -553,17 +553,10 @@ export default {
   padding: 24px;
   height: 100%;
   min-width: 600px;
-  overflow-x: auto;
+  overflow: hidden;
   background-color: white;
-
-}
-
-.title-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: nowrap;
+  flex-direction: column;
 }
 
 .action-group {
@@ -587,6 +580,11 @@ export default {
   color: white;
 }
 
+.btn-search:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
 ::v-deep .search-input .el-input__inner {
   border-radius: 4px;
   border: 1px solid #DCDFE6;
@@ -594,20 +592,51 @@ export default {
   transition: border-color 0.2s;
 }
 
+::v-deep .page-size-select{
+  width: 100px;
+  margin-right: 8px;
+}
+
+::v-deep .page-size-select .el-input__inner{
+  height: 32px;
+  line-height: 32px;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+  background: #dee7ff;
+  color: #606266;
+  font-size: 14px;
+}
+::v-deep .page-size-select .el-input__suffix{
+  right: 6px;
+  width: 15px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  top: 6px;
+  border-radius: 4px;
+}
+
+::v-deep .page-size-select .el-input__suffix-inner{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+::v-deep .page-size-select .el-icon-arrow-up:before{
+  content: "";
+  display: inline-block;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 9px solid #606266;
+  position: relative;
+  transform: rotate(0deg);
+  transition: transform 0.3s;
+}
+
 ::v-deep .search-input .el-input__inner:focus {
   border-color: #6b8cff;
   outline: none;
-}
-
-.btn-search {
-  background: linear-gradient(135deg, #6b8cff, #a966ff);
-  border: none;
-  color: white;
-}
-
-.btn-search:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
 }
 
 .data-table {
@@ -627,22 +656,18 @@ export default {
 }
 
 .table-footer {
-  margin-top: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
   width: 100%;
+  flex-shrink: 0;
+  min-height: 60px;
+  background: white;
 }
 
 .batch-actions {
   display: flex;
-  gap: 8px;
-}
-
-.title-wrapper {
-  display: flex;
-  align-items: center;
   gap: 8px;
 }
 
@@ -695,11 +720,6 @@ export default {
   -moz-user-select: none;
   user-select: none;
   background-color: transparent !important;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
 }
 
 ::v-deep .el-table .custom-selection-header .cell .el-checkbox__inner {
@@ -802,7 +822,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 15px;
 
   /* 导航按钮样式 (首页、上一页、下一页) */
   .pagination-btn:first-child,
@@ -865,23 +884,32 @@ export default {
   }
 }
 
-.page-size-select {
-  width: 100px;
-  margin-right: 8px;
+.model-card{
+  background: white;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  box-shadow: none;
+  overflow: hidden;
+}
 
-  :deep(.el-input__inner) {
-    height: 32px;
-    line-height: 32px;
-    border-radius: 4px;
-    border: 1px solid #e4e7ed;
-    background: #dee7ff;
-    color: #606266;
-    font-size: 14px;
-  }
+.model-card ::v-deep .el-card__body{
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
 
-  :deep(.el-input__suffix) {
-    line-height: 32px;
-  }
+.data-table {
+  --table-max-height: calc(100vh - 45vh);
+  max-height: var(--table-max-height);
+}
+
+.data-table ::v-deep .el-table__body-wrapper {
+  max-height: calc(var(--table-max-height) - 80px);
+  overflow-y: auto;
 }
 
 </style>

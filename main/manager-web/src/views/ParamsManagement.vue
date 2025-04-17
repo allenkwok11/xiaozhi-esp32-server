@@ -17,7 +17,11 @@
                     <el-card class="params-card" shadow="never">
                         <el-table ref="paramsTable" :data="paramsList" class="transparent-table"
                             :header-cell-class-name="headerCellClassName">
-                            <el-table-column label="选择" type="selection" align="center" width="120"></el-table-column>
+                            <el-table-column label="选择" align="center" width="120">
+                                <template slot-scope="scope">
+                                    <el-checkbox v-model="scope.row.selected"></el-checkbox>
+                                </template>
+                            </el-table-column>
                             <el-table-column label="参数编码" prop="paramCode" align="center"></el-table-column>
                             <el-table-column label="参数值" prop="paramValue" align="center"
                                 show-overflow-tooltip></el-table-column>
@@ -37,7 +41,7 @@
                                 </el-button>
                                 <el-button size="mini" type="success" @click="showAddDialog">新增</el-button>
                                 <el-button size="mini" type="danger" icon="el-icon-delete"
-                                    @click="deleteParam($refs.paramsTable.selection)">删除</el-button>
+                                     @click="deleteSelectedParams">删除</el-button>
                             </div>
                             <div class="custom-pagination">
                                 <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
@@ -88,8 +92,8 @@ export default {
             searchCode: "",
             paramsList: [],
             currentPage: 1,
-            pageSize: 5,
-            pageSizeOptions: [5, 10, 20, 50, 100],
+            pageSize: 10,
+            pageSizeOptions: [10, 20, 50, 100],
             total: 0,
             dialogVisible: false,
             dialogTitle: "新增参数",
@@ -142,12 +146,15 @@ export default {
                 },
                 ({ data }) => {
                     if (data.code === 0) {
-                        this.paramsList = data.data.list;
+                        this.paramsList = data.data.list.map(item => ({
+                            ...item,
+                            selected: false
+                        }));
                         this.total = data.data.total;
                     } else {
                         this.$message.error({
-                          message:data.msg || '获取参数列表失败',
-                          showClose:true
+                            message: data.msg || '获取参数列表失败',
+                            showClose: true
                         });
                     }
                 }
@@ -158,12 +165,10 @@ export default {
             this.fetchParams();
         },
         handleSelectAll() {
-            if (this.isAllSelected) {
-                this.$refs.paramsTable.clearSelection();
-            } else {
-                this.$refs.paramsTable.toggleAllSelection();
-            }
             this.isAllSelected = !this.isAllSelected;
+            this.paramsList.forEach(row => {
+                row.selected = this.isAllSelected;
+            });
         },
         showAddDialog() {
             this.dialogTitle = "新增参数";
@@ -206,6 +211,18 @@ export default {
                     }
                 });
             }
+        },
+
+        deleteSelectedParams() {
+            const selectedRows = this.paramsList.filter(row => row.selected);
+            if (selectedRows.length === 0) {
+                this.$message.warning({
+                    message: "请先选择需要删除的参数",
+                    showClose: true
+                });
+                return;
+            }
+            this.deleteParam(selectedRows);
         },
         deleteParam(row) {
             // 处理单个参数或参数数组
@@ -313,7 +330,7 @@ export default {
 .main-wrapper {
   margin: 5px 22px;
   border-radius: 15px;
-  min-height: calc(100vh - 350px);
+  min-height: calc(100vh - 24vh);
   height: auto;
   max-height: 80vh;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -426,8 +443,7 @@ export default {
 .custom-pagination {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 10px;
 
     .el-select {
       margin-right: 8px;
@@ -500,7 +516,7 @@ export default {
     flex-direction: column;
     .el-table__body-wrapper {
       flex: 1;
-      overflow: auto;
+      overflow-y: auto;
       max-height: none !important;
     }
 
@@ -526,19 +542,6 @@ export default {
     }
 }
 
-:deep(.custom-selection-header) {
-    .el-checkbox {
-        display: none !important;
-    }
-
-    &::after {
-        content: "选择";
-        display: inline-block;
-        color: black;
-        font-weight: bold;
-        padding-bottom: 18px;
-    }
-}
 
 :deep(.el-checkbox__inner) {
     background-color: #eeeeee !important;
@@ -597,7 +600,7 @@ export default {
 
 .page-size-select {
     width: 100px;
-    margin-right: 8px;
+    margin-right: 10px;
 
     :deep(.el-input__inner) {
         height: 32px;
@@ -610,7 +613,32 @@ export default {
     }
 
     :deep(.el-input__suffix) {
-        line-height: 32px;
+        right: 6px;
+        width: 15px;
+        height: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 6px;
+        border-radius: 4px;
+    }
+
+    :deep(.el-input__suffix-inner) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    :deep(.el-icon-arrow-up:before) {
+        content: "";
+        display: inline-block;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 9px solid #606266;
+        position: relative;
+        transform: rotate(0deg);
+        transition: transform 0.3s;
     }
 }
 
@@ -621,7 +649,7 @@ export default {
 }
 
 .el-table {
-  --table-max-height: calc(100vh - 400px);
+  --table-max-height: calc(100vh - 40vh);
   max-height: var(--table-max-height);
 
   .el-table__body-wrapper {
