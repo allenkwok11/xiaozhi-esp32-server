@@ -30,6 +30,7 @@ import xiaozhi.modules.sys.dto.PasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
 import xiaozhi.modules.sys.entity.SysUserEntity;
 import xiaozhi.modules.sys.enums.SuperAdminEnum;
+import xiaozhi.modules.sys.service.SysParamsService;
 import xiaozhi.modules.sys.service.SysUserService;
 import xiaozhi.modules.sys.vo.AdminPageUserVO;
 
@@ -44,6 +45,8 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     private final DeviceService deviceService;
 
     private final AgentService agentService;
+
+    private final SysParamsService sysParamsService;
 
     @Override
     public SysUserDTO getByUsername(String username) {
@@ -98,8 +101,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         // 删除设备
         deviceService.deleteByUserId(id);
         // 删除智能体
-        agentService.deleteById(id);
-        // TODO 除了要删除用户还要删除用户关联的对话
+        agentService.deleteAgentByUserId(id);
     }
 
     @Override
@@ -157,17 +159,16 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         params.put(Constant.LIMIT, dto.getLimit());
         IPage<SysUserEntity> page = baseDao.selectPage(
                 getPage(params, "id", true),
-                // 定义查询条件
-                new QueryWrapper<SysUserEntity>()
-                        // 必须按照手机号码查找
-                        .eq(StringUtils.isNotBlank(dto.getMobile()), "username", dto.getMobile()));
+                new QueryWrapper<SysUserEntity>().eq(StringUtils.isNotBlank(dto.getMobile()), "username",
+                        dto.getMobile()));
+        // 循环处理page获取回来的数据，返回需要的字段
         List<AdminPageUserVO> list = page.getRecords().stream().map(user -> {
             AdminPageUserVO adminPageUserVO = new AdminPageUserVO();
             adminPageUserVO.setUserid(user.getId().toString());
             adminPageUserVO.setMobile(user.getUsername());
+            String deviceCount = deviceService.selectCountByUserId(user.getId()).toString();
+            adminPageUserVO.setDeviceCount(deviceCount);
             adminPageUserVO.setStatus(user.getStatus());
-            // TODO 2. 等设备功能写好，获取对应数据
-            adminPageUserVO.setDeviceCount("0");
             return adminPageUserVO;
         }).toList();
         return new PageData<>(list, page.getTotal());
@@ -191,10 +192,33 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
      */
     private String generatePassword() {
         StringBuilder password = new StringBuilder();
-        for (int i = 0; i < 10; i++) {
-            int randomIndex = random.nextInt(CHARACTERS.length());
-            password.append(CHARACTERS.charAt(randomIndex));
+        for (int i = 0; i < 12; i++) {
+            password.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
         }
         return password.toString();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeStatus(Integer status, String[] userIds) {
+        for (String userId : userIds) {
+            SysUserEntity entity = new SysUserEntity();
+            entity.setId(Long.parseLong(userId));
+            entity.setStatus(status);
+            updateById(entity);
+        }
+    }
+
+    @Override
+    public boolean getAllowUserRegister() {
+        String allowUserRegister = sysParamsService.getValue(Constant.SERVER_ALLOW_USER_REGISTER, true);
+        if (allowUserRegister.equals("true")) {
+            return true;
+        }
+        Long userCount = baseDao.selectCount(new QueryWrapper<SysUserEntity>());
+        if (userCount == 0) {
+            return true;
+        }
+        return false;
     }
 }

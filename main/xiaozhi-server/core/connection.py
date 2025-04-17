@@ -1,4 +1,5 @@
 import os
+import copy
 import json
 import uuid
 import time
@@ -17,16 +18,20 @@ from core.utils.util import (
     get_string_no_punctuation_or_emoji,
     extract_json_from_string,
     get_ip_info,
+    initialize_modules,
 )
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from core.handle.sendAudioHandle import sendAudioMessage
 from core.handle.receiveAudioHandle import handleAudioMessage
 from core.handle.functionHandler import FunctionHandler
 from plugins_func.register import Action, ActionResponse
-from config.private_config import PrivateConfig
 from core.auth import AuthMiddleware, AuthenticationError
-from core.utils.auth_code_gen import AuthCodeGenerator
 from core.mcp.manager import MCPManager
+from config.config_loader import (
+    get_private_config_from_api,
+    DeviceNotFoundException,
+    DeviceBindException,
+)
 
 TAG = __name__
 
@@ -41,9 +46,12 @@ class ConnectionHandler:
     def __init__(
         self, config: Dict[str, Any], _vad, _asr, _llm, _tts, _memory, _intent
     ):
-        self.config = config
+        self.config = copy.deepcopy(config)
         self.logger = setup_logging()
         self.auth = AuthMiddleware(config)
+
+        self.need_bind = False
+        self.bind_code = None
 
         self.websocket = None
         self.headers = None
@@ -73,7 +81,7 @@ class ConnectionHandler:
         self.intent = _intent
 
         # vad相关变量
-        self.client_audio_buffer = bytes()
+        self.client_audio_buffer = bytearray()
         self.client_have_voice = False
         self.client_have_voice_last_time = 0.0
         self.client_no_voice_last_time = 0.0
@@ -95,24 +103,40 @@ class ConnectionHandler:
         self.iot_descriptors = {}
         self.func_handler = None
 
-        self.cmd_exit = self.config["CMD_exit"]
+        self.cmd_exit = self.config["exit_commands"]
         self.max_cmd_length = 0
         for cmd in self.cmd_exit:
             if len(cmd) > self.max_cmd_length:
                 self.max_cmd_length = len(cmd)
 
-        self.private_config = None
-        self.auth_code_gen = AuthCodeGenerator.get_instance()
-        self.is_device_verified = False  # 添加设备验证状态标志
         self.close_after_chat = False  # 是否在聊天结束后关闭连接
         self.use_function_call_mode = False
-        if self.config["selected_module"]["Intent"] == "function_call":
-            self.use_function_call_mode = True
 
     async def handle_connection(self, ws):
         try:
             # 获取并验证headers
             self.headers = dict(ws.request.headers)
+
+            if self.headers.get("device-id", None) is None:
+                # 尝试从 URL 的查询参数中获取 device-id
+                from urllib.parse import parse_qs, urlparse
+
+                # 从 WebSocket 请求中获取路径
+                request_path = ws.request.path
+                if not request_path:
+                    self.logger.bind(tag=TAG).error("无法获取请求路径")
+                    return
+                parsed_url = urlparse(request_path)
+                query_params = parse_qs(parsed_url.query)
+                if "device-id" in query_params:
+                    self.headers["device-id"] = query_params["device-id"][0]
+                    self.headers["client-id"] = query_params["client-id"][0]
+                else:
+                    self.logger.bind(tag=TAG).error(
+                        "无法从请求头和URL查询参数中获取device-id"
+                    )
+                    return
+
             # 获取客户端ip地址
             self.client_ip = ws.remote_address[0]
             self.logger.bind(tag=TAG).info(
@@ -121,7 +145,6 @@ class ConnectionHandler:
 
             # 进行认证
             await self.auth.authenticate(self.headers)
-            device_id = self.headers.get("device-id", None)
 
             # 认证通过,继续处理
             self.websocket = ws
@@ -130,42 +153,6 @@ class ConnectionHandler:
             self.welcome_msg = self.config["xiaozhi"]
             self.welcome_msg["session_id"] = self.session_id
             await self.websocket.send(json.dumps(self.welcome_msg))
-            # Load private configuration if device_id is provided
-            bUsePrivateConfig = self.config.get("use_private_config", False)
-            self.logger.bind(tag=TAG).info(
-                f"bUsePrivateConfig: {bUsePrivateConfig}, device_id: {device_id}"
-            )
-            if bUsePrivateConfig and device_id:
-                try:
-                    self.private_config = PrivateConfig(
-                        device_id, self.config, self.auth_code_gen
-                    )
-                    await self.private_config.load_or_create()
-                    # 判断是否已经绑定
-                    owner = self.private_config.get_owner()
-                    self.is_device_verified = owner is not None
-
-                    if self.is_device_verified:
-                        await self.private_config.update_last_chat_time()
-
-                    llm, tts = self.private_config.create_private_instances()
-                    if all([llm, tts]):
-                        self.llm = llm
-                        self.tts = tts
-                        self.logger.bind(tag=TAG).info(
-                            f"Loaded private config and instances for device {device_id}"
-                        )
-                    else:
-                        self.logger.bind(tag=TAG).error(
-                            f"Failed to create instances for device {device_id}"
-                        )
-                        self.private_config = None
-                except Exception as e:
-                    self.logger.bind(tag=TAG).error(
-                        f"Error initializing private config: {e}"
-                    )
-                    self.private_config = None
-                    raise
 
             # 异步初始化
             self.executor.submit(self._initialize_components)
@@ -214,55 +201,171 @@ class ConnectionHandler:
             await handleAudioMessage(self, message)
 
     def _initialize_components(self):
+        """初始化组件"""
+        self._initialize_models()
+
         """加载提示词"""
-        self.prompt = self.config["prompt"]
-        if self.private_config:
-            self.prompt = self.private_config.private_config.get("prompt", self.prompt)
         self.dialogue.put(Message(role="system", content=self.prompt))
+
+        """加载记忆"""
+        self._initialize_memory()
+        """加载意图识别"""
+        self._initialize_intent()
+        """加载位置信息"""
+        self.client_ip_info = get_ip_info(self.client_ip, self.logger)
+        if self.client_ip_info is not None and "city" in self.client_ip_info:
+            self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
+            self.prompt = self.prompt + f"\nuser location:{self.client_ip_info}"
+
+            self.dialogue.update_system_message(self.prompt)
+
+    def _initialize_models(self):
+        read_config_from_api = self.config.get("read_config_from_api", False)
+        """如果是从配置文件获取，则进行二次实例化"""
+        if not read_config_from_api:
+            return
+        """从接口获取差异化的配置进行二次实例化，非全量重新实例化"""
+        try:
+            private_config = get_private_config_from_api(
+                self.config,
+                self.headers.get("device-id", None),
+                self.headers.get("client-id", None),
+            )
+            private_config["delete_audio"] = bool(self.config.get("delete_audio", True))
+            self.logger.bind(tag=TAG).info(f"获取差异化配置成功: {private_config}")
+        except DeviceNotFoundException as e:
+            self.need_bind = True
+            private_config = {}
+        except DeviceBindException as e:
+            self.need_bind = True
+            self.bind_code = e.bind_code
+            private_config = {}
+        except Exception as e:
+            self.need_bind = True
+            self.logger.bind(tag=TAG).error(f"获取差异化配置失败: {e}")
+            private_config = {}
+
+        init_vad, init_asr, init_llm, init_tts, init_memory, init_intent = (
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+        )
+        if private_config.get("VAD", None) is not None:
+            init_vad = True
+            self.config["VAD"] = private_config["VAD"]
+            self.config["selected_module"]["VAD"] = private_config["selected_module"][
+                "VAD"
+            ]
+        if private_config.get("ASR", None) is not None:
+            init_asr = True
+            self.config["ASR"] = private_config["ASR"]
+            self.config["selected_module"]["ASR"] = private_config["selected_module"][
+                "ASR"
+            ]
+        if private_config.get("LLM", None) is not None:
+            init_llm = True
+            self.config["LLM"] = private_config["LLM"]
+            self.config["selected_module"]["LLM"] = private_config["selected_module"][
+                "LLM"
+            ]
+        if private_config.get("TTS", None) is not None:
+            init_tts = True
+            self.config["TTS"] = private_config["TTS"]
+            self.config["selected_module"]["TTS"] = private_config["selected_module"][
+                "TTS"
+            ]
+        if private_config.get("Memory", None) is not None:
+            init_memory = True
+            self.config["Memory"] = private_config["Memory"]
+            self.config["selected_module"]["Memory"] = private_config[
+                "selected_module"
+            ]["Memory"]
+        if private_config.get("Intent", None) is not None:
+            init_intent = True
+            self.config["Intent"] = private_config["Intent"]
+            self.config["selected_module"]["Intent"] = private_config[
+                "selected_module"
+            ]["Intent"]
+        try:
+            modules = initialize_modules(
+                self.logger,
+                private_config,
+                init_vad,
+                init_asr,
+                init_llm,
+                init_tts,
+                init_memory,
+                init_intent,
+            )
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"初始化组件失败: {e}")
+            modules = {}
+        if modules.get("vad", None) is not None:
+            self.vad = modules["vad"]
+        if modules.get("asr", None) is not None:
+            self.asr = modules["asr"]
+        if modules.get("tts", None) is not None:
+            self.tts = modules["tts"]
+        if modules.get("llm", None) is not None:
+            self.llm = modules["llm"]
+        if modules.get("intent", None) is not None:
+            self.intent = modules["intent"]
+        if modules.get("memory", None) is not None:
+            self.memory = modules["memory"]
+        if modules.get("prompt", None) is not None:
+            self.change_system_prompt(modules["prompt"])
+
+    def _initialize_memory(self):
+        """初始化记忆模块"""
+        device_id = self.headers.get("device-id", None)
+        self.memory.init_memory(device_id, self.llm)
+
+    def _initialize_intent(self):
+        if (
+            self.config["Intent"][self.config["selected_module"]["Intent"]]["type"]
+            == "function_call"
+        ):
+            self.use_function_call_mode = True
+        """初始化意图识别模块"""
+        # 获取意图识别配置
+        intent_config = self.config["Intent"]
+        intent_type = self.config["Intent"][self.config["selected_module"]["Intent"]][
+            "type"
+        ]
+
+        # 如果使用 nointent，直接返回
+        if intent_type == "nointent":
+            return
+        # 使用 intent_llm 模式
+        elif intent_type == "intent_llm":
+            intent_llm_name = intent_config[self.config["selected_module"]["Intent"]][
+                "llm"
+            ]
+
+            if intent_llm_name and intent_llm_name in self.config["LLM"]:
+                # 如果配置了专用LLM，则创建独立的LLM实例
+                from core.utils import llm as llm_utils
+
+                intent_llm_config = self.config["LLM"][intent_llm_name]
+                intent_llm_type = intent_llm_config.get("type", intent_llm_name)
+                intent_llm = llm_utils.create_instance(
+                    intent_llm_type, intent_llm_config
+                )
+                self.logger.bind(tag=TAG).info(
+                    f"为意图识别创建了专用LLM: {intent_llm_name}, 类型: {intent_llm_type}"
+                )
+                self.intent.set_llm(intent_llm)
+            else:
+                # 否则使用主LLM
+                self.intent.set_llm(self.llm)
+                self.logger.bind(tag=TAG).info("使用主LLM作为意图识别模型")
 
         """加载插件"""
         self.func_handler = FunctionHandler(self)
         self.mcp_manager = MCPManager(self)
-        """加载记忆"""
-        device_id = self.headers.get("device-id", None)
-        self.memory.init_memory(device_id, self.llm)
-
-        """为意图识别设置LLM，优先使用专用LLM"""
-        # 检查是否配置了专用的意图识别LLM
-        intent_llm_name = self.config["Intent"]["intent_llm"]["llm"]
-
-        # 记录开始初始化意图识别LLM的时间
-        intent_llm_init_start = time.time()
-
-        if (
-            not self.use_function_call_mode
-            and intent_llm_name
-            and intent_llm_name in self.config["LLM"]
-        ):
-            # 如果配置了专用LLM，则创建独立的LLM实例
-            from core.utils import llm as llm_utils
-
-            intent_llm_config = self.config["LLM"][intent_llm_name]
-            intent_llm_type = intent_llm_config.get("type", intent_llm_name)
-            intent_llm = llm_utils.create_instance(intent_llm_type, intent_llm_config)
-            self.logger.bind(tag=TAG).info(
-                f"为意图识别创建了专用LLM: {intent_llm_name}, 类型: {intent_llm_type}"
-            )
-
-            self.intent.set_llm(intent_llm)
-        else:
-            # 否则使用主LLM
-            self.intent.set_llm(self.llm)
-
-        # 记录意图识别LLM初始化耗时
-        intent_llm_init_time = time.time() - intent_llm_init_start
-
-        """加载位置信息"""
-        self.client_ip_info = get_ip_info(self.client_ip)
-        if self.client_ip_info is not None and "city" in self.client_ip_info:
-            self.logger.bind(tag=TAG).info(f"Client ip info: {self.client_ip_info}")
-            self.prompt = self.prompt + f"\nuser location:{self.client_ip_info}"
-            self.dialogue.update_system_message(self.prompt)
 
         """加载MCP工具"""
         asyncio.run_coroutine_threadsafe(
@@ -271,46 +374,16 @@ class ConnectionHandler:
 
     def change_system_prompt(self, prompt):
         self.prompt = prompt
-        # 找到原来的role==system，替换原来的系统提示
-        for m in self.dialogue.dialogue:
-            if m.role == "system":
-                m.content = prompt
-
-    async def _check_and_broadcast_auth_code(self):
-        """检查设备绑定状态并广播认证码"""
-        if not self.private_config.get_owner():
-            auth_code = self.private_config.get_auth_code()
-            if auth_code:
-                # 发送验证码语音提示
-                text = f"请在后台输入验证码：{' '.join(auth_code)}"
-                self.recode_first_last_text(text)
-                future = self.executor.submit(self.speak_and_play, text)
-                self.tts_queue.put(future)
-            return False
-        return True
-
-    def isNeedAuth(self):
-        bUsePrivateConfig = self.config.get("use_private_config", False)
-        if not bUsePrivateConfig:
-            # 如果不使用私有配置，就不需要验证
-            return False
-        return not self.is_device_verified
+        # 更新系统prompt至上下文
+        self.dialogue.update_system_message(self.prompt)
 
     def chat(self, query):
-        if self.isNeedAuth():
-            self.llm_finish_task = True
-            future = asyncio.run_coroutine_threadsafe(
-                self._check_and_broadcast_auth_code(), self.loop
-            )
-            future.result()
-            return True
 
         self.dialogue.put(Message(role="user", content=query))
 
         response_message = []
         processed_chars = 0  # 跟踪已处理的字符位置
         try:
-            start_time = time.time()
             # 使用带记忆的对话
             future = asyncio.run_coroutine_threadsafe(
                 self.memory.query_memory(query), self.loop
@@ -331,9 +404,6 @@ class ConnectionHandler:
             response_message.append(content)
             if self.client_abort:
                 break
-
-            end_time = time.time()
-            # self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
 
             # 合并当前全部文本并处理未分割部分
             full_text = "".join(response_message)
@@ -386,13 +456,6 @@ class ConnectionHandler:
     def chat_with_function_calling(self, query, tool_call=False):
         self.logger.bind(tag=TAG).debug(f"Chat with function calling start: {query}")
         """Chat with function calling for intent detection using streaming"""
-        if self.isNeedAuth():
-            self.llm_finish_task = True
-            future = asyncio.run_coroutine_threadsafe(
-                self._check_and_broadcast_auth_code(), self.loop
-            )
-            future.result()
-            return True
 
         if not tool_call:
             self.dialogue.put(Message(role="user", content=query))
@@ -434,16 +497,19 @@ class ConnectionHandler:
         function_id = None
         function_arguments = ""
         content_arguments = ""
+ 
         for response in llm_responses:
             content, tools_call = response
+
             if "content" in response:
                 content = response["content"]
                 tools_call = None
             if content is not None and len(content) > 0:
-                if len(response_message) <= 0 and (
-                    content == "```" or "<tool_call>" in content
-                ):
-                    tool_call_flag = True
+                content_arguments += content
+          
+            if not tool_call_flag and content_arguments.startswith("<tool_call>"):
+                # print("content_arguments", content_arguments)
+                tool_call_flag = True
 
             if tools_call is not None:
                 tool_call_flag = True
@@ -455,9 +521,7 @@ class ConnectionHandler:
                     function_arguments += tools_call[0].function.arguments
 
             if content is not None and len(content) > 0:
-                if tool_call_flag:
-                    content_arguments += content
-                else:
+                if not tool_call_flag:
                     response_message.append(content)
 
                     if self.client_abort:
@@ -518,9 +582,8 @@ class ConnectionHandler:
                     self.logger.bind(tag=TAG).error(
                         f"function call error: {content_arguments}"
                     )
-                else:
-                    function_arguments = json.loads(function_arguments)
             if not bHasError:
+                response_message.clear()
                 self.logger.bind(tag=TAG).info(
                     f"function_name={function_name}, function_id={function_id}, function_arguments={function_arguments}"
                 )
@@ -672,7 +735,7 @@ class ConnectionHandler:
                 opus_datas, text_index, tts_file = [], 0, None
                 try:
                     self.logger.bind(tag=TAG).debug("正在处理TTS任务...")
-                    tts_timeout = self.config.get("tts_timeout", 10)
+                    tts_timeout = int(self.config.get("tts_timeout", 10))
                     tts_file, text, text_index = future.result(timeout=tts_timeout)
                     if text is None or len(text) <= 0:
                         self.logger.bind(tag=TAG).error(
@@ -769,7 +832,8 @@ class ConnectionHandler:
     async def close(self, ws=None):
         """资源清理方法"""
         # 清理MCP资源
-        await self.mcp_manager.cleanup_all()
+        if hasattr(self, "mcp_manager") and self.mcp_manager:
+            await self.mcp_manager.cleanup_all()
 
         # 触发停止事件并清理资源
         if self.stop_event:
@@ -804,7 +868,7 @@ class ConnectionHandler:
             # q.queue.put(None)
 
     def reset_vad_states(self):
-        self.client_audio_buffer = bytes()
+        self.client_audio_buffer = bytearray()
         self.client_have_voice = False
         self.client_have_voice_last_time = 0
         self.client_voice_stop = False

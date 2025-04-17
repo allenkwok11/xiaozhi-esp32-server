@@ -21,6 +21,7 @@ public interface SysUserService extends BaseService<SysUserEntity> {
 
     /**
      * 删除指定用户，且有关联的数据设备和智能体
+     * 
      * @param ids
      */
     void deleteById(Long ids);
@@ -56,4 +57,19 @@ public interface SysUserService extends BaseService<SysUserEntity> {
      * @return 用户列表分页数据
      */
     PageData<AdminPageUserVO> page(AdminPageUserDTO dto);
+
+    /**
+     * 批量修改用户状态
+     * 
+     * @param status  用户状态
+     * @param userIds 用户ID数组
+     */
+    void changeStatus(Integer status, String[] userIds);
+
+    /**
+     * 获取是否允许用户注册
+     * 
+     * @return 是否允许用户注册
+     */
+    boolean getAllowUserRegister();
 }
