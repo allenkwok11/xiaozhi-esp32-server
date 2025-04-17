@@ -93,10 +93,10 @@ class LLMProvider(LLMProviderBase):
 
         # 如果最后一个是 role="tool"，附加到user上
         if len(dialogue) > 1 and dialogue[-1]["role"] == "tool":
-            assistant_msg = "tool call result: " + dialogue[-1]["content"]
+            assistant_msg = "\ntool call result: " + dialogue[-1]["content"] + "\n\n"
             while len(dialogue) > 1 :
                 if dialogue[-1]["role"] == "user":
-                    dialogue[-1]["content"] += assistant_msg
+                    dialogue[-1]["content"] = assistant_msg + dialogue[-1]["content"]
                     break
                 dialogue.pop()
         
