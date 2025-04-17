@@ -211,7 +211,7 @@ def check_ffmpeg_installed():
 def extract_json_from_string(input_string):
     """提取字符串中的 JSON 部分"""
     pattern = r"(\{.*\})"
-    match = re.search(pattern, input_string)
+    match = re.search(pattern, input_string, re.DOTALL)  #添加 re.DOTALL
     if match:
         return match.group(1)  # 返回提取的 JSON 字符串
     return None

@@ -497,16 +497,19 @@ class ConnectionHandler:
         function_id = None
         function_arguments = ""
         content_arguments = ""
+ 
         for response in llm_responses:
             content, tools_call = response
+
             if "content" in response:
                 content = response["content"]
                 tools_call = None
             if content is not None and len(content) > 0:
-                if len(response_message) <= 0 and (
-                    content == "```" or "<tool_call>" in content
-                ):
-                    tool_call_flag = True
+                content_arguments += content
+          
+            if not tool_call_flag and content_arguments.startswith("<tool_call>"):
+                # print("content_arguments", content_arguments)
+                tool_call_flag = True
 
             if tools_call is not None:
                 tool_call_flag = True
@@ -518,9 +521,7 @@ class ConnectionHandler:
                     function_arguments += tools_call[0].function.arguments
 
             if content is not None and len(content) > 0:
-                if tool_call_flag:
-                    content_arguments += content
-                else:
+                if not tool_call_flag:
                     response_message.append(content)
 
                     if self.client_abort:
@@ -581,9 +582,8 @@ class ConnectionHandler:
                     self.logger.bind(tag=TAG).error(
                         f"function call error: {content_arguments}"
                     )
-                else:
-                    function_arguments = json.loads(function_arguments)
             if not bHasError:
+                response_message.clear()
                 self.logger.bind(tag=TAG).info(
                     f"function_name={function_name}, function_id={function_id}, function_arguments={function_arguments}"
                 )
