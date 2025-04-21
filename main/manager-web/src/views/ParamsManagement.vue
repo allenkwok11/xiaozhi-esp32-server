@@ -195,32 +195,35 @@ export default {
             this.paramForm = { ...row };
             this.dialogVisible = true;
         },
-        handleSubmit(form) {
-            if (form.id) {
-                // 编辑
-                Api.admin.updateParam(form, ({ data }) => {
-                    if (data.code === 0) {
-                        this.$message.success({
-                          message:"修改成功",
-                          showClose:true
-                        });
-                        this.dialogVisible = false;
-                        this.fetchParams();
-                    }
+
+        handleSubmit({ form, done }) {
+          if (form.id) {
+            // 编辑
+            Api.admin.updateParam(form, ({ data }) => {
+              if (data.code === 0) {
+                this.$message.success({
+                  message:"修改成功",
+                  showClose:true
                 });
-            } else {
-                // 新增
-                Api.admin.addParam(form, ({ data }) => {
-                    if (data.code === 0) {
-                        this.$message.success({
-                          message:"新增成功",
-                          showClose:true
-                        });
-                        this.dialogVisible = false;
-                        this.fetchParams();
-                    }
+                this.dialogVisible = false;
+                this.fetchParams();
+              }
+              done && done();
+            });
+          } else {
+            // 新增
+            Api.admin.addParam(form, ({ data }) => {
+              if (data.code === 0) {
+                this.$message.success({
+                  message:"新增成功",
+                  showClose:true
                 });
-            }
+                this.dialogVisible = false;
+                this.fetchParams();
+              }
+              done && done();
+            });
+          }
         },
 
         deleteSelectedParams() {

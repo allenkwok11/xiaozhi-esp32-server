@@ -312,9 +312,10 @@ export default {
       this.currentPage = page;
       this.$refs.modelTable.clearSelection();
     },
-    handleModelSave({ provideCode, formData }) {
+    handleModelSave({ provideCode, formData, done }) {
       const modelType = this.activeTab;
       const id = formData.id;
+
       Api.model.updateModel(
         { modelType, provideCode, id, formData },
         ({ data }) => {
@@ -325,6 +326,7 @@ export default {
           } else {
             this.$message.error(data.msg || '保存失败');
           }
+          done && done(); // 调用done回调关闭加载状态
         }
       );
     },
