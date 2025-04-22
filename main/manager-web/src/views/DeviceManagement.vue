@@ -469,6 +469,13 @@ export default {
   flex: 1;
   overflow: hidden;
 }
+  ::v-deep .el-card__body {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
 
 .table_bottom {
   display: flex;
@@ -477,6 +484,7 @@ export default {
   margin-top: 10px;
   padding-bottom: 10px;
 }
+
 
 .ctrl_btn {
   display: flex;
@@ -674,4 +682,11 @@ export default {
   background-color: #5f70f3 !important;
   border-color: #5f70f3 !important;
 }
+
+::v-deep .el-table--border::after,
+::v-deep .el-table--group::after,
+::v-deep .el-table::before {
+  display: none !important;
+}
+
 </style>
