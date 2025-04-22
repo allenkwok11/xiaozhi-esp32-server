@@ -26,10 +26,14 @@ class TTSProviderBase(ABC):
             max_repeat_time = 5
             text = MarkdownCleaner.clean_markdown(text)
             while not os.path.exists(tmp_file) and max_repeat_time > 0:
-                asyncio.run(self.text_to_speak(text, tmp_file))
-                if not os.path.exists(tmp_file):
-                    max_repeat_time = max_repeat_time - 1
-                    logger.bind(tag=TAG).error(f"语音生成失败: {text}:{tmp_file}，再试{max_repeat_time}次")
+                try:
+                    asyncio.run(self.text_to_speak(text, tmp_file))
+                except Exception as e:
+                    logger.bind(tag=TAG).error(f"语音生成失败: {text}，错误: {e}")
+                    max_repeat_time -= 1
+                    if max_repeat_time > 0:
+                        logger.bind(tag=TAG).error(f"再试{max_repeat_time}次")
+                        asyncio.sleep(max_repeat_time / 10)
 
             if max_repeat_time > 0:
                 logger.bind(tag=TAG).info(f"语音生成成功: {text}:{tmp_file}，重试{5 - max_repeat_time}次")
