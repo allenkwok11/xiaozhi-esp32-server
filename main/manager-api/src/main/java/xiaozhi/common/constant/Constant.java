@@ -172,5 +172,5 @@ public interface Constant {
     /**
      * 版本号
      */
-    public static final String VERSION = "0.3.10";
+    public static final String VERSION = "0.3.11";
 }
