@@ -1,4 +1,4 @@
-# esp32固件编译
+# 编译1.6.0版本esp32固件
 
 ## 第1步 配置环境
 先按照这个教程配置项目环境[《Windows搭建 ESP IDF 5.3.2开发环境以及编译小智》](https://icnynnzcwou8.feishu.cn/wiki/JEYDwTTALi5s2zkGlFGcDiRknXf)
@@ -6,31 +6,47 @@
 ## 第2步 打开配置文件
 配置好编译环境后，下载虾哥iaozhi-esp32项目源码，
 
-从这里下载虾哥[xiaozhi-esp32项目源码](https://github.com/78/xiaozhi-esp32)。
 
-下载后，打开`xiaozhi-esp32/main/Kconfig.projbuild`文件。
+从这里下载虾哥[xiaozhi-esp32项目1.6.0版本源码](https://github.com/78/xiaozhi-esp32/archive/refs/tags/v1.6.0.zip)。
 
-## 第3步 修改OTA地址
+从这里下载虾哥[xiaozhi-esp32项目1.6.0版本源码](https://github.com/78/xiaozhi-esp32/archive/refs/tags/v1.6.0.zip)。
 
-找到`OTA_VERSION_URL`的`default`的内容，把`https://api.tenclass.net/xiaozhi/ota/`
-   改成你自己的地址，例如，我的接口地址是`http://192.168.1.25:8002/xiaozhi/ota/`，就把内容改成这个。
+从这里下载虾哥[xiaozhi-esp32项目1.6.0版本源码](https://github.com/78/xiaozhi-esp32/archive/refs/tags/v1.6.0.zip)。
+
+下载后，解压缩包，打开`xiaozhi-esp32/main/Kconfig.projbuild`文件。
+
+
+## 第3步 修改WEBSOCKET地址
+找到`WEBSOCKET_URL`的`default`的内容，把`wss://api.tenclass.net/xiaozhi/v1/`
+   改成你自己的地址，例如，我的接口地址是`ws://192.168.1.25:8000/xiaozhi/v1/`，就把内容改成这个。
 
 修改前：
+
 ```
-config OTA_VERSION_URL
-    string "OTA Version URL"
-    default "https://api.tenclass.net/xiaozhi/ota/"
+config WEBSOCKET_URL
+    depends on CONNECTION_TYPE_WEBSOCKET
+    string "Websocket URL"
+    default "wss://api.tenclass.net/xiaozhi/v1/"
     help
-        The application will access this URL to check for updates.
+        Communication with the server through websocket after wake up.
 ```
-修改后：
+
+修改后(示例)：
+
 ```
-config OTA_VERSION_URL
-    string "OTA Version URL"
-    default "http://192.168.1.25:8002/xiaozhi/ota/"
+config WEBSOCKET_URL
+    depends on CONNECTION_TYPE_WEBSOCKET
+    string "Websocket URL"
+    default "ws://192.168.1.25:8000/xiaozhi/v1/"
     help
-        The application will access this URL to check for updates.
+        Communication with the server through websocket after wake up.
 ```
+
+注意：你的地址是`ws://`开头，不是`wss://`开头，一定不要写错了。
+
+注意：你的地址是`ws://`开头，不是`wss://`开头，一定不要写错了。
+
+注意：你的地址是`ws://`开头，不是`wss://`开头，一定不要写错了。
 
 ## 第4步 设置编译参数
 
