@@ -31,9 +31,9 @@ INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0026', 'TTS_VolcesAiG
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0027', 'TTS_VolcesAiGatewayTTS', 'Adam', 'en_male_adam_mars_bigtts', '美式英语', NULL, NULL, 27, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0028', 'TTS_VolcesAiGatewayTTS', 'Sarah', 'en_female_sarah_mars_bigtts', '澳洲英语', NULL, NULL, 28, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0029', 'TTS_VolcesAiGatewayTTS', 'Dryw', 'en_male_dryw_mars_bigtts', '澳洲英语', NULL, NULL, 29, NULL, NULL, NULL, NULL);
-INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0030', 'TTS_VolcesAiGatewayTTS', 'かずね（和音）/Javier or Álvaro', 'multi_male_jingqiangkanye_moon_bigtts', '日语、西语', NULL, NULL, 30, NULL, NULL, NULL, NULL);
-INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0031', 'TTS_VolcesAiGatewayTTS', 'はるこ（晴子）/Esmeralda', 'multi_female_shuangkuaisisi_moon_bigtts', '日语、西语', NULL, NULL, 31, NULL, NULL, NULL, NULL);
-INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0032', 'TTS_VolcesAiGatewayTTS', 'ひろし（広志）/Roberto', 'multi_male_wanqudashu_moon_bigtts', '日语、西语', NULL, NULL, 32, NULL, NULL, NULL, NULL);
+INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0030', 'TTS_VolcesAiGatewayTTS', 'かずね（和音）', 'multi_male_jingqiangkanye_moon_bigtts', '日语、西语', NULL, NULL, 30, NULL, NULL, NULL, NULL);
+INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0031', 'TTS_VolcesAiGatewayTTS', 'はるこ（晴子）', 'multi_female_shuangkuaisisi_moon_bigtts', '日语、西语', NULL, NULL, 31, NULL, NULL, NULL, NULL);
+INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0032', 'TTS_VolcesAiGatewayTTS', 'ひろし（広志）', 'multi_male_wanqudashu_moon_bigtts', '日语、西语', NULL, NULL, 32, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0033', 'TTS_VolcesAiGatewayTTS', 'あけみ（朱美）', 'multi_female_gaolengyujie_moon_bigtts', '日语', NULL, NULL, 33, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0034', 'TTS_VolcesAiGatewayTTS', 'Amanda', 'en_female_amanda_mars_bigtts', '美式英语', NULL, NULL, 34, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0035', 'TTS_VolcesAiGatewayTTS', 'Jackson', 'en_male_jackson_mars_bigtts', '美式英语', NULL, NULL, 35, NULL, NULL, NULL, NULL);
