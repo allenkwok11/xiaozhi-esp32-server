@@ -71,4 +71,9 @@ public class OtaServiceImpl extends BaseServiceImpl<OtaDao, OtaEntity> implement
 
         return baseDao.insert(entity) > 0;
     }
+
+    @Override
+    public OtaEntity getLatestOta(String type) {
+        return baseDao.selectOne(new QueryWrapper<OtaEntity>().eq("type", type).orderByDesc("update_date"));
+    }
 }
