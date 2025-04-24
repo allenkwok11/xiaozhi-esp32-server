@@ -14,7 +14,7 @@ class LLMProvider(LLMProviderBase):
         self.base_url = config.get("base_url")
         self.detail = config.get("detail", False)
         self.variables = config.get("variables", {})
-        check_model_key("LLM", self.api_key)
+        check_model_key("FastGPTLLM", self.api_key)
 
     def response(self, session_id, dialogue):
         try:
