@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :title="title" :visible.sync="visible" width="500px" @close="handleClose">
+  <el-dialog :title="title" :visible.sync="visible" width="500px" @close="handleClose" @open="handleOpen">
     <el-form ref="form" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="固件名称" prop="firmwareName">
         <el-input v-model="form.firmwareName" placeholder="请输入固件名称(板子+版本号)"></el-input>
@@ -13,11 +13,14 @@
         <el-input v-model="form.version" placeholder="请输入版本号(x.x.x格式)"></el-input>
       </el-form-item>
       <el-form-item label="固件文件" prop="firmwarePath">
-        <el-upload class="upload-demo" action="#" :http-request="handleUpload" :before-upload="beforeUpload"
-          :accept="'.bin,.apk'" :limit="1" :multiple="false" :auto-upload="true">
+        <el-upload ref="upload" class="upload-demo" action="#" :http-request="handleUpload"
+          :before-upload="beforeUpload" :accept="'.bin,.apk'" :limit="1" :multiple="false" :auto-upload="true"
+          :on-remove="handleRemove">
           <el-button size="small" type="primary">点击上传</el-button>
           <div slot="tip" class="el-upload__tip">只能上传固件文件(.bin/.apk)，且不超过100MB</div>
         </el-upload>
+        <el-progress v-if="isUploading || uploadStatus === 'success'" :percentage="uploadProgress"
+          :status="uploadStatus"></el-progress>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
         <el-input type="textarea" v-model="form.remark" placeholder="请输入备注信息"></el-input>
@@ -53,6 +56,9 @@ export default {
   data() {
     return {
       firmwareTypes: FIRMWARE_TYPES,
+      uploadProgress: 0,
+      uploadStatus: '',
+      isUploading: false,
       rules: {
         firmwareName: [
           { required: true, message: '请输入固件名称(板子+版本号)', trigger: 'blur' }
@@ -108,16 +114,72 @@ export default {
     },
     handleUpload(options) {
       const { file } = options
+      this.uploadProgress = 0
+      this.uploadStatus = ''
+      this.isUploading = true
+
+      // 使用setTimeout实现简单的0-50%过渡
+      const timer = setTimeout(() => {
+        if (this.uploadProgress < 50) {  // 只有当进度小于50%时才设置
+          this.uploadProgress = 50
+        }
+      }, 1000)
+
       Api.ota.uploadFirmware(file, (res) => {
+        clearTimeout(timer)  // 清除定时器
         res = res.data
         if (res.code === 0) {
           this.form.firmwarePath = res.data
           this.form.size = file.size
+          this.uploadProgress = 100
+          this.uploadStatus = 'success'
           this.$message.success('固件文件上传成功')
+          // 延迟2秒后隐藏进度条
+          setTimeout(() => {
+            this.isUploading = false
+          }, 2000)
         } else {
+          this.uploadStatus = 'exception'
           this.$message.error(res.msg || '文件上传失败')
+          this.isUploading = false
+        }
+      }, (progressEvent) => {
+        if (progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          // 只有当进度大于50%时才更新
+          if (progress > 50) {
+            this.uploadProgress = progress
+          }
+          // 如果上传完成但还没收到成功响应，保持进度条显示
+          if (progress === 100) {
+            this.uploadStatus = ''
+          }
         }
       })
+    },
+    handleRemove() {
+      this.form.firmwarePath = ''
+      this.form.size = 0
+      this.uploadProgress = 0
+      this.uploadStatus = ''
+      this.isUploading = false
+    },
+    handleOpen() {
+      // 重置上传相关状态
+      this.uploadProgress = 0
+      this.uploadStatus = ''
+      this.isUploading = false
+      // 重置表单中的文件相关字段
+      if (!this.form.id) {  // 只在新增时重置
+        this.form.firmwarePath = ''
+        this.form.size = 0
+        // 重置上传组件
+        this.$nextTick(() => {
+          if (this.$refs.upload) {
+            this.$refs.upload.clearFiles()
+          }
+        })
+      }
     }
   }
 }
