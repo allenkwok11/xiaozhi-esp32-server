@@ -470,12 +470,20 @@ export default {
 
 .params-card {
     background: white;
-    border: none;
-    box-shadow: none;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    flex: 1;
+    border: none;
+    box-shadow: none;
     overflow: hidden;
+
+    ::v-deep .el-card__body {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
 }
 
 .table_bottom {
@@ -632,19 +640,25 @@ export default {
     }
 }
 
-.custom-selection-header {
-    text-align: center !important;
-}
-
 :deep(.transparent-table) {
-    background-color: transparent;
+    background: white;
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .el-table__body-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        max-height: none !important;
+    }
 
     .el-table__header-wrapper {
         flex-shrink: 0;
     }
 
     .el-table__header th {
-        background-color: white !important;
+        background: white !important;
         color: black;
         font-weight: 600;
         height: 40px;
@@ -653,10 +667,12 @@ export default {
         border-bottom: 1px solid #e4e7ed;
     }
 
-    .el-table__body-wrapper {
+    .el-table__body tr {
+        background-color: white;
+
         td {
-            background-color: transparent;
-            border-bottom: 1px solid #e4e7ed;
+            border-top: 1px solid rgba(0, 0, 0, 0.04);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
             padding: 8px 0;
             height: 40px;
             color: #606266;
@@ -666,6 +682,10 @@ export default {
 
     .el-table__row:hover>td {
         background-color: #f5f7fa !important;
+    }
+
+    &::before {
+        display: none;
     }
 }
 
@@ -698,5 +718,36 @@ export default {
 
 :deep(.el-loading-spinner .path) {
     stroke: #6b8cff;
+}
+
+.el-table {
+    --table-max-height: calc(100vh - 40vh);
+    max-height: var(--table-max-height);
+
+    .el-table__body-wrapper {
+        max-height: calc(var(--table-max-height) - 40px);
+    }
+}
+
+@media (min-width: 1144px) {
+    .table_bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 40px;
+    }
+
+    :deep(.transparent-table) {
+        .el-table__body tr {
+            td {
+                padding-top: 16px;
+                padding-bottom: 16px;
+            }
+
+            &+tr {
+                margin-top: 10px;
+            }
+        }
+    }
 }
 </style>
