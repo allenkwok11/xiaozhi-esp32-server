@@ -138,7 +138,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         }
 
         DeviceReportRespDTO.Firmware firmware = new DeviceReportRespDTO.Firmware();
-        firmware.setVersion(ota.getVersion());
+        firmware.setVersion(ota == null ? null : ota.getVersion());
         firmware.setUrl(downloadUrl);
         response.setFirmware(firmware);
 
