@@ -52,7 +52,7 @@ module.exports = defineConfig({
       overlay: false, // 不显示 webpack 错误覆盖层
     },
   },
-  publicPath: process.env.VUE_APP_PUBLIC_PATH || "",
+  publicPath: process.env.VUE_APP_PUBLIC_PATH || "/",
   chainWebpack: config => {
 
     // 修改 HTML 插件配置，动态插入 CDN 链接
