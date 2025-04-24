@@ -15,8 +15,15 @@
             <div class="content-panel">
                 <div class="content-area">
                     <el-card class="params-card" shadow="never">
-                        <el-table ref="paramsTable" :data="paramsList" class="transparent-table"
-                            :header-cell-class-name="headerCellClassName">
+                            <el-table
+                                ref="paramsTable"
+                                :data="paramsList"
+                                class="transparent-table"
+                                v-loading="loading"
+                                element-loading-text="拼命加载中"
+                                element-loading-spinner="el-icon-loading"
+                                element-loading-background="rgba(255, 255, 255, 0.7)"
+                                :header-cell-class-name="headerCellClassName">
                             <el-table-column label="选择" align="center" width="120">
                                 <template slot-scope="scope">
                                     <el-checkbox v-model="scope.row.selected"></el-checkbox>
@@ -107,6 +114,7 @@ export default {
     data() {
         return {
             searchName: "",
+            loading: false,
             paramsList: [],
             firmwareList: [],
             currentPage: 1,
@@ -158,6 +166,7 @@ export default {
             this.fetchFirmwareList();
         },
         fetchFirmwareList() {
+            this.loading = true;
             const params = {
                 pageNum: this.currentPage,
                 pageSize: this.pageSize,
@@ -166,6 +175,7 @@ export default {
                 order: "desc"
             };
             Api.ota.getOtaList(params, (res) => {
+                this.loading = false;
                 res = res.data
                 if (res.code === 0) {
                     this.firmwareList = res.data.list.map(item => ({
@@ -513,7 +523,7 @@ export default {
 .custom-pagination {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
 
     .el-select {
         margin-right: 8px;
@@ -580,6 +590,46 @@ export default {
 
 .page-size-select {
     width: 100px;
+    margin-right: 10px;
+
+    :deep(.el-input__inner) {
+        height: 32px;
+        line-height: 32px;
+        border-radius: 4px;
+        border: 1px solid #e4e7ed;
+        background: #dee7ff;
+        color: #606266;
+        font-size: 14px;
+    }
+
+    :deep(.el-input__suffix) {
+        right: 6px;
+        width: 15px;
+        height: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 6px;
+        border-radius: 4px;
+    }
+
+    :deep(.el-input__suffix-inner) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    :deep(.el-icon-arrow-up:before) {
+        content: "";
+        display: inline-block;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 9px solid #606266;
+        position: relative;
+        transform: rotate(0deg);
+        transition: transform 0.3s;
+    }
 }
 
 .custom-selection-header {
@@ -639,5 +689,14 @@ export default {
 :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
     background-color: #5f70f3 !important;
     border-color: #5f70f3 !important;
+}
+
+:deep(.el-loading-mask) {
+    background-color: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(2px);
+}
+
+:deep(.el-loading-spinner .path) {
+    stroke: #6b8cff;
 }
 </style>
