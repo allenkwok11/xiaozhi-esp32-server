@@ -91,7 +91,9 @@
         <!-- 新增/编辑固件对话框 -->
         <firmware-dialog :title="dialogTitle" :visible.sync="dialogVisible" :form="firmwareForm" @submit="handleSubmit"
             @cancel="dialogVisible = false" />
-
+        <el-footer>
+            <version-footer />
+        </el-footer>
     </div>
 </template>
 
@@ -99,11 +101,12 @@
 import Api from "@/apis/api";
 import FirmwareDialog from "@/components/FirmwareDialog.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
+import VersionFooter from "@/components/VersionFooter.vue";
 import { FIRMWARE_TYPES } from "@/utils";
 import { formatDate, formatFileSize } from "@/utils/format";
 
 export default {
-    components: { HeaderBar, FirmwareDialog },
+    components: { HeaderBar, FirmwareDialog, VersionFooter },
     data() {
         return {
             searchName: "",
