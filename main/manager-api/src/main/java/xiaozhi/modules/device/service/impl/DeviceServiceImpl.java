@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -54,13 +53,6 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
     private final SysParamsService sysParamsService;
     private final RedisUtils redisUtils;
     private final OtaService otaService;
-
-    @Override
-    public DeviceEntity getDeviceById(String deviceId) {
-        LambdaQueryWrapper<DeviceEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DeviceEntity::getId, deviceId);
-        return deviceDao.selectOne(queryWrapper);
-    }
 
     @Override
     public Boolean deviceActivation(String agentId, String activationCode) {
@@ -105,6 +97,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         deviceEntity.setMacAddress(macAddress);
         deviceEntity.setUserId(user.getId());
         deviceEntity.setCreator(user.getId());
+        deviceEntity.setAutoUpdate(1);
         deviceEntity.setCreateDate(currentTime);
         deviceEntity.setUpdater(user.getId());
         deviceEntity.setUpdateDate(currentTime);
@@ -123,16 +116,22 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         DeviceReportRespDTO response = new DeviceReportRespDTO();
         response.setServer_time(buildServerTime());
 
-        String type = deviceReport.getBoard() == null ? null : deviceReport.getBoard().getType();
-        DeviceReportRespDTO.Firmware firmware = buildFirmwareInfo(type, macAddress);
-        response.setFirmware(firmware);
+        DeviceEntity deviceById = getDeviceByMacAddress(macAddress);
+
+        if (deviceById == null || deviceById.getAutoUpdate() != 0) {
+            String type = deviceReport.getBoard() == null ? null : deviceReport.getBoard().getType();
+            DeviceReportRespDTO.Firmware firmware = buildFirmwareInfo(type);
+            response.setFirmware(firmware);
+        } else {
+            response.setFirmware(null);
+        }
 
         // 添加WebSocket配置
         DeviceReportRespDTO.Websocket websocket = new DeviceReportRespDTO.Websocket();
         // 从系统参数获取WebSocket URL，如果未配置则使用默认值
         String wsUrl = sysParamsService.getValue(Constant.SERVER_WEBSOCKET, true);
         if (StringUtils.isBlank(wsUrl) || wsUrl.equals("null")) {
-            log.error("WebSocket URL is not configured");
+            log.error("WebSocket地址未配置，请登录智控台，在参数管理找到【server.websocket】配置");
             wsUrl = "ws://xiaozhi.server.com:8000/xiaozhi/v1/";
             websocket.setUrl(wsUrl);
         } else {
@@ -141,14 +140,13 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
                 // 随机选择一个WebSocket URL
                 websocket.setUrl(wsUrls[RandomUtil.randomInt(0, wsUrls.length)]);
             } else {
-                log.error("WebSocket URL list is empty");
+                log.error("WebSocket地址未配置，请登录智控台，在参数管理找到【server.websocket】配置");
                 websocket.setUrl("ws://xiaozhi.server.com:8000/xiaozhi/v1/");
             }
         }
 
         response.setWebsocket(websocket);
 
-        DeviceEntity deviceById = getDeviceById(macAddress);
         if (deviceById != null) { // 如果设备存在，则更新上次连接时间
             deviceById.setLastConnectedAt(new Date());
             deviceDao.updateById(deviceById);
@@ -301,7 +299,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         return code;
     }
 
-    private DeviceReportRespDTO.Firmware buildFirmwareInfo(String type, String macAddress) {
+    private DeviceReportRespDTO.Firmware buildFirmwareInfo(String type) {
         if (StringUtils.isBlank(type)) {
             return null;
         }
@@ -311,14 +309,19 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         String downloadUrl = null;
 
         if (ota != null) {
-            // 获取当前请求的URL
-            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                    .getRequest();
-            String requestUrl = request.getRequestURL().toString();
+
+            String otaUrl = sysParamsService.getValue(Constant.SERVER_OTA, true);
+            if (StringUtils.isBlank(otaUrl) || otaUrl.equals("null")) {
+                log.error("OTA地址未配置，请登录智控台，在参数管理找到【server.ota】配置");
+                // 尝试从请求中获取
+                HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                        .getRequest();
+                otaUrl = request.getRequestURL().toString();
+            }
             // 将URL中的/ota/替换为/otaMag/download/
             String uuid = UUID.randomUUID().toString();
             redisUtils.set(RedisKeys.getOtaIdKey(uuid), ota.getId());
-            downloadUrl = requestUrl.replace("/ota/", "/otaMag/download/") + uuid;
+            downloadUrl = otaUrl.replace("/ota/", "/otaMag/download/") + uuid;
         }
 
         firmware.setVersion(ota == null ? null : ota.getVersion());
