@@ -124,22 +124,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         response.setServer_time(buildServerTime());
 
         String type = deviceReport.getBoard() == null ? null : deviceReport.getBoard().getType();
-        OtaEntity ota = otaService.getLatestOta(type);
-        String downloadUrl = null;
-        if (ota != null) {
-            // 获取当前请求的URL
-            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                    .getRequest();
-            String requestUrl = request.getRequestURL().toString();
-            // 将URL中的/ota/替换为/otaMag/download/
-            String uuid = UUID.randomUUID().toString();
-            redisUtils.set(RedisKeys.getOtaIdKey(uuid), ota.getId());
-            downloadUrl = requestUrl.replace("/ota/", "/otaMag/download/") + uuid;
-        }
-
-        DeviceReportRespDTO.Firmware firmware = new DeviceReportRespDTO.Firmware();
-        firmware.setVersion(ota == null ? null : ota.getVersion());
-        firmware.setUrl(downloadUrl);
+        DeviceReportRespDTO.Firmware firmware = buildFirmwareInfo(type, macAddress);
         response.setFirmware(firmware);
 
         // 添加WebSocket配置
@@ -314,5 +299,30 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
             redisUtils.set(codeKey, deviceId);
         }
         return code;
+    }
+
+    private DeviceReportRespDTO.Firmware buildFirmwareInfo(String type, String macAddress) {
+        if (StringUtils.isBlank(type)) {
+            return null;
+        }
+
+        OtaEntity ota = otaService.getLatestOta(type);
+        DeviceReportRespDTO.Firmware firmware = new DeviceReportRespDTO.Firmware();
+        String downloadUrl = null;
+
+        if (ota != null) {
+            // 获取当前请求的URL
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                    .getRequest();
+            String requestUrl = request.getRequestURL().toString();
+            // 将URL中的/ota/替换为/otaMag/download/
+            String uuid = UUID.randomUUID().toString();
+            redisUtils.set(RedisKeys.getOtaIdKey(uuid), ota.getId());
+            downloadUrl = requestUrl.replace("/ota/", "/otaMag/download/") + uuid;
+        }
+
+        firmware.setVersion(ota == null ? null : ota.getVersion());
+        firmware.setUrl(downloadUrl);
+        return firmware;
     }
 }

@@ -15,15 +15,10 @@
             <div class="content-panel">
                 <div class="content-area">
                     <el-card class="params-card" shadow="never">
-                            <el-table
-                                ref="paramsTable"
-                                :data="paramsList"
-                                class="transparent-table"
-                                v-loading="loading"
-                                element-loading-text="拼命加载中"
-                                element-loading-spinner="el-icon-loading"
-                                element-loading-background="rgba(255, 255, 255, 0.7)"
-                                :header-cell-class-name="headerCellClassName">
+                        <el-table ref="paramsTable" :data="paramsList" class="transparent-table" v-loading="loading"
+                            element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
+                            element-loading-background="rgba(255, 255, 255, 0.7)"
+                            :header-cell-class-name="headerCellClassName">
                             <el-table-column label="选择" align="center" width="120">
                                 <template slot-scope="scope">
                                     <el-checkbox v-model="scope.row.selected"></el-checkbox>
@@ -46,6 +41,11 @@
                             <el-table-column label="创建时间" prop="createDate" align="center">
                                 <template slot-scope="scope">
                                     {{ formatDate(scope.row.createDate) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="更新时间" prop="updateDate" align="center">
+                                <template slot-scope="scope">
+                                    {{ formatDate(scope.row.updateDate) }}
                                 </template>
                             </el-table-column>
                             <el-table-column label="操作" align="center">
