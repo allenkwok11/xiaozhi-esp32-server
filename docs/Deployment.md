@@ -240,7 +240,7 @@ selected_module:
   LLM: ChatGLMLLM
   TTS: EdgeTTS
   # 默认不开启记忆，如需开启请看配置文件里的描述
-  Memory: nomem   
+  Memory: nomem
   # 默认不开启意图识别，如需开启请看配置文件里的描述
   Intent: nointent
 ```
@@ -276,17 +276,22 @@ LLM:
 如果你能看到，类似以下日志,则是本项目服务启动成功的标志。
 
 ```
-25-02-23 12:01:09[core.websocket_server] - INFO - Server is running at ws://xxx.xx.xx.xx:8000/xiaozhi/v1/
-25-02-23 12:01:09[core.websocket_server] - INFO - =======上面的地址是websocket协议地址，请勿用浏览器访问=======
-25-02-23 12:01:09[core.websocket_server] - INFO - 如想测试websocket请用谷歌浏览器打开test目录下的test_page.html
-25-02-23 12:01:09[core.websocket_server] - INFO - =======================================================
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.websocket_server]-INFO-Web Socket Server is running at ws://xx.xx.xx.xx:8000/xiaozhi/v1/
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.websocket_server]-INFO-=======上面的地址是websocket协议地址，请勿用浏览器访问=======
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.websocket_server]-INFO-如想测试websocket请用谷歌浏览器打开test目录下的test_page.html
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.websocket_server]-INFO-=============================================================
+
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.ota_server]-INFO-Simple OTA Server is running at http://xx.xx.xx.xx:8002/xiaozhi/ota/
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.ota_server]-INFO-=======上面的地址为最简化安装环境提供OTA基础信息，可用作小智固件v1.6.1及以后版本的自定义OTA地址=======
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.ota_server]-INFO-如想测试OTA地址请用谷歌浏览器打开test目录下的test_page.html
+250426 21:44:42[0.3.11_SiFuChEdnofu][core.ota_server]-INFO-=============================================================
 ```
 
 正常来说，如果您是通过源码运行本项目，日志会有你的接口地址信息。
 但是如果你用docker部署，那么你的日志里给出的接口地址信息就不是真实的接口地址。
 
 最正确的方法，是根据电脑的局域网IP来确定你的接口地址。
-如果你的电脑的局域网IP比如是`192.168.1.25`，那么你的接口地址就是：`ws://192.168.1.25:8000/xiaozhi/v1/`。
+如果你的电脑的局域网IP比如是`192.168.1.25`，那么你的接口地址就是：`ws://192.168.1.25:8000/xiaozhi/v1/`，对应的OTA地址就是：`http://192.168.1.25:8002/xiaozhi/ota/`。
 
 这个信息很有用的，后面`编译esp32固件`需要用到。
 
