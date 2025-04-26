@@ -3,6 +3,7 @@ import sys
 import signal
 from config.settings import load_config, check_config_file
 from core.websocket_server import WebSocketServer
+from core.ota_server import SimpleOtaServer
 from core.utils.util import check_ffmpeg_installed
 
 TAG = __name__
@@ -35,14 +36,20 @@ async def main():
     ws_server = WebSocketServer(config)
     ws_task = asyncio.create_task(ws_server.start())
 
+    # 启动 Simple OAT 服务器
+    ota_server = SimpleOtaServer(config)
+    ota_task = asyncio.create_task(ota_server.start())
+
     try:
         await wait_for_exit()  # 监听退出信号
     except asyncio.CancelledError:
         print("任务被取消，清理资源中...")
     finally:
         ws_task.cancel()
+        ota_task.cancel()
         try:
             await ws_task
+            await ota_task
         except asyncio.CancelledError:
             pass
         print("服务器已关闭，程序退出。")

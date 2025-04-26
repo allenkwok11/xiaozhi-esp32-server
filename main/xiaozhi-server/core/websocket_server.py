@@ -28,7 +28,7 @@ class WebSocketServer:
         port = int(server_config.get("port", 8000))
 
         self.logger.bind(tag=TAG).info(
-            "Server is running at ws://{}:{}/xiaozhi/v1/", get_local_ip(), port
+            "Web Socket Server is running at ws://{}:{}/xiaozhi/v1/", get_local_ip(), port
         )
         self.logger.bind(tag=TAG).info(
             "=======上面的地址是websocket协议地址，请勿用浏览器访问======="
