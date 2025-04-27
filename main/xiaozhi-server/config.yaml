@@ -200,6 +200,12 @@ ASR:
     type: fun_local
     model_dir: models/SenseVoiceSmall
     output_dir: tmp/
+  FunASRServer:
+    # 支持FunASR服务，部署方法：https://github.com/modelscope/FunASR/blob/main/runtime/docs/SDK_advanced_guide_online_zh.md
+    # mode 预置 offline
+    type: fun_server
+    host: 127.0.0.1
+    port: 10096
   SherpaASR:
     type: sherpa_onnx_local
     model_dir: models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17
