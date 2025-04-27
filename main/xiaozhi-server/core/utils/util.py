@@ -112,13 +112,14 @@ def is_punctuation_or_emoji(char):
     punctuation_set = {
         "，",
         ",",  # 中文逗号 + 英文逗号
-        "。",
-        ".",  # 中文句号 + 英文句号
-        "！",
-        "!",  # 中文感叹号 + 英文感叹号
         "-",
         "－",  # 英文连字符 + 中文全角横线
         "、",  # 中文顿号
+        "“",
+        "”",
+        "\"",  # 中文双引号 + 英文引号
+        "：",
+        ":",   # 中文冒号 + 英文冒号
     }
     if char.isspace() or char in punctuation_set:
         return True
@@ -354,7 +355,7 @@ def initialize_modules(
 
 def analyze_emotion(text):
     """
-    分析文本情感并返回对应的emoji名称
+    分析文本情感并返回对应的emoji名称（支持中英文）
     """
     if not text or not isinstance(text, str):
         return 'neutral'
@@ -372,41 +373,62 @@ def analyze_emotion(text):
     has_question = '?' in original_text or '？' in original_text
     has_ellipsis = '...' in original_text or '…' in original_text
 
-    # 定义情感关键词映射（扩展版）
+    # 定义情感关键词映射（中英文扩展版）
     emotion_keywords = {
         'happy': ['开心', '高兴', '快乐', '愉快', '幸福', '满意', '棒', '好', '不错', '完美', '棒极了', '太好了',
-                  '好呀', '好的'],
-        'laughing': ['哈哈', '哈哈哈', '呵呵', '嘿嘿', '嘻嘻', '笑死', '太好笑了', '笑死我了', '笑死我了', '笑抽了'],
-        'funny': ['搞笑', '滑稽', '逗', '幽默', '笑点', '段子', '笑话', '太逗了'],
-        'sad': ['伤心', '难过', '悲哀', '悲伤', '忧郁', '郁闷', '沮丧', '失望', '想哭', '难受', '不开心', '唉', '呜呜'],
-        'angry': ['生气', '愤怒', '气死', '讨厌', '烦人', '可恶', '烦死了', '恼火', '暴躁', '火大', '愤怒', '气炸了'],
-        'crying': ['哭泣', '泪流', '大哭', '伤心欲绝', '泪目', '流泪', '哭死', '哭晕', '想哭', '泪崩'],
-        'loving': ['爱你', '喜欢', '爱', '亲爱的', '宝贝', '么么哒', '抱抱', '想你', '思念', '最爱', '亲亲', '喜欢你'],
-        'embarrassed': ['尴尬', '不好意思', '害羞', '脸红', '难为情', '社死', '丢脸', '出丑'],
-        'surprised': ['惊讶', '吃惊', '天啊', '哇塞', '哇', '居然', '竟然', '没想到', '出乎意料'],
-        'shocked': ['震惊', '吓到', '惊呆了', '不敢相信', '震撼', '吓死', '恐怖', '害怕', '吓人'],
-        'thinking': ['思考', '考虑', '想一下', '琢磨', '沉思', '冥想', '想', '思考中', '在想'],
-        'winking': ['调皮', '眨眼', '你懂的', '坏笑', '邪恶', '奸笑', '使眼色'],
-        'cool': ['酷', '帅', '厉害', '棒极了', '真棒', '牛逼', '强', '优秀', '杰出', '出色', '完美'],
-        'relaxed': ['放松', '舒服', '惬意', '悠闲', '轻松', '舒适', '安逸', '自在'],
-        'delicious': ['好吃', '美味', '香', '馋', '可口', '香甜', '大餐', '大快朵颐', '流口水', '垂涎'],
-        'kissy': ['亲亲', '么么', '吻', 'mua', 'muah', '亲一下', '飞吻'],
-        'confident': ['自信', '肯定', '确定', '毫无疑问', '当然', '必须的', '毫无疑问', '确信', '坚信'],
-        'sleepy': ['困', '睡觉', '晚安', '想睡', '好累', '疲惫', '疲倦', '困了', '想休息', '睡意'],
-        'silly': ['傻', '笨', '呆', '憨', '蠢', '二', '憨憨', '傻乎乎', '呆萌'],
-        'confused': ['疑惑', '不明白', '不懂', '困惑', '疑问', '为什么', '怎么回事', '啥意思', '不清楚']
+                  '好呀', '好的', 'happy', 'joy', 'great', 'good', 'nice', 'awesome', 'fantastic', 'wonderful'],
+        'laughing': ['哈哈', '哈哈哈', '呵呵', '嘿嘿', '嘻嘻', '笑死', '太好笑了', '笑死我了', 'lol', 'lmao', 'haha',
+                     'hahaha', 'hehe', 'rofl', 'funny', 'laugh'],
+        'funny': ['搞笑', '滑稽', '逗', '幽默', '笑点', '段子', '笑话', '太逗了', 'hilarious', 'joke', 'comedy'],
+        'sad': ['伤心', '难过', '悲哀', '悲伤', '忧郁', '郁闷', '沮丧', '失望', '想哭', '难受', '不开心', '唉', '呜呜',
+                'sad', 'upset', 'unhappy', 'depressed', 'sorrow', 'gloomy'],
+        'angry': ['生气', '愤怒', '气死', '讨厌', '烦人', '可恶', '烦死了', '恼火', '暴躁', '火大', '愤怒', '气炸了',
+                  'angry', 'mad', 'annoyed', 'furious', 'pissed', 'hate'],
+        'crying': ['哭泣', '泪流', '大哭', '伤心欲绝', '泪目', '流泪', '哭死', '哭晕', '想哭', '泪崩',
+                   'cry', 'crying', 'tears', 'sob', 'weep'],
+        'loving': ['爱你', '喜欢', '爱', '亲爱的', '宝贝', '么么哒', '抱抱', '想你', '思念', '最爱', '亲亲', '喜欢你',
+                   'love', 'like', 'adore', 'darling', 'sweetie', 'honey', 'miss you', 'heart'],
+        'embarrassed': ['尴尬', '不好意思', '害羞', '脸红', '难为情', '社死', '丢脸', '出丑',
+                        'embarrassed', 'awkward', 'shy', 'blush'],
+        'surprised': ['惊讶', '吃惊', '天啊', '哇塞', '哇', '居然', '竟然', '没想到', '出乎意料',
+                      'surprise', 'wow', 'omg', 'oh my god', 'amazing', 'unbelievable'],
+        'shocked': ['震惊', '吓到', '惊呆了', '不敢相信', '震撼', '吓死', '恐怖', '害怕', '吓人',
+                    'shocked', 'shocking', 'scared', 'frightened', 'terrified', 'horror'],
+        'thinking': ['思考', '考虑', '想一下', '琢磨', '沉思', '冥想', '想', '思考中', '在想',
+                      'think', 'thinking', 'consider', 'ponder', 'meditate'],
+        'winking': ['调皮', '眨眼', '你懂的', '坏笑', '邪恶', '奸笑', '使眼色',
+                    'wink', 'teasing', 'naughty', 'mischievous'],
+        'cool': ['酷', '帅', '厉害', '棒极了', '真棒', '牛逼', '强', '优秀', '杰出', '出色', '完美',
+                 'cool', 'awesome', 'amazing', 'great', 'impressive', 'perfect'],
+        'relaxed': ['放松', '舒服', '惬意', '悠闲', '轻松', '舒适', '安逸', '自在',
+                     'relax', 'relaxed', 'comfortable', 'cozy', 'chill', 'peaceful'],
+        'delicious': ['好吃', '美味', '香', '馋', '可口', '香甜', '大餐', '大快朵颐', '流口水', '垂涎',
+                      'delicious', 'yummy', 'tasty', 'yum', 'appetizing', 'mouthwatering'],
+        'kissy': ['亲亲', '么么', '吻', 'mua', 'muah', '亲一下', '飞吻',
+                  'kiss', 'xoxo', 'hug', 'muah', 'smooch'],
+        'confident': ['自信', '肯定', '确定', '毫无疑问', '当然', '必须的', '毫无疑问', '确信', '坚信',
+                      'confident', 'sure', 'certain', 'definitely', 'positive'],
+        'sleepy': ['困', '睡觉', '晚安', '想睡', '好累', '疲惫', '疲倦', '困了', '想休息', '睡意',
+                   'sleep', 'sleepy', 'tired', 'exhausted', 'bedtime', 'good night'],
+        'silly': ['傻', '笨', '呆', '憨', '蠢', '二', '憨憨', '傻乎乎', '呆萌',
+                  'silly', 'stupid', 'dumb', 'foolish', 'goofy', 'ridiculous'],
+        'confused': ['疑惑', '不明白', '不懂', '困惑', '疑问', '为什么', '怎么回事', '啥意思', '不清楚',
+                     'confused', 'puzzled', 'doubt', 'question', 'what', 'why', 'how']
     }
 
-    # 特殊句型判断（扩展版）
+    # 特殊句型判断（中英文）
     # 赞美他人
     if any(phrase in text for phrase in
-           ['你真', '你好', '您真', '你真棒', '你好厉害', '你太强了', '你真好', '你真聪明']):
+           ['你真', '你好', '您真', '你真棒', '你好厉害', '你太强了', '你真好', '你真聪明',
+            'you are', 'you\'re', 'you look', 'you seem', 'so smart', 'so kind']):
         return 'loving'
     # 自我赞美
-    if any(phrase in text for phrase in ['我真', '我最', '我太棒了', '我厉害', '我聪明', '我优秀']):
+    if any(phrase in text for phrase in ['我真', '我最', '我太棒了', '我厉害', '我聪明', '我优秀',
+                                        'i am', 'i\'m', 'i feel', 'so good', 'so happy']):
         return 'cool'
     # 晚安/睡觉相关
-    if any(phrase in text for phrase in ['睡觉', '晚安', '睡了', '好梦', '休息了', '去睡了']):
+    if any(phrase in text for phrase in ['睡觉', '晚安', '睡了', '好梦', '休息了', '去睡了',
+                                         'sleep', 'good night', 'bedtime', 'go to bed']):
         return 'sleepy'
     # 疑问句
     if has_question and not has_exclamation:
