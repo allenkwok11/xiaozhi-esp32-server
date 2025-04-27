@@ -441,11 +441,16 @@ class ConnectionHandler:
             current_text = full_text[processed_chars:]  # 从未处理的位置开始
 
             # 查找最后一个有效标点
-            punctuations = ("。", "？", "！", "；", "：")
+            punctuations = ("。", ".", "？", "?", "！", "!", "；", ";", "：")
             last_punct_pos = -1
+            number_flag = True
             for punct in punctuations:
                 pos = current_text.rfind(punct)
-                if pos > last_punct_pos:
+                prev_char = current_text[pos - 1] if pos - 1 >= 0 else ""
+                # 如果.前面是数字统一判断为小数
+                if prev_char.isdigit() and punct == '.':
+                    number_flag = False
+                if pos > last_punct_pos and number_flag:
                     last_punct_pos = pos
 
             # 找到分割点则处理
@@ -567,11 +572,16 @@ class ConnectionHandler:
                     current_text = full_text[processed_chars:]  # 从未处理的位置开始
 
                     # 查找最后一个有效标点
-                    punctuations = ("。", "？", "！", "；", "：")
+                    punctuations = ("。", ".", "？", "?", "！", "!", "；", ";", "：")
                     last_punct_pos = -1
+                    number_flag = True
                     for punct in punctuations:
                         pos = current_text.rfind(punct)
-                        if pos > last_punct_pos:
+                        prev_char = current_text[pos - 1] if pos - 1 >= 0 else ""
+                        # 如果.前面是数字统一判断为小数
+                        if prev_char.isdigit() and punct == '.':
+                            number_flag = False
+                        if pos > last_punct_pos and number_flag:
                             last_punct_pos = pos
 
                     # 找到分割点则处理
