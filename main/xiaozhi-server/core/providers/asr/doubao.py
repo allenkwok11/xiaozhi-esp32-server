@@ -149,7 +149,7 @@ class ASRProvider(ASRProviderBase):
                 "sequence": 1
             },
             "audio": {
-                "format": "wav",
+                "format": "raw",
                 "rate": 16000,
                 "language": "zh-CN",
                 "bits": 16,
@@ -259,23 +259,14 @@ class ASRProvider(ASRProviderBase):
             pcm_data = self.decode_opus(opus_data, session_id)
             combined_pcm_data = b''.join(pcm_data)
 
-            wav_buffer = io.BytesIO()
-
-            with wave.open(wav_buffer, "wb") as wav_file:
-                wav_file.setnchannels(1)  # 设置声道数
-                wav_file.setsampwidth(2)  # 设置采样宽度
-                wav_file.setframerate(16000)  # 设置采样率
-                wav_file.writeframes(combined_pcm_data)  # 写入 PCM 数据
-
-            # 获取封装后的 WAV 数据
-            wav_data = wav_buffer.getvalue()
-            nchannels, sampwidth, framerate, nframes, wav_len = self.read_wav_info(wav_data)
-            size_per_sec = nchannels * sampwidth * framerate
+            # 直接使用PCM数据
+            # 计算分段大小 (单声道, 16bit, 16kHz采样率)
+            size_per_sec = 1 * 2 * 16000  # nchannels * sampwidth * framerate
             segment_size = int(size_per_sec * self.seg_duration / 1000)
 
             # 语音识别
             start_time = time.time()
-            text = await self._send_request(wav_data, segment_size)
+            text = await self._send_request(combined_pcm_data, segment_size)
             if text:
                 logger.bind(tag=TAG).debug(f"语音识别耗时: {time.time() - start_time:.3f}s | 结果: {text}")
                 return text, None
