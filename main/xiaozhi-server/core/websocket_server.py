@@ -27,18 +27,6 @@ class WebSocketServer:
         host = server_config.get("ip", "0.0.0.0")
         port = int(server_config.get("port", 8000))
 
-        self.logger.bind(tag=TAG).info(
-            "Web Socket Server is running at ws://{}:{}/xiaozhi/v1/", get_local_ip(), port
-        )
-        self.logger.bind(tag=TAG).info(
-            "=======上面的地址是websocket协议地址，请勿用浏览器访问======="
-        )
-        self.logger.bind(tag=TAG).info(
-            "如想测试websocket请用谷歌浏览器打开test目录下的test_page.html"
-        )
-        self.logger.bind(tag=TAG).info(
-            "=============================================================\n"
-        )
         async with websockets.serve(self._handle_connection, host, port):
             await asyncio.Future()
 

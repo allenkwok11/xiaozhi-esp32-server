@@ -9,9 +9,14 @@ server:
   # 服务器监听地址和端口(Server listening address and port)
   ip: 0.0.0.0
   port: 8000
-  # 最简化安装环供OTA基础信息接口
+  # OTA接口的端口号
   ota_port: 8002
-  # OAT返回信息时区偏移量
+  # 这个websocket配置是指ota接口向设备发送的websocket地址
+  # 如果按默认的写法，ota接口会自动生成websocket地址。这个地址你可以直接用浏览器访问ota接口确认一下
+  # 当你使用docker部署或使用公网部署(使用ssl、域名)时，不一定准确
+  # 所以如果你使用docker部署或使用公网部署时，请设置正确的websocket地址
+  websocket: ws://你的ip或者域名:端口号/xiaozhi/v1/
+  # OTA返回信息时区偏移量
   timezone_offset: +8
   # 认证配置
   auth:
