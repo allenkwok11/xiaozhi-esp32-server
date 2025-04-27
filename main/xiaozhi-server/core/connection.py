@@ -898,7 +898,7 @@ class ConnectionHandler:
 
     def clear_queues(self):
         # 清空所有任务队列
-        self.logger.bind(tag=TAG).info(
+        self.logger.bind(tag=TAG).debug(
             f"开始清理: TTS队列大小={self.tts_queue.qsize()}, 音频队列大小={self.audio_play_queue.qsize()}"
         )
         for q in [self.tts_queue, self.audio_play_queue]:
@@ -912,7 +912,7 @@ class ConnectionHandler:
             q.queue.clear()
             # 添加毒丸信号到队列，确保线程退出
             # q.queue.put(None)
-        self.logger.bind(tag=TAG).info(
+        self.logger.bind(tag=TAG).debug(
             f"清理结束: TTS队列大小={self.tts_queue.qsize()}, 音频队列大小={self.audio_play_queue.qsize()}"
         )
 
