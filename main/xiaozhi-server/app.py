@@ -42,7 +42,7 @@ async def main():
 
     read_config_from_api = config.get("read_config_from_api", False)
     if not read_config_from_api:
-        # 启动 Simple OAT 服务器
+        # 启动 Simple OTA 服务器
         ota_server = SimpleOtaServer(config)
         ota_task = asyncio.create_task(ota_server.start())
 
