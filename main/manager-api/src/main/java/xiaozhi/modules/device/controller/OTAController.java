@@ -28,7 +28,6 @@ import xiaozhi.modules.device.dto.DeviceReportReqDTO;
 import xiaozhi.modules.device.dto.DeviceReportRespDTO;
 import xiaozhi.modules.device.entity.DeviceEntity;
 import xiaozhi.modules.device.service.DeviceService;
-import xiaozhi.modules.device.utils.NetworkUtil;
 import xiaozhi.modules.sys.service.SysParamsService;
 
 @Tag(name = "设备管理", description = "OTA 相关接口")
@@ -53,9 +52,8 @@ public class OTAController {
             clientId = deviceId;
         }
         String macAddress = deviceReportReqDTO.getMacAddress();
-        boolean macAddressValid = NetworkUtil.isMacAddressValid(macAddress);
         // 设备Id和Mac地址应是一致的, 并且必须需要application字段
-        if (!deviceId.equals(macAddress) || !macAddressValid || deviceReportReqDTO.getApplication() == null) {
+        if (!deviceId.equals(macAddress) || deviceReportReqDTO.getApplication() == null) {
             return createResponse(DeviceReportRespDTO.createError("Invalid OTA request"));
         }
         return createResponse(deviceService.checkDeviceActive(macAddress, clientId, deviceReportReqDTO));
