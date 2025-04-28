@@ -385,6 +385,9 @@ TTS:
     appid: 你的火山引擎语音合成服务appid
     access_token: 你的火山引擎语音合成服务access_token
     cluster: volcano_tts
+    speed_ratio: 1.0
+    volume_ratio: 1.0
+    pitch_ratio: 1.0
   CosyVoiceSiliconflow:
     type: siliconflow
     # 硅基流动TTS
