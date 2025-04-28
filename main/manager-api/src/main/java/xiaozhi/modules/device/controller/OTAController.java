@@ -52,8 +52,9 @@ public class OTAController {
             clientId = deviceId;
         }
         String macAddress = deviceReportReqDTO.getMacAddress();
+        boolean macAddressValid = isMacAddressValid(macAddress);
         // 设备Id和Mac地址应是一致的, 并且必须需要application字段
-        if (!deviceId.equals(macAddress) || deviceReportReqDTO.getApplication() == null) {
+        if (!deviceId.equals(macAddress) || !macAddressValid || deviceReportReqDTO.getApplication() == null) {
             return createResponse(DeviceReportRespDTO.createError("Invalid OTA request"));
         }
         return createResponse(deviceService.checkDeviceActive(macAddress, clientId, deviceReportReqDTO));
@@ -99,5 +100,20 @@ public class OTAController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .contentLength(jsonBytes.length)
                 .body(json);
+    }
+
+    /**
+     * 简单判断mac地址是否有效（非严格）
+     * 
+     * @param macAddress
+     * @return
+     */
+    private boolean isMacAddressValid(String macAddress) {
+        if (StringUtils.isBlank(macAddress)) {
+            return false;
+        }
+        // MAC地址通常为12位十六进制数字，可以包含冒号或连字符分隔符
+        String macPattern = "^([0-9A-Za-z]{2}[:-]){5}([0-9A-Za-z]{2})$";
+        return macAddress.matches(macPattern);
     }
 }
