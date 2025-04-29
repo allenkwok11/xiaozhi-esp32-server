@@ -214,6 +214,30 @@ class ConnectionHandler:
         elif isinstance(message, bytes):
             await handleAudioMessage(self, message)
 
+    async def handle_config_update(self, message):
+        """处理配置更新请求"""
+        config_model = message.get("model")
+        new_content = message.get("content")
+
+        # 打印更新前的配置
+        old_value = self.config.get(config_model)
+        self.logger.bind(tag=TAG).info(f"配置更新: {config_model} 从 {old_value} 更新为 {new_content}")
+
+        # 更新配置
+        self.config[config_model] = new_content
+
+        # 如果是模型相关配置，重新初始化模型
+        if config_model in ["LLM", "TTS", "ASR", "VAD", "Intent", "Memory"]:
+            self._initialize_components(self.config)
+            self.logger.bind(tag=TAG).info(f"已使用新配置重新初始化 {config_model} 模块")
+
+        # 返回更新确认
+        await self.websocket.send(json.dumps({
+            "type": "config_update_response",
+            "status": "success",
+            "message": f"{config_model} 配置已更新"
+        }))
+
     def _initialize_components(self, private_config):
         """初始化组件"""
         if private_config is not None:
@@ -241,7 +265,7 @@ class ConnectionHandler:
             )
             private_config["delete_audio"] = bool(self.config.get("delete_audio", True))
             self.logger.bind(tag=TAG).info(
-                f"{time.time() - begin_time} 秒，获取差异化配置成功: {private_config}"
+                f"{time.time() - begin_time} 秒，获取差异化配置成功: {json.dumps(filter_sensitive_info(private_config), ensure_ascii=False)}"
             )
         except DeviceNotFoundException as e:
             self.need_bind = True
@@ -448,7 +472,7 @@ class ConnectionHandler:
                 pos = current_text.rfind(punct)
                 prev_char = current_text[pos - 1] if pos - 1 >= 0 else ""
                 # 如果.前面是数字统一判断为小数
-                if prev_char.isdigit() and punct == '.':
+                if prev_char.isdigit() and punct == ".":
                     number_flag = False
                 if pos > last_punct_pos and number_flag:
                     last_punct_pos = pos
@@ -579,7 +603,7 @@ class ConnectionHandler:
                         pos = current_text.rfind(punct)
                         prev_char = current_text[pos - 1] if pos - 1 >= 0 else ""
                         # 如果.前面是数字统一判断为小数
-                        if prev_char.isdigit() and punct == '.':
+                        if prev_char.isdigit() and punct == ".":
                             number_flag = False
                         if pos > last_punct_pos and number_flag:
                             last_punct_pos = pos
@@ -945,3 +969,36 @@ class ConnectionHandler:
                     break
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"超时检查任务出错: {e}")
+
+
+def filter_sensitive_info(config: dict) -> dict:
+    """
+    过滤配置中的敏感信息
+    Args:
+        config: 原始配置字典
+    Returns:
+        过滤后的配置字典
+    """
+    sensitive_keys = [
+        "api_key",
+        "personal_access_token",
+        "access_token",
+        "token",
+        "access_key_secret",
+        "secret_key",
+    ]
+
+    def _filter_dict(d: dict) -> dict:
+        filtered = {}
+        for k, v in d.items():
+            if any(sensitive in k.lower() for sensitive in sensitive_keys):
+                filtered[k] = "***"
+            elif isinstance(v, dict):
+                filtered[k] = _filter_dict(v)
+            elif isinstance(v, list):
+                filtered[k] = [_filter_dict(i) if isinstance(i, dict) else i for i in v]
+            else:
+                filtered[k] = v
+        return filtered
+
+    return _filter_dict(copy.deepcopy(config))
