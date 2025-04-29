@@ -5,8 +5,8 @@
     <div class="operation-bar">
       <h2 class="page-title">设备管理</h2>
       <div class="right-operations">
-        <el-input placeholder="请输入设备型号或Mac地址查询" v-model="searchKeyword"
-                 class="search-input" @keyup.enter.native="handleSearch" clearable />
+        <el-input placeholder="请输入设备型号或Mac地址查询" v-model="searchKeyword" class="search-input"
+          @keyup.enter.native="handleSearch" clearable />
         <el-button class="btn-search" @click="handleSearch">搜索</el-button>
       </div>
     </div>
@@ -15,15 +15,20 @@
       <div class="content-panel">
         <div class="content-area">
           <el-card class="device-card" shadow="never">
-            <el-table
-              ref="deviceTable"
-              :data="paginatedDeviceList"
-              @selection-change="handleSelectionChange"
-              class="transparent-table"
-              :header-cell-class-name="headerCellClassName">
-              <el-table-column type="selection" align="center" width="120"></el-table-column>
-              <el-table-column label="设备型号" prop="model" align="center"></el-table-column>
-              <el-table-column label="固件版本" prop="firmwareVersion" align="center" ></el-table-column>
+            <el-table ref="deviceTable" :data="paginatedDeviceList" class="transparent-table"
+              :header-cell-class-name="headerCellClassName" v-loading="loading" element-loading-text="拼命加载中"
+              element-loading-spinner="el-icon-loading" element-loading-background="rgba(255, 255, 255, 0.7)">
+              <el-table-column label="选择" align="center" width="120">
+                <template slot-scope="scope">
+                  <el-checkbox v-model="scope.row.selected"></el-checkbox>
+                </template>
+              </el-table-column>
+              <el-table-column label="设备型号" prop="model" align="center">
+                <template slot-scope="scope">
+                  {{ getFirmwareTypeName(scope.row.model) }}
+                </template>
+              </el-table-column>
+              <el-table-column label="固件版本" prop="firmwareVersion" align="center"></el-table-column>
               <el-table-column label="Mac地址" prop="macAddress" align="center"></el-table-column>
               <el-table-column label="绑定时间" prop="bindTime" align="center"></el-table-column>
               <el-table-column label="最近对话" prop="lastConversation" align="center"></el-table-column>
@@ -32,7 +37,8 @@
                   <el-input v-if="scope.row.isEdit" v-model="scope.row.remark" size="mini"
                     @blur="stopEditRemark(scope.$index)"></el-input>
                   <span v-else>
-                    <i v-if="!scope.row.remark" class="el-icon-edit" @click="startEditRemark(scope.$index, scope.row)"></i>
+                    <i v-if="!scope.row.remark" class="el-icon-edit"
+                      @click="startEditRemark(scope.$index, scope.row)"></i>
                     <span v-else @click="startEditRemark(scope.$index, scope.row)">
                       {{ scope.row.remark }}
                     </span>
@@ -41,8 +47,8 @@
               </el-table-column>
               <el-table-column label="OTA升级" align="center">
                 <template slot-scope="scope">
-                  <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66"
-                    inactive-color="#ff4949"></el-switch>
+                  <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66" inactive-color="#ff4949"
+                    @change="handleOtaSwitchChange(scope.row)"></el-switch>
                 </template>
               </el-table-column>
               <el-table-column label="操作" align="center">
@@ -56,32 +62,23 @@
 
             <div class="table_bottom">
               <div class="ctrl_btn">
-                <el-button size="mini" type="primary" class="select-all-btn" @click="toggleAllSelection">
+                <el-button size="mini" type="primary" class="select-all-btn" @click="handleSelectAll">
                   {{ isAllSelected ? '取消全选' : '全选' }}
                 </el-button>
                 <el-button type="success" size="mini" class="add-device-btn" @click="handleAddDevice">
                   新增
                 </el-button>
-                <el-button size="mini" type="danger" icon="el-icon-delete"
-                  @click="deleteSelected">解绑</el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteSelected">解绑</el-button>
               </div>
               <div class="custom-pagination">
                 <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
-                    <el-option
-                        v-for="item in pageSizeOptions"
-                        :key="item"
-                        :label="`${item}条/页`"
-                        :value="item">
-                    </el-option>
+                  <el-option v-for="item in pageSizeOptions" :key="item" :label="`${item}条/页`" :value="item">
+                  </el-option>
                 </el-select>
                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
-                <button
-                  v-for="page in visiblePages"
-                  :key="page"
-                  class="pagination-btn"
-                  :class="{ active: page === currentPage }"
-                  @click="goToPage(page)">
+                <button v-for="page in visiblePages" :key="page" class="pagination-btn"
+                  :class="{ active: page === currentPage }" @click="goToPage(page)">
                   {{ page }}
                 </button>
                 <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">下一页</button>
@@ -103,6 +100,7 @@
 import Api from '@/apis/api';
 import AddDeviceDialog from "@/components/AddDeviceDialog.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
+import { FIRMWARE_TYPES } from "@/utils";
 
 export default {
   components: { HeaderBar, AddDeviceDialog },
@@ -120,7 +118,6 @@ export default {
       deviceList: [],
       loading: false,
       userApi: null,
-
     };
   },
   computed: {
@@ -136,7 +133,10 @@ export default {
     paginatedDeviceList() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
-      return this.filteredDeviceList.slice(start, end);
+      return this.filteredDeviceList.slice(start, end).map(item => ({
+        ...item,
+        selected: false
+      }));
     },
     pageCount() {
       return Math.ceil(this.filteredDeviceList.length / this.pageSize);
@@ -173,15 +173,16 @@ export default {
       this.currentPage = 1;
     },
 
-    handleSelectionChange(val) {
-      this.selectedDevices = val;
-      this.isAllSelected = val.length === this.paginatedDeviceList.length;
-    },
-    toggleAllSelection() {
-      this.$refs.deviceTable.toggleAllSelection();
+    handleSelectAll() {
+      this.isAllSelected = !this.isAllSelected;
+      this.paginatedDeviceList.forEach(row => {
+        row.selected = this.isAllSelected;
+      });
+      this.selectedDevices = this.paginatedDeviceList.filter(device => device.selected);
     },
 
     deleteSelected() {
+      this.selectedDevices = this.paginatedDeviceList.filter(device => device.selected);
       if (this.selectedDevices.length === 0) {
         this.$message.warning({
           message: '请至少选择一条记录',
@@ -301,7 +302,7 @@ export default {
               rawBindTime: new Date(device.createDate).getTime()
             };
           })
-              .sort((a, b) => a.rawBindTime - b.rawBindTime);
+            .sort((a, b) => a.rawBindTime - b.rawBindTime);
           this.activeSearchKeyword = "";
           this.searchKeyword = "";
         } else {
@@ -309,12 +310,26 @@ export default {
         }
       });
     },
-    headerCellClassName({columnIndex}) {
+    headerCellClassName({ columnIndex }) {
       if (columnIndex === 0) {
         return "custom-selection-header";
       }
       return "";
-    }
+    },
+    getFirmwareTypeName(type) {
+      const firmwareType = FIRMWARE_TYPES.find(item => item.key === type);
+      return firmwareType ? firmwareType.name : type;
+    },
+    handleOtaSwitchChange(row) {
+      Api.device.enableOtaUpgrade(row.device_id, row.otaSwitch ? 1 : 0, ({ data }) => {
+        if (data.code === 0) {
+          this.$message.success(row.otaSwitch ? '已设置成自动升级' : '已关闭自动升级')
+        } else {
+          row.otaSwitch = !row.otaSwitch
+          this.$message.error(data.msg || '操作失败')
+        }
+      })
+    },
   }
 };
 </script>
@@ -383,12 +398,12 @@ export default {
   transition: border-color 0.2s;
 }
 
-::v-deep .page-size-select{
+::v-deep .page-size-select {
   width: 100px;
   margin-right: 8px;
 }
 
-::v-deep .page-size-select .el-input__inner{
+::v-deep .page-size-select .el-input__inner {
   height: 32px;
   line-height: 32px;
   border-radius: 4px;
@@ -397,7 +412,8 @@ export default {
   color: #606266;
   font-size: 14px;
 }
-::v-deep .page-size-select .el-input__suffix{
+
+::v-deep .page-size-select .el-input__suffix {
   right: 6px;
   width: 15px;
   height: 20px;
@@ -408,13 +424,14 @@ export default {
   border-radius: 4px;
 }
 
-::v-deep .page-size-select .el-input__suffix-inner{
+::v-deep .page-size-select .el-input__suffix-inner {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
 }
-::v-deep .page-size-select .el-icon-arrow-up:before{
+
+::v-deep .page-size-select .el-icon-arrow-up:before {
   content: "";
   display: inline-block;
   border-left: 6px solid transparent;
@@ -460,6 +477,14 @@ export default {
   overflow: hidden;
 }
 
+::v-deep .el-card__body {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
 .table_bottom {
   display: flex;
   justify-content: space-between;
@@ -467,6 +492,7 @@ export default {
   margin-top: 10px;
   padding-bottom: 10px;
 }
+
 
 .ctrl_btn {
   display: flex;
@@ -613,13 +639,7 @@ export default {
   display: none !important;
 }
 
-:deep(.custom-selection-header::after) {
-  content: "选择";
-  display: inline-block;
-  color: black;
-  font-weight: bold;
-  padding-bottom: 18px;
-}
+
 
 :deep(.el-table .el-button--text) {
   color: #7079aa;
@@ -655,5 +675,25 @@ export default {
     padding-top: 16px;
     padding-bottom: 16px;
   }
+}
+
+:deep(.el-checkbox__inner) {
+  background-color: #eeeeee !important;
+  border-color: #cccccc !important;
+}
+
+:deep(.el-checkbox__inner:hover) {
+  border-color: #cccccc !important;
+}
+
+:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #5f70f3 !important;
+  border-color: #5f70f3 !important;
+}
+
+::v-deep .el-table--border::after,
+::v-deep .el-table--group::after,
+::v-deep .el-table::before {
+  display: none !important;
 }
 </style>
