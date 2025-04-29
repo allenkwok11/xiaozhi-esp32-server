@@ -51,7 +51,7 @@ class ASRProvider(ASRProviderBase):
             )
 
     def save_audio_to_file(self, opus_data: List[bytes], session_id: str) -> str:
-        """将Opus音频数据解码并保存为WAV文件"""
+        """PCM数据保存为WAV文件"""
         file_name = f"asr_{session_id}_{uuid.uuid4()}.wav"
         file_path = os.path.join(self.output_dir, file_name)
 
@@ -72,20 +72,40 @@ class ASRProvider(ASRProviderBase):
             wf.writeframes(b"".join(pcm_data))
 
         return file_path
+    
+    @staticmethod
+    def decode_opus(opus_data: List[bytes], session_id: str) -> List[bytes]:
+
+        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
+        pcm_data = []
+
+        for opus_packet in opus_data:
+            try:
+                pcm_frame = decoder.decode(opus_packet, 960)  # 960 samples = 60ms
+                pcm_data.append(pcm_frame)
+            except opuslib_next.OpusError as e:
+                logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
+
+        return pcm_data
 
     async def speech_to_text(self, opus_data: List[bytes], session_id: str) -> Tuple[Optional[str], Optional[str]]:
         """语音转文本主处理逻辑"""
         file_path = None
         try:
-            # 保存音频文件
-            start_time = time.time()
-            file_path = self.save_audio_to_file(opus_data, session_id)
-            logger.bind(tag=TAG).debug(f"音频文件保存耗时: {time.time() - start_time:.3f}s | 路径: {file_path}")
+            # 合并所有opus数据包
+            pcm_data = self.decode_opus(opus_data, session_id)
+            combined_pcm_data = b"".join(pcm_data)
+
+            # 判断是否保存为WAV文件
+            if self.delete_audio_file:
+                pass
+            else:
+                self.save_audio_to_file(pcm_data, session_id)
 
             # 语音识别
             start_time = time.time()
             result = self.model.generate(
-                input=file_path,
+                input=combined_pcm_data,
                 cache={},
                 language="auto",
                 use_itn=True,
