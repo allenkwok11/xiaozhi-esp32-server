@@ -1,6 +1,7 @@
 import os
 import argparse
 import yaml
+from collections.abc import Mapping
 from config.manage_api_client import init_service, get_server_config, get_agent_models
 
 
@@ -25,12 +26,19 @@ def load_config():
     if _config_cache is not None:
         return _config_cache
 
-    parser = argparse.ArgumentParser(description="Server configuration")
-    config_file = get_config_file()
+    default_config_path = get_project_dir() + "config.yaml"
+    custom_config_path = get_project_dir() + "data/.config.yaml"
 
-    parser.add_argument("--config_path", type=str, default=config_file)
-    args = parser.parse_args()
-    config = read_config(args.config_path)
+    # 加载默认配置
+    default_config = read_config(default_config_path)
+
+    # 加载用户自定义配置（如果存在）
+    if os.path.exists(custom_config_path):
+        custom_config = read_config(custom_config_path)
+        # 合并配置
+        config = merge_configs(default_config, custom_config)
+    else:
+        config = default_config
 
     if config.get("manager-api", {}).get("url"):
         config = get_config_from_api(config)
@@ -115,3 +123,28 @@ def ensure_directories(config):
             os.makedirs(dir_path, exist_ok=True)
         except PermissionError:
             print(f"警告：无法创建目录 {dir_path}，请检查写入权限")
+
+
+def merge_configs(default_config, custom_config):
+    """
+    递归合并配置，custom_config优先级更高
+    
+    Args:
+        default_config: 默认配置
+        custom_config: 用户自定义配置
+        
+    Returns:
+        合并后的配置
+    """
+    if not isinstance(default_config, Mapping) or not isinstance(custom_config, Mapping):
+        return custom_config
+    
+    merged = dict(default_config)
+    
+    for key, value in custom_config.items():
+        if key in merged and isinstance(merged[key], Mapping) and isinstance(value, Mapping):
+            merged[key] = merge_configs(merged[key], value)
+        else:
+            merged[key] = value
+            
+    return merged
