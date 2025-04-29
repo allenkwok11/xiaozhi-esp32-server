@@ -27,9 +27,9 @@ class TTSProvider(TTSProviderBase):
         else:
             self.voice = config.get("voice")
 
-        self.speed_ratio = config.get("speed_ratio") if config.get("speed_ratio") else 1.0
-        self.volume_ratio = config.get("volume_ratio") if config.get("volume_ratio") else 1.0
-        self.pitch_ratio = config.get("pitch_ratio") if config.get("pitch_ratio") else 1.0
+        self.speed_ratio = float(config.get("speed_ratio", 0.1))
+        self.volume_ratio = float(config.get("volume_ratio", 0.1))
+        self.pitch_ratio = float(config.get("pitch_ratio", 0.1))
 
         self.api_url = config.get("api_url")
         self.authorization = config.get("authorization")
