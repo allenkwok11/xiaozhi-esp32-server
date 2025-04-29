@@ -89,6 +89,7 @@ class ASRProvider(ASRProviderBase):
         self.cluster = config.get("cluster")
         self.access_token = config.get("access_token")
         self.output_dir = config.get("output_dir")
+        self.delete_audio_file = delete_audio_file
 
         self.host = "openspeech.bytedance.com"
         self.ws_url = f"wss://{self.host}/api/v2/asr"
@@ -98,20 +99,10 @@ class ASRProvider(ASRProviderBase):
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def save_audio_to_file(self, opus_data: List[bytes], session_id: str) -> str:
-        """将Opus音频数据解码并保存为WAV文件"""
+    def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
+        """PCM数据保存为WAV文件"""
         file_name = f"asr_{session_id}_{uuid.uuid4()}.wav"
         file_path = os.path.join(self.output_dir, file_name)
-
-        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
-        pcm_data = []
-
-        for opus_packet in opus_data:
-            try:
-                pcm_frame = decoder.decode(opus_packet, 960)  # 960 samples = 60ms
-                pcm_data.append(pcm_frame)
-            except opuslib_next.OpusError as e:
-                logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
 
         with wave.open(file_path, "wb") as wf:
             wf.setnchannels(1)
@@ -273,6 +264,12 @@ class ASRProvider(ASRProviderBase):
             # 合并所有opus数据包
             pcm_data = self.decode_opus(opus_data, session_id)
             combined_pcm_data = b"".join(pcm_data)
+
+            # 判断是否保存为WAV文件
+            if self.delete_audio_file:
+                pass
+            else:
+                self.save_audio_to_file(pcm_data, session_id)
 
             # 直接使用PCM数据
             # 计算分段大小 (单声道, 16bit, 16kHz采样率)
