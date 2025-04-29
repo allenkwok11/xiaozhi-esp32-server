@@ -27,6 +27,10 @@ class TTSProvider(TTSProviderBase):
         else:
             self.voice = config.get("voice")
 
+        self.speed_ratio = float(config.get("speed_ratio", 0.1))
+        self.volume_ratio = float(config.get("volume_ratio", 0.1))
+        self.pitch_ratio = float(config.get("pitch_ratio", 0.1))
+
         self.api_url = config.get("api_url")
         self.authorization = config.get("authorization")
         self.header = {"Authorization": f"{self.authorization}{self.access_token}"}
@@ -49,9 +53,9 @@ class TTSProvider(TTSProviderBase):
             "audio": {
                 "voice_type": self.voice,
                 "encoding": "wav",
-                "speed_ratio": 1.0,
-                "volume_ratio": 1.0,
-                "pitch_ratio": 1.0,
+                "speed_ratio": self.speed_ratio,
+                "volume_ratio": self.volume_ratio,
+                "pitch_ratio": self.pitch_ratio,
             },
             "request": {
                 "reqid": str(uuid.uuid4()),
