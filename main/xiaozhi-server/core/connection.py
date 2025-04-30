@@ -222,18 +222,7 @@ class ConnectionHandler:
     async def handle_config_update(self, message):
         """处理配置更新请求"""
         content = message.get("content", {})
-        secret = content.pop("secret", None)
         new_config = content
-
-        # 密钥验证
-        if secret != "43c716ae-37c4-49ba-84ab-2f0fbfcd7115":
-            self.logger.bind(tag=TAG).warning("配置更新请求的密钥不正确")
-            await self.websocket.send(json.dumps({
-                "type": "config_update_response",
-                "status": "error",
-                "message": "密钥不正确"
-            }))
-            return
 
         # 遍历所有支持的配置模块
         updated_modules = []
