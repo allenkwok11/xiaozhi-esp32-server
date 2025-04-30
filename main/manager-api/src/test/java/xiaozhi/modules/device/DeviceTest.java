@@ -10,6 +10,10 @@ import org.springframework.test.context.ActiveProfiles;
 import lombok.extern.slf4j.Slf4j;
 import xiaozhi.common.redis.RedisKeys;
 import xiaozhi.common.redis.RedisUtils;
+import xiaozhi.modules.sys.dto.SysUserDTO;
+import xiaozhi.modules.sys.service.SysUserService;
+
+import java.util.HashMap;
 
 @Slf4j
 @SpringBootTest
@@ -19,18 +23,38 @@ public class DeviceTest {
 
     @Autowired
     private RedisUtils redisUtils;
+    @Autowired
+    private SysUserService sysUserService;
+
+    @Test
+    public void testSaveUser() {
+        SysUserDTO userDTO = new SysUserDTO();
+        userDTO.setUsername("13536468486");
+        userDTO.setPassword("0218jianyuQ!");
+        sysUserService.save(userDTO);
+    }
 
     @Test
     @DisplayName("测试写入设备信息")
     public void testWriteDeviceInfo() {
         log.info("开始测试写入设备信息...");
-
         // 模拟设备MAC地址
-        String macAddress = "00:11:22:33:44:55";
+        String macAddress = "00:11:22:33:44:66";
         // 模拟设备验证码
         String deviceCode = "123456";
 
-        String redisKey = RedisKeys.getDeviceCaptchaKey(deviceCode);
+        HashMap<String,Object> map = new HashMap<>();
+        map.put("mac_address",macAddress);
+        map.put("activation_code",deviceCode);
+        map.put("board","硬件型号");
+        map.put("app_version","0.3.13");
+
+        String safeDeviceId = macAddress.replace(":", "_").toLowerCase();
+        String cacheDeviceKey = String.format("ota:activation:data:%s", safeDeviceId);
+        redisUtils.set(cacheDeviceKey, map, 300);
+
+
+        String redisKey = "ota:activation:code:"+deviceCode;
         log.info("Redis Key: {}", redisKey);
 
         // 将设备信息写入Redis
