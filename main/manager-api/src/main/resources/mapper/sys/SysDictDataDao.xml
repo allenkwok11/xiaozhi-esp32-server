@@ -3,11 +3,4 @@
 
 <mapper namespace="xiaozhi.modules.sys.dao.SysDictDataDao">
 
-    <select id="getDictDataList" resultType="xiaozhi.modules.sys.entity.DictData">
-        select dict_type_id, dict_label, dict_value from sys_dict_data order by dict_type_id, sort
-    </select>
-
-    <select id="getDataByTypeCode" resultType="xiaozhi.modules.sys.dto.SysDictDataDTO">
-        select * from sys_dict_data WHERE DICT_TYPE_ID =(SELECT id FROM SYS_DICT_TYPE WHERE DICT_TYPE = #{dictType}) order by sort;
-    </select>
 </mapper>
