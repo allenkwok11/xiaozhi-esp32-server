@@ -231,7 +231,7 @@ Websocket接口地址: wss://2662r3426b.vicp.fun/xiaozhi/v1/
 | 使用方式 | 支持平台 | 免费平台 |
 |:---:|:---:|:---:|
 | 本地使用 | FunASR、SherpaASR | FunASR、SherpaASR |
-| 接口调用 | DoubaoASR | - |
+| 接口调用 | DoubaoASR、FunASRServer、TencentASR、AliyunASR | FunASRServer |
 
 ---
 
