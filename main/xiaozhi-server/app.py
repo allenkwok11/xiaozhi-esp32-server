@@ -1,7 +1,7 @@
 import asyncio
 import sys
 import signal
-from config.settings import load_config, check_config_file
+from config.settings import load_config
 from core.websocket_server import WebSocketServer
 from core.ota_server import SimpleOtaServer
 from core.utils.util import check_ffmpeg_installed
@@ -31,7 +31,6 @@ async def wait_for_exit():
 
 
 async def main():
-    check_config_file()
     check_ffmpeg_installed()
     config = load_config()
 

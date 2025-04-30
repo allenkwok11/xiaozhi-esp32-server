@@ -53,6 +53,7 @@ class ManageApiClient:
             headers={
                 "User-Agent": f"PythonClient/2.0 (PID:{os.getpid()})",
                 "Accept": "application/json",
+                "Authorization": "Bearer " + cls._secret
             },
             timeout=cls.config.get("timeout", 30),  # 默认超时时间30秒
         )
@@ -126,7 +127,7 @@ class ManageApiClient:
 def get_server_config() -> Optional[Dict]:
     """获取服务器基础配置"""
     return ManageApiClient._instance._execute_request(
-        "POST", "/config/server-base", json={"secret": ManageApiClient._secret}
+        "POST", "/config/server-base"
     )
 
 
@@ -138,7 +139,6 @@ def get_agent_models(
         "POST",
         "/config/agent-models",
         json={
-            "secret": ManageApiClient._secret,
             "macAddress": mac_address,
             "clientId": client_id,
             "selectedModule": selected_module,
