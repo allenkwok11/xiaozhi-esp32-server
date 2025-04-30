@@ -21,6 +21,7 @@ import xiaozhi.modules.agent.dao.AgentDao;
 import xiaozhi.modules.agent.dto.AgentDTO;
 import xiaozhi.modules.agent.entity.AgentEntity;
 import xiaozhi.modules.agent.service.AgentService;
+import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.model.service.ModelConfigService;
 import xiaozhi.modules.timbre.service.TimbreService;
 
@@ -30,6 +31,9 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
 
     @Autowired
     private TimbreService timbreModelService;
+
+    @Autowired
+    private DeviceService deviceService;
 
     @Autowired
     private ModelConfigService modelConfigService;
@@ -103,6 +107,11 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
 
             // 获取设备数量
             dto.setDeviceCount(getDeviceCountByAgentId(agent.getId()));
+
+            // 获取智能体最近的最后连接时长
+            dto.setLastConnectedAt(deviceService.getLatestLastConnectionTime(agent.getId()));
+
+
 
             return dto;
         }).collect(Collectors.toList());
