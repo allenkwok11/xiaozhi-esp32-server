@@ -232,8 +232,9 @@ ASR:
     appid: 你的火山引擎语音合成服务appid
     access_token: 你的火山引擎语音合成服务access_token
     cluster: volcengine_input_common
-    boosting_table_name: 你的热词文件名称
-    correct_table_name: 你的替换词文件名称
+    # 热词、替换词使用流程：https://www.volcengine.com/docs/6561/155738
+    boosting_table_name: （选填）你的热词文件名称
+    correct_table_name: （选填）你的替换词文件名称
     output_dir: tmp/
   TencentASR:
     # token申请地址：https://console.cloud.tencent.com/cam/capi
