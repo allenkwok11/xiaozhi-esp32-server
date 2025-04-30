@@ -1,12 +1,7 @@
 package xiaozhi.modules.device.service.impl;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -256,6 +251,12 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
             return cachedCode;
         }
         return null;
+    }
+
+    @Override
+    public Date getLatestLastConnectionTime(String agentId) {
+        List<Date> list = deviceDao.getAllLastConnectedAtByAgentId(agentId);
+        return Collections.max(list, Comparator.comparing(Date::getTime));
     }
 
     private String getDeviceCacheKey(String deviceId) {
