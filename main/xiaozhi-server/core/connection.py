@@ -42,9 +42,10 @@ class TTSException(RuntimeError):
 
 class ConnectionHandler:
     def __init__(
-        self, config: Dict[str, Any], _vad, _asr, _llm, _tts, _memory, _intent
+        self, config: Dict[str, Any], _vad, _asr, _llm, _tts, _memory, _intent, server=None
     ):
-        self.config = copy.deepcopy(config)
+        self.config = config
+        self.server = server
         self.logger = setup_logging()
         self.auth = AuthMiddleware(config)
 
@@ -255,6 +256,12 @@ class ConnectionHandler:
             # 标记需要重新初始化的模块
             if config_model in ["llm", "tts", "asr", "vad", "intent", "memory"]:
                 updated_modules.append(config_model)
+
+        # 同步更新 WebSocketServer 的配置
+        if self.server:
+            async with self.server.config_lock:  # 使用锁确保线程安全
+                for config_model in updated_modules:
+                    self.server.config[config_model].update(new_config[config_model])
 
         # 批量初始化模块
         if updated_modules:
