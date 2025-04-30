@@ -1,0 +1,3 @@
+update `ai_model_provider` set `fields` = 
+'[{"key": "api_url","label": "API地址","type": "string"},{"key": "voice","label": "音色","type": "string"},{"key": "output_dir","label": "输出目录","type": "string"},{"key": "authorization","label": "授权","type": "string"},{"key": "appid","label": "应用ID","type": "string"},{"key": "access_token","label": "访问令牌","type": "string"},{"key": "cluster","label": "集群","type": "string"},{"key": "speed_ratio","label": "语速","type": "number"},{"key": "volume_ratio","label": "音量","type": "number"},{"key": "pitch_ratio","label": "音高","type": "number"}]'
+where `id` = 'SYSTEM_TTS_doubao';

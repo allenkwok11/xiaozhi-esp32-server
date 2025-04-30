@@ -53,6 +53,8 @@ async def handleTextMessage(conn, message):
                         # 如果是唤醒词，且关闭了唤醒词回复，就不用回答
                         await send_stt_message(conn, text)
                         await send_tts_message(conn, "stop", None)
+                    elif is_wakeup_words:
+                        await startToChat(conn, "嘿，你好呀")
                     else:
                         # 否则需要LLM对文字内容进行答复
                         await startToChat(conn, text)

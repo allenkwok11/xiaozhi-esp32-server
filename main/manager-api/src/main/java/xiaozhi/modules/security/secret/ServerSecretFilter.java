@@ -2,8 +2,6 @@ package xiaozhi.modules.security.secret;
 
 import java.io.IOException;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -12,6 +10,8 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.utils.HttpContextUtils;
@@ -55,7 +55,7 @@ public class ServerSecretFilter extends AuthenticatingFilter {
         String token = getRequestToken((HttpServletRequest) servletRequest);
         if (StringUtils.isBlank(token)) {
             // token为空，返回401
-            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "Authorization token不能为空");
+            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "服务器密钥不能为空");
             return false;
         }
 
@@ -63,7 +63,7 @@ public class ServerSecretFilter extends AuthenticatingFilter {
         String serverSecret = getServerSecret();
         if (StringUtils.isBlank(serverSecret) || !serverSecret.equals(token)) {
             // token无效，返回401
-            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "无效的Authorization token");
+            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "无效的服务器密钥");
             return false;
         }
 
@@ -77,7 +77,7 @@ public class ServerSecretFilter extends AuthenticatingFilter {
         response.setContentType("application/json;charset=utf-8");
         response.setHeader("Access-Control-Allow-Credentials", "true");
         response.setHeader("Access-Control-Allow-Origin", HttpContextUtils.getOrigin());
-        
+
         try {
             String json = JsonUtils.toJsonString(new Result<Void>().error(ErrorCode.UNAUTHORIZED, message));
             response.getWriter().print(json);
@@ -102,4 +102,4 @@ public class ServerSecretFilter extends AuthenticatingFilter {
     private String getServerSecret() {
         return sysParamsService.getValue(Constant.SERVER_SECRET, true);
     }
-} 
+}

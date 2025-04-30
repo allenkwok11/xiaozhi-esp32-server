@@ -31,35 +31,17 @@ def load_config():
 
     # 加载默认配置
     default_config = read_config(default_config_path)
+    custom_config = read_config(custom_config_path)
 
-    # 加载用户自定义配置（如果存在）
-    if os.path.exists(custom_config_path):
-        custom_config = read_config(custom_config_path)
+    if custom_config.get("manager-api", {}).get("url"):
+        config = get_config_from_api(custom_config)
+    else:
         # 合并配置
         config = merge_configs(default_config, custom_config)
-    else:
-        config = default_config
-
-    if config.get("manager-api", {}).get("url"):
-        config = get_config_from_api(config)
-
     # 初始化目录
     ensure_directories(config)
     _config_cache = config
     return config
-
-
-def get_config_file():
-    """获取配置文件路径，优先使用私有配置文件（若存在）。
-
-    Returns:
-       str: 配置文件路径（相对路径或默认路径）
-    """
-    default_config_file = "config.yaml"
-    config_file = default_config_file
-    if os.path.exists(get_project_dir() + "data/." + default_config_file):
-        config_file = "data/." + default_config_file
-    return config_file
 
 
 def get_config_from_api(config):
@@ -128,23 +110,29 @@ def ensure_directories(config):
 def merge_configs(default_config, custom_config):
     """
     递归合并配置，custom_config优先级更高
-    
+
     Args:
         default_config: 默认配置
         custom_config: 用户自定义配置
-        
+
     Returns:
         合并后的配置
     """
-    if not isinstance(default_config, Mapping) or not isinstance(custom_config, Mapping):
+    if not isinstance(default_config, Mapping) or not isinstance(
+        custom_config, Mapping
+    ):
         return custom_config
-    
+
     merged = dict(default_config)
-    
+
     for key, value in custom_config.items():
-        if key in merged and isinstance(merged[key], Mapping) and isinstance(value, Mapping):
+        if (
+            key in merged
+            and isinstance(merged[key], Mapping)
+            and isinstance(value, Mapping)
+        ):
             merged[key] = merge_configs(merged[key], value)
         else:
             merged[key] = value
-            
+
     return merged
