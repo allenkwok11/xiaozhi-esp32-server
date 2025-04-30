@@ -4,6 +4,7 @@ from core.utils.util import remove_punctuation_and_length
 from core.handle.sendAudioHandle import send_stt_message
 from core.handle.intentHandler import handle_user_intent
 from core.utils.output_counter import check_device_output_limit
+from core.handle.asrReportHandle import enqueue_asr_report
 
 TAG = __name__
 logger = setup_logging()
@@ -40,6 +41,9 @@ async def handleAudioMessage(conn, audio):
             logger.bind(tag=TAG).info(f"识别文本: {text}")
             text_len, _ = remove_punctuation_and_length(text)
             if text_len > 0:
+                # 使用自定义模块进行上报
+                enqueue_asr_report(conn, text, conn.asr_audio)
+
                 await startToChat(conn, text)
             else:
                 conn.asr_server_receive = True

@@ -6,6 +6,7 @@ from core.utils.util import remove_punctuation_and_length
 from core.handle.receiveAudioHandle import startToChat, handleAudioMessage
 from core.handle.sendAudioHandle import send_stt_message, send_tts_message
 from core.handle.iotHandle import handleIotDescriptors, handleIotStatus
+from core.handle.asrReportHandle import enqueue_asr_report
 import asyncio
 
 TAG = __name__
@@ -54,8 +55,12 @@ async def handleTextMessage(conn, message):
                         await send_stt_message(conn, text)
                         await send_tts_message(conn, "stop", None)
                     elif is_wakeup_words:
+                        # 上报纯文字数据（复用ASR上报功能，但不提供音频数据）
+                        enqueue_asr_report(conn, "嘿，你好呀", [])
                         await startToChat(conn, "嘿，你好呀")
                     else:
+                        # 上报纯文字数据（复用ASR上报功能，但不提供音频数据）
+                        enqueue_asr_report(conn, text, [])
                         # 否则需要LLM对文字内容进行答复
                         await startToChat(conn, text)
         elif msg_json["type"] == "iot":
