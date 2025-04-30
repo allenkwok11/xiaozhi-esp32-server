@@ -105,14 +105,11 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
             // 获取 TTS 音色名称
             dto.setTtsVoiceName(timbreModelService.getTimbreNameById(agent.getTtsVoiceId()));
 
-            // 获取设备数量
-            dto.setDeviceCount(getDeviceCountByAgentId(agent.getId()));
-
             // 获取智能体最近的最后连接时长
             dto.setLastConnectedAt(deviceService.getLatestLastConnectionTime(agent.getId()));
 
-
-
+            // 获取设备数量
+            dto.setDeviceCount(getDeviceCountByAgentId(agent.getId()));
             return dto;
         }).collect(Collectors.toList());
     }
