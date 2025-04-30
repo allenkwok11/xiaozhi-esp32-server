@@ -88,6 +88,8 @@ class ASRProvider(ASRProviderBase):
         self.appid = config.get("appid")
         self.cluster = config.get("cluster")
         self.access_token = config.get("access_token")
+        self.boosting_table_name = config.get("boosting_table_name")
+        self.correct_table_name = config.get("correct_table_name")
         self.output_dir = config.get("output_dir")
         self.delete_audio_file = delete_audio_file
 
@@ -136,7 +138,13 @@ class ASRProvider(ASRProviderBase):
             "user": {
                 "uid": str(uuid.uuid4()),
             },
-            "request": {"reqid": reqid, "show_utterances": False, "sequence": 1},
+            "request": {
+                "reqid": reqid, 
+                "show_utterances": False, 
+                "sequence": 1,
+                "boosting_table_name": self.boosting_table_name,
+                "correct_table_name": self.correct_table_name,
+            },
             "audio": {
                 "format": "raw",
                 "rate": 16000,
@@ -231,14 +239,6 @@ class ASRProvider(ASRProviderBase):
                 logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
 
         return pcm_data
-
-    @staticmethod
-    def read_wav_info(data: io.BytesIO = None) -> (int, int, int, int, int):
-        with io.BytesIO(data) as _f:
-            wave_fp = wave.open(_f, "rb")
-            nchannels, sampwidth, framerate, nframes = wave_fp.getparams()[:4]
-            wave_bytes = wave_fp.readframes(nframes)
-        return nchannels, sampwidth, framerate, nframes, len(wave_bytes)
 
     @staticmethod
     def slice_data(data: bytes, chunk_size: int) -> (list, bool):
