@@ -26,6 +26,7 @@ import xiaozhi.modules.sys.dao.SysUserDao;
 import xiaozhi.modules.sys.dto.SysDictTypeDTO;
 import xiaozhi.modules.sys.entity.SysDictTypeEntity;
 import xiaozhi.modules.sys.entity.SysUserEntity;
+import xiaozhi.modules.sys.service.SysDictDataService;
 import xiaozhi.modules.sys.service.SysDictTypeService;
 import xiaozhi.modules.sys.vo.SysDictTypeVO;
 
@@ -35,9 +36,9 @@ import xiaozhi.modules.sys.vo.SysDictTypeVO;
 @Service
 @AllArgsConstructor
 public class SysDictTypeServiceImpl extends BaseServiceImpl<SysDictTypeDao, SysDictTypeEntity>
-    implements SysDictTypeService {
-
+        implements SysDictTypeService {
     private final SysUserDao sysUserDao;
+    private final SysDictDataService sysDictDataService;
 
     @Override
     public PageData<SysDictTypeVO> page(Map<String, Object> params) {
@@ -51,8 +52,8 @@ public class SysDictTypeServiceImpl extends BaseServiceImpl<SysDictTypeDao, SysD
     }
 
     private QueryWrapper<SysDictTypeEntity> getWrapper(Map<String, Object> params) {
-        String dictType = (String)params.get("dictType");
-        String dictName = (String)params.get("dictName");
+        String dictType = (String) params.get("dictType");
+        String dictName = (String) params.get("dictName");
 
         QueryWrapper<SysDictTypeEntity> wrapper = new QueryWrapper<>();
         wrapper.like(StringUtils.isNotBlank(dictType), "dict_type", dictType);
@@ -96,7 +97,11 @@ public class SysDictTypeServiceImpl extends BaseServiceImpl<SysDictTypeDao, SysD
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(Long[] ids) {
-        // 删除
+        // 先删除对应的字典数据
+        for (Long id : ids) {
+            sysDictDataService.deleteByTypeId(id);
+        }
+        // 再删除字典类型
         deleteBatchIds(Arrays.asList(ids));
     }
 
@@ -118,14 +123,14 @@ public class SysDictTypeServiceImpl extends BaseServiceImpl<SysDictTypeDao, SysD
     private void setUserName(List<SysDictTypeVO> sysDictTypeList) {
         // 收集所有用户 ID
         Set<Long> userIds = sysDictTypeList.stream().flatMap(vo -> Stream.of(vo.getCreator(), vo.getUpdater()))
-            .filter(Objects::nonNull).collect(Collectors.toSet());
+                .filter(Objects::nonNull).collect(Collectors.toSet());
 
         // 设置更新者和创建者名称
         if (!userIds.isEmpty()) {
             List<SysUserEntity> sysUserEntities = sysUserDao.selectBatchIds(userIds);
             // 把List转成Map，Map<Long, String>
             Map<Long, String> userNameMap = sysUserEntities.stream().collect(Collectors.toMap(SysUserEntity::getId,
-                SysUserEntity::getUsername, (existing, replacement) -> existing));
+                    SysUserEntity::getUsername, (existing, replacement) -> existing));
 
             sysDictTypeList.forEach(vo -> {
                 vo.setCreatorName(userNameMap.get(vo.getCreator()));

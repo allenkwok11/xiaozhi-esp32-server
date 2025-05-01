@@ -1,10 +1,10 @@
 package xiaozhi.modules.sys.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +25,7 @@ import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.ValidatorUtils;
 import xiaozhi.modules.sys.dto.SysDictDataDTO;
 import xiaozhi.modules.sys.service.SysDictDataService;
+import xiaozhi.modules.sys.vo.SysDictDataItem;
 import xiaozhi.modules.sys.vo.SysDictDataVO;
 
 /**
@@ -43,10 +44,10 @@ public class SysDictDataController {
     @GetMapping("/page")
     @Operation(summary = "分页查询字典数据")
     @RequiresPermissions("sys:role:superAdmin")
-    @Parameters({@Parameter(name = "dictTypeId", description = "字典类型ID", required = true),
-        @Parameter(name = "dictLabel", description = "数据标签"), @Parameter(name = "dictValue", description = "数据值"),
-        @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
-        @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true)})
+    @Parameters({ @Parameter(name = "dictTypeId", description = "字典类型ID", required = true),
+            @Parameter(name = "dictLabel", description = "数据标签"), @Parameter(name = "dictValue", description = "数据值"),
+            @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
+            @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true) })
     public Result<PageData<SysDictDataVO>> page(@Parameter(hidden = true) @RequestParam Map<String, Object> params) {
         ValidatorUtils.validateEntity(params);
         // 强制校验dictTypeId是否存在
@@ -84,13 +85,21 @@ public class SysDictDataController {
         return new Result<>();
     }
 
-    @DeleteMapping("/delete")
+    @PostMapping("/delete")
     @Operation(summary = "删除字典数据")
     @RequiresPermissions("sys:role:superAdmin")
     @Parameter(name = "ids", description = "ID数组", required = true)
     public Result<Void> delete(@RequestBody Long[] ids) {
         sysDictDataService.delete(ids);
         return new Result<>();
+    }
+
+    @GetMapping("/type/{dictType}")
+    @Operation(summary = "获取字典数据列表")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<List<SysDictDataItem>> getDictDataByType(@PathVariable("dictType") String dictType) {
+        List<SysDictDataItem> list = sysDictDataService.getDictDataByType(dictType);
+        return new Result<List<SysDictDataItem>>().ok(list);
     }
 
 }
