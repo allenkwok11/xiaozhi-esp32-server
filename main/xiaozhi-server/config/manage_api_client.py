@@ -1,3 +1,4 @@
+import base64
 import os
 import time
 from typing import Optional, Dict
@@ -145,6 +146,35 @@ def get_agent_models(
         },
     )
 
+async def report(mac_address: str,
+                 session_id: str,
+                 sort: int,
+                 chat_type: int,
+                 content: str,
+                 audio,
+                 file_extension: str = "wav",
+                 need_report: bool = None,
+                 report_type: int = None,
+                 reported: bool = None) -> Optional[Dict]:
+    """带熔断的业务方法示例"""
+    if not content or not ManageApiClient._instance:
+        return None
+    return await ManageApiClient._instance._execute_request(
+        "POST",
+        f"/agent/chat-history/report",
+        json = {
+            "macAddress": mac_address,
+            "sessionId": session_id,
+            "sort": sort,
+            "chatType": chat_type,
+            "content": content,
+            "fileBase64": base64.b64encode(audio).decode('utf-8'),
+            "fileExtension": file_extension,
+            "needReport": need_report,
+            "reportType": report_type,
+            "reported": reported
+        }
+    )
 
 def init_service(config):
     ManageApiClient(config)

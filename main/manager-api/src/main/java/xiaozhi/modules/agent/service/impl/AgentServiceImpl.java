@@ -130,4 +130,12 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
 
         return deviceCount != null ? deviceCount : 0;
     }
+
+    @Override
+    public AgentEntity getDefaultAgentByMacAddress(String macAddress) {
+        if (StringUtils.isEmpty(macAddress)) {
+            return null;
+        }
+        return agentDao.getDefaultAgentByMacAddress(macAddress);
+    }
 }
