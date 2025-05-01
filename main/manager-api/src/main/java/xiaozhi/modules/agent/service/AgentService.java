@@ -42,4 +42,12 @@ public interface AgentService extends BaseService<AgentEntity> {
      * @return 设备数量
      */
     Integer getDeviceCountByAgentId(String agentId);
+
+    /**
+     * 根据设备MAC地址查询对应设备的默认智能体信息
+     *
+     * @param macAddress 设备MAC地址
+     * @return 默认智能体信息，不存在时返回null
+     */
+    AgentEntity getDefaultAgentByMacAddress(String macAddress);
 }

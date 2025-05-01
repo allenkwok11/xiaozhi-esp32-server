@@ -1,5 +1,6 @@
 import os
 import time
+import base64
 from typing import Optional, Dict
 
 import httpx
@@ -53,7 +54,7 @@ class ManageApiClient:
             headers={
                 "User-Agent": f"PythonClient/2.0 (PID:{os.getpid()})",
                 "Accept": "application/json",
-                "Authorization": "Bearer " + cls._secret
+                "Authorization": "Bearer " + cls._secret,
             },
             timeout=cls.config.get("timeout", 30),  # 默认超时时间30秒
         )
@@ -126,9 +127,7 @@ class ManageApiClient:
 
 def get_server_config() -> Optional[Dict]:
     """获取服务器基础配置"""
-    return ManageApiClient._instance._execute_request(
-        "POST", "/config/server-base"
-    )
+    return ManageApiClient._instance._execute_request("POST", "/config/server-base")
 
 
 def get_agent_models(
@@ -144,6 +143,41 @@ def get_agent_models(
             "selectedModule": selected_module,
         },
     )
+
+
+def report(
+    mac_address: str, session_id: str, chat_type: int, content: str, opus_data
+) -> Optional[Dict]:
+    """带熔断的业务方法示例"""
+    if not content or not ManageApiClient._instance:
+        return None
+    try:
+        # 处理opus_data为列表的情况
+        if isinstance(opus_data, list):
+            # 将列表中的所有bytes数据合并
+            combined_data = b"".join(opus_data)
+        else:
+            combined_data = opus_data
+
+        # 将二进制数据转换为Base64编码的字符串
+        opus_data_base64 = (
+            base64.b64encode(combined_data).decode("utf-8") if combined_data else None
+        )
+
+        return ManageApiClient._instance._execute_request(
+            "POST",
+            f"/agent/chat-history/report",
+            json={
+                "macAddress": mac_address,
+                "sessionId": session_id,
+                "chatType": chat_type,
+                "content": content,
+                "opusDataBase64": opus_data_base64,
+            },
+        )
+    except Exception as e:
+        print(f"TTS上报失败: {e}")
+        return None
 
 
 def init_service(config):
