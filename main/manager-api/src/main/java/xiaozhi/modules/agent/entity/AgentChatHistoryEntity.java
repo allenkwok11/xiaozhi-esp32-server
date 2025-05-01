@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,68 +26,62 @@ import lombok.NoArgsConstructor;
 @TableName(value = "ai_agent_chat_history")
 public class AgentChatHistoryEntity {
     /**
-    * 主键ID
-    */
+     * 主键ID
+     */
     @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-    * MAC地址
-    */
+     * MAC地址
+     */
     @TableField(value = "mac_address")
     private String macAddress;
 
     /**
-    * 智能体id
-    */
+     * 智能体id
+     */
     @TableField(value = "agent_id")
     private String agentId;
 
     /**
-    * 会话ID
-    */
+     * 会话ID
+     */
     @TableField(value = "session_id")
     private String sessionId;
 
     /**
-    * 排序值（与session_id对应），使用时间戳，方便排序
-    */
-    @TableField(value = "sort")
-    private Long sort;
-
-    /**
-    * 消息类型: 1-用户, 2-智能体
-    */
+     * 消息类型: 1-用户, 2-智能体
+     */
     @TableField(value = "chat_type")
     private Byte chatType;
 
     /**
-    * 聊天内容
-    */
+     * 聊天内容
+     */
     @TableField(value = "content")
     private String content;
 
     /**
-    * 音频base64数据
-    */
-    @TableField(value = "audio")
-    private String audio;
+     * 音频base64数据
+     */
+    @TableField(value = "audio_id")
+    private String audioId;
 
     /**
-    * 音频URL
-    */
+     * 音频URL
+     */
     @TableField(value = "audio_url")
     private String audioUrl;
 
     /**
-    * 创建时间
-    */
+     * 创建时间
+     */
     @TableField(value = "created_at")
     private Date createdAt;
 
     /**
-    * 更新时间
-    */
+     * 更新时间
+     */
     @TableField(value = "updated_at")
     private Date updatedAt;
 }

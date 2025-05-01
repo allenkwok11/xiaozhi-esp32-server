@@ -20,17 +20,12 @@ public class AgentChatHistoryReportDTO {
     @Schema(description = "会话ID", example = "79578c31-f1fb-426a-900e-1e934215f05a")
     @NotBlank
     private String sessionId;
-    @Schema(description = "排序值（与session_id对应）", example = "1745566378")
-    @NotNull
-    private Long sort;
     @Schema(description = "消息类型: 1-用户, 2-智能体", example = "1")
     @NotNull
     private Byte chatType;
     @Schema(description = "聊天内容", example = "你好呀")
     @NotBlank
     private String content;
-    @Schema(description = "文件数据（Base64编码）", example = "")
-    private String fileBase64;
-    @Schema(description = "文件扩展名（如wav、mp3等）", example = "wav")
-    private String fileExtension;
-} 
+    @Schema(description = "文件数据（opus编码）", example = "")
+    private String opusDataBase64;
+}

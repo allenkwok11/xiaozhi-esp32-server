@@ -9,62 +9,51 @@ TTS上报功能已集成到ConnectionHandler类中。
 具体实现请参考core/connection.py中的相关代码。
 """
 
-import os
 from config.logger import setup_logging
 from config.manage_api_client import report
 
 TAG = __name__
 logger = setup_logging()
 
-async def report_tts(conn, text, audio_data):
+
+def report_tts(conn, type, text, opus_data):
     """执行TTS上报操作
-    
+
     Args:
         conn: 连接对象
+        type: 上报类型，1为用户，2为智能体
         text: 合成文本
-        audio_data: 音频二进制数据
+        opus_data: opus音频数据
     """
     try:
         # 执行上报
-        result = await report(
+        report(
             mac_address=conn.device_id,
             session_id=conn.session_id,
-            sort=int(conn.session_open_time),
-            chat_type=2,  # TTS类型为2
+            chat_type=type,
             content=text,
-            audio=audio_data,
-            file_extension="wav"
+            opus_data=opus_data,
         )
-        logger.bind(tag=TAG).info(f"TTS上报成功: {conn.device_id}, {conn.session_id}, 数据大小: {len(audio_data)} 字节")
-        return result
     except Exception as e:
         logger.bind(tag=TAG).error(f"TTS上报失败: {e}")
-        return None
-    finally:
-        # 手动清理audio_data引用，帮助垃圾回收
-        del audio_data
 
-def enqueue_tts_report(conn, text, file_path):
+
+def enqueue_tts_report(conn, type, text, opus_data):
+    if not conn.read_config_from_api:
+        return
     """将TTS数据加入上报队列
-    
+
     Args:
         conn: 连接对象
         text: 合成文本
-        file_path: TTS音频文件路径
+        opus_data: opus音频数据
     """
     try:
-        # 检查文件是否存在
-        if not file_path or not os.path.exists(file_path):
-            logger.bind(tag=TAG).error(f"加入TTS上报队列失败: 文件不存在 {file_path}")
-            return
-            
-        # 立即读取文件为二进制数据，因为外部会删除文件
-        with open(file_path, 'rb') as f:
-            audio_data = f.read()
-            
         # 使用连接对象的队列，传入文本和二进制数据而非文件路径
-        conn.tts_report_queue.put((text, audio_data))
-        
-        logger.bind(tag=TAG).info(f"TTS数据已加入上报队列: {conn.device_id}, 文件大小: {len(audio_data)} 字节")
+        conn.tts_report_queue.put((type, text, opus_data))
+
+        logger.bind(tag=TAG).info(
+            f"TTS数据已加入上报队列: {conn.device_id}, 音频大小: {len(opus_data)} "
+        )
     except Exception as e:
-        logger.bind(tag=TAG).error(f"加入TTS上报队列失败: {e}, 文件: {file_path}")
+        logger.bind(tag=TAG).error(f"加入TTS上报队列失败: {text}, {e}")
