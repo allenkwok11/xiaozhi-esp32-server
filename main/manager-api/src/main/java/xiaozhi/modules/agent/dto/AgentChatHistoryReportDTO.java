@@ -26,6 +26,6 @@ public class AgentChatHistoryReportDTO {
     @Schema(description = "聊天内容", example = "你好呀")
     @NotBlank
     private String content;
-    @Schema(description = "文件数据（opus编码）", example = "")
-    private String opusDataBase64;
+    @Schema(description = "base64编码的opus音频数据", example = "")
+    private String audioBase64;
 }

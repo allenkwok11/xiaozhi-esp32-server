@@ -1,5 +1,7 @@
 package xiaozhi.modules.agent.service.biz.impl;
 
+import java.util.Base64;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,12 +45,11 @@ public class AgentChatHistoryBizServiceImpl implements AgentChatHistoryBizServic
 
         // 1. base64解码report.getOpusDataBase64(),存入ai_agent_chat_audio表
         String audioId = null;
-        if (report.getOpusDataBase64() != null && !report.getOpusDataBase64().isEmpty()) {
+        if (report.getAudioBase64() != null && !report.getAudioBase64().isEmpty()) {
             try {
-                // TODO: 需要考虑保留什么格式的音频数据，比如是opus还是wave
-                // byte[] audioData = Base64.getDecoder().decode(report.getOpusDataBase64());
-                // audioId = agentChatAudioService.saveAudio(audioData);
-                // log.info("音频数据保存成功，audioId={}", audioId);
+                byte[] audioData = Base64.getDecoder().decode(report.getAudioBase64());
+                audioId = agentChatAudioService.saveAudio(audioData);
+                log.info("音频数据保存成功，audioId={}", audioId);
             } catch (Exception e) {
                 log.error("音频数据保存失败", e);
                 return false;
