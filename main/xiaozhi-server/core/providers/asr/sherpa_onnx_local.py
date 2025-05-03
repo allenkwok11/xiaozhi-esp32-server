@@ -85,7 +85,8 @@ class ASRProvider(ASRProviderBase):
 
     def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
         """PCM数据保存为WAV文件"""
-        file_name = f"asr_{session_id}_{uuid.uuid4()}.wav"
+        module_name = __name__.split(".")[-1]
+        file_name = f"asr_{module_name}_{session_id}_{uuid.uuid4()}.wav"
         file_path = os.path.join(self.output_dir, file_name)
 
         with wave.open(file_path, "wb") as wf:
@@ -164,7 +165,7 @@ class ASRProvider(ASRProviderBase):
 
         except Exception as e:
             logger.bind(tag=TAG).error(f"语音识别失败: {e}", exc_info=True)
-            return "", None
+            return "", file_path
         finally:
             # 文件清理逻辑
             if self.delete_audio_file and file_path and os.path.exists(file_path):

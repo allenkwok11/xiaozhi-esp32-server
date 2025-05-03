@@ -50,20 +50,11 @@ class ASRProvider(ASRProviderBase):
                 # device="cuda:0",  # 启用GPU加速
             )
 
-    def save_audio_to_file(self, opus_data: List[bytes], session_id: str) -> str:
+    def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
         """PCM数据保存为WAV文件"""
-        file_name = f"asr_{session_id}_{uuid.uuid4()}.wav"
+        module_name = __name__.split(".")[-1]
+        file_name = f"asr_{module_name}_{session_id}_{uuid.uuid4()}.wav"
         file_path = os.path.join(self.output_dir, file_name)
-
-        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
-        pcm_data = []
-
-        for opus_packet in opus_data:
-            try:
-                pcm_frame = decoder.decode(opus_packet, 960)  # 960 samples = 60ms
-                pcm_data.append(pcm_frame)
-            except opuslib_next.OpusError as e:
-                logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
 
         with wave.open(file_path, "wb") as wf:
             wf.setnchannels(1)
@@ -72,7 +63,7 @@ class ASRProvider(ASRProviderBase):
             wf.writeframes(b"".join(pcm_data))
 
         return file_path
-    
+
     @staticmethod
     def decode_opus(opus_data: List[bytes], session_id: str) -> List[bytes]:
 
@@ -100,7 +91,7 @@ class ASRProvider(ASRProviderBase):
             if self.delete_audio_file:
                 pass
             else:
-                self.save_audio_to_file(pcm_data, session_id)
+                file_path = self.save_audio_to_file(pcm_data, session_id)
 
             # 语音识别
             start_time = time.time()
@@ -118,13 +109,13 @@ class ASRProvider(ASRProviderBase):
 
         except Exception as e:
             logger.bind(tag=TAG).error(f"语音识别失败: {e}", exc_info=True)
-            return "", None
+            return "", file_path
 
-        finally:
-            # 文件清理逻辑
-            if self.delete_audio_file and file_path and os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                    logger.bind(tag=TAG).debug(f"已删除临时音频文件: {file_path}")
-                except Exception as e:
-                    logger.bind(tag=TAG).error(f"文件删除失败: {file_path} | 错误: {e}")
+        # finally:
+        #     # 文件清理逻辑
+        #     if self.delete_audio_file and file_path and os.path.exists(file_path):
+        #         try:
+        #             os.remove(file_path)
+        #             logger.bind(tag=TAG).debug(f"已删除临时音频文件: {file_path}")
+        #         except Exception as e:
+        #             logger.bind(tag=TAG).error(f"文件删除失败: {file_path} | 错误: {e}")
