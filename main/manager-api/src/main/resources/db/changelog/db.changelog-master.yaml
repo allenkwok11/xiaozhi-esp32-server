@@ -94,9 +94,9 @@ databaseChangeLog:
             encoding: utf8
             path: classpath:db/changelog/202504301341.sql
   - changeSet:
-      id: 202505012207
+      id: 202505022134
       author: Goody
       changes:
         - sqlFile:
             encoding: utf8
-            path: classpath:db/changelog/202505012207.sql
+            path: classpath:db/changelog/202505022134.sql
