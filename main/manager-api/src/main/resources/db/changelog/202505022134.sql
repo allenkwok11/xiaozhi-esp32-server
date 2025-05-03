@@ -1,5 +1,6 @@
 -- 初始化智能体聊天记录
 DROP TABLE IF EXISTS ai_chat_history;
+DROP TABLE IF EXISTS ai_chat_message;
 DROP TABLE IF EXISTS ai_agent_chat_history;
 CREATE TABLE ai_agent_chat_history
 (
@@ -13,7 +14,9 @@ CREATE TABLE ai_agent_chat_history
     created_at  DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL COMMENT '创建时间',
     updated_at  DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
     INDEX idx_ai_agent_chat_history_mac (mac_address),
-    INDEX idx_ai_agent_chat_history_agent_id (agent_id)
+    INDEX idx_ai_agent_chat_history_session_id (session_id),
+    INDEX idx_ai_agent_chat_history_agent_id (agent_id),
+    INDEX idx_ai_agent_chat_history_agent_session_created (agent_id, session_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '智能体聊天记录表';
 
 DROP TABLE IF EXISTS ai_agent_chat_audio;

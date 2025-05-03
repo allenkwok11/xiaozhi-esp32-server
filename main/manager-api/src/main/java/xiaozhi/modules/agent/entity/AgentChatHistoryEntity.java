@@ -68,12 +68,6 @@ public class AgentChatHistoryEntity {
     private String audioId;
 
     /**
-     * 音频URL
-     */
-    @TableField(value = "audio_url")
-    private String audioUrl;
-
-    /**
      * 创建时间
      */
     @TableField(value = "created_at")

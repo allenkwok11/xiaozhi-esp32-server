@@ -294,20 +294,13 @@ export default {
         this.loading = false;
         if (data.code === 0) {
           this.deviceList = data.data.map(device => {
-            const bindDate = new Date(device.createDate);
-            const formattedBindTime = `${bindDate.getFullYear()}-${(bindDate.getMonth() + 1).toString().padStart(2, '0')}-${bindDate.getDate().toString().padStart(2, '0')} ${bindDate.getHours().toString().padStart(2, '0')}:${bindDate.getMinutes().toString().padStart(2, '0')}:${bindDate.getSeconds().toString().padStart(2, '0')}`;
-            let formattedLastConversation = '';
-            if (device.lastConnectedAt) {
-              const lastConvoDate = new Date(device.lastConnectedAt);
-              formattedLastConversation = `${lastConvoDate.getFullYear()}-${(lastConvoDate.getMonth() + 1).toString().padStart(2, '0')}-${lastConvoDate.getDate().toString().padStart(2, '0')} ${lastConvoDate.getHours().toString().padStart(2, '0')}:${lastConvoDate.getMinutes().toString().padStart(2, '0')}:${lastConvoDate.getSeconds().toString().padStart(2, '0')}`;
-            }
             return {
               device_id: device.id,
               model: device.board,
               firmwareVersion: device.appVersion,
               macAddress: device.macAddress,
-              bindTime: formattedBindTime,
-              lastConversation: formattedLastConversation,
+              bindTime: device.createDate,
+              lastConversation: device.lastConnectedAt,
               remark: device.alias,
               isEdit: false,
               otaSwitch: device.autoUpdate === 1,
