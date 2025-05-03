@@ -17,12 +17,16 @@ from config.logger import setup_logging
 TAG = __name__
 logger = setup_logging()
 
+
 class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool = True):
         self.app_id = config.get("app_id")
         self.api_key = config.get("api_key")
         self.secret_key = config.get("secret_key")
-        self.dev_pid = config.get("dev_pid")
+
+        dev_pid = config.get("dev_pid", "1537")
+        self.dev_pid = int(dev_pid) if dev_pid else 1537
+
         self.output_dir = config.get("output_dir")
         self.delete_audio_file = delete_audio_file
 
@@ -61,7 +65,9 @@ class ASRProvider(ASRProviderBase):
 
         return pcm_data
 
-    async def speech_to_text(self, opus_data: List[bytes], session_id: str) -> Tuple[Optional[str], Optional[str]]:
+    async def speech_to_text(
+        self, opus_data: List[bytes], session_id: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         """将语音数据转换为文本"""
         if not opus_data:
             logger.bind(tag=TAG).warn("音频数据为空！")
@@ -86,16 +92,25 @@ class ASRProvider(ASRProviderBase):
 
             start_time = time.time()
             # 识别本地文件
-            result = self.client.asr(combined_pcm_data, 'pcm', 16000, {
-                'dev_pid': str(self.dev_pid),
-            })
+            result = self.client.asr(
+                combined_pcm_data,
+                "pcm",
+                16000,
+                {
+                    "dev_pid": str(self.dev_pid),
+                },
+            )
 
             if result and result["err_no"] == 0:
-                logger.bind(tag=TAG).debug(f"百度语音识别耗时: {time.time() - start_time:.3f}s | 结果: {result}")
+                logger.bind(tag=TAG).debug(
+                    f"百度语音识别耗时: {time.time() - start_time:.3f}s | 结果: {result}"
+                )
                 result = result["result"][0]
                 return result, file_path
             else:
-                raise Exception(f"百度语音识别失败，错误码: {result['err_no']}，错误信息: {result['err_msg']}")
+                raise Exception(
+                    f"百度语音识别失败，错误码: {result['err_no']}，错误信息: {result['err_msg']}"
+                )
                 return None, file_path
 
         except Exception as e:
