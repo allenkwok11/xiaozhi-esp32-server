@@ -51,7 +51,7 @@ class TTSProvider(TTSProviderBase):
         request_json = {
             "app": {
                 "appid": f"{self.appid}",
-                "token": "access_token",
+                "token": self.access_token,
                 "cluster": self.cluster,
             },
             "user": {"uid": "1"},

@@ -25,14 +25,14 @@ class AccessToken:
     def _encode_text(text):
         encoded_text = parse.quote_plus(text)
         return encoded_text.replace('+', '%20').replace('*', '%2A').replace('%7E', '~')
-    
+
     @staticmethod
     def _encode_dict(dic):
         keys = dic.keys()
         dic_sorted = [(key, dic[key]) for key in sorted(keys)]
         encoded_text = parse.urlencode(dic_sorted)
         return encoded_text.replace('+', '%20').replace('*', '%2A').replace('%7E', '~')
-    
+
     @staticmethod
     def create_token(access_key_id, access_key_secret):
         parameters = {'AccessKeyId': access_key_id,
@@ -98,7 +98,7 @@ class ASRProvider(ASRProviderBase):
             # 直接使用预生成的长期token
             self.token = config.get("token")
             self.expire_time = None
-        
+
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -107,7 +107,7 @@ class ASRProvider(ASRProviderBase):
         """刷新Token并记录过期时间"""
         if self.access_key_id and self.access_key_secret:
             self.token, expire_time_str = AccessToken.create_token(
-                self.access_key_id, 
+                self.access_key_id,
                 self.access_key_secret
             )
             if not expire_time_str:
@@ -121,16 +121,16 @@ class ASRProvider(ASRProviderBase):
                     expire_time = datetime.fromtimestamp(int(expire_str))
                 else:
                     expire_time = datetime.strptime(
-                        expire_str, 
+                        expire_str,
                         "%Y-%m-%dT%H:%M:%SZ"
                     )
                 self.expire_time = expire_time.timestamp() - 60
             except Exception as e:
                 raise ValueError(f"无效的过期时间格式: {expire_str}") from e
-        
+
         else:
             self.expire_time = None
-            
+
         if not self.token:
             raise ValueError("无法获取有效的访问Token")
 
@@ -173,12 +173,11 @@ class ASRProvider(ASRProviderBase):
 
         return pcm_data
 
-    def save_audio_to_file(self, opus_data: List[bytes], session_id: str) -> str:
-        """将Opus音频数据解码并保存为WAV文件"""
-        file_name = f"asr_{session_id}.wav"
+    def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
+        """PCM数据保存为WAV文件"""
+        module_name = __name__.split(".")[-1]
+        file_name = f"asr_{module_name}_{session_id}_{uuid.uuid4()}.wav"
         file_path = os.path.join(self.output_dir, file_name)
-
-        pcm_data = self.decode_opus(opus_data, session_id)
 
         with wave.open(file_path, "wb") as wf:
             wf.setnchannels(1)  # 单声道
@@ -202,7 +201,7 @@ class ASRProvider(ASRProviderBase):
             # 创建连接并发送请求
             conn = http.client.HTTPSConnection(self.host)
             request_url = self._construct_request_url()
-            
+
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, lambda: conn.request(
                 method='POST',
@@ -220,7 +219,7 @@ class ASRProvider(ASRProviderBase):
             try:
                 body_json = json.loads(body)
                 status = body_json.get('status')
-                
+
                 if status == 20000000:
                     result = body_json.get('result', '')
                     logger.bind(tag=TAG).debug(f"ASR结果: {result}")
@@ -228,7 +227,7 @@ class ASRProvider(ASRProviderBase):
                 else:
                     logger.bind(tag=TAG).error(f"ASR失败，状态码: {status}")
                     return None
-                    
+
             except ValueError:
                 logger.bind(tag=TAG).error("响应不是JSON格式")
                 return None
@@ -242,24 +241,27 @@ class ASRProvider(ASRProviderBase):
         if self._is_token_expired():
             logger.warning("Token已过期，正在自动刷新...")
             self._refresh_token()
-            
+
+        file_path = None
         try:
             # 解码Opus为PCM
-            pcm_data_list = self.decode_opus(opus_data, session_id)
-            combined_pcm_data = b''.join(pcm_data_list)
+            pcm_data = self.decode_opus(opus_data, session_id)
+            combined_pcm_data = b''.join(pcm_data)
+
+            # 判断是否保存为WAV文件
+            if self.delete_audio_file:
+                pass
+            else:
+                file_path = self.save_audio_to_file(pcm_data, session_id)
 
             # 发送请求并获取文本
             text = await self._send_request(combined_pcm_data)
-            
-            file_path = self.save_audio_to_file(opus_data, session_id)
-            if self.delete_audio_file:
-                os.remove(file_path)
-                logger.bind(tag=TAG).debug(f"音频文件已删除: {file_path}")
 
             if text:
-                return text, None
-            return "", None
+                return text, file_path
+
+            return "", file_path
 
         except Exception as e:
             logger.bind(tag=TAG).error(f"语音识别失败: {e}", exc_info=True)
-            return "", None
+            return "", file_path

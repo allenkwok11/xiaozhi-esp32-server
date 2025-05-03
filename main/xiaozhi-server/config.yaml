@@ -221,6 +221,8 @@ ASR:
     type: fun_server
     host: 127.0.0.1
     port: 10096
+    is_ssl: true
+    output_dir: tmp/
   SherpaASR:
     type: sherpa_onnx_local
     model_dir: models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17
@@ -253,8 +255,18 @@ ASR:
     type: aliyun
     appkey: 你的阿里云智能语音交互服务项目Appkey
     token: 你的阿里云智能语音交互服务AccessToken，临时的24小时，要长期用下方的access_key_id，access_key_secret
-    access_key_id: 的阿里云账号access_key_id
+    access_key_id: 你的阿里云账号access_key_id
     access_key_secret: 你的阿里云账号access_key_secret
+    output_dir: tmp/
+  BaiduASR:
+    # 获取AppID、API Key、Secret Key：https://console.bce.baidu.com/ai-engine/old/#/ai/speech/app/list
+    # 查看资源额度：https://console.bce.baidu.com/ai-engine/old/#/ai/speech/overview/resource/list
+    type: baidu
+    app_id: 你的百度语音技术AppID
+    api_key: 你的百度语音技术APIKey
+    secret_key: 你的百度语音技术SecretKey
+    # 语言参数，1537为普通话，具体参考：https://ai.baidu.com/ai-doc/SPEECH/0lbxfnc9b
+    dev_pid: 1537
     output_dir: tmp/
 
 VAD:
