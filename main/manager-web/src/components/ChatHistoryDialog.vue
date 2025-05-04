@@ -8,7 +8,7 @@
                     <img src="@/assets/xiaozhi-logo.png" class="avatar" />
                     <div class="session-info">
                         <div class="session-time">{{ formatTime(session.createdAt) }}</div>
-                        <div class="message-count">{{ session.chatCount }}</div>
+                        <div class="message-count">{{ session.chatCount > 99 ? '99' : session.chatCount }}</div>
                     </div>
                 </div>
                 <div v-if="loading" class="loading">加载中...</div>
