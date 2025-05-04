@@ -97,4 +97,50 @@ export default {
                 });
             }).send();
     },
+    // 获取智能体会话列表
+    getAgentSessions(agentId, params, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/agent/${agentId}/sessions`)
+            .method('GET')
+            .data(params)
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail(() => {
+                RequestService.reAjaxFun(() => {
+                    this.getAgentSessions(agentId, params, callback);
+                });
+            }).send();
+    },
+    // 获取智能体聊天记录
+    getAgentChatHistory(agentId, sessionId, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/agent/${agentId}/chat-history/${sessionId}`)
+            .method('GET')
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail(() => {
+                RequestService.reAjaxFun(() => {
+                    this.getAgentChatHistory(agentId, sessionId, callback);
+                });
+            }).send();
+    },
+}
+
+export function getAgentSessions(agentId, params) {
+    return request({
+        url: `/agent/${agentId}/sessions`,
+        method: 'get',
+        params
+    });
+}
+
+export function getAgentChatHistory(agentId, sessionId) {
+    return request({
+        url: `/agent/${agentId}/chat-history/${sessionId}`,
+        method: 'get'
+    });
 }
