@@ -6,6 +6,15 @@
     "des和link属性，仅为说明安装方式，方便大家查看原始链接，不是必须项。"
   ],
   "mcpServers": {
+    "Home Assistant": {
+      "command": "mcp-proxy",
+      "args": [
+        "http://YOUR_HA_HOST/mcp_server/sse"
+      ],
+      "env": {
+        "API_ACCESS_TOKEN": "YOUR_API_ACCESS_TOKEN"
+      }
+    },
     "filesystem": {
       "command": "npx",
       "args": [
