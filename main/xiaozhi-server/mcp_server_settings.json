@@ -26,6 +26,9 @@
       "command": "npx",
       "args": ["-y", "@simonb97/server-win-cli"],
       "link": "https://github.com/SimonB97/win-cli-mcp-server"
+    },
+    "perplexity-ask": {
+      "url": "http://your-server-ip:your-port/sse"
     }
   }
 }
