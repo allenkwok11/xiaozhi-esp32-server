@@ -66,7 +66,7 @@ export default {
             currentSessionId: '',
             currentMacAddress: '',
             page: 1,
-            limit: 10,
+            limit: 20,
             loading: false,
             hasMore: true,
             scrollTimer: null,
@@ -237,16 +237,21 @@ export default {
                 this.audioElement = null;
             }
 
-            // 播放新音频
+            // 先获取音频下载ID
             this.playingAudioId = message.audioId;
-            this.audioElement = new Audio(Api.getServiceUrl() + `/agent/audio/${message.audioId}`);
+            Api.agent.getAudioId(message.audioId, (res) => {
+                if (res.data && res.data.data) {
+                    // 使用获取到的下载ID播放音频
+                    this.audioElement = new Audio(Api.getServiceUrl() + `/agent/play/${res.data.data}`);
 
-            this.audioElement.onended = () => {
-                this.playingAudioId = null;
-                this.audioElement = null;
-            };
+                    this.audioElement.onended = () => {
+                        this.playingAudioId = null;
+                        this.audioElement = null;
+                    };
 
-            this.audioElement.play();
+                    this.audioElement.play();
+                }
+            });
         },
         getUserAvatar(sessionId) {
             // 从 sessionId 中提取所有数字
@@ -269,7 +274,7 @@ export default {
 <style scoped>
 .chat-container {
     display: flex;
-    height: 600px;
+    height: 100%;
 }
 
 .session-list {
@@ -422,7 +427,7 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    height: 80vh;
+    height: 90vh;
     max-width: 85vw;
     border-radius: 12px;
     overflow: hidden;
@@ -436,7 +441,7 @@ export default {
 .chat-history-dialog .el-dialog__body {
     padding: 0;
     overflow: hidden;
-    height: calc(80vh - 54px);
+    height: calc(90vh - 54px);
     /* 减去标题栏的高度 */
 }
 </style>
