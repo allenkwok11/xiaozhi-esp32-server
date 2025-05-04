@@ -3,7 +3,9 @@ package xiaozhi.modules.agent.controller;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +30,8 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.page.PageData;
+import xiaozhi.common.redis.RedisKeys;
+import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.common.utils.Result;
@@ -55,6 +59,7 @@ public class AgentController {
     private final DeviceService deviceService;
     private final AgentChatHistoryService agentChatHistoryService;
     private final AgentChatAudioService agentChatAudioService;
+    private final RedisUtils redisUtils;
 
     @GetMapping("/list")
     @Operation(summary = "获取用户智能体列表")
@@ -235,17 +240,37 @@ public class AgentController {
         return new Result<List<AgentChatHistoryDTO>>().ok(result);
     }
 
-    @GetMapping("/audio/{audioId}")
-    @Operation(summary = "下载音频")
+    @PostMapping("/audio/{audioId}")
+    @Operation(summary = "获取音频下载ID")
     @RequiresPermissions("sys:role:normal")
-    public ResponseEntity<byte[]> downloadAudio(@PathVariable("audioId") String audioId) {
+    public Result<String> getAudioId(@PathVariable("audioId") String audioId) {
+        byte[] audioData = agentChatAudioService.getAudio(audioId);
+        if (audioData == null) {
+            return new Result<String>().error("音频不存在");
+        }
+        String uuid = UUID.randomUUID().toString();
+        redisUtils.set(RedisKeys.getAgentAudioIdKey(uuid), audioId);
+        return new Result<String>().ok(uuid);
+    }
+
+    @GetMapping("/play/{uuid}")
+    @Operation(summary = "播放音频")
+    public ResponseEntity<byte[]> playAudio(@PathVariable("uuid") String uuid) {
+
+        String audioId = (String) redisUtils.get(RedisKeys.getAgentAudioIdKey(uuid));
+        if (StringUtils.isBlank(audioId)) {
+            return ResponseEntity.notFound().build();
+        }
+
         byte[] audioData = agentChatAudioService.getAudio(audioId);
         if (audioData == null) {
             return ResponseEntity.notFound().build();
         }
+        redisUtils.delete(RedisKeys.getAgentAudioIdKey(uuid));
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"play.wav\"")
                 .body(audioData);
     }
+
 }

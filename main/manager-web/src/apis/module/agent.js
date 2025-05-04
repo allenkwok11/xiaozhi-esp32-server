@@ -128,19 +128,19 @@ export default {
                 });
             }).send();
     },
-}
-
-export function getAgentSessions(agentId, params) {
-    return request({
-        url: `/agent/${agentId}/sessions`,
-        method: 'get',
-        params
-    });
-}
-
-export function getAgentChatHistory(agentId, sessionId) {
-    return request({
-        url: `/agent/${agentId}/chat-history/${sessionId}`,
-        method: 'get'
-    });
+    // 获取音频下载ID
+    getAudioId(audioId, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/agent/audio/${audioId}`)
+            .method('POST')
+            .success((res) => {
+                RequestService.clearRequestTime();
+                callback(res);
+            })
+            .fail(() => {
+                RequestService.reAjaxFun(() => {
+                    this.getAudioId(audioId, callback);
+                });
+            }).send();
+    },
 }
