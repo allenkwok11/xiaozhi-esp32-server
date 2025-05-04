@@ -94,7 +94,7 @@ public class AgentController {
     @PostMapping
     @Operation(summary = "创建智能体")
     @RequiresPermissions("sys:role:normal")
-    public Result<Void> save(@RequestBody @Valid AgentCreateDTO dto) {
+    public Result<String> save(@RequestBody @Valid AgentCreateDTO dto) {
         AgentEntity entity = ConvertUtils.sourceToTarget(dto, AgentEntity.class);
 
         // 获取默认模板
@@ -122,7 +122,7 @@ public class AgentController {
         // ID、智能体编码和排序会在Service层自动生成
         agentService.insert(entity);
 
-        return new Result<>();
+        return new Result<String>().ok(entity.getId());
     }
 
     @PutMapping("/{id}")
