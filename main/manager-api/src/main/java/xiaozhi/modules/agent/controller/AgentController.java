@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +38,7 @@ import xiaozhi.modules.agent.dto.AgentDTO;
 import xiaozhi.modules.agent.dto.AgentUpdateDTO;
 import xiaozhi.modules.agent.entity.AgentEntity;
 import xiaozhi.modules.agent.entity.AgentTemplateEntity;
+import xiaozhi.modules.agent.service.AgentChatAudioService;
 import xiaozhi.modules.agent.service.AgentChatHistoryService;
 import xiaozhi.modules.agent.service.AgentService;
 import xiaozhi.modules.agent.service.AgentTemplateService;
@@ -50,6 +54,7 @@ public class AgentController {
     private final AgentTemplateService agentTemplateService;
     private final DeviceService deviceService;
     private final AgentChatHistoryService agentChatHistoryService;
+    private final AgentChatAudioService agentChatAudioService;
 
     @GetMapping("/list")
     @Operation(summary = "获取用户智能体列表")
@@ -228,5 +233,19 @@ public class AgentController {
         // 查询聊天记录
         List<AgentChatHistoryDTO> result = agentChatHistoryService.getChatHistoryBySessionId(id, sessionId);
         return new Result<List<AgentChatHistoryDTO>>().ok(result);
+    }
+
+    @GetMapping("/audio/{audioId}")
+    @Operation(summary = "下载音频")
+    @RequiresPermissions("sys:role:normal")
+    public ResponseEntity<byte[]> downloadAudio(@PathVariable("audioId") String audioId) {
+        byte[] audioData = agentChatAudioService.getAudio(audioId);
+        if (audioData == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"play.wav\"")
+                .body(audioData);
     }
 }

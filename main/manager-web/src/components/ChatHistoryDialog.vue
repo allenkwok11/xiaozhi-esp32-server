@@ -5,7 +5,7 @@
             <div class="session-list" @scroll="handleScroll">
                 <div v-for="session in sessions" :key="session.sessionId" class="session-item"
                     :class="{ active: currentSessionId === session.sessionId }" @click="selectSession(session)">
-                    <img src="@/assets/xiaozhi-logo.png" class="avatar" />
+                    <img :src="getUserAvatar(session.sessionId)" class="avatar" />
                     <div class="session-info">
                         <div class="session-time">{{ formatTime(session.createdAt) }}</div>
                         <div class="message-count">{{ session.chatCount > 99 ? '99' : session.chatCount }}</div>
@@ -21,9 +21,13 @@
                             {{ message.content }}
                         </div>
                         <div v-else class="message-item" :class="{ 'user-message': message.chatType === 1 }">
-                            <img :src="message.chatType === 1 ? require('@/assets/user-avatar.png') : require('@/assets/xiaozhi-logo.png')"
+                            <img :src="message.chatType === 1 ? getUserAvatar(currentSessionId) : require('@/assets/xiaozhi-logo.png')"
                                 class="avatar" />
-                            <div class="message-content">{{ message.content }}</div>
+                            <div class="message-content">
+                                {{ message.content }}
+                                <i v-if="message.audioId" :class="getAudioIconClass(message)"
+                                    @click="playAudio(message)" class="audio-icon"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -66,7 +70,9 @@ export default {
             loading: false,
             hasMore: true,
             scrollTimer: null,
-            isFirstLoad: true
+            isFirstLoad: true,
+            playingAudioId: null,
+            audioElement: null
         };
     },
     watch: {
@@ -207,6 +213,54 @@ export default {
                 const day = date.getDate().toString().padStart(2, '0');
                 return `${year}-${month}-${day} ${hours}:${minutes}`;
             }
+        },
+        getAudioIconClass(message) {
+            if (this.playingAudioId === message.audioId) {
+                return 'el-icon-loading';
+            }
+            return 'el-icon-video-play';
+        },
+        playAudio(message) {
+            if (this.playingAudioId === message.audioId) {
+                // 如果正在播放当前音频，则停止播放
+                if (this.audioElement) {
+                    this.audioElement.pause();
+                    this.audioElement = null;
+                }
+                this.playingAudioId = null;
+                return;
+            }
+
+            // 停止当前正在播放的音频
+            if (this.audioElement) {
+                this.audioElement.pause();
+                this.audioElement = null;
+            }
+
+            // 播放新音频
+            this.playingAudioId = message.audioId;
+            this.audioElement = new Audio(Api.getServiceUrl() + `/agent/audio/${message.audioId}`);
+
+            this.audioElement.onended = () => {
+                this.playingAudioId = null;
+                this.audioElement = null;
+            };
+
+            this.audioElement.play();
+        },
+        getUserAvatar(sessionId) {
+            // 从 sessionId 中提取所有数字
+            const numbers = sessionId.match(/\d+/g);
+            if (!numbers) return require('@/assets/user-avatar1.png');
+
+            // 将所有数字相加
+            const sum = numbers.reduce((acc, num) => acc + parseInt(num), 0);
+
+            // 计算模5并加1，得到1-5之间的数字
+            const avatarIndex = (sum % 5) + 1;
+
+            // 返回对应的头像图片
+            return require(`@/assets/user-avatar${avatarIndex}.png`);
         }
     }
 };
@@ -269,7 +323,7 @@ export default {
 .message-count {
     font-size: 14px;
     color: #fff;
-    background-color: #1890ff;
+    background-color: #b4b4b4;
     border-radius: 20px;
     float: left;
     width: 20px;
@@ -302,10 +356,25 @@ export default {
     margin: 0 10px;
     text-align: left;
     line-height: 20px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.audio-icon {
+    font-size: 20px;
+    cursor: pointer;
+    margin: 0 5px;
+    color: #1890ff;
 }
 
 .user-message .message-content {
     background-color: #1890ff;
+    color: white;
+    flex-direction: row-reverse;
+}
+
+.user-message .audio-icon {
     color: white;
 }
 
@@ -355,6 +424,13 @@ export default {
     transform: translate(-50%, -50%);
     height: 80vh;
     max-width: 85vw;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.chat-history-dialog .el-dialog__header {
+    background-color: #e6f7ff;
+    padding: 15px 20px;
 }
 
 .chat-history-dialog .el-dialog__body {
