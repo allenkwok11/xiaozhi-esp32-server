@@ -151,11 +151,9 @@ class ConnectionHandler:
                     self.headers["device-id"] = query_params["device-id"][0]
                     self.headers["client-id"] = query_params["client-id"][0]
                 else:
-                    self.logger.bind(tag=TAG).error(
-                        "无法从请求头和URL查询参数中获取device-id"
-                    )
+                    await ws.send("端口正常，如需测试连接，请使用test_page.html")
+                    await self.close(ws)
                     return
-
             # 获取客户端ip地址
             self.client_ip = ws.remote_address[0]
             self.logger.bind(tag=TAG).info(
@@ -212,7 +210,8 @@ class ConnectionHandler:
     async def _save_and_close(self, ws):
         """保存记忆并关闭连接"""
         try:
-            await self.memory.save_memory(self.dialogue.dialogue)
+            if self.memory:
+                await self.memory.save_memory(self.dialogue.dialogue)
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
         finally:
@@ -318,7 +317,7 @@ class ConnectionHandler:
 
     def _init_report_threads(self):
         """初始化ASR和TTS上报线程"""
-        if not self.read_config_from_api:
+        if not self.read_config_from_api or self.need_bind:
             return
         if self.tts_report_thread is None or not self.tts_report_thread.is_alive():
             self.tts_report_thread = threading.Thread(
