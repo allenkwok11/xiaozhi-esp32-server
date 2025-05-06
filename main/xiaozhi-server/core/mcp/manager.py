@@ -50,9 +50,9 @@ class MCPManager:
         """初始化所有MCP服务"""
         config = self.load_config()
         for name, srv_config in config.items():
-            if not srv_config.get("command"):
+            if not srv_config.get("command") and not srv_config.get("url"):
                 self.logger.bind(tag=TAG).warning(
-                    f"Skipping server {name}: command not specified"
+                    f"Skipping server {name}: neither command nor url specified"
                 )
                 continue
 

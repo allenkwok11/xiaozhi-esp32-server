@@ -4,6 +4,7 @@ from contextlib import AsyncExitStack
 import os, shutil
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.client.sse import sse_client
 
 from config.logger import setup_logging
 
@@ -21,29 +22,36 @@ class MCPClient:
     async def initialize(self):
         args = self.config.get("args", [])
 
-        command = (
-            shutil.which("npx")
-            if self.config["command"] == "npx"
-            else self.config["command"]
-        )
-        
-        env={**os.environ}
-        if self.config.get("env"):
-            env.update(self.config["env"])
-        
-        server_params = StdioServerParameters(
-            command=command,
-            args=args,
-            env=env
-        )
-        
-        stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
-        self.stdio, self.write = stdio_transport
-        time_out_delta =  timedelta(seconds=15)
-        self.session = await self.exit_stack.enter_async_context(ClientSession(read_stream=self.stdio, write_stream=self.write, read_timeout_seconds=time_out_delta))
-        
+        if "command" in self.config:
+            command = (
+                shutil.which("npx")
+                if self.config["command"] == "npx"
+                else self.config["command"]
+            )
+            env = {**os.environ}
+            if self.config.get("env"):
+                env.update(self.config["env"])
+            server_params = StdioServerParameters(
+                command=command,
+                args=args,
+                env=env
+            )
+            stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
+            self.stdio, self.write = stdio_transport
+            time_out_delta = timedelta(seconds=15)
+            self.session = await self.exit_stack.enter_async_context(
+                ClientSession(read_stream=self.stdio, write_stream=self.write, read_timeout_seconds=time_out_delta)
+            )
+        elif "url" in self.config:
+            sse_transport = await self.exit_stack.enter_async_context(sse_client(self.config["url"]))
+            self.sse_read, self.sse_write = sse_transport
+            self.session = await self.exit_stack.enter_async_context(
+                ClientSession(read_stream=self.sse_read, write_stream=self.sse_write)
+            )
+        else:
+            raise ValueError("MCPClient config must have 'command' or 'url'.")
+
         await self.session.initialize()
-        
         # List available tools
         response = await self.session.list_tools()
         tools = response.tools
