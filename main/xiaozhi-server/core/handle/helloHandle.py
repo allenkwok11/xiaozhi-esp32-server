@@ -21,7 +21,15 @@ WAKEUP_CONFIG = {
 }
 
 
-async def handleHelloMessage(conn):
+async def handleHelloMessage(conn, msg_json):
+    """处理hello消息"""
+    audio_params = msg_json.get("audio_params")
+    if audio_params:
+        format = audio_params.get("format")
+        logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
+        conn.audio_format = format
+        conn.welcome_msg['audio_params'] = audio_params
+
     await conn.websocket.send(json.dumps(conn.welcome_msg))
 
 

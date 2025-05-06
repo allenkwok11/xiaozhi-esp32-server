@@ -53,8 +53,15 @@ class TTSProviderBase(ABC):
     async def text_to_speak(self, text, output_file):
         pass
 
+    def audio_to_pcm_data(self, audio_file_path):
+        """音频文件转换为PCM编码"""
+        return self.audio_to_data(audio_file_path, is_opus=False)
+    
     def audio_to_opus_data(self, audio_file_path):
         """音频文件转换为Opus编码"""
+        return self.audio_to_data(audio_file_path, is_opus=True)
+    
+    def audio_to_data(self, audio_file_path, is_opus=True):
         # 获取文件后缀名
         file_type = os.path.splitext(audio_file_path)[1]
         if file_type:
@@ -80,7 +87,7 @@ class TTSProviderBase(ABC):
         frame_duration = 60  # 60ms per frame
         frame_size = int(16000 * frame_duration / 1000)  # 960 samples/frame
 
-        opus_datas = []
+        datas = []
         # 按帧处理所有音频数据（包括最后一帧可能补零）
         for i in range(0, len(raw_data), frame_size * 2):  # 16bit=2bytes/sample
             # 获取当前帧的二进制数据
@@ -89,12 +96,16 @@ class TTSProviderBase(ABC):
             # 如果最后一帧不足，补零
             if len(chunk) < frame_size * 2:
                 chunk += b"\x00" * (frame_size * 2 - len(chunk))
+            
+            if is_opus:
+                # 转换为numpy数组处理
+                np_frame = np.frombuffer(chunk, dtype=np.int16)
+                 # 编码Opus数据
+                frame_data = encoder.encode(np_frame.tobytes(), frame_size)
+            else: 
+                frame_data = chunk if isinstance(chunk, bytes) else bytes(chunk)
 
-            # 转换为numpy数组处理
-            np_frame = np.frombuffer(chunk, dtype=np.int16)
 
-            # 编码Opus数据
-            opus_data = encoder.encode(np_frame.tobytes(), frame_size)
-            opus_datas.append(opus_data)
+            datas.append(frame_data)
 
-        return opus_datas, duration
+        return datas, duration

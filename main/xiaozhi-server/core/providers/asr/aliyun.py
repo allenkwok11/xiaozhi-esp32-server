@@ -158,20 +158,7 @@ class ASRProvider(ASRProviderBase):
         request += "&enable_inverse_text_normalization=true"
         request += "&enable_voice_detection=false"
         return request
-
-    def decode_opus(self, opus_data: List[bytes], session_id: str) -> List[bytes]:
-        """将Opus数据解码为PCM"""
-        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
-        pcm_data = []
-
-        for opus_packet in opus_data:
-            try:
-                pcm_frame = decoder.decode(opus_packet, 960)  # 960 samples = 60ms
-                pcm_data.append(pcm_frame)
-            except opuslib_next.OpusError as e:
-                logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
-
-        return pcm_data
+    
 
     def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
         """PCM数据保存为WAV文件"""
