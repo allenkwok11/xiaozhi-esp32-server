@@ -260,12 +260,9 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         if (cachedDate != null) {
             return cachedDate;
         }
-        List<Date> list = deviceDao.getAllLastConnectedAtByAgentId(agentId);
-        Date maxDate = Collections.max(list, Comparator.comparing(Date::getTime));
-        // 将结果存入Redis, 存储设备最近最后连接时间，和设备数量
-        redisUtils.set(RedisKeys.getAgentDeviceCountById(agentId), list.size(), 60);
+        Date maxDate = deviceDao.getAllLastConnectedAtByAgentId(agentId);
         if (maxDate != null) {
-            redisUtils.set(RedisKeys.getAgentDeviceLastConnectedAtById(agentId), maxDate, 60);
+            redisUtils.set(RedisKeys.getAgentDeviceLastConnectedAtById(agentId), maxDate, 60 * 2);
         }
         return maxDate;
     }

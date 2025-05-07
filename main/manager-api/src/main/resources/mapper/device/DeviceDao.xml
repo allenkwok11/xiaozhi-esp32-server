@@ -3,6 +3,10 @@
 <mapper namespace="xiaozhi.modules.device.dao.DeviceDao">
     <!-- 获取此智能体全部设备的最后连接时间 -->
     <select id="getAllLastConnectedAtByAgentId" resultType="java.util.Date">
-        SELECT last_connected_at FROM ai_device WHERE agent_id = #{agentId}
+        SELECT last_connected_at FROM ai_device
+        WHERE
+            agent_id = #{agentId}
+        order by
+            last_connected_at desc limit 0,1
     </select>
 </mapper> 

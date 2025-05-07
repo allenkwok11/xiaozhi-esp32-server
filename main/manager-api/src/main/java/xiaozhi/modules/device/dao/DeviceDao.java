@@ -16,6 +16,6 @@ public interface DeviceDao extends BaseMapper<DeviceEntity> {
      * @param agentId 智能体id
      * @return
      */
-    List<Date> getAllLastConnectedAtByAgentId(String agentId);
+    Date getAllLastConnectedAtByAgentId(String agentId);
 
 }
