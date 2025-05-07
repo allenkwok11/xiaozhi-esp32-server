@@ -1,4 +1,3 @@
-from config.logger import setup_logging
 import time
 import copy
 from core.utils.util import remove_punctuation_and_length
@@ -9,12 +8,13 @@ from core.handle.ttsReportHandle import enqueue_tts_report
 from core.providers.tts.base import audio_to_opus_data
 
 TAG = __name__
-logger = setup_logging()
 
 
 async def handleAudioMessage(conn, audio):
+    if conn.vad is None:
+        return
     if not conn.asr_server_receive:
-        logger.bind(tag=TAG).debug(f"前期数据处理中，暂停接收")
+        conn.logger.bind(tag=TAG).debug(f"前期数据处理中，暂停接收")
         return
     if conn.client_listen_mode == "auto":
         have_voice = conn.vad.is_vad(conn, audio)
@@ -40,7 +40,7 @@ async def handleAudioMessage(conn, audio):
             conn.asr_server_receive = True
         else:
             text, _ = await conn.asr.speech_to_text(conn.asr_audio, conn.session_id)
-            logger.bind(tag=TAG).info(f"识别文本: {text}")
+            conn.logger.bind(tag=TAG).info(f"识别文本: {text}")
             text_len, _ = remove_punctuation_and_length(text)
             if text_len > 0:
                 # 使用自定义模块进行上报
@@ -120,7 +120,7 @@ async def check_bind_device(conn):
     if conn.bind_code:
         # 确保bind_code是6位数字
         if len(conn.bind_code) != 6:
-            logger.bind(tag=TAG).error(f"无效的绑定码格式: {conn.bind_code}")
+            conn.logger.bind(tag=TAG).error(f"无效的绑定码格式: {conn.bind_code}")
             text = "绑定码格式错误，请检查配置。"
             await send_stt_message(conn, text)
             return
@@ -144,7 +144,7 @@ async def check_bind_device(conn):
                 num_packets, _ = audio_to_opus_data(num_path)
                 conn.audio_play_queue.put((num_packets, None, i + 1))
             except Exception as e:
-                logger.bind(tag=TAG).error(f"播放数字音频失败: {e}")
+                conn.logger.bind(tag=TAG).error(f"播放数字音频失败: {e}")
                 continue
     else:
         text = f"没有找到该设备的版本信息，请正确配置 OTA地址，然后重新编译固件。"
