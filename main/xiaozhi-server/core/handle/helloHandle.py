@@ -9,7 +9,6 @@ import random
 import time
 
 TAG = __name__
-logger = setup_logging()
 
 WAKEUP_CONFIG = {
     "dir": "config/assets/",
@@ -75,7 +74,7 @@ async def wakeupWordsResponse(conn):
         await asyncio.sleep(1)
         wait_max_time -= 1
         if wait_max_time <= 0:
-            logger.bind(tag=TAG).error("连接对象没有llm")
+            conn.logger.bind(tag=TAG).error("连接对象没有llm")
             return
 
     """唤醒词响应"""

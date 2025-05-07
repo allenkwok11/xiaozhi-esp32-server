@@ -2,7 +2,7 @@ import asyncio
 import websockets
 from config.logger import setup_logging
 from core.connection import ConnectionHandler
-from core.utils.util import initialize_modules
+from core.utils.util import initialize_modules, check_vad_update, check_asr_update
 from config.config_loader import get_config_from_api
 
 TAG = __name__
@@ -84,38 +84,8 @@ class WebSocketServer:
                     return False
 
                 # 检查 VAD 和 ASR 类型是否需要更新
-                update_vad = False
-                update_asr = False
-
-                # 获取当前和新的 VAD 类型
-                current_vad_module = self.config["selected_module"]["VAD"]
-                new_vad_module = new_config["selected_module"]["VAD"]
-                current_vad_type = (
-                    current_vad_module
-                    if "type" not in self.config["VAD"][current_vad_module]
-                    else self.config["VAD"][current_vad_module]["type"]
-                )
-                new_vad_type = (
-                    new_vad_module
-                    if "type" not in new_config["VAD"][new_vad_module]
-                    else new_config["VAD"][new_vad_module]["type"]
-                )
-                update_vad = current_vad_type != new_vad_type
-
-                # 获取当前和新的 ASR 类型
-                current_asr_module = self.config["selected_module"]["ASR"]
-                new_asr_module = new_config["selected_module"]["ASR"]
-                current_asr_type = (
-                    current_asr_module
-                    if "type" not in self.config["ASR"][current_asr_module]
-                    else self.config["ASR"][current_asr_module]["type"]
-                )
-                new_asr_type = (
-                    new_asr_module
-                    if "type" not in new_config["ASR"][new_asr_module]
-                    else new_config["ASR"][new_asr_module]["type"]
-                )
-                update_asr = current_asr_type != new_asr_type
+                update_vad = check_vad_update(self.config, new_config)
+                update_asr = check_asr_update(self.config, new_config)
 
                 # 更新配置
                 self.config = new_config
@@ -132,12 +102,18 @@ class WebSocketServer:
                 )
 
                 # 更新组件实例
-                self._vad = modules["vad"] if "vad" in modules else None
-                self._asr = modules["asr"] if "asr" in modules else None
-                self._tts = modules["tts"] if "tts" in modules else None
-                self._llm = modules["llm"] if "llm" in modules else None
-                self._intent = modules["intent"] if "intent" in modules else None
-                self._memory = modules["memory"] if "memory" in modules else None
+                if "vad" in modules:
+                    self._vad = modules["vad"]
+                if "asr" in modules:
+                    self._asr = modules["asr"]
+                if "tts" in modules:
+                    self._tts = modules["tts"]
+                if "llm" in modules:
+                    self._llm = modules["llm"]
+                if "intent" in modules:
+                    self._intent = modules["intent"]
+                if "memory" in modules:
+                    self._memory = modules["memory"]
 
                 return True
         except Exception as e:
