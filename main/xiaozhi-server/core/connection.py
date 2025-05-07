@@ -53,9 +53,9 @@ class ConnectionHandler:
         server=None,
     ):
         self.config = config
-        self.server = server
         self.logger = setup_logging()
         self.auth = AuthMiddleware(config)
+        self.server = server  # 保存server实例的引用
 
         self.need_bind = False
         self.bind_code = None
@@ -151,11 +151,9 @@ class ConnectionHandler:
                     self.headers["device-id"] = query_params["device-id"][0]
                     self.headers["client-id"] = query_params["client-id"][0]
                 else:
-                    self.logger.bind(tag=TAG).error(
-                        "无法从请求头和URL查询参数中获取device-id"
-                    )
+                    await ws.send("端口正常，如需测试连接，请使用test_page.html")
+                    await self.close(ws)
                     return
-
             # 获取客户端ip地址
             self.client_ip = ws.remote_address[0]
             self.logger.bind(tag=TAG).info(
@@ -212,7 +210,8 @@ class ConnectionHandler:
     async def _save_and_close(self, ws):
         """保存记忆并关闭连接"""
         try:
-            await self.memory.save_memory(self.dialogue.dialogue)
+            if self.memory:
+                await self.memory.save_memory(self.dialogue.dialogue)
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
         finally:
@@ -234,74 +233,6 @@ class ConnectionHandler:
         elif isinstance(message, bytes):
             await handleAudioMessage(self, message)
 
-    async def handle_config_update(self, message):
-        """处理配置更新请求"""
-        content = message.get("content", {})
-        new_config = content
-
-        # 遍历所有支持的配置模块
-        updated_modules = []
-        for config_model in ["tts", "llm", "vad", "asr", "memory", "intent"]:
-            if config_model not in new_config:
-                continue
-
-            new_content = new_config[config_model]
-            old_content = self.config.get(config_model, {})
-
-            # 记录配置变更
-            self.logger.bind(tag=TAG).info(
-                f"配置更新: {config_model} 旧值: {json.dumps(old_content, ensure_ascii=False)} "
-                f"新值: {json.dumps(new_content, ensure_ascii=False)}"
-            )
-
-            # 深度合并配置
-            if isinstance(old_content, dict) and isinstance(new_content, dict):
-                merged = {**old_content, **new_content}
-                self.config[config_model] = merged
-            else:
-                self.config[config_model] = new_content
-
-            # 标记需要重新初始化的模块
-            if config_model in ["llm", "tts", "asr", "vad", "intent", "memory"]:
-                updated_modules.append(config_model)
-
-        # 同步更新 WebSocketServer 的配置
-        if self.server:
-            async with self.server.config_lock:  # 使用锁确保线程安全
-                for config_model in updated_modules:
-                    self.server.config[config_model].update(new_config[config_model])
-
-        # 批量初始化模块
-        if updated_modules:
-            try:
-                self._initialize_components(self.config)
-                self.logger.bind(tag=TAG).info(
-                    f"已重新初始化模块: {', '.join(updated_modules)}"
-                )
-            except Exception as e:
-                self.logger.bind(tag=TAG).error(f"模块初始化失败: {str(e)}")
-                await self.websocket.send(
-                    json.dumps(
-                        {
-                            "type": "config_update_response",
-                            "status": "error",
-                            "message": f"模块初始化失败: {str(e)}",
-                        }
-                    )
-                )
-                return
-
-        # 返回成功响应
-        await self.websocket.send(
-            json.dumps(
-                {
-                    "type": "config_update_response",
-                    "status": "success",
-                    "message": f"已更新配置: {', '.join(updated_modules)}",
-                }
-            )
-        )
-
     def _initialize_components(self, private_config):
         """初始化组件"""
         if private_config is not None:
@@ -318,7 +249,7 @@ class ConnectionHandler:
 
     def _init_report_threads(self):
         """初始化ASR和TTS上报线程"""
-        if not self.read_config_from_api:
+        if not self.read_config_from_api or self.need_bind:
             return
         if self.tts_report_thread is None or not self.tts_report_thread.is_alive():
             self.tts_report_thread = threading.Thread(
@@ -1094,6 +1025,7 @@ def filter_sensitive_info(config: dict) -> dict:
         "personal_access_token",
         "access_token",
         "token",
+        "secret",
         "access_key_secret",
         "secret_key",
     ]

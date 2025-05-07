@@ -80,7 +80,7 @@ async def handleTextMessage(conn, message):
                 await conn.websocket.send(
                     json.dumps(
                         {
-                            "type": "config_update_response",
+                            "type": "server",
                             "status": "error",
                             "message": "服务器密钥验证失败",
                         }
@@ -89,6 +89,52 @@ async def handleTextMessage(conn, message):
                 return
             # 动态更新配置
             if msg_json["action"] == "update_config":
-                await conn.handle_config_update(msg_json)
+                try:
+                    # 更新WebSocketServer的配置
+                    if not conn.server:
+                        await conn.websocket.send(
+                            json.dumps(
+                                {
+                                    "type": "config_update_response",
+                                    "status": "error",
+                                    "message": "无法获取服务器实例",
+                                }
+                            )
+                        )
+                        return
+
+                    if not await conn.server.update_config():
+                        await conn.websocket.send(
+                            json.dumps(
+                                {
+                                    "type": "config_update_response",
+                                    "status": "error",
+                                    "message": "更新服务器配置失败",
+                                }
+                            )
+                        )
+                        return
+
+                    # 发送成功响应
+                    await conn.websocket.send(
+                        json.dumps(
+                            {
+                                "type": "config_update_response",
+                                "status": "success",
+                                "message": "配置更新成功",
+                            }
+                        )
+                    )
+                except Exception as e:
+                    conn.logger.bind(tag=TAG).error(f"更新配置失败: {str(e)}")
+                    await conn.websocket.send(
+                        json.dumps(
+                            {
+                                "type": "config_update_response",
+                                "status": "error",
+                                "message": f"更新配置失败: {str(e)}",
+                            }
+                        )
+                    )
     except json.JSONDecodeError:
         await conn.websocket.send(message)

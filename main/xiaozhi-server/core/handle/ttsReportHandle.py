@@ -95,7 +95,7 @@ def opus_to_wav(opus_data):
 
 
 def enqueue_tts_report(conn, type, text, opus_data):
-    if not conn.read_config_from_api:
+    if not conn.read_config_from_api or conn.need_bind:
         return
     """将TTS数据加入上报队列
 
@@ -108,7 +108,7 @@ def enqueue_tts_report(conn, type, text, opus_data):
         # 使用连接对象的队列，传入文本和二进制数据而非文件路径
         conn.tts_report_queue.put((type, text, opus_data))
 
-        logger.bind(tag=TAG).info(
+        logger.bind(tag=TAG).debug(
             f"TTS数据已加入上报队列: {conn.device_id}, 音频大小: {len(opus_data)} "
         )
     except Exception as e:

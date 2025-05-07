@@ -3,6 +3,7 @@ import websockets
 from config.logger import setup_logging
 from core.connection import ConnectionHandler
 from core.utils.util import initialize_modules
+from config.config_loader import get_config_from_api
 
 TAG = __name__
 
@@ -13,14 +14,21 @@ class WebSocketServer:
         self.logger = setup_logging()
         self.config_lock = asyncio.Lock()
         modules = initialize_modules(
-            self.logger, self.config, True, True, True, True, True, True
+            self.logger,
+            self.config,
+            "VAD" in self.config["selected_module"],
+            "ASR" in self.config["selected_module"],
+            "LLM" in self.config["selected_module"],
+            "TTS" in self.config["selected_module"],
+            "Memory" in self.config["selected_module"],
+            "Intent" in self.config["selected_module"],
         )
-        self._vad = modules["vad"]
-        self._asr = modules["asr"]
-        self._tts = modules["tts"]
-        self._llm = modules["llm"]
-        self._intent = modules["intent"]
-        self._memory = modules["memory"]
+        self._vad = modules["vad"] if "vad" in modules else None
+        self._asr = modules["asr"] if "asr" in modules else None
+        self._tts = modules["tts"] if "tts" in modules else None
+        self._llm = modules["llm"] if "llm" in modules else None
+        self._intent = modules["intent"] if "intent" in modules else None
+        self._memory = modules["memory"] if "memory" in modules else None
         self.active_connections = set()
 
     async def start(self):
@@ -44,7 +52,7 @@ class WebSocketServer:
             self._tts,
             self._memory,
             self._intent,
-            self  # 传入当前 WebSocketServer 实例
+            self,  # 传入server实例
         )
         self.active_connections.add(handler)
         try:
@@ -60,3 +68,78 @@ class WebSocketServer:
         else:
             # 如果是普通 HTTP 请求，返回 "server is running"
             return websocket.respond(200, "Server is running\n")
+
+    async def update_config(self) -> bool:
+        """更新服务器配置并重新初始化组件
+
+        Returns:
+            bool: 更新是否成功
+        """
+        try:
+            async with self.config_lock:
+                # 重新获取配置
+                new_config = get_config_from_api(self.config)
+                if new_config is None:
+                    self.logger.bind(tag=TAG).error("获取新配置失败")
+                    return False
+
+                # 检查 VAD 和 ASR 类型是否需要更新
+                update_vad = False
+                update_asr = False
+
+                # 获取当前和新的 VAD 类型
+                current_vad_module = self.config["selected_module"]["VAD"]
+                new_vad_module = new_config["selected_module"]["VAD"]
+                current_vad_type = (
+                    current_vad_module
+                    if "type" not in self.config["VAD"][current_vad_module]
+                    else self.config["VAD"][current_vad_module]["type"]
+                )
+                new_vad_type = (
+                    new_vad_module
+                    if "type" not in new_config["VAD"][new_vad_module]
+                    else new_config["VAD"][new_vad_module]["type"]
+                )
+                update_vad = current_vad_type != new_vad_type
+
+                # 获取当前和新的 ASR 类型
+                current_asr_module = self.config["selected_module"]["ASR"]
+                new_asr_module = new_config["selected_module"]["ASR"]
+                current_asr_type = (
+                    current_asr_module
+                    if "type" not in self.config["ASR"][current_asr_module]
+                    else self.config["ASR"][current_asr_module]["type"]
+                )
+                new_asr_type = (
+                    new_asr_module
+                    if "type" not in new_config["ASR"][new_asr_module]
+                    else new_config["ASR"][new_asr_module]["type"]
+                )
+                update_asr = current_asr_type != new_asr_type
+
+                # 更新配置
+                self.config = new_config
+                # 重新初始化组件
+                modules = initialize_modules(
+                    self.logger,
+                    new_config,
+                    update_vad,
+                    update_asr,
+                    "LLM" in new_config["selected_module"],
+                    "TTS" in new_config["selected_module"],
+                    "Memory" in new_config["selected_module"],
+                    "Intent" in new_config["selected_module"],
+                )
+
+                # 更新组件实例
+                self._vad = modules["vad"] if "vad" in modules else None
+                self._asr = modules["asr"] if "asr" in modules else None
+                self._tts = modules["tts"] if "tts" in modules else None
+                self._llm = modules["llm"] if "llm" in modules else None
+                self._intent = modules["intent"] if "intent" in modules else None
+                self._memory = modules["memory"] if "memory" in modules else None
+
+                return True
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"更新服务器配置失败: {str(e)}")
+            return False
