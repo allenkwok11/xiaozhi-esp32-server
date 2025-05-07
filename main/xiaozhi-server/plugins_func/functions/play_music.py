@@ -10,6 +10,7 @@ from pathlib import Path
 from core.utils import p3
 from core.handle.sendAudioHandle import send_stt_message
 from plugins_func.register import register_function, ToolType, ActionResponse, Action
+from core.utils.dialogue import Message
 
 
 TAG = __name__
@@ -214,6 +215,7 @@ async def play_local_music(conn, specific_file=None):
             return
         text = _get_random_play_prompt(selected_music)
         await send_stt_message(conn, text)
+        conn.dialogue.put(Message(role="assistant", content=text))
         conn.tts_first_text_index = 0
         conn.tts_last_text_index = 0
 
