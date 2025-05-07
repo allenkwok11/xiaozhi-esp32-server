@@ -129,7 +129,10 @@ class ASRProvider(ASRProviderBase):
         try:
             # 保存音频文件
             start_time = time.time()
-            pcm_data = self.decode_opus(opus_data, session_id)
+            if self.audio_format == "pcm":
+                pcm_data = opus_data
+            else:
+                pcm_data = self.decode_opus(opus_data, session_id)
             file_path = self.save_audio_to_file(pcm_data, session_id)
             logger.bind(tag=TAG).debug(
                 f"音频文件保存耗时: {time.time() - start_time:.3f}s | 路径: {file_path}"
