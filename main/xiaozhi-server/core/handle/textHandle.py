@@ -136,5 +136,8 @@ async def handleTextMessage(conn, message):
                             }
                         )
                     )
+            # 重启服务器
+            elif msg_json["action"] == "restart":
+                await conn.handle_restart(msg_json)
     except json.JSONDecodeError:
         await conn.websocket.send(message)

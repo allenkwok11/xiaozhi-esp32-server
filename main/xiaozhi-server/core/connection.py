@@ -1,6 +1,7 @@
 import os
 import copy
 import json
+import sys
 import uuid
 import time
 import queue
@@ -232,6 +233,38 @@ class ConnectionHandler:
             await handleTextMessage(self, message)
         elif isinstance(message, bytes):
             await handleAudioMessage(self, message)
+
+    async def handle_restart(self, message):
+        """处理服务器重启请求"""
+        try:
+
+            self.logger.bind(tag=TAG).info("收到服务器重启指令，准备执行...")
+
+            # 发送确认响应
+            await self.websocket.send(json.dumps({
+                "type": "server_response",
+                "status": "success",
+                "message": "服务器重启中..."
+            }))
+
+            # 异步执行重启操作
+            def restart_server():
+                """实际执行重启的方法"""
+                time.sleep(1)
+                self.logger.bind(tag=TAG).info("执行服务器重启...")
+                python = sys.executable
+                os.execl(python, python, *sys.argv)
+
+            # 使用线程执行重启避免阻塞事件循环
+            threading.Thread(target=restart_server, daemon=True).start()
+
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"重启失败: {str(e)}")
+            await self.websocket.send(json.dumps({
+                "type": "server_response",
+                "status": "error",
+                "message": f"Restart failed: {str(e)}"
+            }))
 
     def _initialize_components(self, private_config):
         """初始化组件"""
