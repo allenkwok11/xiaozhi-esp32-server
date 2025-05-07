@@ -510,7 +510,7 @@ class ConnectionHandler:
                 future = self.executor.submit(
                     self.speak_and_play, segment_text, text_index
                 )
-                self.tts_queue.put(future)
+                self.tts_queue.put((future, text_index))
 
         self.llm_finish_task = True
         self.dialogue.put(Message(role="assistant", content="".join(response_message)))
@@ -685,7 +685,7 @@ class ConnectionHandler:
                 future = self.executor.submit(
                     self.speak_and_play, segment_text, text_index
                 )
-                self.tts_queue.put(future)
+                self.tts_queue.put((future, text_index))
 
         # 存储对话内容
         if len(response_message) > 0:
@@ -747,7 +747,7 @@ class ConnectionHandler:
             text = result.response
             self.recode_first_last_text(text, text_index)
             future = self.executor.submit(self.speak_and_play, text, text_index)
-            self.tts_queue.put(future)
+            self.tts_queue.put((future, text_index))
             self.dialogue.put(Message(role="assistant", content=text))
         elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
             text = result.result
@@ -780,7 +780,7 @@ class ConnectionHandler:
             text = result.result
             self.recode_first_last_text(text, text_index)
             future = self.executor.submit(self.speak_and_play, text, text_index)
-            self.tts_queue.put(future)
+            self.tts_queue.put((future, text_index))
             self.dialogue.put(Message(role="assistant", content=text))
         else:
             pass
@@ -908,6 +908,8 @@ class ConnectionHandler:
         if text is None or len(text) <= 0:
             self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{text}")
             return None, text, text_index
+        if text_index>2:
+            time.sleep(20)
         tts_file = self.tts.to_tts(text)
         if tts_file is None:
             self.logger.bind(tag=TAG).error(f"tts转换失败，{text}")
