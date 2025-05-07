@@ -908,8 +908,6 @@ class ConnectionHandler:
         if text is None or len(text) <= 0:
             self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{text}")
             return None, text, text_index
-        if text_index>2:
-            time.sleep(20)
         tts_file = self.tts.to_tts(text)
         if tts_file is None:
             self.logger.bind(tag=TAG).error(f"tts转换失败，{text}")
