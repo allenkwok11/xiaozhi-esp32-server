@@ -1,5 +1,8 @@
 package xiaozhi.modules.device;
 
+import java.util.HashMap;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,12 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import lombok.extern.slf4j.Slf4j;
-import xiaozhi.common.redis.RedisKeys;
 import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.modules.sys.dto.SysUserDTO;
 import xiaozhi.modules.sys.service.SysUserService;
-
-import java.util.HashMap;
 
 @Slf4j
 @SpringBootTest
@@ -29,8 +29,8 @@ public class DeviceTest {
     @Test
     public void testSaveUser() {
         SysUserDTO userDTO = new SysUserDTO();
-        userDTO.setUsername("13536468486");
-        userDTO.setPassword("0218jianyuQ!");
+        userDTO.setUsername("test");
+        userDTO.setPassword(UUID.randomUUID().toString());
         sysUserService.save(userDTO);
     }
 
@@ -43,18 +43,17 @@ public class DeviceTest {
         // 模拟设备验证码
         String deviceCode = "123456";
 
-        HashMap<String,Object> map = new HashMap<>();
-        map.put("mac_address",macAddress);
-        map.put("activation_code",deviceCode);
-        map.put("board","硬件型号");
-        map.put("app_version","0.3.13");
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("mac_address", macAddress);
+        map.put("activation_code", deviceCode);
+        map.put("board", "硬件型号");
+        map.put("app_version", "0.3.13");
 
         String safeDeviceId = macAddress.replace(":", "_").toLowerCase();
         String cacheDeviceKey = String.format("ota:activation:data:%s", safeDeviceId);
         redisUtils.set(cacheDeviceKey, map, 300);
 
-
-        String redisKey = "ota:activation:code:"+deviceCode;
+        String redisKey = "ota:activation:code:" + deviceCode;
         log.info("Redis Key: {}", redisKey);
 
         // 将设备信息写入Redis

@@ -34,6 +34,7 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
     private final TimbreService timbreModelService;
     private final ModelConfigService modelConfigService;
     private final RedisUtils redisUtils;
+    private final DeviceService deviceService;
 
     @Override
     public PageData<AgentEntity> adminAgentList(Map<String, Object> params) {
