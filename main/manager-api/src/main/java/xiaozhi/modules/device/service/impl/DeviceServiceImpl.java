@@ -1,12 +1,7 @@
 package xiaozhi.modules.device.service.impl;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -256,6 +251,20 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
             return cachedCode;
         }
         return null;
+    }
+
+    @Override
+    public Date getLatestLastConnectionTime(String agentId) {
+        // 查询是否有缓存时间，有则返回
+        Date cachedDate = (Date) redisUtils.get(RedisKeys.getAgentDeviceLastConnectedAtById(agentId));
+        if (cachedDate != null) {
+            return cachedDate;
+        }
+        Date maxDate = deviceDao.getAllLastConnectedAtByAgentId(agentId);
+        if (maxDate != null) {
+            redisUtils.set(RedisKeys.getAgentDeviceLastConnectedAtById(agentId), maxDate, 60 * 2);
+        }
+        return maxDate;
     }
 
     private String getDeviceCacheKey(String deviceId) {
