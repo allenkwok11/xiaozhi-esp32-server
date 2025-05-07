@@ -103,4 +103,18 @@ public class RedisKeys {
     public static String getOtaDownloadCountKey(String uuid) {
         return "ota:download:count:" + uuid;
     }
+
+    /**
+     * 获取字典数据的缓存key
+     */
+    public static String getDictDataByTypeKey(String dictType) {
+        return "sys:dict:data:" + dictType;
+    }
+
+    /**
+     * 获取智能体音频ID的缓存key
+     */
+    public static String getAgentAudioIdKey(String uuid) {
+        return "agent:audio:id:" + uuid;
+    }
 }
