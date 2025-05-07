@@ -565,7 +565,7 @@ class ConnectionHandler:
                     future = self.executor.submit(
                         self.speak_and_play, segment_text, text_index
                     )
-                    self.tts_queue.put(future)
+                    self.tts_queue.put((future, text_index))
                     processed_chars += len(segment_text_raw)  # 更新已处理字符位置
 
         # 处理最后剩余的文本
@@ -695,7 +695,7 @@ class ConnectionHandler:
                             future = self.executor.submit(
                                 self.speak_and_play, segment_text, text_index
                             )
-                            self.tts_queue.put(future)
+                            self.tts_queue.put((future, text_index))
                             # 更新已处理字符位置
                             processed_chars += len(segment_text_raw)
 
@@ -859,7 +859,10 @@ class ConnectionHandler:
             text = None
             try:
                 try:
-                    future = self.tts_queue.get(timeout=1)
+                    item = self.tts_queue.get(timeout=1)
+                    if item is None:
+                        continue
+                    future, text_index = item  # 解包获取 Future 和 text_index
                 except queue.Empty:
                     if self.stop_event.is_set():
                         break
@@ -867,11 +870,11 @@ class ConnectionHandler:
                 if future is None:
                     continue
                 text = None
-                opus_datas, text_index, tts_file = [], 0, None
+                opus_datas, tts_file = [],  None
                 try:
                     self.logger.bind(tag=TAG).debug("正在处理TTS任务...")
                     tts_timeout = int(self.config.get("tts_timeout", 10))
-                    tts_file, text, text_index = future.result(timeout=tts_timeout)
+                    tts_file, text, _ = future.result(timeout=tts_timeout)
                     if text is None or len(text) <= 0:
                         self.logger.bind(tag=TAG).error(
                             f"TTS出错：{text_index}: tts text is empty"
