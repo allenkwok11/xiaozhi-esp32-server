@@ -1,6 +1,7 @@
 import os
 import copy
 import json
+import subprocess
 import sys
 import uuid
 import time
@@ -252,8 +253,14 @@ class ConnectionHandler:
                 """实际执行重启的方法"""
                 time.sleep(1)
                 self.logger.bind(tag=TAG).info("执行服务器重启...")
-                python = sys.executable
-                os.execl(python, python, *sys.argv)
+                subprocess.Popen(
+                    [sys.executable, "app.py"],
+                    stdin=sys.stdin,
+                    stdout=sys.stdout,
+                    stderr=sys.stderr,
+                    start_new_session=True
+                )
+                os._exit(0)
 
             # 使用线程执行重启避免阻塞事件循环
             threading.Thread(target=restart_server, daemon=True).start()
