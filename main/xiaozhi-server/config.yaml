@@ -104,12 +104,13 @@ plugins:
   get_weather: { "api_key": "a861d0d5e7bf4ee1a83d9a9e4f96d4da", "default_location": "广州" }
   # 获取新闻插件的配置，这里根据需要的新闻类型传入对应的url链接，默认支持社会、科技、财经新闻
   # 更多类型的新闻列表查看 https://www.chinanews.com.cn/rss/
-  get_news:
+  get_news_from_chinanews:
     default_rss_url: "https://www.chinanews.com.cn/rss/society.xml"
     category_urls:
       society: "https://www.chinanews.com.cn/rss/society.xml"
       world: "https://www.chinanews.com.cn/rss/world.xml"
       finance: "https://www.chinanews.com.cn/rss/finance.xml"
+  get_news_from_newsnow: {"url": "https://newsnow.busiyi.world/api/s?id="}
   home_assistant:
     devices:
       - 客厅,玩具灯,switch.cuco_cn_460494544_cp1_on_p_2_1
@@ -183,7 +184,8 @@ Intent:
     functions:
       - change_role
       - get_weather
-      - get_news
+      # - get_news_from_chinanews
+      - get_news_from_newsnow
       # play_music是服务器自带的音乐播放，hass_play_music是通过home assistant控制的独立外部程序音乐播放
       # 如果用了hass_play_music，就不要开启play_music，两者只留一个
       - play_music

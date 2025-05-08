@@ -41,7 +41,6 @@ class IntentProvider(IntentProviderBase):
             '2. 结束对话意图: {"function_call": {"name": "handle_exit_intent", "arguments": {"say_goodbye": "goodbye"}}}\n'
             '3. 获取当天日期时间: {"function_call": {"name": "get_time"}}\n'
             '4. 继续聊天意图: {"function_call": {"name": "continue_chat"}}\n'
-            '5. 查询新闻意图: {"function_call": {"name": "get_news_from_different_source", "arguments":{"source": {"type": "string","description": "新闻源，可选项有{"thepaper": "澎湃新闻","wallstreetcn-quick": "华尔街见闻","ithome": "IT之家","zhihu": "知乎"}。可选参数，如果不提供则使用默认新闻源"},"detail": {"type": "boolean","description": "是否获取详细内容，默认为false。如果为true，则获取上一条新闻的详细内容"}}}\n'
             "\n"
             "注意:\n"
             '- 播放音乐：无歌名时，song_name设为"random"\n'
@@ -52,14 +51,6 @@ class IntentProvider(IntentProviderBase):
             "```\n"
             "用户: 你也太搞笑了\n"
             '返回: {"function_call": {"name": "continue_chat"}}\n'
-            "```\n"
-            "```\n"
-            "用户: 最近有什么新闻吗\n"
-            '返回: {"function_call": {"name": "get_news_from_different_source", "arguments": {"source":"thepaper", "detail":"False"}}}\n'
-            "```\n"
-            "```\n"
-            "用户: 详细说说这个新闻\n"
-            '返回: {"function_call": {"name": "get_news_from_different_source", "arguments": {"source":"thepaper", "detail":"True"}}}\n'
             "```\n"
             "```\n"
             "用户: 现在是几号了?现在几点了？\n"
