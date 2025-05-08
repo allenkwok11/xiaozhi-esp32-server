@@ -1,5 +1,4 @@
 import json
-from config.logger import setup_logging
 from core.handle.sendAudioHandle import send_stt_message
 from core.utils.util import remove_punctuation_and_length
 import shutil
@@ -25,7 +24,7 @@ async def handleHelloMessage(conn, msg_json):
     audio_params = msg_json.get("audio_params")
     if audio_params:
         format = audio_params.get("format")
-        logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
+        conn.logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
         conn.audio_format = format
         conn.asr.set_audio_format(format)
         conn.welcome_msg["audio_params"] = audio_params
