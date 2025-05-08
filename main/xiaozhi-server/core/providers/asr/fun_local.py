@@ -44,7 +44,7 @@ class ASRProvider(ASRProviderBase):
                 model=self.model_dir,
                 vad_kwargs={"max_single_segment_time": 30000},
                 disable_update=True,
-                hub="hf"
+                hub="hf",
                 # device="cuda:0",  # 启用GPU加速
             )
 
@@ -62,7 +62,9 @@ class ASRProvider(ASRProviderBase):
 
         return file_path
 
-    async def speech_to_text(self, opus_data: List[bytes], session_id: str) -> Tuple[Optional[str], Optional[str]]:
+    async def speech_to_text(
+        self, opus_data: List[bytes], session_id: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         """语音转文本主处理逻辑"""
         file_path = None
         try:
@@ -70,8 +72,8 @@ class ASRProvider(ASRProviderBase):
             if self.audio_format == "pcm":
                 pcm_data = opus_data
             else:
-                pcm_data = self.decode_opus(opus_data, session_id)
-                
+                pcm_data = self.decode_opus(opus_data)
+
             combined_pcm_data = b"".join(pcm_data)
 
             # 判断是否保存为WAV文件
@@ -90,7 +92,9 @@ class ASRProvider(ASRProviderBase):
                 batch_size_s=60,
             )
             text = rich_transcription_postprocess(result[0]["text"])
-            logger.bind(tag=TAG).debug(f"语音识别耗时: {time.time() - start_time:.3f}s | 结果: {text}")
+            logger.bind(tag=TAG).debug(
+                f"语音识别耗时: {time.time() - start_time:.3f}s | 结果: {text}"
+            )
 
             return text, file_path
 
