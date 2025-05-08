@@ -1,11 +1,9 @@
 import asyncio
 from config.logger import setup_logging
 import os
-import numpy as np
-import opuslib_next
-from pydub import AudioSegment
 from abc import ABC, abstractmethod
 from core.utils.tts import MarkdownCleaner
+from core.utils.util import audio_to_data
 
 TAG = __name__
 logger = setup_logging()
@@ -29,7 +27,9 @@ class TTSProviderBase(ABC):
                 try:
                     asyncio.run(self.text_to_speak(text, tmp_file))
                 except Exception as e:
-                    logger.bind(tag=TAG).warning(f"语音生成失败{5 - max_repeat_time + 1}次: {text}，错误: {e}")
+                    logger.bind(tag=TAG).warning(
+                        f"语音生成失败{5 - max_repeat_time + 1}次: {text}，错误: {e}"
+                    )
                     # 未执行成功，删除文件
                     if os.path.exists(tmp_file):
                         os.remove(tmp_file)
@@ -55,11 +55,11 @@ class TTSProviderBase(ABC):
 
     def audio_to_pcm_data(self, audio_file_path):
         """音频文件转换为PCM编码"""
-        return self.audio_to_data(audio_file_path, is_opus=False)
+        return audio_to_data(audio_file_path, is_opus=False)
     
     def audio_to_opus_data(self, audio_file_path):
         """音频文件转换为Opus编码"""
-        return self.audio_to_data(audio_file_path, is_opus=True)
+        return audio_to_data(audio_file_path, is_opus=True)
     
     def audio_to_data(self, audio_file_path, is_opus=True):
         # 获取文件后缀名

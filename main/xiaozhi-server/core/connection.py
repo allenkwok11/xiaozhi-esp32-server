@@ -18,6 +18,8 @@ from core.utils.util import (
     get_string_no_punctuation_or_emoji,
     extract_json_from_string,
     initialize_modules,
+    check_vad_update,
+    check_asr_update,
 )
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from core.handle.sendAudioHandle import sendAudioMessage
@@ -52,10 +54,12 @@ class ConnectionHandler:
         _intent,
         server=None,
     ):
-        self.config = config
-        self.server = server
+        self.common_config = config
+        self.config = copy.deepcopy(config)
+        self.session_id = str(uuid.uuid4())
         self.logger = setup_logging()
         self.auth = AuthMiddleware(config)
+        self.server = server  # 保存server实例的引用
 
         self.need_bind = False
         self.bind_code = None
@@ -66,7 +70,6 @@ class ConnectionHandler:
         self.device_id = None
         self.client_ip = None
         self.client_ip_info = {}
-        self.session_id = None
         self.prompt = None
         self.welcome_msg = None
         self.max_output_size = 0
@@ -87,8 +90,10 @@ class ConnectionHandler:
         self.tts_report_thread = None
 
         # 依赖的组件
-        self.vad = _vad
-        self.asr = _asr
+        self.vad = None
+        self.asr = None
+        self._asr = _asr
+        self._vad = _vad
         self.llm = _llm
         self.tts = _tts
         self.memory = _memory
@@ -153,11 +158,9 @@ class ConnectionHandler:
                     self.headers["device-id"] = query_params["device-id"][0]
                     self.headers["client-id"] = query_params["client-id"][0]
                 else:
-                    self.logger.bind(tag=TAG).error(
-                        "无法从请求头和URL查询参数中获取device-id"
-                    )
+                    await ws.send("端口正常，如需测试连接，请使用test_page.html")
+                    await self.close(ws)
                     return
-
             # 获取客户端ip地址
             self.client_ip = ws.remote_address[0]
             self.logger.bind(tag=TAG).info(
@@ -170,7 +173,6 @@ class ConnectionHandler:
             # 认证通过,继续处理
             self.websocket = ws
             self.device_id = self.headers.get("device-id", None)
-            self.session_id = str(uuid.uuid4())
 
             # 启动超时检查任务
             self.timeout_task = asyncio.create_task(self._check_timeout())
@@ -180,9 +182,9 @@ class ConnectionHandler:
             await self.websocket.send(json.dumps(self.welcome_msg))
 
             # 获取差异化配置
-            private_config = self._initialize_private_config()
+            self._initialize_private_config()
             # 异步初始化
-            self.executor.submit(self._initialize_components, private_config)
+            self.executor.submit(self._initialize_components)
             # tts 消化线程
             self.tts_priority_thread = threading.Thread(
                 target=self._tts_priority_thread, daemon=True
@@ -214,7 +216,8 @@ class ConnectionHandler:
     async def _save_and_close(self, ws):
         """保存记忆并关闭连接"""
         try:
-            await self.memory.save_memory(self.dialogue.dialogue)
+            if self.memory:
+                await self.memory.save_memory(self.dialogue.dialogue)
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
         finally:
@@ -236,81 +239,17 @@ class ConnectionHandler:
         elif isinstance(message, bytes):
             await handleAudioMessage(self, message)
 
-    async def handle_config_update(self, message):
-        """处理配置更新请求"""
-        content = message.get("content", {})
-        new_config = content
-
-        # 遍历所有支持的配置模块
-        updated_modules = []
-        for config_model in ["tts", "llm", "vad", "asr", "memory", "intent"]:
-            if config_model not in new_config:
-                continue
-
-            new_content = new_config[config_model]
-            old_content = self.config.get(config_model, {})
-
-            # 记录配置变更
-            self.logger.bind(tag=TAG).info(
-                f"配置更新: {config_model} 旧值: {json.dumps(old_content, ensure_ascii=False)} "
-                f"新值: {json.dumps(new_content, ensure_ascii=False)}"
-            )
-
-            # 深度合并配置
-            if isinstance(old_content, dict) and isinstance(new_content, dict):
-                merged = {**old_content, **new_content}
-                self.config[config_model] = merged
-            else:
-                self.config[config_model] = new_content
-
-            # 标记需要重新初始化的模块
-            if config_model in ["llm", "tts", "asr", "vad", "intent", "memory"]:
-                updated_modules.append(config_model)
-
-        # 同步更新 WebSocketServer 的配置
-        if self.server:
-            async with self.server.config_lock:  # 使用锁确保线程安全
-                for config_model in updated_modules:
-                    self.server.config[config_model].update(new_config[config_model])
-
-        # 批量初始化模块
-        if updated_modules:
-            try:
-                self._initialize_components(self.config)
-                self.logger.bind(tag=TAG).info(
-                    f"已重新初始化模块: {', '.join(updated_modules)}"
-                )
-            except Exception as e:
-                self.logger.bind(tag=TAG).error(f"模块初始化失败: {str(e)}")
-                await self.websocket.send(
-                    json.dumps(
-                        {
-                            "type": "config_update_response",
-                            "status": "error",
-                            "message": f"模块初始化失败: {str(e)}",
-                        }
-                    )
-                )
-                return
-
-        # 返回成功响应
-        await self.websocket.send(
-            json.dumps(
-                {
-                    "type": "config_update_response",
-                    "status": "success",
-                    "message": f"已更新配置: {', '.join(updated_modules)}",
-                }
-            )
-        )
-
-    def _initialize_components(self, private_config):
+    def _initialize_components(self):
         """初始化组件"""
-        if private_config is not None:
-            self._initialize_models(private_config)
-        else:
-            self.prompt = self.config["prompt"]
-            self.change_system_prompt(self.prompt)
+        self.prompt = self.config["prompt"]
+        self.change_system_prompt(self.prompt)
+        self.logger.bind(tag=TAG).info(f"初始化组件: prompt成功 {self.prompt[:50]}...")
+
+        """初始化本地组件"""
+        if self.vad is None:
+            self.vad = self._vad
+        if self.asr is None:
+            self.asr = self._asr
         """加载记忆"""
         self._initialize_memory()
         """加载意图识别"""
@@ -320,7 +259,7 @@ class ConnectionHandler:
 
     def _init_report_threads(self):
         """初始化ASR和TTS上报线程"""
-        if not self.read_config_from_api:
+        if not self.read_config_from_api or self.need_bind:
             return
         if self.tts_report_thread is None or not self.tts_report_thread.is_alive():
             self.tts_report_thread = threading.Thread(
@@ -357,54 +296,21 @@ class ConnectionHandler:
             self.logger.bind(tag=TAG).error(f"获取差异化配置失败: {e}")
             private_config = {}
 
-        init_tts = False
-        if private_config.get("TTS", None) is not None:
-            init_tts = True
-            self.config["TTS"] = private_config["TTS"]
-            self.config["selected_module"]["TTS"] = private_config["selected_module"][
-                "TTS"
-            ]
-
-        try:
-            modules = initialize_modules(
-                self.logger,
-                private_config,
-                False,
-                False,
-                False,
-                init_tts,
-                False,
-                False,
-            )
-        except Exception as e:
-            self.logger.bind(tag=TAG).error(f"初始化组件失败: {e}")
-            modules = {}
-        if modules.get("tts", None) is not None:
-            self.tts = modules["tts"]
-        if modules.get("prompt", None) is not None:
-            self.change_system_prompt(modules["prompt"])
-            private_config["prompt"] = None
-        return private_config
-
-    def _initialize_models(self, private_config):
-        init_vad, init_asr, init_llm, init_memory, init_intent = (
-            False,
+        init_llm, init_tts, init_memory, init_intent = (
             False,
             False,
             False,
             False,
         )
-        if private_config.get("VAD", None) is not None:
-            init_vad = True
-            self.config["VAD"] = private_config["VAD"]
-            self.config["selected_module"]["VAD"] = private_config["selected_module"][
-                "VAD"
-            ]
-        if private_config.get("ASR", None) is not None:
-            init_asr = True
-            self.config["ASR"] = private_config["ASR"]
-            self.config["selected_module"]["ASR"] = private_config["selected_module"][
-                "ASR"
+
+        init_vad = check_vad_update(self.common_config, private_config)
+        init_asr = check_asr_update(self.common_config, private_config)
+
+        if private_config.get("TTS", None) is not None:
+            init_tts = True
+            self.config["TTS"] = private_config["TTS"]
+            self.config["selected_module"]["TTS"] = private_config["selected_module"][
+                "TTS"
             ]
         if private_config.get("LLM", None) is not None:
             init_llm = True
@@ -424,8 +330,11 @@ class ConnectionHandler:
             self.config["selected_module"]["Intent"] = private_config[
                 "selected_module"
             ]["Intent"]
+        if private_config.get("prompt", None) is not None:
+            self.config["prompt"] = private_config["prompt"]
         if private_config.get("device_max_output_size", None) is not None:
             self.max_output_size = int(private_config["device_max_output_size"])
+
         try:
             modules = initialize_modules(
                 self.logger,
@@ -433,13 +342,15 @@ class ConnectionHandler:
                 init_vad,
                 init_asr,
                 init_llm,
-                False,
+                init_tts,
                 init_memory,
                 init_intent,
             )
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"初始化组件失败: {e}")
             modules = {}
+        if modules.get("tts", None) is not None:
+            self.tts = modules["tts"]
         if modules.get("vad", None) is not None:
             self.vad = modules["vad"]
         if modules.get("asr", None) is not None:
@@ -517,10 +428,12 @@ class ConnectionHandler:
         processed_chars = 0  # 跟踪已处理的字符位置
         try:
             # 使用带记忆的对话
-            future = asyncio.run_coroutine_threadsafe(
-                self.memory.query_memory(query), self.loop
-            )
-            memory_str = future.result()
+            memory_str = None
+            if self.memory is not None:
+                future = asyncio.run_coroutine_threadsafe(
+                    self.memory.query_memory(query), self.loop
+                )
+                memory_str = future.result()
 
             self.logger.bind(tag=TAG).debug(f"记忆内容: {memory_str}")
             llm_responses = self.llm.response(
@@ -567,7 +480,7 @@ class ConnectionHandler:
                     future = self.executor.submit(
                         self.speak_and_play, segment_text, text_index
                     )
-                    self.tts_queue.put(future)
+                    self.tts_queue.put((future, text_index))
                     processed_chars += len(segment_text_raw)  # 更新已处理字符位置
 
         # 处理最后剩余的文本
@@ -581,7 +494,7 @@ class ConnectionHandler:
                 future = self.executor.submit(
                     self.speak_and_play, segment_text, text_index
                 )
-                self.tts_queue.put(future)
+                self.tts_queue.put((future, text_index))
 
         self.llm_finish_task = True
         self.dialogue.put(Message(role="assistant", content="".join(response_message)))
@@ -608,10 +521,12 @@ class ConnectionHandler:
             start_time = time.time()
 
             # 使用带记忆的对话
-            future = asyncio.run_coroutine_threadsafe(
-                self.memory.query_memory(query), self.loop
-            )
-            memory_str = future.result()
+            memory_str = None
+            if self.memory is not None:
+                future = asyncio.run_coroutine_threadsafe(
+                    self.memory.query_memory(query), self.loop
+                )
+                memory_str = future.result()
 
             # self.logger.bind(tag=TAG).info(f"对话记录: {self.dialogue.get_llm_dialogue_with_memory(memory_str)}")
 
@@ -697,7 +612,7 @@ class ConnectionHandler:
                             future = self.executor.submit(
                                 self.speak_and_play, segment_text, text_index
                             )
-                            self.tts_queue.put(future)
+                            self.tts_queue.put((future, text_index))
                             # 更新已处理字符位置
                             processed_chars += len(segment_text_raw)
 
@@ -756,7 +671,7 @@ class ConnectionHandler:
                 future = self.executor.submit(
                     self.speak_and_play, segment_text, text_index
                 )
-                self.tts_queue.put(future)
+                self.tts_queue.put((future, text_index))
 
         # 存储对话内容
         if len(response_message) > 0:
@@ -818,7 +733,7 @@ class ConnectionHandler:
             text = result.response
             self.recode_first_last_text(text, text_index)
             future = self.executor.submit(self.speak_and_play, text, text_index)
-            self.tts_queue.put(future)
+            self.tts_queue.put((future, text_index))
             self.dialogue.put(Message(role="assistant", content=text))
         elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
             text = result.result
@@ -851,7 +766,7 @@ class ConnectionHandler:
             text = result.result
             self.recode_first_last_text(text, text_index)
             future = self.executor.submit(self.speak_and_play, text, text_index)
-            self.tts_queue.put(future)
+            self.tts_queue.put((future, text_index))
             self.dialogue.put(Message(role="assistant", content=text))
         else:
             pass
@@ -861,7 +776,10 @@ class ConnectionHandler:
             text = None
             try:
                 try:
-                    future = self.tts_queue.get(timeout=1)
+                    item = self.tts_queue.get(timeout=1)
+                    if item is None:
+                        continue
+                    future, text_index = item  # 解包获取 Future 和 text_index
                 except queue.Empty:
                     if self.stop_event.is_set():
                         break
@@ -869,11 +787,11 @@ class ConnectionHandler:
                 if future is None:
                     continue
                 text = None
-                audio_datas, text_index, tts_file = [], 0, None
+                opus_datas, tts_file = [], None
                 try:
                     self.logger.bind(tag=TAG).debug("正在处理TTS任务...")
                     tts_timeout = int(self.config.get("tts_timeout", 10))
-                    tts_file, text, text_index = future.result(timeout=tts_timeout)
+                    tts_file, text, _ = future.result(timeout=tts_timeout)
                     if text is None or len(text) <= 0:
                         self.logger.bind(tag=TAG).error(
                             f"TTS出错：{text_index}: tts text is empty"
@@ -1096,6 +1014,7 @@ def filter_sensitive_info(config: dict) -> dict:
         "personal_access_token",
         "access_token",
         "token",
+        "secret",
         "access_key_secret",
         "secret_key",
     ]
