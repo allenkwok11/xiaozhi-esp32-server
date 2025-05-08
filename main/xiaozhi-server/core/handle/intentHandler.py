@@ -5,6 +5,8 @@ from core.handle.sendAudioHandle import send_stt_message
 from core.handle.helloHandle import checkWakeupWords
 from core.utils.util import remove_punctuation_and_length
 from core.utils.dialogue import Message
+from plugins_func.register import Action
+from loguru import logger
 
 TAG = __name__
 
@@ -100,24 +102,63 @@ async def process_intent_result(conn, intent_result, original_text):
                 result = conn.func_handler.handle_llm_function_call(
                     conn, function_call_data
                 )
-                if result and function_name != "play_music":
-                    # 获取当前最新的文本索引
-                    text = result.response
-                    if text is None:
+                logger.bind(tag=TAG).debug(f"检测到Action : {result.action}")
+                
+                if result:
+                    if result.action == Action.RESPONSE:  # 直接回复前端
+                        text = result.response
+                        if text is not None:
+                            text_index = (
+                                conn.tts_last_text_index + 1
+                                if hasattr(conn, "tts_last_text_index")
+                                else 0
+                            )
+                            conn.recode_first_last_text(text, text_index)
+                            future = conn.executor.submit(
+                                conn.speak_and_play, text, text_index
+                            )
+                            conn.llm_finish_task = True
+                            conn.tts_queue.put(future)
+                            conn.dialogue.put(Message(role="assistant", content=text))
+                    elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
                         text = result.result
-                    if text is not None:
-                        text_index = (
-                            conn.tts_last_text_index + 1
-                            if hasattr(conn, "tts_last_text_index")
-                            else 0
-                        )
-                        conn.recode_first_last_text(text, text_index)
-                        future = conn.executor.submit(
-                            conn.speak_and_play, text, text_index
-                        )
-                        conn.llm_finish_task = True
-                        conn.tts_queue.put((future, text_index))
-                        conn.dialogue.put(Message(role="assistant", content=text))
+                        if text is not None and len(text) > 0:
+                            conn.dialogue.put(Message(role="tool", content=text))
+                            conn.executor.submit(conn.chat_with_function_calling, text, True)
+                    elif result.action == Action.NOTFOUND or result.action == Action.ERROR:
+                        text = result.result
+                        if text is not None:
+                            text_index = (
+                                conn.tts_last_text_index + 1
+                                if hasattr(conn, "tts_last_text_index")
+                                else 0
+                            )
+                            conn.recode_first_last_text(text, text_index)
+                            future = conn.executor.submit(
+                                conn.speak_and_play, text, text_index
+                            )
+                            conn.llm_finish_task = True
+                            conn.tts_queue.put((future, text_index))
+                            conn.dialogue.put(Message(role="assistant", content=text))
+                    elif function_name != "play_music":
+                        # For backward compatibility with original code
+                        # 获取当前最新的文本索引
+                        text = result.response
+                        if text is None:
+                            text = result.result
+                        if text is not None:
+                            text_index = (
+                                conn.tts_last_text_index + 1
+                                if hasattr(conn, "tts_last_text_index")
+                                else 0
+                            )
+                            conn.recode_first_last_text(text, text_index)
+                            future = conn.executor.submit(
+                                conn.speak_and_play, text, text_index
+                            )
+                            conn.llm_finish_task = True
+                            conn.tts_queue.put(future)
+                            conn.dialogue.put(Message(role="assistant", content=text))
 
             # 将函数执行放在线程池中
             conn.executor.submit(process_function_call)
