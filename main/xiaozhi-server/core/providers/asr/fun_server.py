@@ -44,23 +44,6 @@ class ASRProvider(ASRProviderBase):
 
         return file_path
 
-    @staticmethod
-    def decode_opus(opus_data: List[bytes]) -> bytes:
-        """将Opus音频数据解码为PCM数据"""
-        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
-        pcm_data = []
-
-        for opus_packet in opus_data:
-            try:
-                pcm_frame = decoder.decode(opus_packet, 960)  # 960 samples = 60ms
-                pcm_data.append(pcm_frame)
-            except opuslib_next.OpusError as e:
-                logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
-
-        return pcm_data
-
-
-
     async def _receive_responses(self, ws) -> None:
         '''
         Asynchronous generator to receive messages from the WebSocket.
@@ -123,7 +106,10 @@ class ASRProvider(ASRProviderBase):
         :return: Tuple containing recognized text and optional timestamp.
         '''
         file_path = None
-        pcm_data = self.decode_opus(opus_data)
+        if self.audio_format == "pcm":
+            pcm_data = opus_data
+        else:
+            pcm_data = self.decode_opus(opus_data)
         combined_pcm_data = b"".join(pcm_data)
 
         # 判断是否保存为WAV文件
