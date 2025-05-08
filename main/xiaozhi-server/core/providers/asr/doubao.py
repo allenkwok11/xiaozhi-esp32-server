@@ -88,8 +88,8 @@ class ASRProvider(ASRProviderBase):
         self.appid = config.get("appid")
         self.cluster = config.get("cluster")
         self.access_token = config.get("access_token")
-        self.boosting_table_name = config.get("boosting_table_name")
-        self.correct_table_name = config.get("correct_table_name")
+        self.boosting_table_name = config.get("boosting_table_name", "")
+        self.correct_table_name = config.get("correct_table_name", "")
         self.output_dir = config.get("output_dir")
         self.delete_audio_file = delete_audio_file
 
