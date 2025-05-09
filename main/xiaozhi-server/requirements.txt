@@ -28,3 +28,4 @@ PySocks==1.7.1
 dashscope==1.23.1
 baidu-aip==4.16.13
 chardet==5.2.0
+aioconsole==0.8.1
