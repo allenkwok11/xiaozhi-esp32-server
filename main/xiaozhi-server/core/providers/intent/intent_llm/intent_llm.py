@@ -20,6 +20,7 @@ class IntentProvider(IntentProviderBase):
         self.intent_cache = {}  # 缓存意图识别结果
         self.cache_expiry = 600  # 缓存有效期10分钟
         self.cache_max_size = 100  # 最多缓存100个意图
+        self.history_count = 4  # 默认使用最近4条对话记录
 
     def get_intent_system_prompt(self, functions_list: str) -> str:
         """
@@ -104,6 +105,13 @@ class IntentProvider(IntentProviderBase):
             for key, _ in sorted_items[: len(sorted_items) - self.cache_max_size]:
                 del self.intent_cache[key]
 
+    def replyResult(self, text: str):
+        llm_result = self.llm.response_no_stream(
+            system_prompt=text,
+            user_prompt="请总结以上内容，像人类一样说话的口吻回复用户，要求简洁，请直接返回结果。",
+        )
+        return llm_result
+
     async def detect_intent(self, conn, dialogue_history: List[Dict], text: str) -> str:
         if not self.llm:
             raise ValueError("LLM provider not set")
@@ -150,14 +158,13 @@ class IntentProvider(IntentProviderBase):
 
         logger.bind(tag=TAG).debug(f"User prompt: {prompt_music}")
 
-        # 构建用户最后一句话的提示
+        # 构建用户对话历史的提示
         msgStr = ""
 
-        # 只使用最后两句即可
-        if len(dialogue_history) >= 2:
-            # 保证最少有两句话的时候处理
-            msgStr += f"{dialogue_history[-2].role}: {dialogue_history[-2].content}\n"
-        msgStr += f"{dialogue_history[-1].role}: {dialogue_history[-1].content}\n"
+        # 获取最近的对话历史
+        start_idx = max(0, len(dialogue_history) - self.history_count)
+        for i in range(start_idx, len(dialogue_history)):
+            msgStr += f"{dialogue_history[i].role}: {dialogue_history[i].content}\n"
 
         msgStr += f"User: {text}\n"
         user_prompt = f"current dialogue:\n{msgStr}"
