@@ -1,9 +1,9 @@
 """MCP服务管理器"""
+
 import asyncio
 import os, json
 from typing import Dict, Any, List
 from .MCPClient import MCPClient
-from config.logger import setup_logging
 from plugins_func.register import register_function, ToolType
 from config.config_loader import get_project_dir
 
@@ -18,11 +18,10 @@ class MCPManager:
         初始化MCP管理器
         """
         self.conn = conn
-        self.logger = setup_logging()
         self.config_path = get_project_dir() + "data/.mcp_server_settings.json"
         if os.path.exists(self.config_path) == False:
             self.config_path = ""
-            self.logger.bind(tag=TAG).warning(
+            self.conn.logger.bind(tag=TAG).warning(
                 f"请检查mcp服务配置文件：data/.mcp_server_settings.json"
             )
         self.client: Dict[str, MCPClient] = {}
@@ -41,7 +40,7 @@ class MCPManager:
                 config = json.load(f)
             return config.get("mcpServers", {})
         except Exception as e:
-            self.logger.bind(tag=TAG).error(
+            self.conn.logger.bind(tag=TAG).error(
                 f"Error loading MCP config from {self.config_path}: {e}"
             )
             return {}
@@ -51,7 +50,7 @@ class MCPManager:
         config = self.load_config()
         for name, srv_config in config.items():
             if not srv_config.get("command") and not srv_config.get("url"):
-                self.logger.bind(tag=TAG).warning(
+                self.conn.logger.bind(tag=TAG).warning(
                     f"Skipping server {name}: neither command nor url specified"
                 )
                 continue
@@ -60,7 +59,7 @@ class MCPManager:
                 client = MCPClient(srv_config)
                 await client.initialize()
                 self.client[name] = client
-                self.logger.bind(tag=TAG).info(f"Initialized MCP client: {name}")
+                self.conn.logger.bind(tag=TAG).info(f"Initialized MCP client: {name}")
                 client_tools = client.get_available_tools()
                 self.tools.extend(client_tools)
                 for tool in client_tools:
@@ -73,7 +72,7 @@ class MCPManager:
                     )
 
             except Exception as e:
-                self.logger.bind(tag=TAG).error(
+                self.conn.logger.bind(tag=TAG).error(
                     f"Failed to initialize MCP server {name}: {e}"
                 )
         self.conn.func_handler.upload_functions_desc()
@@ -94,8 +93,8 @@ class MCPManager:
         """
         for tool in self.tools:
             if (
-                    tool.get("function") != None
-                    and tool["function"].get("name") == tool_name
+                tool.get("function") != None
+                and tool["function"].get("name") == tool_name
             ):
                 return True
         return False
@@ -110,7 +109,7 @@ class MCPManager:
         Raises:
             ValueError: 工具未找到时抛出
         """
-        self.logger.bind(tag=TAG).info(
+        self.conn.logger.bind(tag=TAG).info(
             f"Executing tool {tool_name} with arguments: {arguments}"
         )
         for client in self.client.values():
@@ -124,9 +123,9 @@ class MCPManager:
         for name, client in list(self.client.items()):
             try:
                 await asyncio.wait_for(client.cleanup(), timeout=20)
-                self.logger.bind(tag=TAG).info(f"MCP client closed: {name}")
+                self.conn.logger.bind(tag=TAG).info(f"MCP client closed: {name}")
             except (asyncio.TimeoutError, Exception) as e:
-                self.logger.bind(tag=TAG).error(
+                self.conn.logger.bind(tag=TAG).error(
                     f"Error closing MCP client {name}: {e}"
                 )
         self.client.clear()
