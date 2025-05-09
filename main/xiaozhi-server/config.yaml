@@ -175,6 +175,13 @@ Intent:
     # 如果这里不填，则会默认使用selected_module.LLM的模型作为意图识别的思考模型
     # 如果你的不想使用selected_module.LLM意图识别，这里最好使用独立的LLM作为意图识别，例如使用免费的ChatGLMLLM
     llm: ChatGLMLLM
+    # plugins_func/functions下的模块，可以通过配置，选择加载哪个模块，加载后对话支持相应的function调用
+    # 系统默认已经记载“handle_exit_intent(退出识别)”、“play_music(音乐播放)”插件，请勿重复加载
+    # 下面是加载查天气、角色切换、加载查新闻的插件示例
+    functions:
+      - get_weather
+      - get_news_from_newsnow
+      - play_music
   function_call:
     # 不需要动type
     type: function_call

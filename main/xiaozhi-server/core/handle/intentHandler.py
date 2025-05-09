@@ -19,7 +19,7 @@ async def handle_user_intent(conn, text):
     if await checkWakeupWords(conn, text):
         return True
 
-    if conn.use_function_call_mode:
+    if conn.intent_type == "function_call":
         # 使用支持function calling的聊天方法,不再进行意图分析
         return False
     # 使用LLM进行意图分析
@@ -103,7 +103,7 @@ async def process_intent_result(conn, intent_result, original_text):
                     conn, function_call_data
                 )
                 logger.bind(tag=TAG).debug(f"检测到Action : {result.action}")
-                
+
                 if result:
                     if result.action == Action.RESPONSE:  # 直接回复前端
                         text = result.response
@@ -118,14 +118,19 @@ async def process_intent_result(conn, intent_result, original_text):
                                 conn.speak_and_play, text, text_index
                             )
                             conn.llm_finish_task = True
-                            conn.tts_queue.put(future)
+                            conn.tts_queue.put((future, text_index))
                             conn.dialogue.put(Message(role="assistant", content=text))
                     elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
                         text = result.result
                         if text is not None and len(text) > 0:
                             conn.dialogue.put(Message(role="tool", content=text))
-                            conn.executor.submit(conn.chat_with_function_calling, text, True)
-                    elif result.action == Action.NOTFOUND or result.action == Action.ERROR:
+                            conn.executor.submit(
+                                conn.chat_with_function_calling, text, True
+                            )
+                    elif (
+                        result.action == Action.NOTFOUND
+                        or result.action == Action.ERROR
+                    ):
                         text = result.result
                         if text is not None:
                             text_index = (
@@ -157,7 +162,7 @@ async def process_intent_result(conn, intent_result, original_text):
                                 conn.speak_and_play, text, text_index
                             )
                             conn.llm_finish_task = True
-                            conn.tts_queue.put(future)
+                            conn.tts_queue.put((future, text_index))
                             conn.dialogue.put(Message(role="assistant", content=text))
 
             # 将函数执行放在线程池中

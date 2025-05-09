@@ -76,7 +76,7 @@ async def startToChat(conn, text):
 
     # 意图未被处理，继续常规聊天流程
     await send_stt_message(conn, text)
-    if conn.use_function_call_mode:
+    if conn.intent_type == "function_call":
         # 使用支持function calling的聊天方法
         conn.executor.submit(conn.chat_with_function_calling, text)
     else:
