@@ -58,9 +58,9 @@ class ConnectionHandler:
         self.config = copy.deepcopy(config)
         self.session_id = str(uuid.uuid4())
         self.logger = setup_logging()
-        self.auth = AuthMiddleware(config)
         self.server = server  # 保存server实例的引用
 
+        self.auth = AuthMiddleware(config)
         self.need_bind = False
         self.bind_code = None
         self.read_config_from_api = self.config.get("read_config_from_api", False)
@@ -128,8 +128,10 @@ class ConnectionHandler:
             if len(cmd) > self.max_cmd_length:
                 self.max_cmd_length = len(cmd)
 
-        self.close_after_chat = False  # 是否在聊天结束后关闭连接
-        self.use_function_call_mode = False
+        # 是否在聊天结束后关闭连接
+        self.close_after_chat = False
+        self.load_function_plugin = False
+        self.intent_type = "nointent"
 
         self.timeout_task = None
         self.timeout_seconds = (
@@ -370,11 +372,11 @@ class ConnectionHandler:
         self.memory.init_memory(self.device_id, self.llm)
 
     def _initialize_intent(self):
-        if (
-            self.config["Intent"][self.config["selected_module"]["Intent"]]["type"]
-            == "function_call"
-        ):
-            self.use_function_call_mode = True
+        self.intent_type = self.config["Intent"][
+            self.config["selected_module"]["Intent"]
+        ]["type"]
+        if self.intent_type == "function_call" or self.intent_type == "intent_llm":
+            self.load_function_plugin = True
         """初始化意图识别模块"""
         # 获取意图识别配置
         intent_config = self.config["Intent"]
@@ -762,7 +764,13 @@ class ConnectionHandler:
                 )
 
                 self.dialogue.put(
-                    Message(role="tool", tool_call_id=function_id, content=text)
+                    Message(
+                        role="tool",
+                        tool_call_id=(
+                            str(uuid.uuid4()) if function_id is None else function_id
+                        ),
+                        content=text,
+                    )
                 )
                 self.chat_with_function_calling(text, tool_call=True)
         elif result.action == Action.NOTFOUND or result.action == Action.ERROR:
