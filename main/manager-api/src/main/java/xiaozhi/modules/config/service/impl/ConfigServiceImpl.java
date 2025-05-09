@@ -257,7 +257,8 @@ public class ConfigServiceImpl implements ConfigService {
                         if (intentLLMModelId != null && intentLLMModelId.equals(llmModelId)) {
                             intentLLMModelId = null;
                         }
-                    } else if ("function_call".equals(map.get("type"))) {
+                    }
+                    if (map.get("functions") != null) {
                         String functionStr = (String) map.get("functions");
                         if (StringUtils.isNotBlank(functionStr)) {
                             String[] functions = functionStr.split("\\;");

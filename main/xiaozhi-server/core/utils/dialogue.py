@@ -33,7 +33,13 @@ class Dialogue:
             dialogue.append({"role": m.role, "tool_calls": m.tool_calls})
         elif m.role == "tool":
             dialogue.append(
-                {"role": m.role, "tool_call_id": m.tool_call_id, "content": m.content}
+                {
+                    "role": m.role,
+                    "tool_call_id": (
+                        str(uuid.uuid4()) if m.tool_call_id is None else m.tool_call_id
+                    ),
+                    "content": m.content,
+                }
             )
         else:
             dialogue.append({"role": m.role, "content": m.content})
