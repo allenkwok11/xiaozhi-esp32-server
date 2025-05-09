@@ -112,7 +112,7 @@ async def process_intent_result(conn, intent_result, original_text):
                     elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
                         text = result.result
                         conn.dialogue.put(Message(role="tool", content=text))
-                        llm_result = conn.intent.replyResult(text)
+                        llm_result = conn.intent.replyResult(text, original_text)
                         if llm_result is None:
                             llm_result = text
                         speak_and_play(conn, llm_result)

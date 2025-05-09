@@ -105,10 +105,11 @@ class IntentProvider(IntentProviderBase):
             for key, _ in sorted_items[: len(sorted_items) - self.cache_max_size]:
                 del self.intent_cache[key]
 
-    def replyResult(self, text: str):
+    def replyResult(self, text: str, original_text: str):
         llm_result = self.llm.response_no_stream(
             system_prompt=text,
-            user_prompt="请总结以上内容，像人类一样说话的口吻回复用户，要求简洁，请直接返回结果。",
+            user_prompt="请根据以上内容，像人类一样说话的口吻回复用户，要求简洁，请直接返回结果。用户现在说："
+            + original_text,
         )
         return llm_result
 
