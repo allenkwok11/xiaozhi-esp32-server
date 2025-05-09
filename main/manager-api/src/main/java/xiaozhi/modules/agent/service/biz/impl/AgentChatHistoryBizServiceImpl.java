@@ -49,7 +49,7 @@ public class AgentChatHistoryBizServiceImpl implements AgentChatHistoryBizServic
         Byte chatType = report.getChatType();
         log.info("小智设备聊天上报请求: macAddress={}, type={}", macAddress, chatType);
 
-        // 2.1 根据设备MAC地址查询对应的默认智能体，判断是否需要上报
+        // 根据设备MAC地址查询对应的默认智能体，判断是否需要上报
         AgentEntity agentEntity = agentService.getDefaultAgentByMacAddress(macAddress);
         if (agentEntity == null) {
             return Boolean.FALSE;
