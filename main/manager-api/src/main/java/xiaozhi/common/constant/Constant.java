@@ -180,9 +180,7 @@ public interface Constant {
     enum ChatHistoryConfEnum {
         IGNORE(0, "不记录"),
         RECORD_TEXT(1, "记录文本"),
-        RECORD_AUDIO(2, "记录音频"),
-        RECORD_TEXT_AUDIO(3, "文本音频都记录")
-        ;
+        RECORD_TEXT_AUDIO(2, "文本音频都记录");
 
         private final int code;
         private final String name;

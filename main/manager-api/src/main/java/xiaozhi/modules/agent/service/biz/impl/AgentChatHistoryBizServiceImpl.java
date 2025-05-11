@@ -60,8 +60,6 @@ public class AgentChatHistoryBizServiceImpl implements AgentChatHistoryBizServic
 
         if (Objects.equals(chatHistoryConf, Constant.ChatHistoryConfEnum.RECORD_TEXT.getCode())) {
             saveChatText(report, agentId, macAddress, null);
-        } else if (Objects.equals(chatHistoryConf, Constant.ChatHistoryConfEnum.RECORD_AUDIO.getCode())) {
-            saveChatAudio(report);
         } else if (Objects.equals(chatHistoryConf, Constant.ChatHistoryConfEnum.RECORD_TEXT_AUDIO.getCode())) {
             String audioId = saveChatAudio(report);
             saveChatText(report, agentId, macAddress, audioId);
@@ -69,7 +67,6 @@ public class AgentChatHistoryBizServiceImpl implements AgentChatHistoryBizServic
 
         // 更新设备最后对话时间
         redisUtils.set(RedisKeys.getAgentDeviceLastConnectedAtById(agentId), new Date());
-
         return Boolean.TRUE;
     }
 
