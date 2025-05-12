@@ -16,7 +16,7 @@ async def handleAudioMessage(conn, audio):
     if not conn.asr_server_receive:
         conn.logger.bind(tag=TAG).debug(f"前期数据处理中，暂停接收")
         return
-    if conn.client_listen_mode == "auto":
+    if conn.client_listen_mode == "auto" or conn.client_listen_mode == "realtime":
         have_voice = conn.vad.is_vad(conn, audio)
     else:
         have_voice = conn.client_have_voice
@@ -76,7 +76,7 @@ async def startToChat(conn, text):
 
     # 意图未被处理，继续常规聊天流程
     await send_stt_message(conn, text)
-    if conn.use_function_call_mode:
+    if conn.intent_type == "function_call":
         # 使用支持function calling的聊天方法
         conn.executor.submit(conn.chat_with_function_calling, text)
     else:

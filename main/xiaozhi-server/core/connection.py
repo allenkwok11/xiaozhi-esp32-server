@@ -1,6 +1,8 @@
 import os
 import copy
 import json
+import subprocess
+import sys
 import uuid
 import time
 import queue
@@ -58,9 +60,9 @@ class ConnectionHandler:
         self.config = copy.deepcopy(config)
         self.session_id = str(uuid.uuid4())
         self.logger = setup_logging()
-        self.auth = AuthMiddleware(config)
         self.server = server  # 保存server实例的引用
 
+        self.auth = AuthMiddleware(config)
         self.need_bind = False
         self.bind_code = None
         self.read_config_from_api = self.config.get("read_config_from_api", False)
@@ -128,8 +130,10 @@ class ConnectionHandler:
             if len(cmd) > self.max_cmd_length:
                 self.max_cmd_length = len(cmd)
 
-        self.close_after_chat = False  # 是否在聊天结束后关闭连接
-        self.use_function_call_mode = False
+        # 是否在聊天结束后关闭连接
+        self.close_after_chat = False
+        self.load_function_plugin = False
+        self.intent_type = "nointent"
 
         self.timeout_task = None
         self.timeout_seconds = (
@@ -238,6 +242,44 @@ class ConnectionHandler:
             await handleTextMessage(self, message)
         elif isinstance(message, bytes):
             await handleAudioMessage(self, message)
+
+    async def handle_restart(self, message):
+        """处理服务器重启请求"""
+        try:
+
+            self.logger.bind(tag=TAG).info("收到服务器重启指令，准备执行...")
+
+            # 发送确认响应
+            await self.websocket.send(json.dumps({
+                "type": "server_response",
+                "status": "success",
+                "message": "服务器重启中..."
+            }))
+
+            # 异步执行重启操作
+            def restart_server():
+                """实际执行重启的方法"""
+                time.sleep(1)
+                self.logger.bind(tag=TAG).info("执行服务器重启...")
+                subprocess.Popen(
+                    [sys.executable, "app.py"],
+                    stdin=sys.stdin,
+                    stdout=sys.stdout,
+                    stderr=sys.stderr,
+                    start_new_session=True
+                )
+                os._exit(0)
+
+            # 使用线程执行重启避免阻塞事件循环
+            threading.Thread(target=restart_server, daemon=True).start()
+
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"重启失败: {str(e)}")
+            await self.websocket.send(json.dumps({
+                "type": "server_response",
+                "status": "error",
+                "message": f"Restart failed: {str(e)}"
+            }))
 
     def _initialize_components(self):
         """初始化组件"""
@@ -370,11 +412,11 @@ class ConnectionHandler:
         self.memory.init_memory(self.device_id, self.llm)
 
     def _initialize_intent(self):
-        if (
-            self.config["Intent"][self.config["selected_module"]["Intent"]]["type"]
-            == "function_call"
-        ):
-            self.use_function_call_mode = True
+        self.intent_type = self.config["Intent"][
+            self.config["selected_module"]["Intent"]
+        ]["type"]
+        if self.intent_type == "function_call" or self.intent_type == "intent_llm":
+            self.load_function_plugin = True
         """初始化意图识别模块"""
         # 获取意图识别配置
         intent_config = self.config["Intent"]
@@ -762,7 +804,13 @@ class ConnectionHandler:
                 )
 
                 self.dialogue.put(
-                    Message(role="tool", tool_call_id=function_id, content=text)
+                    Message(
+                        role="tool",
+                        tool_call_id=(
+                            str(uuid.uuid4()) if function_id is None else function_id
+                        ),
+                        content=text,
+                    )
                 )
                 self.chat_with_function_calling(text, tool_call=True)
         elif result.action == Action.NOTFOUND or result.action == Action.ERROR:

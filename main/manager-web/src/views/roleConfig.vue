@@ -86,9 +86,15 @@
                           </div>
                       </div>
                     </el-form-item>
-                    <el-form-item label="角色音色：">
+                    <el-form-item label="角色音色">
                       <el-select v-model="form.ttsVoiceId" placeholder="请选择" class="form-select">
                         <el-option v-for="(item, index) in voiceOptions" :key="`voice-${index}`" :label="item.label"
+                          :value="item.value" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="聊天记录配置">
+                      <el-select v-model="form.chatHistoryConf" placeholder="请选择" class="form-select">
+                        <el-option v-for="(item, index) in chatHistoryOptions" :key="`chatHistoryConf-${index}`" :label="item.label"
                           :value="item.value" />
                       </el-select>
                     </el-form-item>
@@ -119,6 +125,7 @@ export default {
         agentCode: "",
         agentName: "",
         ttsVoiceId: "",
+        chatHistoryConf: "",
         systemPrompt: "",
         langCode: "",
         language: "",
@@ -155,7 +162,25 @@ export default {
         { name: '新闻', params: {} },
         { name: '工具', params: {} },
         { name: '退出', params: {} }
-      ]
+      ],
+      chatHistoryOptions: [
+        {
+            "value": 0,
+            "label": "不记录"
+        },
+        {
+            "value": 1,
+            "label": "仅记录文本"
+        },
+        {
+            "value": 2,
+            "label": "仅记录语音"
+        },
+        {
+            "value": 3,
+            "label": "文本音频都记录"
+        }
+      ],
     }
   },
   methods: {
@@ -171,6 +196,7 @@ export default {
         llmModelId: this.form.model.llmModelId,
         ttsModelId: this.form.model.ttsModelId,
         ttsVoiceId: this.form.ttsVoiceId,
+        chatHistoryConf: this.form.chatHistoryConf,
         memModelId: this.form.model.memModelId,
         intentModelId: this.form.model.intentModelId,
         systemPrompt: this.form.systemPrompt,
@@ -203,6 +229,7 @@ export default {
           agentCode: "",
           agentName: "",
           ttsVoiceId: "",
+          chatHistoryConf: "",
           systemPrompt: "",
           langCode: "",
           language: "",
@@ -256,6 +283,7 @@ export default {
         ...this.form,
         agentName: templateData.agentName || this.form.agentName,
         ttsVoiceId: templateData.ttsVoiceId || this.form.ttsVoiceId,
+        chatHistoryConf: templateData.chatHistoryConf || this.form.chatHistoryConf,
         systemPrompt: templateData.systemPrompt || this.form.systemPrompt,
         langCode: templateData.langCode || this.form.langCode,
         model: {
@@ -394,7 +422,6 @@ export default {
 <style scoped>
 .welcome {
   min-width: 900px;
-  min-height: 506px;
   height: 100vh;
   display: flex;
   position: relative;
@@ -410,7 +437,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 1.5vh 24px;
 }
 
 .page-title {
@@ -420,7 +447,7 @@ export default {
 }
 
 .main-wrapper {
-  margin: 5px 22px;
+  margin: 1vh 22px;
   border-radius: 15px;
   height: calc(100vh - 24vh);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -492,7 +519,7 @@ export default {
 }
 
 .form-content {
-  padding: 20px 0;
+  padding: 2vh 0;
 }
 
 .form-grid {
@@ -526,11 +553,11 @@ export default {
 }
 
 .template-item {
-  height: 37px;
+  height: 4vh;
   width: 76px;
   border-radius: 8px;
   background: #e6ebff;
-  line-height: 37px;
+  line-height: 4vh;
   font-weight: 400;
   font-size: 11px;
   text-align: center;
@@ -547,7 +574,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 20px;
+  margin-top: 2vh;
   align-items: center;
 }
 
