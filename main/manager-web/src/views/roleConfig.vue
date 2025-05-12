@@ -73,8 +73,8 @@
                     </el-form-item>
                     <el-form-item label="聊天记录配置">
                       <el-select v-model="form.chatHistoryConf" placeholder="请选择" class="form-select">
-                        <el-option v-for="(item, index) in chatHistoryOptions" :key="`chatHistoryConf-${index}`" :label="item.label"
-                          :value="item.value" />
+                        <el-option v-for="(item, index) in chatHistoryOptions" :key="`chatHistoryConf-${index}`"
+                          :label="item.label" :value="item.value" />
                       </el-select>
                     </el-form-item>
                   </div>
@@ -130,20 +130,16 @@ export default {
       voiceOptions: [],
       chatHistoryOptions: [
         {
-            "value": 0,
-            "label": "不记录"
+          "value": 0,
+          "label": "不记录"
         },
         {
-            "value": 1,
-            "label": "仅记录文本"
+          "value": 1,
+          "label": "仅记录文本"
         },
         {
-            "value": 2,
-            "label": "仅记录语音"
-        },
-        {
-            "value": 3,
-            "label": "文本音频都记录"
+          "value": 2,
+          "label": "文本音频都记录"
         }
       ],
     }
@@ -538,7 +534,7 @@ export default {
 }
 
 ::v-deep .el-form-item__label {
-  font-size: 10px !important;
+  font-size: 12px !important;
   color: #3d4566 !important;
   font-weight: 400;
   line-height: 22px;
