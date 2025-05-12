@@ -1,8 +1,11 @@
 # core/providers/llm/gemini_sdk.py
 import os, json, uuid
+import urllib
 from types import SimpleNamespace
 from typing import Any, Dict, List
+from urllib.parse import urlparse
 
+import requests
 from google import generativeai as genai
 from google.generativeai import types, GenerationConfig
 
@@ -10,24 +13,72 @@ from core.providers.llm.base import LLMProviderBase
 from core.utils.util import check_model_key
 from config.logger import setup_logging
 from google.generativeai.types import GenerateContentResponse
+from requests import RequestException
 
 log = setup_logging()
 TAG = __name__
+
+
+def test_proxy(proxy_url: str, test_url: str) -> bool:
+    try:
+        resp = requests.get(test_url, proxies={"http": proxy_url, "https": proxy_url})
+        return 200 <= resp.status_code < 400
+    except RequestException:
+        return False
+
+
+def setup_proxy_env(http_proxy: str | None, https_proxy: str | None):
+    """
+    分别测试 HTTP 和 HTTPS 代理是否可用，并设置环境变量。
+    如果 HTTPS 代理不可用但 HTTP 可用，会将 HTTPS_PROXY 也指向 HTTP。
+    """
+    test_http_url = "http://www.google.com"
+    test_https_url = "https://www.google.com"
+
+    ok_http = ok_https = False
+
+    if http_proxy:
+        ok_http = test_proxy(http_proxy, test_http_url)
+        if ok_http:
+            os.environ["HTTP_PROXY"] = http_proxy
+            log.bind(tag=TAG).info(f"配置提供的Gemini HTTPS代理连通成功: {http_proxy}")
+        else:
+            log.bind(tag=TAG).warn(f"配置提供的Gemini HTTP代理不可用: {http_proxy}")
+
+    if https_proxy:
+        ok_https = test_proxy(https_proxy, test_https_url)
+        if ok_https:
+            os.environ["HTTPS_PROXY"] = https_proxy
+            log.bind(tag=TAG).info(f"配置提供的Gemini HTTPS代理连通成功: {https_proxy}")
+        else:
+            log.bind(tag=TAG).warning(f"配置提供的Gemini HTTPS代理不可用: {https_proxy}")
+
+    # 如果https_proxy不可用，但http_proxy可用且能走通https，则复用http_proxy作为https_proxy
+    if ok_http and not ok_https:
+        if test_proxy(http_proxy, test_https_url):
+            os.environ["HTTPS_PROXY"] = http_proxy
+            ok_https = True
+            log.bind(tag=TAG).info(f"复用HTTP代理作为HTTPS代理: {http_proxy}")
+
+    if not ok_http and not ok_https:
+        log.bind(tag=TAG).error(f"Gemini 代理设置失败: HTTP 和 HTTPS 代理都不可用，请检查配置")
+        raise RuntimeError("HTTP 和 HTTPS 代理都不可用，请检查配置")
 
 
 class LLMProvider(LLMProviderBase):
     def __init__(self, cfg: Dict[str, Any]):
         self.model_name = cfg.get("model_name", "gemini-2.0-flash")
         self.api_key = cfg["api_key"]
-        proxy = cfg.get("https_proxy") or cfg.get("http_proxy")
+        http_proxy = cfg.get("http_proxy")
+        https_proxy = cfg.get("https_proxy")
 
         if not check_model_key("LLM", self.api_key):
             raise ValueError("无效的Gemini API Key，请检查是否配置正确")
 
-        if proxy:
-            os.environ["HTTPS_PROXY"] = os.environ["HTTP_PROXY"] = proxy
-            log.bind(tag=TAG).info(f"Gemini 代理地址: {proxy}")
-
+        if http_proxy or https_proxy:
+            log.bind(tag=TAG).info(f"检测到Gemini代理配置，开始测试代理连通性和设置代理环境...")
+            setup_proxy_env(http_proxy, https_proxy)
+            log.bind(tag=TAG).info(f"Gemini 代理设置成功 - HTTP: {http_proxy}, HTTPS: {https_proxy}")
         genai.configure(api_key=self.api_key)
         self.model = genai.GenerativeModel(self.model_name)
 
@@ -37,7 +88,6 @@ class LLMProvider(LLMProviderBase):
             top_k=40,
             max_output_tokens=2048,
         )
-
 
     @staticmethod
     def _build_tools(funcs: List[Dict[str, Any]] | None):
