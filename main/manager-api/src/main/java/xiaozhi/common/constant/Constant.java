@@ -111,6 +111,11 @@ public interface Constant {
      */
     String FILE_EXTENSION_SEG = ".";
 
+    /**
+     * 无记忆
+     */
+    String MEMORY_NO_MEM = "Memory_nomem";
+
     enum SysBaseParam {
         /**
          * 系统全称
