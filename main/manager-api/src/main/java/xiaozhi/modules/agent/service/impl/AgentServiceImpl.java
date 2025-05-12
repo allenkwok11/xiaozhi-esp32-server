@@ -48,9 +48,10 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
     @Override
     public AgentEntity getAgentById(String id) {
         AgentEntity agent = agentDao.selectById(id);
-        if (agent != null && agent.getMemModelId() != null && agent.getMemModelId().equals("Memory_nomem")) {
+        if (agent != null && agent.getMemModelId() != null && agent.getMemModelId().equals(Constant.MEMORY_NO_MEM)) {
             agent.setChatHistoryConf(Constant.ChatHistoryConfEnum.IGNORE.getCode());
-        } else if (agent != null && agent.getMemModelId() != null && !agent.getMemModelId().equals("Memory_nomem")
+        } else if (agent != null && agent.getMemModelId() != null
+                && !agent.getMemModelId().equals(Constant.MEMORY_NO_MEM)
                 && agent.getChatHistoryConf() == null) {
             agent.setChatHistoryConf(Constant.ChatHistoryConfEnum.RECORD_TEXT_AUDIO.getCode());
         }
