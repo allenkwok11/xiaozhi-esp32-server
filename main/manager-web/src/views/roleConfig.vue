@@ -340,8 +340,10 @@ export default {
       return this.functionColorMap[hash % 7];
     },
     showFunctionIcons(type) {
-      return type === 'Intent' &&
-        this.form.model.intentModelId !== 'Intent_nointent';
+      // TODO 暂时不放出来
+      return false;
+      // return type === 'Intent' &&
+      //   this.form.model.intentModelId !== 'Intent_nointent';
     },
     handleModelChange(type, value) {
       if (type === 'Intent' && value !== 'Intent_nointent') {
