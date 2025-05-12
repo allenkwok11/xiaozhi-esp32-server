@@ -1,9 +1,7 @@
 # core/providers/llm/gemini_sdk.py
 import os, json, uuid
-import urllib
 from types import SimpleNamespace
 from typing import Any, Dict, List
-from urllib.parse import urlparse
 
 import requests
 from google import generativeai as genai
