@@ -109,6 +109,7 @@ public class AgentController {
             entity.setMemModelId(template.getMemModelId());
             entity.setIntentModelId(template.getIntentModelId());
             entity.setSystemPrompt(template.getSystemPrompt());
+            entity.setChatHistoryConf(template.getChatHistoryConf());
             entity.setLangCode(template.getLangCode());
             entity.setLanguage(template.getLanguage());
         }
@@ -166,6 +167,9 @@ public class AgentController {
         if (dto.getSystemPrompt() != null) {
             existingEntity.setSystemPrompt(dto.getSystemPrompt());
         }
+        if (dto.getChatHistoryConf() != null) {
+            existingEntity.setChatHistoryConf(dto.getChatHistoryConf());
+        }
         if (dto.getLangCode() != null) {
             existingEntity.setLangCode(dto.getLangCode());
         }
@@ -183,6 +187,15 @@ public class AgentController {
 
         agentService.updateById(existingEntity);
 
+        // 更新记忆策略
+        if (existingEntity.getMemModelId() == null || existingEntity.getMemModelId().equals(Constant.MEMORY_NO_MEM)) {
+            // 删除所有记录
+            agentChatHistoryService.deleteByAgentId(existingEntity.getId(), true, true);
+        } else if (existingEntity.getChatHistoryConf() != null && existingEntity.getChatHistoryConf() == 1) {
+            // 删除音频数据
+            agentChatHistoryService.deleteByAgentId(existingEntity.getId(), true, false);
+        }
+
         return new Result<>();
     }
 
@@ -193,7 +206,7 @@ public class AgentController {
         // 先删除关联的设备
         deviceService.deleteByAgentId(id);
         // 删除关联的聊天记录
-        agentChatHistoryService.deleteByAgentId(id);
+        agentChatHistoryService.deleteByAgentId(id, true, true);
         // 再删除智能体
         agentService.deleteById(id);
         return new Result<>();
