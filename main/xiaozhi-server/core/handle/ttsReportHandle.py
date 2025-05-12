@@ -92,6 +92,8 @@ def opus_to_wav(conn, opus_data):
 def enqueue_tts_report(conn, type, text, opus_data):
     if not conn.read_config_from_api or conn.need_bind:
         return
+    if conn.chat_history_conf == 0:
+        return
     """将TTS数据加入上报队列
 
     Args:
@@ -101,10 +103,15 @@ def enqueue_tts_report(conn, type, text, opus_data):
     """
     try:
         # 使用连接对象的队列，传入文本和二进制数据而非文件路径
-        conn.tts_report_queue.put((type, text, opus_data))
-
-        conn.logger.bind(tag=TAG).debug(
-            f"TTS数据已加入上报队列: {conn.device_id}, 音频大小: {len(opus_data)} "
-        )
+        if conn.chat_history_conf == 2:
+            conn.tts_report_queue.put((type, text, opus_data))
+            conn.logger.bind(tag=TAG).debug(
+                f"TTS数据已加入上报队列: {conn.device_id}, 音频大小: {len(opus_data)} "
+            )
+        else:
+            conn.tts_report_queue.put((type, text, None))
+            conn.logger.bind(tag=TAG).debug(
+                f"TTS数据已加入上报队列: {conn.device_id}, 不上报音频"
+            )
     except Exception as e:
         conn.logger.bind(tag=TAG).error(f"加入TTS上报队列失败: {text}, {e}")

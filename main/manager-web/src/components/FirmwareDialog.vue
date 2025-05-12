@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :title="title" :visible.sync="dialogVisible" width="30%" @close="handleClose" @open="handleOpen">
+  <el-dialog :title="title" :visible.sync="dialogVisible" @close="handleClose" @open="handleOpen">
     <el-form ref="form" :model="form" :rules="rules" label-width="100px">
       <el-form-item label="固件名称" prop="firmwareName">
         <el-input v-model="form.firmwareName" placeholder="请输入固件名称(板子+版本号)"></el-input>
@@ -22,7 +22,7 @@
         <el-progress v-if="isUploading || uploadStatus === 'success'" :percentage="uploadProgress"
           :status="uploadStatus"></el-progress>
         <div class="hint-text">
-          <span>温馨提示：请上传xiaozhi.bin文件，而不是merged-binary.bin文件</span>
+          <span>温馨提示：请上传合并前的xiaozhi.bin文件，而不是合并后的merged-binary.bin文件</span>
         </div>
       </el-form-item>
       <el-form-item label="备注" prop="remark">
@@ -229,7 +229,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #979db1;
-  font-size: 11px;
+  font-size: 14px;
 }
 </style>
