@@ -16,13 +16,12 @@
           <el-button type="text" @click="selectAll" class="select-all-btn">全选</el-button>
         </div>
         <div class="function-list">
-          <div v-for="func in unselected" :key="func.name" class="function-item" @click="handleFunctionClick(func)">
-            <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)" @click.native.stop>
-              <div class="func-tag">
-                <div class="color-dot" :style="{backgroundColor: getFunctionColor(func.name)}"></div>
-                <span>{{ func.name }}</span>
-              </div>
-            </el-checkbox>
+          <div v-for="func in unselected" :key="func.name" class="function-item">
+            <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)" @click.native.stop></el-checkbox>
+            <div class="func-tag" @click="handleFunctionClick(func)">
+              <div class="color-dot" :style="{backgroundColor: getFunctionColor(func.name)}"></div>
+              <span>{{ func.name }}</span>
+            </div>
             <el-tooltip class="item" effect="dark" :content="func.description || '暂无功能描述'" placement="top">
               <img src="@/assets/home/info.png" alt="" class="info-icon">
             </el-tooltip>
@@ -37,13 +36,12 @@
           <el-button type="text" @click="deselectAll" class="select-all-btn">全选</el-button>
         </div>
         <div class="function-list">
-          <div v-for="func in selectedList" :key="func.name" class="function-item" @click="handleFunctionClick(func)">
-            <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)" @click.native.stop>
-              <div class="func-tag">
-                <div class="color-dot" :style="{backgroundColor: getFunctionColor(func.name)}"></div>
-                <span>{{ func.name }}</span>
-              </div>
-            </el-checkbox>
+          <div v-for="func in selectedList" :key="func.name" class="function-item">
+            <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)" @click.native.stop></el-checkbox>
+            <div class="func-tag" @click="handleFunctionClick(func)">
+              <div class="color-dot" :style="{backgroundColor: getFunctionColor(func.name)}"></div>
+              <span>{{ func.name }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -51,13 +49,13 @@
       <!-- 右侧：参数配置 -->
       <div class="params-column">
         <h4 v-if="currentFunction" class="column-title">参数配置 - {{ currentFunction.name }}</h4>
-        <div v-if="currentFunction" class="params-container">
-          <el-form :model="currentFunction" size="mini" class="param-form">
-            <el-form-item v-for="(value, key) in currentFunction.params" :key="key" :label="key" class="param-item">
-              <el-input v-model="currentFunction.params[key]" size="mini" class="param-input" @change="(val) => handleParamChange(currentFunction, key, val)"/>
-            </el-form-item>
-          </el-form>
-        </div>
+          <div v-if="currentFunction" class="params-container">
+            <el-form :model="currentFunction" size="mini" class="param-form" v-loading="loading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading" element-loading-background="rgba(255, 255, 255, 0.7)">
+              <el-form-item v-for="(value, key) in currentFunction.params" :key="key" :label="key" class="param-item">
+                <el-input v-model="currentFunction.params[key]" size="mini" class="param-input" @change="(val) => handleParamChange(currentFunction, key, val)"/>
+              </el-form-item>
+            </el-form>
+          </div>
         <div v-else class="empty-tip">请选择已配置的功能进行参数设置</div>
       </div>
     </div>
@@ -101,6 +99,7 @@ export default {
       tempFunctions: {},
       // 添加一个标志位来跟踪是否已经保存
       hasSaved: false,
+      loading: false,
     }
   },
   computed: {
@@ -126,8 +125,12 @@ export default {
   methods: {
     handleFunctionClick(func) {
       if (this.selectedNames.includes(func.name)) {
-        const tempFunc = this.tempFunctions[func.name];
-        this.currentFunction = tempFunc ? tempFunc : JSON.parse(JSON.stringify(func));
+        this.loading = true;
+        setTimeout(() => {
+          const tempFunc = this.tempFunctions[func.name];
+          this.currentFunction = tempFunc ? tempFunc : JSON.parse(JSON.stringify(func));
+          this.loading = false;
+        }, 300);
       }
     },
     handleParamChange(func, key, value) {
@@ -145,7 +148,9 @@ export default {
         this.selectedNames = this.selectedNames.filter(name => name !== func.name);
       }
 
-      if (this.currentFunction && this.currentFunction.name === func.name && !checked) {
+      if (this.selectedList.length > 0) {
+        this.currentFunction = this.selectedList[0];
+      } else {
         this.currentFunction = null;
       }
     },
@@ -298,6 +303,9 @@ export default {
 .func-tag {
   display: flex;
   align-items: center;
+  cursor: pointer;
+  flex-grow: 1;
+  margin-left: 8px;
 }
 
 .color-dot {
@@ -396,4 +404,7 @@ export default {
   border-color: #409EFF;
 }
 
+::v-deep .el-checkbox__label {
+  display: none;
+}
 </style>

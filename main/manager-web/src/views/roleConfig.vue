@@ -353,10 +353,10 @@ export default {
     },
     showFunctionIcons(type) {
       return type === 'Intent' &&
-        this.form.model.intentModelId === 'Intent_function_call';
+        this.form.model.intentModelId !== 'Intent_nointent';
     },
     handleModelChange(type, value) {
-      if (type === 'Intent' && value === 'Intent_function_call') {
+      if (type === 'Intent' && value !== 'Intent_nointent') {
         this.fetchFunctionList();
       }
     },
