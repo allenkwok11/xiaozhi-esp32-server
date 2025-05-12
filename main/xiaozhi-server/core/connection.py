@@ -33,7 +33,7 @@ from core.mcp.manager import MCPManager
 from config.config_loader import get_private_config_from_api
 from config.manage_api_client import DeviceNotFoundException, DeviceBindException
 from core.utils.output_counter import add_device_output
-from core.handle.ttsReportHandle import enqueue_tts_report, report_tts
+from core.handle.reportHandle import enqueue_tts_report, report
 
 TAG = __name__
 
@@ -89,8 +89,11 @@ class ConnectionHandler:
         self.executor = ThreadPoolExecutor(max_workers=10)
 
         # 上报线程
-        self.tts_report_queue = queue.Queue()
-        self.tts_report_thread = None
+        self.report_queue = queue.Queue()
+        self.report_thread = None
+        # TODO(haotian): 2025/5/12 可以通过修改此处，调节asr的上报和tts的上报
+        self.report_asr_enable = self.read_config_from_api
+        self.report_tts_enable = self.read_config_from_api
 
         # 依赖的组件
         self.vad = None
@@ -317,11 +320,11 @@ class ConnectionHandler:
             return
         if self.chat_history_conf == 0:
             return
-        if self.tts_report_thread is None or not self.tts_report_thread.is_alive():
-            self.tts_report_thread = threading.Thread(
-                target=self._tts_report_worker, daemon=True
+        if self.report_thread is None or not self.report_thread.is_alive():
+            self.report_thread = threading.Thread(
+                target=self._report_worker, daemon=True
             )
-            self.tts_report_thread.start()
+            self.report_thread.start()
             self.logger.bind(tag=TAG).info("TTS上报线程已启动")
 
     def _initialize_private_config(self):
@@ -872,8 +875,8 @@ class ConnectionHandler:
                                 audio_datas, _ = self.tts.audio_to_pcm_data(tts_file)
                             else:
                                 audio_datas, _ = self.tts.audio_to_opus_data(tts_file)
-                            # 在这里上报TTS数据（使用文件路径）
-                            enqueue_tts_report(self, 2, text, audio_datas)
+                            # 在这里上报TTS数据
+                            enqueue_tts_report(self, text, audio_datas)
                         else:
                             self.logger.bind(tag=TAG).error(
                                 f"TTS出错：文件不存在{tts_file}"
@@ -929,13 +932,12 @@ class ConnectionHandler:
                     f"audio_play_priority priority_thread: {text} {e}"
                 )
 
-    def _tts_report_worker(self):
-        """TTS上报工作线程"""
-
+    def _report_worker(self):
+        """聊天记录上报工作线程"""
         while not self.stop_event.is_set():
             try:
                 # 从队列获取数据，设置超时以便定期检查停止事件
-                item = self.tts_report_queue.get(timeout=1)
+                item = self.report_queue.get(timeout=1)
                 if item is None:  # 检测毒丸对象
                     break
 
@@ -943,18 +945,18 @@ class ConnectionHandler:
 
                 try:
                     # 执行上报（传入二进制数据）
-                    report_tts(self, type, text, audio_data)
+                    report(self, type, text, audio_data)
                 except Exception as e:
-                    self.logger.bind(tag=TAG).error(f"TTS上报线程异常: {e}")
+                    self.logger.bind(tag=TAG).error(f"聊天记录上报线程异常: {e}")
                 finally:
                     # 标记任务完成
-                    self.tts_report_queue.task_done()
+                    self.report_queue.task_done()
             except queue.Empty:
                 continue
             except Exception as e:
-                self.logger.bind(tag=TAG).error(f"TTS上报工作线程异常: {e}")
+                self.logger.bind(tag=TAG).error(f"聊天记录上报工作线程异常: {e}")
 
-        self.logger.bind(tag=TAG).info("TTS上报线程已退出")
+        self.logger.bind(tag=TAG).info("聊天记录上报线程已退出")
 
     def speak_and_play(self, text, text_index=0):
         if text is None or len(text) <= 0:
@@ -1002,7 +1004,7 @@ class ConnectionHandler:
             self.executor = None
 
         # 添加毒丸对象到上报队列确保线程退出
-        self.tts_report_queue.put(None)
+        self.report_queue.put(None)
 
         # 清空任务队列
         self.clear_queues()
