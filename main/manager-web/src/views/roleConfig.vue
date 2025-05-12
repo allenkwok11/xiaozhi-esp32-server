@@ -61,41 +61,46 @@
                     <el-form-item v-for="(model, index) in models" :key="`model-${index}`" :label="model.label"
                       class="model-item">
                       <div class="model-select-wrapper">
-                        <el-select v-model="form.model[model.key]" filterable placeholder="请选择" class="form-select" @change="handleModelChange(model.type, $event)">
-                          <el-option v-for="(item, optionIndex) in modelOptions[model.type]" :key="`option-${index}-${optionIndex}`" :label="item.label" :value="item.value"/>
+                        <el-select v-model="form.model[model.key]" filterable placeholder="请选择" class="form-select"
+                          @change="handleModelChange(model.type, $event)">
+                          <el-option v-for="(item, optionIndex) in modelOptions[model.type]"
+                            :key="`option-${index}-${optionIndex}`" :label="item.label" :value="item.value" />
                         </el-select>
-                          <div v-if="showFunctionIcons(model.type)" class="function-icons">
-                            <el-tooltip v-for="func in currentFunctions" :key="func.name" effect="dark" placement="top" popper-class="custom-tooltip">
-                              <div slot="content">
-                                <div><strong>功能名称:</strong> {{ func.name }}</div>
-                                <div v-if="Object.keys(func.params).length > 0">
-                                  <strong>参数配置:</strong>
-                                  <div v-for="(value, key) in func.params" :key="key">
-                                    {{ key }}: {{ value }}
-                                  </div>
+                        <div v-if="showFunctionIcons(model.type)" class="function-icons">
+                          <el-tooltip v-for="func in currentFunctions" :key="func.name" effect="dark" placement="top"
+                            popper-class="custom-tooltip">
+                            <div slot="content">
+                              <div><strong>功能名称:</strong> {{ func.name }}</div>
+                              <div v-if="Object.keys(func.params).length > 0">
+                                <strong>参数配置:</strong>
+                                <div v-for="(value, key) in func.params" :key="key">
+                                  {{ key }}: {{ value }}
                                 </div>
-                                <div v-else>无参数配置</div>
                               </div>
-                              <div class="icon-dot" :style="{backgroundColor: getFunctionColor(func.name)}">
-                                {{ func.name.charAt(0) }}
-                              </div>
-                            </el-tooltip>
-                            <el-button class="edit-function-btn" @click="showFunctionDialog = true" :class="{'active-btn': showFunctionDialog}">
-                              编辑功能
-                            </el-button>
-                          </div>
+                              <div v-else>无参数配置</div>
+                            </div>
+                            <div class="icon-dot" :style="{ backgroundColor: getFunctionColor(func.name) }">
+                              {{ func.name.charAt(0) }}
+                            </div>
+                          </el-tooltip>
+                          <el-button class="edit-function-btn" @click="showFunctionDialog = true"
+                            :class="{ 'active-btn': showFunctionDialog }">
+                            编辑功能
+                          </el-button>
+                        </div>
+                        <div v-if="model.type === 'Memory' && form.model.memModelId !== 'Memory_nomem'"
+                          class="chat-history-options">
+                          <el-radio-group v-model="form.chatHistoryConf" @change="updateChatHistoryConf">
+                            <el-radio-button :label="1">上报文字</el-radio-button>
+                            <el-radio-button :label="2">上报文字+语音</el-radio-button>
+                          </el-radio-group>
+                        </div>
                       </div>
                     </el-form-item>
                     <el-form-item label="角色音色">
                       <el-select v-model="form.ttsVoiceId" placeholder="请选择" class="form-select">
                         <el-option v-for="(item, index) in voiceOptions" :key="`voice-${index}`" :label="item.label"
                           :value="item.value" />
-                      </el-select>
-                    </el-form-item>
-                    <el-form-item label="聊天记录配置">
-                      <el-select v-model="form.chatHistoryConf" placeholder="请选择" class="form-select">
-                        <el-option v-for="(item, index) in chatHistoryOptions" :key="`chatHistoryConf-${index}`"
-                          :label="item.label" :value="item.value" />
                       </el-select>
                     </el-form-item>
                   </div>
@@ -107,14 +112,15 @@
       </div>
     </div>
 
-    <function-dialog v-model="showFunctionDialog" :functions="currentFunctions" @update-functions="handleUpdateFunctions"  @dialog-closed="handleDialogClosed"/>
+    <function-dialog v-model="showFunctionDialog" :functions="currentFunctions"
+      @update-functions="handleUpdateFunctions" @dialog-closed="handleDialogClosed" />
   </div>
 </template>
 
 <script>
 import Api from '@/apis/api';
-import HeaderBar from "@/components/HeaderBar.vue";
 import FunctionDialog from "@/components/FunctionDialog.vue";
+import HeaderBar from "@/components/HeaderBar.vue";
 
 export default {
   name: 'RoleConfigPage',
@@ -125,7 +131,7 @@ export default {
         agentCode: "",
         agentName: "",
         ttsVoiceId: "",
-        chatHistoryConf: "",
+        chatHistoryConf: 0,
         systemPrompt: "",
         langCode: "",
         language: "",
@@ -162,20 +168,6 @@ export default {
         { name: '新闻', params: {} },
         { name: '工具', params: {} },
         { name: '退出', params: {} }
-      ],
-      chatHistoryOptions: [
-        {
-          "value": 0,
-          "label": "不记录"
-        },
-        {
-          "value": 1,
-          "label": "仅记录文本"
-        },
-        {
-          "value": 2,
-          "label": "文本音频都记录"
-        }
       ],
     }
   },
@@ -225,7 +217,7 @@ export default {
           agentCode: "",
           agentName: "",
           ttsVoiceId: "",
-          chatHistoryConf: "",
+          chatHistoryConf: 0,
           systemPrompt: "",
           langCode: "",
           language: "",
@@ -244,7 +236,7 @@ export default {
           message: '配置已重置',
           showClose: true
         })
-      }).catch(() => {});
+      }).catch(() => { });
     },
     fetchTemplates() {
       Api.agent.getAgentTemplate(({ data }) => {
@@ -355,6 +347,12 @@ export default {
       if (type === 'Intent' && value === 'Intent_function_call') {
         this.fetchFunctionList();
       }
+      if (type === 'Memory' && value === 'Memory_nomem') {
+        this.form.chatHistoryConf = 0;
+      }
+      if (type === 'Memory' && value !== 'Memory_nomem' && (this.form.chatHistoryConf === 0 || this.form.chatHistoryConf === null)) {
+        this.form.chatHistoryConf = 2;
+      }
     },
     fetchFunctionList() {
       // 使用假数据代替API调用
@@ -377,6 +375,11 @@ export default {
       if (!saved) {
         // 如果未保存，恢复原始功能列表
         this.currentFunctions = JSON.parse(JSON.stringify(this.originalFunctions));
+      }
+    },
+    updateChatHistoryConf() {
+      if (this.form.model.memModelId === 'Memory_nomem') {
+        this.form.chatHistoryConf = 0;
       }
     },
   },
@@ -693,4 +696,10 @@ export default {
   color: white;
 }
 
+.chat-history-options {
+  display: flex;
+  gap: 10px;
+  min-width: 250px;
+  justify-content: flex-end;
+}
 </style>
