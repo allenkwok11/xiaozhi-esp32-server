@@ -9,6 +9,7 @@ import wave
 import websockets
 from config.logger import setup_logging
 import asyncio
+import re
 
 TAG = __name__
 logger = setup_logging()
@@ -24,6 +25,7 @@ class ASRProvider(ASRProviderBase):
         super().__init__()
         self.host = config.get("host", "localhost")
         self.port = config.get("port", 10095)
+        self.api_key = config.get('api_key', 'none')
         self.is_ssl = config.get("is_ssl", True)
         self.output_dir = config.get("output_dir")
         self.delete_audio_file = delete_audio_file
@@ -130,9 +132,9 @@ class ASRProvider(ASRProviderBase):
             pass
         else:
             file_path = self.save_audio_to_file(pcm_data, session_id)
-
+        auth_header = {'Authorization': 'Bearer; {}'.format(self.api_key)}
         async with websockets.connect(
-            self.uri, subprotocols=["binary"], ping_interval=None, ssl=self.ssl_context
+            self.uri, additional_headers=auth_header, subprotocols=["binary"], ping_interval=None, ssl=self.ssl_context
         ) as ws:
             try:
                 # Use asyncio to handle WebSocket communication
@@ -157,6 +159,9 @@ class ASRProvider(ASRProviderBase):
 
                 # Get the result from the receive task
                 result = receive_task.result()
+                match = re.match(r'<\|(.*?)\|><\|(.*?)\|><\|(.*?)\|>(.*)', result)
+                if match:
+                    result = match.group(4).strip()
                 return (
                     result,
                     file_path,
