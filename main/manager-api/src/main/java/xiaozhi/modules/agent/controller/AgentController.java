@@ -46,6 +46,7 @@ import xiaozhi.modules.agent.service.AgentChatAudioService;
 import xiaozhi.modules.agent.service.AgentChatHistoryService;
 import xiaozhi.modules.agent.service.AgentService;
 import xiaozhi.modules.agent.service.AgentTemplateService;
+import xiaozhi.modules.device.entity.DeviceEntity;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.security.user.SecurityUser;
 
@@ -109,6 +110,7 @@ public class AgentController {
             entity.setMemModelId(template.getMemModelId());
             entity.setIntentModelId(template.getIntentModelId());
             entity.setSystemPrompt(template.getSystemPrompt());
+            entity.setSummaryMemory(template.getSummaryMemory());
             entity.setChatHistoryConf(template.getChatHistoryConf());
             entity.setLangCode(template.getLangCode());
             entity.setLanguage(template.getLanguage());
@@ -126,10 +128,24 @@ public class AgentController {
         return new Result<String>().ok(entity.getId());
     }
 
+    @PutMapping("/device/{macAddress}")
+    @Operation(summary = "根据设备id更新智能体")
+    public Result<Void> updateByDeviceId(@PathVariable String macAddress, @RequestBody @Valid AgentUpdateDTO dto) {
+        DeviceEntity device = deviceService.getDeviceByMacAddress(macAddress);
+        if (device == null) {
+            return new Result<>();
+        }
+        return updateAgentById(device.getAgentId(), dto);
+    }
+
     @PutMapping("/{id}")
     @Operation(summary = "更新智能体")
     @RequiresPermissions("sys:role:normal")
     public Result<Void> update(@PathVariable String id, @RequestBody @Valid AgentUpdateDTO dto) {
+        return updateAgentById(id, dto);
+    }
+
+    private Result<Void> updateAgentById(String id, AgentUpdateDTO dto) {
         // 先查询现有实体
         AgentEntity existingEntity = agentService.getAgentById(id);
         if (existingEntity == null) {
@@ -166,6 +182,9 @@ public class AgentController {
         }
         if (dto.getSystemPrompt() != null) {
             existingEntity.setSystemPrompt(dto.getSystemPrompt());
+        }
+        if (dto.getSummaryMemory() != null) {
+            existingEntity.setSummaryMemory(dto.getSummaryMemory());
         }
         if (dto.getChatHistoryConf() != null) {
             existingEntity.setChatHistoryConf(dto.getChatHistoryConf());

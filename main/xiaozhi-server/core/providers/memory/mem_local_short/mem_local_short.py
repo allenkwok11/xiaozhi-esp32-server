@@ -4,6 +4,7 @@ import json
 import os
 import yaml
 from config.config_loader import get_project_dir
+from config.manage_api_client import save_mem_local_short
 
 
 short_term_memory_prompt = """
@@ -93,17 +94,22 @@ TAG = __name__
 
 
 class MemoryProvider(MemoryProviderBase):
-    def __init__(self, config):
+    def __init__(self, config, summary_memory):
         super().__init__(config)
         self.short_momery = ""
         self.memory_path = get_project_dir() + "data/.memory.yaml"
-        self.load_memory()
+        self.load_memory(summary_memory)
 
-    def init_memory(self, role_id, llm):
+    def init_memory(self, role_id, llm, summary_memory=None):
         super().init_memory(role_id, llm)
-        self.load_memory()
+        self.load_memory(summary_memory)
 
-    def load_memory(self):
+    def load_memory(self, summary_memory):
+        # api获取到总结记忆后直接返回
+        if summary_memory:
+            self.short_momery = summary_memory
+            return
+
         all_memory = {}
         if os.path.exists(self.memory_path):
             with open(self.memory_path, "r", encoding="utf-8") as f:
@@ -152,6 +158,7 @@ class MemoryProvider(MemoryProviderBase):
             print("Error:", e)
 
         self.save_memory_to_file()
+        save_mem_local_short(self.role_id, self.short_momery)
         logger.bind(tag=TAG).info(f"Save memory successful - Role: {self.role_id}")
 
         return self.short_momery

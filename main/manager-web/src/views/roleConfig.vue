@@ -40,6 +40,11 @@
                       <el-input type="textarea" rows="12" resize="none" placeholder="请输入内容" v-model="form.systemPrompt"
                         maxlength="2000" show-word-limit class="form-textarea" />
                     </el-form-item>
+                    
+                    <el-form-item label="总结记忆：" :style="{ display: form.model.memModelId === 'Memory_mem_local_short' ? 'block' : 'none' }">
+                      <el-input type="textarea" rows="12" resize="none" placeholder="请输入内容" v-model="form.summaryMemory"
+                        maxlength="2000" show-word-limit class="form-textarea" />
+                    </el-form-item>
                     <el-form-item label="语言编码：" style="display: none;">
                       <el-input v-model="form.langCode" placeholder="请输入语言编码，如：zh_CN" maxlength="10" show-word-limit
                         class="form-input" />
@@ -133,6 +138,7 @@ export default {
         ttsVoiceId: "",
         chatHistoryConf: 0,
         systemPrompt: "",
+        summaryMemory: "",
         langCode: "",
         language: "",
         sort: "",
@@ -188,6 +194,7 @@ export default {
         memModelId: this.form.model.memModelId,
         intentModelId: this.form.model.intentModelId,
         systemPrompt: this.form.systemPrompt,
+        summaryMemory: this.form.summaryMemory,
         langCode: this.form.langCode,
         language: this.form.language,
         sort: this.form.sort,
@@ -219,6 +226,7 @@ export default {
           ttsVoiceId: "",
           chatHistoryConf: 0,
           systemPrompt: "",
+          summaryMemory: "",
           langCode: "",
           language: "",
           sort: "",
@@ -273,6 +281,7 @@ export default {
         ttsVoiceId: templateData.ttsVoiceId || this.form.ttsVoiceId,
         chatHistoryConf: templateData.chatHistoryConf || this.form.chatHistoryConf,
         systemPrompt: templateData.systemPrompt || this.form.systemPrompt,
+        summaryMemory: templateData.summaryMemory || this.form.summaryMemory,
         langCode: templateData.langCode || this.form.langCode,
         model: {
           ttsModelId: templateData.ttsModelId || this.form.model.ttsModelId,
