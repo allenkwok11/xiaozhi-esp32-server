@@ -102,6 +102,9 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
             // 获取 LLM 模型名称
             dto.setLlmModelName(modelConfigService.getModelNameById(agent.getLlmModelId()));
 
+            // 获取记忆模型名称
+            dto.setMemModelId(agent.getMemModelId());
+
             // 获取 TTS 音色名称
             dto.setTtsVoiceName(timbreModelService.getTimbreNameById(agent.getTtsVoiceId()));
 
