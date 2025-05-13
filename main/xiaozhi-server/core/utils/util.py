@@ -930,7 +930,6 @@ def check_vad_update(before_config, new_config):
         if "type" not in new_config["VAD"][new_vad_module]
         else new_config["VAD"][new_vad_module]["type"]
     )
-    print(f"前vad:{current_vad_type}，后vad:{new_vad_type}")
     update_vad = current_vad_type != new_vad_type
     return update_vad
 
@@ -954,6 +953,5 @@ def check_asr_update(before_config, new_config):
         if "type" not in new_config["ASR"][new_asr_module]
         else new_config["ASR"][new_asr_module]["type"]
     )
-    print(f"前asr:{current_asr_type}，后asr:{new_asr_type}")
     update_asr = current_asr_type != new_asr_type
     return update_asr

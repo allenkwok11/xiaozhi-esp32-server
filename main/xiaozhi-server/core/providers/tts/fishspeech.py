@@ -85,7 +85,9 @@ class TTSProvider(TTSProviderBase):
     def __init__(self, config, delete_audio_file):
         super().__init__(config, delete_audio_file)
 
-        self.reference_id = config.get("reference_id")
+        self.reference_id = (
+            None if not config.get("reference_id") else config.get("reference_id")
+        )
         self.reference_audio = parse_string_to_list(config.get("reference_audio"))
         self.reference_text = parse_string_to_list(config.get("reference_text"))
         self.format = config.get("response_format", "wav")
