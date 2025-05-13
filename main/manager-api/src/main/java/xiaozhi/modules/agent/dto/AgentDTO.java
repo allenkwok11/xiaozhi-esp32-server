@@ -27,6 +27,9 @@ public class AgentDTO {
     @Schema(description = "大语言模型名称", example = "llm_model_01")
     private String llmModelName;
 
+    @Schema(description = "记忆模型ID", example = "mem_model_01")
+    private String memModelId;
+
     @Schema(description = "角色设定参数", example = "你是一个专业的客服助手，负责回答用户问题并提供帮助")
     private String systemPrompt;
 
