@@ -225,10 +225,24 @@ class ConnectionHandler:
         """保存记忆并关闭连接"""
         try:
             if self.memory:
-                await self.memory.save_memory(self.dialogue.dialogue)
+                # 使用线程池异步保存记忆
+                def save_memory_task():
+                    try:
+                        # 创建新事件循环（避免与主循环冲突）
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(self.memory.save_memory(self.dialogue.dialogue))
+                    except Exception as e:
+                        self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
+                    finally:
+                        loop.close()
+
+                # 启动线程保存记忆，不等待完成
+                threading.Thread(target=save_memory_task, daemon=True).start()
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"保存记忆失败: {e}")
         finally:
+            # 立即关闭连接，不等待记忆保存完成
             await self.close(ws)
 
     async def reset_timeout(self):
@@ -985,6 +999,7 @@ class ConnectionHandler:
 
     async def close(self, ws=None):
         """资源清理方法"""
+
         # 取消超时任务
         if self.timeout_task:
             self.timeout_task.cancel()
@@ -994,43 +1009,42 @@ class ConnectionHandler:
         if hasattr(self, "mcp_manager") and self.mcp_manager:
             await self.mcp_manager.cleanup_all()
 
-        # 触发停止事件并清理资源
+        # 触发停止事件
         if self.stop_event:
             self.stop_event.set()
-
-        # 立即关闭线程池
-        if self.executor:
-            self.executor.shutdown(wait=False, cancel_futures=True)
-            self.executor = None
-
-        # 添加毒丸对象到上报队列确保线程退出
-        self.report_queue.put(None)
 
         # 清空任务队列
         self.clear_queues()
 
+        # 关闭WebSocket连接
         if ws:
             await ws.close()
         elif self.websocket:
             await self.websocket.close()
+
+        # 最后关闭线程池（避免阻塞）
+        if self.executor:
+            self.executor.shutdown(wait=False)
+            self.executor = None
+
         self.logger.bind(tag=TAG).info("连接资源已释放")
 
     def clear_queues(self):
-        # 清空所有任务队列
+        """清空所有任务队列"""
         self.logger.bind(tag=TAG).debug(
             f"开始清理: TTS队列大小={self.tts_queue.qsize()}, 音频队列大小={self.audio_play_queue.qsize()}"
         )
+
+        # 使用非阻塞方式清空队列
         for q in [self.tts_queue, self.audio_play_queue]:
             if not q:
                 continue
-            while not q.empty():
+            while True:
                 try:
                     q.get_nowait()
                 except queue.Empty:
-                    continue
-            q.queue.clear()
-            # 添加毒丸信号到队列，确保线程退出
-            # q.queue.put(None)
+                    break
+
         self.logger.bind(tag=TAG).debug(
             f"清理结束: TTS队列大小={self.tts_queue.qsize()}, 音频队列大小={self.audio_play_queue.qsize()}"
         )
