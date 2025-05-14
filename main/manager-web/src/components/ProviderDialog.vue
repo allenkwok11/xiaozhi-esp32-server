@@ -49,7 +49,7 @@
 
         <div class="fields-container">
           <el-table :data="form.fields" style="width: 100%;" border size="medium" :key="tableKey">
-            <el-table-column label="选择" align="center" width="120">
+            <el-table-column label="选择" align="center" width="50">
               <template slot-scope="scope">
                 <el-checkbox v-model="scope.row.selected" @change="handleFieldSelectChange"></el-checkbox>
               </template>
@@ -60,7 +60,7 @@
                   <el-input v-model="scope.row.key" placeholder="字段key"></el-input>
                 </template>
                 <template v-else>
-                  {{ scope.row.key || '-' }}
+                  {{ scope.row.key }}
                 </template>
               </template>
             </el-table-column>
@@ -70,7 +70,7 @@
                   <el-input v-model="scope.row.label" placeholder="字段标签"></el-input>
                 </template>
                 <template v-else>
-                  {{ scope.row.label || '-' }}
+                  {{ scope.row.label }}
                 </template>
               </template>
             </el-table-column>
@@ -86,6 +86,16 @@
                 </template>
                 <template v-else>
                   {{ getTypeLabel(scope.row.type) }}
+                </template>
+              </template>
+            </el-table-column>
+            <el-table-column label="默认值">
+              <template slot-scope="scope">
+                <template v-if="scope.row.editing">
+                  <el-input v-model="scope.row.default_value" placeholder="请输入默认值"></el-input>
+                </template>
+                <template v-else>
+                  {{ scope.row.default_value }}
                 </template>
               </template>
             </el-table-column>
@@ -148,7 +158,7 @@ export default {
         'boolean': '布尔值',
         'dict': '字典'
       };
-      return typeMap[type] || '-';
+      return typeMap[type];
     },
 
     startEditing(row) {
@@ -205,6 +215,7 @@ export default {
         key: '',
         label: '',
         type: 'string',
+        default_value: '',
         selected: false,
         editing: true
       });
