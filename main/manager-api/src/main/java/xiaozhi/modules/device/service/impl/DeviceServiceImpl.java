@@ -118,14 +118,20 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
 
         DeviceEntity deviceById = getDeviceByMacAddress(macAddress);
 
-        // 只有在设备已绑定且autoUpdate不为0的情况下才返回固件升级信息
-        if (deviceById != null && deviceById.getAutoUpdate() != 0) {
-            String type = deviceReport.getBoard() == null ? null : deviceReport.getBoard().getType();
-            DeviceReportRespDTO.Firmware firmware = buildFirmwareInfo(type,
-                    deviceReport.getApplication() == null ? null : deviceReport.getApplication().getVersion());
+        // 设备未绑定，则返回当前上传的固件信息（不更新）以此兼容旧固件版本
+        if (deviceById == null) {
+            DeviceReportRespDTO.Firmware firmware = new DeviceReportRespDTO.Firmware();
+            firmware.setVersion(deviceReport.getApplication().getVersion());
+            firmware.setUrl("http://xiaozhi.server.com:8002/xiaozhi/otaMag/download/NOT_ACTIVATED_FIRMWARE_THIS_IS_A_INVALID_URL");
             response.setFirmware(firmware);
         } else {
-            response.setFirmware(null);
+            // 只有在设备已绑定且autoUpdate不为0的情况下才返回固件升级信息
+            if (deviceById.getAutoUpdate() != 0) {
+                String type = deviceReport.getBoard() == null ? null : deviceReport.getBoard().getType();
+                DeviceReportRespDTO.Firmware firmware = buildFirmwareInfo(type,
+                        deviceReport.getApplication() == null ? null : deviceReport.getApplication().getVersion());
+                response.setFirmware(firmware);
+            }
         }
 
         // 添加WebSocket配置
