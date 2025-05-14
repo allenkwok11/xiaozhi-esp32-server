@@ -107,8 +107,8 @@ WEATHER_CODE_MAP = {
 }
 
 
-def fetch_city_info(location, api_key):
-    url = f"https://geoapi.qweather.com/v2/city/lookup?key={api_key}&location={location}&lang=zh"
+def fetch_city_info(location, api_key, api_host):
+    url = f"https://{api_host}/geo/v2/city/lookup?key={api_key}&location={location}&lang=zh"
     response = requests.get(url, headers=HEADERS).json()
     return response.get("location", [])[0] if response.get("location") else None
 
@@ -151,8 +151,10 @@ def parse_weather_info(soup):
 
 @register_function("get_weather", GET_WEATHER_FUNCTION_DESC, ToolType.SYSTEM_CTL)
 def get_weather(conn, location: str = None, lang: str = "zh_CN"):
+    api_host = conn.config["plugins"]["get_weather"]["api_host"]
     api_key = conn.config["plugins"]["get_weather"]["api_key"]
     default_location = conn.config["plugins"]["get_weather"]["default_location"]
+    print(api_host,api_key)
     client_ip = conn.client_ip
     # 优先使用用户提供的location参数
     if not location:
@@ -164,8 +166,7 @@ def get_weather(conn, location: str = None, lang: str = "zh_CN"):
         else:
             # 若IP解析失败或无IP，使用默认位置
             location = default_location
-
-    city_info = fetch_city_info(location, api_key)
+    city_info = fetch_city_info(location, api_key, api_host)
     if not city_info:
         return ActionResponse(
             Action.REQLLM, f"未找到相关的城市: {location}，请确认地点是否正确", None
