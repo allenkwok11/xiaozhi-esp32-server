@@ -144,13 +144,12 @@ def get_agent_models(
         },
     )
 
-def save_mem_local_short(
-    mac_address: str, short_momery: str
-) -> Optional[Dict]:
+
+def save_mem_local_short(mac_address: str, short_momery: str) -> Optional[Dict]:
     try:
         return ManageApiClient._instance._execute_request(
             "PUT",
-            f"/agent/device/" + mac_address,
+            f"/agent/saveMemory/" + mac_address,
             json={
                 "summaryMemory": short_momery,
             },

@@ -39,6 +39,7 @@ import xiaozhi.modules.agent.dto.AgentChatHistoryDTO;
 import xiaozhi.modules.agent.dto.AgentChatSessionDTO;
 import xiaozhi.modules.agent.dto.AgentCreateDTO;
 import xiaozhi.modules.agent.dto.AgentDTO;
+import xiaozhi.modules.agent.dto.AgentMemoryDTO;
 import xiaozhi.modules.agent.dto.AgentUpdateDTO;
 import xiaozhi.modules.agent.entity.AgentEntity;
 import xiaozhi.modules.agent.entity.AgentTemplateEntity;
@@ -128,14 +129,16 @@ public class AgentController {
         return new Result<String>().ok(entity.getId());
     }
 
-    @PutMapping("/device/{macAddress}")
+    @PutMapping("/saveMemory/{macAddress}")
     @Operation(summary = "根据设备id更新智能体")
-    public Result<Void> updateByDeviceId(@PathVariable String macAddress, @RequestBody @Valid AgentUpdateDTO dto) {
+    public Result<Void> updateByDeviceId(@PathVariable String macAddress, @RequestBody @Valid AgentMemoryDTO dto) {
         DeviceEntity device = deviceService.getDeviceByMacAddress(macAddress);
         if (device == null) {
             return new Result<>();
         }
-        return updateAgentById(device.getAgentId(), dto);
+        AgentUpdateDTO agentUpdateDTO = new AgentUpdateDTO();
+        agentUpdateDTO.setSummaryMemory(dto.getSummaryMemory());
+        return updateAgentById(device.getAgentId(), agentUpdateDTO);
     }
 
     @PutMapping("/{id}")
@@ -204,17 +207,16 @@ public class AgentController {
         existingEntity.setUpdater(user.getId());
         existingEntity.setUpdatedAt(new Date());
 
-        agentService.updateById(existingEntity);
-
         // 更新记忆策略
         if (existingEntity.getMemModelId() == null || existingEntity.getMemModelId().equals(Constant.MEMORY_NO_MEM)) {
             // 删除所有记录
             agentChatHistoryService.deleteByAgentId(existingEntity.getId(), true, true);
+            existingEntity.setSummaryMemory("");
         } else if (existingEntity.getChatHistoryConf() != null && existingEntity.getChatHistoryConf() == 1) {
             // 删除音频数据
             agentChatHistoryService.deleteByAgentId(existingEntity.getId(), true, false);
         }
-
+        agentService.updateById(existingEntity);
         return new Result<>();
     }
 
