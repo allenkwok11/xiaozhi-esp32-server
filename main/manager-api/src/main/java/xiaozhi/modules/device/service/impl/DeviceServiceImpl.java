@@ -9,6 +9,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.aop.framework.AopContext;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -53,6 +55,24 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
     private final SysParamsService sysParamsService;
     private final RedisUtils redisUtils;
     private final OtaService otaService;
+
+    @Async
+    public void updateDeviceConnectionInfo(String agentId, String deviceId, String appVersion) {
+        try {
+            DeviceEntity device = new DeviceEntity();
+            device.setId(deviceId);
+            device.setLastConnectedAt(new Date());
+            if (StringUtils.isNotBlank(appVersion)) {
+                device.setAppVersion(appVersion);
+            }
+            deviceDao.updateById(device);
+            if (StringUtils.isNotBlank(agentId)) {
+                redisUtils.set(RedisKeys.getAgentDeviceLastConnectedAtById(agentId), new Date());
+            }
+        } catch (Exception e) {
+            log.error("异步更新设备连接信息失败", e);
+        }
+    }
 
     @Override
     public Boolean deviceActivation(String agentId, String activationCode) {
@@ -150,13 +170,12 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         response.setWebsocket(websocket);
 
         if (deviceById != null) {
-            // 如果设备存在，则更新上次连接时间
-            deviceById.setLastConnectedAt(new Date());
-            if (deviceReport.getApplication() != null
-                    && StringUtils.isNotBlank(deviceReport.getApplication().getVersion())) {
-                deviceById.setAppVersion(deviceReport.getApplication().getVersion());
-            }
-            deviceDao.updateById(deviceById);
+            // 如果设备存在，则异步更新上次连接时间和版本信息
+            String appVersion = deviceReport.getApplication() != null ? deviceReport.getApplication().getVersion()
+                    : null;
+            // 通过Spring代理调用异步方法
+            ((DeviceServiceImpl) AopContext.currentProxy()).updateDeviceConnectionInfo(deviceById.getAgentId(),
+                    deviceById.getId(), appVersion);
         } else {
             // 如果设备不存在，则生成激活码
             DeviceReportRespDTO.Activation code = buildActivation(macAddress, deviceReport);
