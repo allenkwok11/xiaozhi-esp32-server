@@ -153,7 +153,7 @@ class MemoryProvider(MemoryProviderBase):
                 msgStr += f"User: {msg.content}\n"
             elif msg.role == "assistant":
                 msgStr += f"Assistant: {msg.content}\n"
-        if len(self.short_momery) > 0:
+        if self.short_momery and len(self.short_momery) > 0:
             msgStr += "历史记忆：\n"
             msgStr += self.short_momery
 
