@@ -154,7 +154,6 @@ def get_weather(conn, location: str = None, lang: str = "zh_CN"):
     api_host = conn.config["plugins"]["get_weather"]["api_host"]
     api_key = conn.config["plugins"]["get_weather"]["api_key"]
     default_location = conn.config["plugins"]["get_weather"]["default_location"]
-    print(api_host,api_key)
     client_ip = conn.client_ip
     # 优先使用用户提供的location参数
     if not location:
