@@ -429,7 +429,8 @@ class ConnectionHandler:
         self.memory.init_memory(
             self.device_id,
             self.llm,
-            self.config["summaryMemory"]
+            self.config["summaryMemory"],
+            not self.read_config_from_api,
         )
 
     def _initialize_intent(self):
