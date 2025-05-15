@@ -2,6 +2,8 @@ package xiaozhi.common.validator;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -44,5 +46,24 @@ public class ValidatorUtils {
             ConstraintViolation<Object> constraint = constraintViolations.iterator().next();
             throw new RenException(constraint.getMessage());
         }
+    }
+
+    /**
+     * 手机号正则表达式
+     */
+    private static final String PHONE_REGEX = "^1[3-9]\\d{9}$";
+
+    /**
+     * 校验单参数是否是正确的手机号
+     * @param phone 手机号
+     * @return boolean
+     */
+    public static boolean isValidPhone(String phone) {
+        if (phone == null || phone.isEmpty()) {
+            return false;
+        }
+        Pattern pattern = Pattern.compile(PHONE_REGEX);
+        Matcher matcher = pattern.matcher(phone);
+        return matcher.matches();
     }
 }
