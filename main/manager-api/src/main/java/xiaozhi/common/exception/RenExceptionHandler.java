@@ -1,7 +1,10 @@
 package xiaozhi.common.exception;
 
 import org.apache.shiro.authz.UnauthorizedException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -10,6 +13,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import xiaozhi.common.utils.Result;
 
+import java.util.List;
+import java.util.Objects;
 /**
  * 异常处理器
  * Copyright (c) 人人开源 All rights reserved.
@@ -58,6 +63,18 @@ public class RenExceptionHandler {
     public Result<Void> handleNoResourceFoundException(NoResourceFoundException ex) {
         log.warn("Resource not found: {}", ex.getMessage());
         return new Result<Void>().error(404, "资源不存在");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        StringBuilder sb = new StringBuilder();
+        List<ObjectError> allErrors = ex.getBindingResult().getAllErrors();
+        String errorMsg = allErrors.stream()
+                .filter(Objects::nonNull)
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .findFirst()
+                .orElse("");
+        return new Result<Void>().error(400, errorMsg);
     }
 
 }
