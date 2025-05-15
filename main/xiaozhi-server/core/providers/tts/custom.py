@@ -1,4 +1,5 @@
 import os
+import json
 import uuid
 import requests
 from config.logger import setup_logging
@@ -13,7 +14,7 @@ class TTSProvider(TTSProviderBase):
         super().__init__(config, delete_audio_file)
         self.url = config.get("url")
         self.headers = config.get("headers", {})
-        self.params = config.get("params")
+        self.params = json.loads(config.get("params"))
         self.format = config.get("format", "wav")
         self.output_file = config.get("output_dir", "tmp/")
 
