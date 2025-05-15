@@ -1,6 +1,7 @@
 package xiaozhi.modules.security.service.impl;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import xiaozhi.common.redis.RedisKeys;
 import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.modules.security.service.CaptchaService;
+import xiaozhi.modules.sms.service.SmsService;
 
 /**
  * 验证码
@@ -25,6 +27,8 @@ import xiaozhi.modules.security.service.CaptchaService;
 public class CaptchaServiceImpl implements CaptchaService {
     @Resource
     private RedisUtils redisUtils;
+    @Resource
+    private SmsService smsService;
     @Value("${renren.redis.open}")
     private boolean open;
     /**
@@ -64,6 +68,35 @@ public class CaptchaServiceImpl implements CaptchaService {
         }
 
         return false;
+    }
+
+    @Override
+    public void sendSMSValidateCode(String phone) {
+        String key = RedisKeys.getSMSValidateCodeKey(phone);
+        String validateCodes = generateValidateCode(6);
+        setCache(key,validateCodes);
+        //发送验证码短信
+        smsService.sendVerificationCodeSms(phone,validateCodes);
+    }
+
+    @Override
+    public boolean validateSMSValidateCode(String phone,String code) {
+        String key = RedisKeys.getSMSValidateCodeKey(phone);
+        return validate(key, code);
+    }
+    /**
+     * 生成指定数量的随机数验证码
+     * @param length 数量
+     * @return 随机码
+     */
+    private  String generateValidateCode(Integer length) {
+        String chars = "0123456789"; // 字符范围可以自定义：数字
+        Random random = new Random();
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            code.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return code.toString();
     }
 
     private void setCache(String key, String value) {

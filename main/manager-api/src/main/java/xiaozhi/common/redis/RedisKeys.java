@@ -117,4 +117,12 @@ public class RedisKeys {
     public static String getAgentAudioIdKey(String uuid) {
         return "agent:audio:id:" + uuid;
     }
+
+    /**
+     * 获取短信验证码的缓存key
+     */
+    public static String getSMSValidateCodeKey(String phone) {
+        return "sms:Validate:Code:" + phone;
+    }
+
 }
