@@ -13,6 +13,7 @@ class TTSProvider(TTSProviderBase):
     def __init__(self, config, delete_audio_file):
         super().__init__(config, delete_audio_file)
         self.url = config.get("url")
+        self.method = config.get("method", "GET")
         self.headers = config.get("headers", {})
         self.params = json.loads(config.get("params"))
         self.format = config.get("format", "wav")
@@ -28,7 +29,10 @@ class TTSProvider(TTSProviderBase):
                 v = v.replace("{prompt_text}", text)
             request_params[k] = v
 
-        resp = requests.get(self.url, params=request_params, headers=self.headers)
+        if self.method.upper() == "POST":
+            resp = requests.post(self.url, json=request_params, headers=self.headers)
+        else:
+            resp = requests.get(self.url, params=request_params, headers=self.headers)
         if resp.status_code == 200:
             with open(output_file, "wb") as file:
                 file.write(resp.content)
