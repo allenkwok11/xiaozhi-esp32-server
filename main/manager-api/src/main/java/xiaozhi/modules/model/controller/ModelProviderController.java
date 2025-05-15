@@ -15,15 +15,15 @@ import xiaozhi.modules.model.service.ModelProviderService;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/models/provider")
-@Tag(name = "模型配置")
+@Tag(name = "模型供应器")
 public class ModelProviderController {
 
     private final ModelProviderService modelProviderService;
 
     @GetMapping
-    @Operation(summary = "获取模型配置列表")
+    @Operation(summary = "获取模型供应器列表")
     @RequiresPermissions("sys:role:superAdmin")
-    public Result<PageData<ModelProviderDTO>> getListPage(@RequestBody ModelProviderDTO modelProviderDTO,
+    public Result<PageData<ModelProviderDTO>> getListPage(ModelProviderDTO modelProviderDTO,
                                                              @RequestParam(required = true, defaultValue = "0") String page,
                                                              @RequestParam(required = true, defaultValue = "10") String limit) {
         return new Result<PageData<ModelProviderDTO>>()
@@ -31,7 +31,7 @@ public class ModelProviderController {
     }
 
     @PostMapping
-    @Operation(summary = "获取模型配置列表")
+    @Operation(summary = "获取模型供应器列表")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<ModelProviderDTO> add(@RequestBody @Validated ModelProviderDTO modelProviderDTO) {
         ModelProviderDTO resp = modelProviderService.add(modelProviderDTO);
@@ -39,7 +39,7 @@ public class ModelProviderController {
     }
 
     @PutMapping
-    @Operation(summary = "获取模型配置列表")
+    @Operation(summary = "获取模型供应器列表")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<ModelProviderDTO> edit(@RequestBody @Validated(UpdateGroup.class) ModelProviderDTO modelProviderDTO) {
         ModelProviderDTO resp = modelProviderService.edit(modelProviderDTO);
@@ -47,7 +47,7 @@ public class ModelProviderController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "获取模型配置列表")
+    @Operation(summary = "获取模型供应器列表")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@PathVariable String id) {
         modelProviderService.delete(id);

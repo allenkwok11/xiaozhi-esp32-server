@@ -88,7 +88,9 @@ public class ModelProviderServiceImpl extends BaseServiceImpl<ModelProviderDao, 
 
     @Override
     public void delete(String id) {
-        modelProviderDao.deleteById(id);
+        if (modelProviderDao.deleteById(id) == 0) {
+            throw new RenException("删除数据失败");
+        }
     }
 
     @Override
