@@ -29,7 +29,9 @@ import xiaozhi.modules.security.service.CaptchaService;
 import xiaozhi.modules.security.service.SysUserTokenService;
 import xiaozhi.modules.security.user.SecurityUser;
 import xiaozhi.modules.sys.dto.PasswordDTO;
+import xiaozhi.modules.sys.dto.RetrievePasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
+import xiaozhi.modules.sys.service.SysParamsService;
 import xiaozhi.modules.sys.service.SysUserService;
 
 /**
@@ -43,15 +45,24 @@ public class LoginController {
     private final SysUserService sysUserService;
     private final SysUserTokenService sysUserTokenService;
     private final CaptchaService captchaService;
+    private final SysParamsService sysParamsService;
 
     @GetMapping("/captcha")
     @Operation(summary = "验证码")
     public void captcha(HttpServletResponse response, String uuid) throws IOException {
         // uuid不能为空
         AssertUtils.isBlank(uuid, ErrorCode.IDENTIFIER_NOT_NULL);
-
         // 生成验证码
         captchaService.create(response, uuid);
+    }
+
+    @GetMapping("/smsVerification")
+    @Operation(summary = "短信验证码")
+    public void smsVerification(String phone) throws IOException {
+        // uuid不能为空
+        AssertUtils.isBlank(phone, ErrorCode.IDENTIFIER_NOT_NULL);
+        // 发送短信验证码
+        captchaService.sendSMSValidateCode(phone);
     }
 
     @PostMapping("/login")
@@ -81,8 +92,23 @@ public class LoginController {
         if (!sysUserService.getAllowUserRegister()) {
             throw new RenException("当前不允许普通用户注册");
         }
-        // 验证是否正确输入验证码
-        boolean validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha());
+        // 是否开启手机注册
+        Boolean isMobileRegister = sysParamsService.getValueObject(Constant.SysMSMParam
+                .SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+        boolean validate;
+        if (isMobileRegister) {
+            // 验证用户是否是手机号码
+            boolean validPhone = ValidatorUtils.isValidPhone(login.getUsername());
+            if (validPhone) {
+                throw new RenException("用户名不是手机号码，请重新输入");
+            }
+            // 验证短信验证码是否正常
+            validate = captchaService.validateSMSValidateCode(login.getUsername(),login.getCaptcha());
+        } else {
+            // 验证是否正确输入验证码
+            validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha());
+        }
+        // 判断是否通过验证
         if (!validate) {
             throw new RenException("验证码错误，请重新获取");
         }
@@ -96,7 +122,6 @@ public class LoginController {
         userDTO.setPassword(login.getPassword());
         sysUserService.save(userDTO);
         return new Result<>();
-
     }
 
     @GetMapping("/info")
@@ -115,6 +140,42 @@ public class LoginController {
         ValidatorUtils.validateEntity(passwordDTO);
         Long userId = SecurityUser.getUserId();
         sysUserTokenService.changePassword(userId, passwordDTO);
+        return new Result<>();
+    }
+
+    @PutMapping("/retrieve-password")
+    @Operation(summary = "找回密码")
+    public Result<?> retrievePassword(@RequestBody RetrievePasswordDTO dto) {
+        // 是否开启手机注册
+        Boolean isMobileRegister = sysParamsService.getValueObject(Constant.SysMSMParam
+                .SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+        if (!isMobileRegister) {
+            throw new RenException("没有开启手机注册，没法使用找回密码功能");
+        }
+        // 判断非空
+        ValidatorUtils.validateEntity(dto);
+        // 验证用户是否是手机号码
+        boolean validPhone = ValidatorUtils.isValidPhone(dto.getPhone());
+        if (validPhone) {
+            throw new RenException("用户名不是手机号码，请重新输入");
+        };
+
+        // 按照用户名获取用户
+        SysUserDTO userDTO = sysUserService.getByUsername(dto.getPhone());
+        if (userDTO == null) {
+            throw new RenException("用户名或验证码错误");
+        }
+        // 验证用户是否是手机号码
+        ValidatorUtils.isValidPhone(dto.getPhone());
+        // 验证短信验证码是否正常
+        boolean validate = captchaService.validateSMSValidateCode(dto.getPhone(),dto.getCode());
+        // 判断是否通过验证
+        if (!validate) {
+            throw new RenException("用户名或验证码错误");
+        }
+
+        Long userId = SecurityUser.getUserId();
+        sysUserService.changePasswordDirectly(userId, dto.getPassword());
         return new Result<>();
     }
 
