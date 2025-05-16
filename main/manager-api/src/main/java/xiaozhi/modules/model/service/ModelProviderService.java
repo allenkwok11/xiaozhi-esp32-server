@@ -17,6 +17,8 @@ public interface ModelProviderService {
 
     void delete(String id);
 
+    void delete(List<String> id);
+
     PageData<ModelProviderDTO> getListPage(ModelProviderDTO modelProviderDTO, String page, String limit);
 
     List<ModelProviderDTO> getList(String modelType, String provideCode);

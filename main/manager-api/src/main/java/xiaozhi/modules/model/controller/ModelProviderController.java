@@ -1,11 +1,21 @@
 package xiaozhi.modules.model.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.AllArgsConstructor;
+import java.util.List;
+
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
 import xiaozhi.common.annotation.UpdateGroup;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.utils.Result;
@@ -31,7 +41,7 @@ public class ModelProviderController {
     }
 
     @PostMapping
-    @Operation(summary = "获取模型供应器列表")
+    @Operation(summary = "新增模型供应器")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<ModelProviderDTO> add(@RequestBody @Validated ModelProviderDTO modelProviderDTO) {
         ModelProviderDTO resp = modelProviderService.add(modelProviderDTO);
@@ -39,18 +49,19 @@ public class ModelProviderController {
     }
 
     @PutMapping
-    @Operation(summary = "获取模型供应器列表")
+    @Operation(summary = "修改模型供应器")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<ModelProviderDTO> edit(@RequestBody @Validated(UpdateGroup.class) ModelProviderDTO modelProviderDTO) {
         ModelProviderDTO resp = modelProviderService.edit(modelProviderDTO);
         return new Result<ModelProviderDTO>().ok(resp);
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "获取模型供应器列表")
+    @PostMapping("/delete")
+    @Operation(summary = "删除模型供应器")
     @RequiresPermissions("sys:role:superAdmin")
-    public Result<Void> delete(@PathVariable String id) {
-        modelProviderService.delete(id);
+    @Parameter(name = "ids", description = "ID数组", required = true)
+    public Result<Void> delete(@RequestBody List<String> ids) {
+        modelProviderService.delete(ids);
         return new Result<>();
     }
 
