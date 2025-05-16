@@ -10,15 +10,15 @@
 
       <el-form :model="form" label-width="100px" :rules="rules" ref="form" class="custom-form">
         <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-          <el-form-item label="类别" prop="model_type" style="flex: 1;">
-            <el-select v-model="form.model_type" placeholder="请选择类别" class="custom-input-bg" style="width: 100%;">
+          <el-form-item label="类别" prop="modelType" style="flex: 1;">
+            <el-select v-model="form.modelType" placeholder="请选择类别" class="custom-input-bg" style="width: 100%;">
               <el-option v-for="item in modelTypes" :key="item.value" :label="item.label" :value="item.value">
               </el-option>
             </el-select>
           </el-form-item>
 
-          <el-form-item label="供应器编码" prop="provider_code" style="flex: 1;">
-            <el-input v-model="form.provider_code" placeholder="请输入供应器编码" class="custom-input-bg"></el-input>
+          <el-form-item label="供应器编码" prop="providerCode" style="flex: 1;">
+            <el-input v-model="form.providerCode" placeholder="请输入供应器编码" class="custom-input-bg"></el-input>
           </el-form-item>
         </div>
 
@@ -135,8 +135,8 @@ export default {
     return {
       saving: false,
       rules: {
-        model_type: [{required: true, message: '请选择类别', trigger: 'change'}],
-        provider_code: [{required: true, message: '请输入供应器编码', trigger: 'blur'}],
+        modelType: [{required: true, message: '请选择类别', trigger: 'change'}],
+        providerCode: [{required: true, message: '请输入供应器编码', trigger: 'blur'}],
         name: [{required: true, message: '请输入供应器名称', trigger: 'blur'}]
       },
       isAllFieldsSelected: false,
