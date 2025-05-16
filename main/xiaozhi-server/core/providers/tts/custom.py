@@ -15,9 +15,18 @@ class TTSProvider(TTSProviderBase):
         self.url = config.get("url")
         self.method = config.get("method", "GET")
         self.headers = config.get("headers", {})
-        self.params = json.loads(config.get("params"))
         self.format = config.get("format", "wav")
         self.output_file = config.get("output_dir", "tmp/")
+
+        self.params = config.get("params")
+
+        if isinstance(self.params, str):
+            try:
+                self.params = json.loads(self.params)
+            except json.JSONDecodeError:
+                raise ValueError("Custom TTS配置参数出错,无法将字符串解析为对象")
+        elif not isinstance(self.params, dict):
+            raise TypeError("Custom TTS配置参数出错, 请参考配置说明")
 
     def generate_filename(self):
         return os.path.join(self.output_file, f"tts-{datetime.now().date()}@{uuid.uuid4().hex}.{self.format}")
