@@ -30,7 +30,7 @@ public class ModelProviderEntity {
     private String name;
 
     @Schema(description = "供应器字段列表(JSON格式)")
-    @TableField(typeHandler = JacksonTypeHandler.class)
+//    @TableField(typeHandler = JacksonTypeHandler.class)
     private String fields;
 
     @Schema(description = "排序")
