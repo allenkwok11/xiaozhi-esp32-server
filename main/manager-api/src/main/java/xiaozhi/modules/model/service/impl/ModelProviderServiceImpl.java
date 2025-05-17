@@ -59,7 +59,9 @@ public class ModelProviderServiceImpl extends BaseServiceImpl<ModelProviderDao, 
         }
 
         if (StringUtils.isNotBlank(modelProviderDTO.getName())) {
-            wrapper.like("name", "%" + modelProviderDTO.getName() + "%");
+            wrapper.and(w -> w.like("name", modelProviderDTO.getName())
+                    .or()
+                    .like("provider_code", modelProviderDTO.getName()));
         }
         return getPageData(modelProviderDao.selectPage(pageParam, wrapper), ModelProviderDTO.class);
     }
@@ -93,7 +95,8 @@ public class ModelProviderServiceImpl extends BaseServiceImpl<ModelProviderDao, 
         UserDetail user = SecurityUser.getUser();
         modelProviderDTO.setUpdater(user.getId());
         modelProviderDTO.setUpdateDate(new Date());
-        if (modelProviderDao.updateById(ConvertUtils.sourceToTarget(modelProviderDTO, ModelProviderEntity.class)) == 0) {
+        if (modelProviderDao
+                .updateById(ConvertUtils.sourceToTarget(modelProviderDTO, ModelProviderEntity.class)) == 0) {
             throw new RenException("修改数据失败");
         }
         return ConvertUtils.sourceToTarget(modelProviderDTO, ModelProviderDTO.class);

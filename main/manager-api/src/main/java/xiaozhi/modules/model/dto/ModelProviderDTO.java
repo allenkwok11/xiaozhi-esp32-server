@@ -16,7 +16,6 @@ import xiaozhi.common.annotation.UpdateGroup;
 @Data
 @Schema(description = "模型供应器/商")
 public class ModelProviderDTO implements Serializable {
-    //
     @Schema(description = "主键")
     @NotBlank(message = "id不能为空", groups = UpdateGroup.class)
     private String id;
