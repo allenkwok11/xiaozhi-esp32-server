@@ -59,8 +59,8 @@ public class LoginController {
     @GetMapping("/smsVerification")
     @Operation(summary = "短信验证码")
     public void smsVerification(String phone) throws IOException {
-        // uuid不能为空
-        AssertUtils.isBlank(phone, ErrorCode.IDENTIFIER_NOT_NULL);
+        // 手机号码不能为空
+        AssertUtils.isBlank(phone, ErrorCode.PHONE_NOT_NULL);
         // 发送短信验证码
         captchaService.sendSMSValidateCode(phone);
     }
@@ -99,7 +99,7 @@ public class LoginController {
         if (isMobileRegister) {
             // 验证用户是否是手机号码
             boolean validPhone = ValidatorUtils.isValidPhone(login.getUsername());
-            if (validPhone) {
+            if (!validPhone) {
                 throw new RenException("用户名不是手机号码，请重新输入");
             }
             // 验证短信验证码是否正常
@@ -156,8 +156,8 @@ public class LoginController {
         ValidatorUtils.validateEntity(dto);
         // 验证用户是否是手机号码
         boolean validPhone = ValidatorUtils.isValidPhone(dto.getPhone());
-        if (validPhone) {
-            throw new RenException("用户名不是手机号码，请重新输入");
+        if (!validPhone) {
+            throw new RenException("用户名不是手机号码，无法提供找回密码服务");
         };
 
         // 按照用户名获取用户
@@ -165,8 +165,6 @@ public class LoginController {
         if (userDTO == null) {
             throw new RenException("用户名或验证码错误");
         }
-        // 验证用户是否是手机号码
-        ValidatorUtils.isValidPhone(dto.getPhone());
         // 验证短信验证码是否正常
         boolean validate = captchaService.validateSMSValidateCode(dto.getPhone(),dto.getCode());
         // 判断是否通过验证
