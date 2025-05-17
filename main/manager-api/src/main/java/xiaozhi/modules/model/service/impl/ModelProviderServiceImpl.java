@@ -50,7 +50,7 @@ public class ModelProviderServiceImpl extends BaseServiceImpl<ModelProviderDao, 
         params.put(Constant.ORDER_FIELD, List.of("model_type", "sort"));
         params.put(Constant.ORDER, "asc");
 
-        IPage<ModelProviderEntity> pageParam = getPage(params);
+        IPage<ModelProviderEntity> pageParam = getPage(params, null, true);
 
         QueryWrapper<ModelProviderEntity> wrapper = new QueryWrapper<ModelProviderEntity>();
 

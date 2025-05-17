@@ -215,15 +215,12 @@ export default {
     RequestService.sendRequest()
       .url(`${getServiceUrl()}/models/provider?${queryParams.toString()}`)
       .method('GET')
-      // 如果需要额外设置 header，可以在这里添加
-      // .headers({ 'X-Custom-Header': 'xxx' })
       .success((res) => {
         RequestService.clearRequestTime();
         callback(res);
       })
       .fail((err) => {
-        console.error('获取供应器列表失败:', err);
-        this.$message.error('获取供应器列表失败');
+        this.$message.error(err.msg || '获取供应器列表失败');
         RequestService.reAjaxFun(() => {
           this.getModelProviders(params, callback);
         });
@@ -249,17 +246,15 @@ export default {
       .method('POST')
       .data(postData)
       .success((res) => {
-        console.log('新增模型供应器成功:', res);
         RequestService.clearRequestTime();
-        // this.$message.success('新增模型供应器成功');
         callback(res);
       })
       .fail((err) => {
-        console.error('新增模型供应器失败:', err);
-        // this.$message.error(err.msg || '新增模型供应器失败');
-        // RequestService.reAjaxFun(() => {
-        //   this.addModelProvider(params, callback);
-        // });
+        console.error('新增模型供应器失败:', err)
+        this.$message.error(err.msg || '新增模型供应器失败')
+        RequestService.reAjaxFun(() => {
+          this.addModelProvider(params, callback);
+        });
       }).send();
   },
 
@@ -287,7 +282,7 @@ export default {
         callback(res);
       })
       .fail((err) => {
-        console.error('更新模型供应器失败:', err);
+        this.$message.error(err.msg || '更新模型供应器失败')
         RequestService.reAjaxFun(() => {
           this.updateModelProvider(params, callback);
         });
@@ -304,9 +299,9 @@ export default {
         callback(res);
       })
       .fail((err) => {
-        console.error('删除参数失败:', err)
+        this.$message.error(err.msg || '删除模型供应器失败')
         RequestService.reAjaxFun(() => {
-          this.deleteParam(ids, callback)
+          this.deleteModelProviderByIds(ids, callback)
         })
       }).send()
   },

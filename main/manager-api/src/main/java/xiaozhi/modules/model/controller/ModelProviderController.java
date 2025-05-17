@@ -16,9 +16,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
-import xiaozhi.common.annotation.UpdateGroup;
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.utils.Result;
+import xiaozhi.common.validator.group.UpdateGroup;
 import xiaozhi.modules.model.dto.ModelProviderDTO;
 import xiaozhi.modules.model.service.ModelProviderService;
 
@@ -34,8 +34,8 @@ public class ModelProviderController {
     @Operation(summary = "获取模型供应器列表")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<PageData<ModelProviderDTO>> getListPage(ModelProviderDTO modelProviderDTO,
-                                                             @RequestParam(required = true, defaultValue = "0") String page,
-                                                             @RequestParam(required = true, defaultValue = "10") String limit) {
+            @RequestParam(required = true, defaultValue = "0") String page,
+            @RequestParam(required = true, defaultValue = "10") String limit) {
         return new Result<PageData<ModelProviderDTO>>()
                 .ok(modelProviderService.getListPage(modelProviderDTO, page, limit));
     }

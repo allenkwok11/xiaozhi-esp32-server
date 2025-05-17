@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import xiaozhi.common.annotation.UpdateGroup;
+import xiaozhi.common.validator.group.UpdateGroup;
 
 @Data
 @Schema(description = "模型供应器/商")

@@ -47,6 +47,12 @@ public abstract class BaseServiceImpl<M extends BaseMapper<T>, T> implements Bas
      * @param params            分页查询参数
      * @param defaultOrderField 默认排序字段
      * @param isAsc             排序方式
+     * @see xiaozhi.common.constant.Constant
+     *      params.put(Constant.PAGE, "1");
+     *      params.put(Constant.LIMIT, "10");
+     *      params.put(Constant.ORDER_FIELD, "field"); // 单个字段
+     *      params.put(Constant.ORDER_FIELD, List.of("field1", "field2")); // 多个字段
+     *      params.put(Constant.ORDER, "asc");
      */
     protected IPage<T> getPage(Map<String, Object> params, String defaultOrderField, boolean isAsc) {
         // 分页参数
@@ -67,80 +73,33 @@ public abstract class BaseServiceImpl<M extends BaseMapper<T>, T> implements Bas
         params.put(Constant.PAGE, page);
 
         // 排序字段
-        String orderField = (String) params.get(Constant.ORDER_FIELD);
-        String order = (String) params.get(Constant.ORDER);
-
-        // 前端字段排序
-        if (StringUtils.isNotBlank(orderField) && StringUtils.isNotBlank(order)) {
-            if (Constant.ASC.equalsIgnoreCase(order)) {
-                return page.addOrder(OrderItem.asc(orderField));
-            } else {
-                return page.addOrder(OrderItem.desc(orderField));
-            }
-        }
-
-        // 没有排序字段，则不排序
-        if (StringUtils.isBlank(defaultOrderField)) {
-            return page;
-        }
-
-        // 默认排序
-        if (isAsc) {
-            page.addOrder(OrderItem.asc(defaultOrderField));
-        } else {
-            page.addOrder(OrderItem.desc(defaultOrderField));
-        }
-
-        return page;
-    }
-
-    /**
-     * 获取分页对象
-     * @see xiaozhi.common.constant.Constant
-     * params.put(Constant.PAGE, "1");
-     * params.put(Constant.LIMIT, "10");
-     * params.put(Constant.ORDER_FIELD, List.of("model_type", "sort"));
-     * params.put(Constant.ORDER, "asc");
-     *
-     * @param params         分页查询参数
-     */
-    protected IPage<T> getPage(Map<String, Object> params) {
-        // 分页参数
-        long curPage = 1;
-        long limit = 10;
-
-        if (params.get(Constant.PAGE) != null) {
-            curPage = Long.parseLong((String) params.get(Constant.PAGE));
-        }
-
-        if (params.get(Constant.LIMIT) != null) {
-            limit = Long.parseLong((String) params.get(Constant.LIMIT));
-        }
-
-        // 分页对象
-        Page<T> page = new Page<>(curPage, limit);
-
-        // 分页参数
-        params.put(Constant.PAGE, page);
-
-        // 排序字段
         Object orderField = params.get(Constant.ORDER_FIELD);
+        String order = (String) params.get(Constant.ORDER);
 
         List<String> orderFields = new ArrayList<>();
 
+        // 处理排序字段
         if (orderField instanceof String) {
             orderFields.add((String) orderField);
         } else if (orderField instanceof List) {
-            orderFields.addAll( (List<String>) orderField);
+            orderFields.addAll((List<String>) orderField);
         }
-        String order = (String) params.get(Constant.ORDER);
 
-        // 有排序字段则排序，默认降序
+        // 有排序字段则排序
         if (CollectionUtils.isNotEmpty(orderFields)) {
             if (StringUtils.isNotBlank(order) && Constant.ASC.equalsIgnoreCase(order)) {
-                return page.addOrder(OrderItem.ascs(orderFields.toArray(new String[orderFields.size()])));
+                return page.addOrder(OrderItem.ascs(orderFields.toArray(new String[0])));
             } else {
-                return page.addOrder(OrderItem.descs(orderFields.toArray(new String[orderFields.size()])));
+                return page.addOrder(OrderItem.descs(orderFields.toArray(new String[0])));
+            }
+        }
+
+        // 没有排序字段，使用默认排序
+        if (StringUtils.isNotBlank(defaultOrderField)) {
+            if (isAsc) {
+                page.addOrder(OrderItem.asc(defaultOrderField));
+            } else {
+                page.addOrder(OrderItem.desc(defaultOrderField));
             }
         }
 
