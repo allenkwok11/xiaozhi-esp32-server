@@ -126,7 +126,7 @@ public class CaptchaServiceImpl implements CaptchaService {
         }
 
         // 发送验证码短信
-        // smsService.sendVerificationCodeSms(phone, validateCodes);
+        smsService.sendVerificationCodeSms(phone, validateCodes);
     }
 
     @Override
