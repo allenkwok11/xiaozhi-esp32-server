@@ -183,7 +183,7 @@ public class LoginController {
             throw new RenException("用户名或验证码错误");
         }
         // 验证短信验证码是否正常
-        boolean validate = captchaService.validateSMSValidateCode(dto.getPhone(), dto.getCode());
+        boolean validate = captchaService.validateSMSValidateCode(dto.getPhone(), dto.getCode(), false);
         // 判断是否通过验证
         if (!validate) {
             throw new RenException("用户名或验证码错误");
