@@ -2,6 +2,7 @@ package xiaozhi.modules.security.controller;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,7 @@ import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.AssertUtils;
 import xiaozhi.common.validator.ValidatorUtils;
 import xiaozhi.modules.security.dto.LoginDTO;
+import xiaozhi.modules.security.dto.SmsVerificationDTO;
 import xiaozhi.modules.security.password.PasswordUtils;
 import xiaozhi.modules.security.service.CaptchaService;
 import xiaozhi.modules.security.service.SysUserTokenService;
@@ -31,8 +33,10 @@ import xiaozhi.modules.security.user.SecurityUser;
 import xiaozhi.modules.sys.dto.PasswordDTO;
 import xiaozhi.modules.sys.dto.RetrievePasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
+import xiaozhi.modules.sys.service.SysDictDataService;
 import xiaozhi.modules.sys.service.SysParamsService;
 import xiaozhi.modules.sys.service.SysUserService;
+import xiaozhi.modules.sys.vo.SysDictDataItem;
 
 /**
  * 登录控制层
@@ -46,6 +50,7 @@ public class LoginController {
     private final SysUserTokenService sysUserTokenService;
     private final CaptchaService captchaService;
     private final SysParamsService sysParamsService;
+    private final SysDictDataService sysDictDataService;
 
     @GetMapping("/captcha")
     @Operation(summary = "验证码")
@@ -56,22 +61,31 @@ public class LoginController {
         captchaService.create(response, uuid);
     }
 
-    @GetMapping("/smsVerification")
+    @PostMapping("/smsVerification")
     @Operation(summary = "短信验证码")
-    public void smsVerification(String phone) throws IOException {
-        // 手机号码不能为空
-        AssertUtils.isBlank(phone, ErrorCode.PHONE_NOT_NULL);
+    public Result<Void> smsVerification(@RequestBody SmsVerificationDTO dto) {
+        // 验证图形验证码
+        boolean validate = captchaService.validate(dto.getCaptchaId(), dto.getCaptcha(), true);
+        if (!validate) {
+            throw new RenException("图形验证码错误");
+        }
+        Boolean isMobileRegister = sysParamsService
+                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+        if (!isMobileRegister) {
+            throw new RenException("没有开启手机注册，没法使用短信验证码功能");
+        }
         // 发送短信验证码
-        captchaService.sendSMSValidateCode(phone);
+        captchaService.sendSMSValidateCode(dto.getPhone());
+        return new Result<>();
     }
 
     @PostMapping("/login")
     @Operation(summary = "登录")
     public Result<TokenDTO> login(@RequestBody LoginDTO login) {
         // 验证是否正确输入验证码
-        boolean validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha());
+        boolean validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha(), true);
         if (!validate) {
-            throw new RenException("验证码错误，请重新获取");
+            throw new RenException("图形验证码错误，请重新获取");
         }
         // 按照用户名获取用户
         SysUserDTO userDTO = sysUserService.getByUsername(login.getUsername());
@@ -103,15 +117,18 @@ public class LoginController {
                 throw new RenException("用户名不是手机号码，请重新输入");
             }
             // 验证短信验证码是否正常
-            validate = captchaService.validateSMSValidateCode(login.getUsername(), login.getCaptcha());
+            validate = captchaService.validateSMSValidateCode(login.getUsername(), login.getMobileCaptcha(), false);
+            if (!validate) {
+                throw new RenException("手机验证码错误，请重新获取");
+            }
         } else {
             // 验证是否正确输入验证码
-            validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha());
+            validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha(), true);
+            if (!validate) {
+                throw new RenException("图形验证码错误，请重新获取");
+            }
         }
-        // 判断是否通过验证
-        if (!validate) {
-            throw new RenException("验证码错误，请重新获取");
-        }
+
         // 按照用户名获取用户
         SysUserDTO userDTO = sysUserService.getByUsername(login.getUsername());
         if (userDTO != null) {
@@ -172,8 +189,7 @@ public class LoginController {
             throw new RenException("用户名或验证码错误");
         }
 
-        Long userId = SecurityUser.getUserId();
-        sysUserService.changePasswordDirectly(userId, dto.getPassword());
+        sysUserService.changePasswordDirectly(userDTO.getId(), dto.getPassword());
         return new Result<>();
     }
 
@@ -185,6 +201,9 @@ public class LoginController {
                 .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class));
         config.put("version", Constant.VERSION);
         config.put("allowUserRegister", sysUserService.getAllowUserRegister());
+        List<SysDictDataItem> list = sysDictDataService.getDictDataByType("MOBILE_AREA");
+        config.put("mobileAreaList", list);
+
         return new Result<Map<String, Object>>().ok(config);
     }
 }

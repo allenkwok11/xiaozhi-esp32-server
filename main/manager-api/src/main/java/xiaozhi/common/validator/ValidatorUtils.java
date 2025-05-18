@@ -2,7 +2,6 @@ package xiaozhi.common.validator;
 
 import java.util.Locale;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
@@ -49,12 +48,20 @@ public class ValidatorUtils {
     }
 
     /**
-     * 手机号正则表达式
+     * 国际手机号正则表达式
+     * 要求必须带国际区号，格式：+[国家代码][手机号]
+     * 例如：
+     * - +8613800138000
+     * - +12345678900
+     * - +447123456789
      */
-    private static final String PHONE_REGEX = "^1[3-9]\\d{9}$";
+    private static final String INTERNATIONAL_PHONE_REGEX = "^\\+[1-9]\\d{0,3}[1-9]\\d{4,14}$";
 
     /**
-     * 校验单参数是否是正确的手机号
+     * 校验手机号是否有效
+     * 要求必须带国际区号，格式：+[国家代码][手机号]
+     * 例如：+8613800138000
+     * 
      * @param phone 手机号
      * @return boolean
      */
@@ -62,8 +69,9 @@ public class ValidatorUtils {
         if (phone == null || phone.isEmpty()) {
             return false;
         }
-        Pattern pattern = Pattern.compile(PHONE_REGEX);
-        Matcher matcher = pattern.matcher(phone);
-        return matcher.matches();
+
+        // 验证必须带国际区号的手机号格式
+        Pattern pattern = Pattern.compile(INTERNATIONAL_PHONE_REGEX);
+        return pattern.matcher(phone).matches();
     }
 }
