@@ -199,6 +199,7 @@ export default {
         this.$store.commit('setToken', JSON.stringify(data.data));
         goToPage('/home');
       }, (err) => {
+        showDanger(err.data.msg || '登录失败')
         if (err.data != null && err.data.msg != null && err.data.msg.indexOf('图形验证码') > -1) {
           this.fetchCaptcha()
         }
