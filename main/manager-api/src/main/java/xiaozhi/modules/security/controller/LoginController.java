@@ -203,6 +203,8 @@ public class LoginController {
         config.put("allowUserRegister", sysUserService.getAllowUserRegister());
         List<SysDictDataItem> list = sysDictDataService.getDictDataByType("MOBILE_AREA");
         config.put("mobileAreaList", list);
+        config.put("beianIcpNum", sysParamsService.getValue("beian_icp_num", true));
+        config.put("beianGaNum", sysParamsService.getValue("beian_ga_num", true));
 
         return new Result<Map<String, Object>>().ok(config);
     }
