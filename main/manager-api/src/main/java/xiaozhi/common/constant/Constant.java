@@ -159,15 +159,15 @@ public interface Constant {
          */
         ALIYUN_SMS_ACCESS_KEY_SECRET("aliyun.sms.access_key_secret"),
         /**
-         *
+         * 阿里云短信签名
          */
         ALIYUN_SMS_SIGN_NAME("aliyun.sms.sign_name"),
         /**
-         * 已删除
+         * 阿里云短信模板
          */
         ALIYUN_SMS_SMS_CODE_TEMPLATE_CODE("aliyun.sms.sms_code_template_code"),
         /**
-         * 已删除
+         * 单号码最大短信发送条数
          */
         SYSTEM_SMS_MAX_SEND_COUNT("system.sms.max_send_count"),
         /**

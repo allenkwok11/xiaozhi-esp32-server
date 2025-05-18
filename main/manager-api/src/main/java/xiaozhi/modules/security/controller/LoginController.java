@@ -93,8 +93,8 @@ public class LoginController {
             throw new RenException("当前不允许普通用户注册");
         }
         // 是否开启手机注册
-        Boolean isMobileRegister = sysParamsService.getValueObject(Constant.SysMSMParam
-                .SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+        Boolean isMobileRegister = sysParamsService
+                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
         boolean validate;
         if (isMobileRegister) {
             // 验证用户是否是手机号码
@@ -103,7 +103,7 @@ public class LoginController {
                 throw new RenException("用户名不是手机号码，请重新输入");
             }
             // 验证短信验证码是否正常
-            validate = captchaService.validateSMSValidateCode(login.getUsername(),login.getCaptcha());
+            validate = captchaService.validateSMSValidateCode(login.getUsername(), login.getCaptcha());
         } else {
             // 验证是否正确输入验证码
             validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha());
@@ -147,8 +147,8 @@ public class LoginController {
     @Operation(summary = "找回密码")
     public Result<?> retrievePassword(@RequestBody RetrievePasswordDTO dto) {
         // 是否开启手机注册
-        Boolean isMobileRegister = sysParamsService.getValueObject(Constant.SysMSMParam
-                .SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+        Boolean isMobileRegister = sysParamsService
+                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
         if (!isMobileRegister) {
             throw new RenException("没有开启手机注册，没法使用找回密码功能");
         }
@@ -158,7 +158,7 @@ public class LoginController {
         boolean validPhone = ValidatorUtils.isValidPhone(dto.getPhone());
         if (!validPhone) {
             throw new RenException("用户名不是手机号码，无法提供找回密码服务");
-        };
+        }
 
         // 按照用户名获取用户
         SysUserDTO userDTO = sysUserService.getByUsername(dto.getPhone());
@@ -166,7 +166,7 @@ public class LoginController {
             throw new RenException("用户名或验证码错误");
         }
         // 验证短信验证码是否正常
-        boolean validate = captchaService.validateSMSValidateCode(dto.getPhone(),dto.getCode());
+        boolean validate = captchaService.validateSMSValidateCode(dto.getPhone(), dto.getCode());
         // 判断是否通过验证
         if (!validate) {
             throw new RenException("用户名或验证码错误");
@@ -181,6 +181,8 @@ public class LoginController {
     @Operation(summary = "公共配置")
     public Result<Map<String, Object>> pubConfig() {
         Map<String, Object> config = new HashMap<>();
+        config.put("enableMobileRegister", sysParamsService
+                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class));
         config.put("version", Constant.VERSION);
         config.put("allowUserRegister", sysUserService.getAllowUserRegister());
         return new Result<Map<String, Object>>().ok(config);
