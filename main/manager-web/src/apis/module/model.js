@@ -18,7 +18,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res)
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('获取模型列表失败:', err)
         RequestService.reAjaxFun(() => {
           this.getModelList(params, callback)
@@ -34,7 +34,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res.data?.data || [])
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('获取供应器列表失败:', err)
         this.$message.error('获取供应器列表失败')
         RequestService.reAjaxFun(() => {
@@ -65,7 +65,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res)
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('新增模型失败:', err)
         this.$message.error(err.msg || '新增模型失败')
         RequestService.reAjaxFun(() => {
@@ -82,7 +82,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res)
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('删除模型失败:', err)
         this.$message.error(err.msg || '删除模型失败')
         RequestService.reAjaxFun(() => {
@@ -100,7 +100,7 @@ export default {
         RequestService.clearRequestTime();
         callback(res);
       })
-      .fail(() => {
+      .networkFail(() => {
         RequestService.reAjaxFun(() => {
           this.getModelNames(modelType, modelName, callback);
         });
@@ -118,7 +118,7 @@ export default {
         RequestService.clearRequestTime();
         callback(res);
       })
-      .fail(() => {
+      .networkFail(() => {
         RequestService.reAjaxFun(() => {
           this.getModelVoices(modelId, voiceName, callback);
         });
@@ -133,7 +133,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res)
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('获取模型配置失败:', err)
         this.$message.error(err.msg || '获取模型配置失败')
         RequestService.reAjaxFun(() => {
@@ -150,7 +150,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res)
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('更新模型状态失败:', err)
         this.$message.error(err.msg || '更新模型状态失败')
         RequestService.reAjaxFun(() => {
@@ -173,7 +173,7 @@ export default {
         RequestService.clearRequestTime();
         callback(res);
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('更新模型失败:', err);
         this.$message.error(err.msg || '更新模型失败');
         RequestService.reAjaxFun(() => {
@@ -190,7 +190,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res)
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('设置默认模型失败:', err)
         this.$message.error(err.msg || '设置默认模型失败')
         RequestService.reAjaxFun(() => {
@@ -219,7 +219,7 @@ export default {
         RequestService.clearRequestTime();
         callback(res);
       })
-      .fail((err) => {
+      .networkFail((err) => {
         this.$message.error(err.msg || '获取供应器列表失败');
         RequestService.reAjaxFun(() => {
           this.getModelProviders(params, callback);
@@ -249,7 +249,7 @@ export default {
         RequestService.clearRequestTime();
         callback(res);
       })
-      .fail((err) => {
+      .networkFail((err) => {
         console.error('新增模型供应器失败:', err)
         this.$message.error(err.msg || '新增模型供应器失败')
         RequestService.reAjaxFun(() => {
@@ -281,7 +281,7 @@ export default {
         RequestService.clearRequestTime();
         callback(res);
       })
-      .fail((err) => {
+      .networkFail((err) => {
         this.$message.error(err.msg || '更新模型供应器失败')
         RequestService.reAjaxFun(() => {
           this.updateModelProvider(params, callback);
@@ -298,7 +298,7 @@ export default {
         RequestService.clearRequestTime()
         callback(res);
       })
-      .fail((err) => {
+      .networkFail((err) => {
         this.$message.error(err.msg || '删除模型供应器失败')
         RequestService.reAjaxFun(() => {
           this.deleteModelProviderByIds(ids, callback)
