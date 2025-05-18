@@ -1,14 +1,15 @@
 package xiaozhi.modules.sys;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+
+import lombok.extern.slf4j.Slf4j;
 import xiaozhi.modules.security.controller.LoginController;
 import xiaozhi.modules.security.dto.LoginDTO;
+import xiaozhi.modules.security.dto.SmsVerificationDTO;
 import xiaozhi.modules.sys.dto.RetrievePasswordDTO;
-
 
 @Slf4j
 @SpringBootTest
@@ -28,23 +29,27 @@ class loginControllerTest {
     }
 
     @Test
-    public void testSmsVerification(){
+    public void testSmsVerification() {
         try {
-            loginController.smsVerification("手机号码");
-        }catch (Exception e){
+            SmsVerificationDTO smsVerificationDTO = new SmsVerificationDTO();
+            smsVerificationDTO.setPhone("手机号码");
+            smsVerificationDTO.setCaptchaId("123456");
+            smsVerificationDTO.setCaptcha("123456");
+            loginController.smsVerification(smsVerificationDTO);
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
 
     @Test
-    public void testRetrievePassword(){
+    public void testRetrievePassword() {
         try {
             RetrievePasswordDTO retrievePasswordDTO = new RetrievePasswordDTO();
             retrievePasswordDTO.setCode("123456");
             retrievePasswordDTO.setPhone("手机号码");
             retrievePasswordDTO.setPassword("密码");
             loginController.retrievePassword(retrievePasswordDTO);
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
 

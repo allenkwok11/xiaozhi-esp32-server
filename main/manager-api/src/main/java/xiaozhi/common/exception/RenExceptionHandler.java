@@ -1,5 +1,8 @@
 package xiaozhi.common.exception;
 
+import java.util.List;
+import java.util.Objects;
+
 import org.apache.shiro.authz.UnauthorizedException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DuplicateKeyException;
@@ -13,8 +16,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import xiaozhi.common.utils.Result;
 
-import java.util.List;
-import java.util.Objects;
 /**
  * 异常处理器
  * Copyright (c) 人人开源 All rights reserved.
@@ -67,7 +68,6 @@ public class RenExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        StringBuilder sb = new StringBuilder();
         List<ObjectError> allErrors = ex.getBindingResult().getAllErrors();
         String errorMsg = allErrors.stream()
                 .filter(Objects::nonNull)
