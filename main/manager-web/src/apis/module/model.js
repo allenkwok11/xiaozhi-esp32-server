@@ -197,5 +197,112 @@ export default {
           this.setDefaultModel(id, callback)
         })
       }).send()
-  }
+  },
+
+  /**
+   * 获取模型配置列表（支持查询参数）
+   * @param {Object} params - 查询参数对象，例如 { name: 'test', modelType: 1 }
+   * @param {Function} callback - 回调函数
+   */
+  getModelProvidersPage(params, callback) {
+    // 构建查询参数
+    const queryParams = new URLSearchParams();
+    if (params.name) queryParams.append('name', params.name);
+    if (params.modelType !== undefined) queryParams.append('modelType', params.modelType);
+    if (params.page !== undefined) queryParams.append('page', params.page);
+    if (params.limit !== undefined) queryParams.append('limit', params.limit);
+
+    RequestService.sendRequest()
+      .url(`${getServiceUrl()}/models/provider?${queryParams.toString()}`)
+      .method('GET')
+      .success((res) => {
+        RequestService.clearRequestTime();
+        callback(res);
+      })
+      .networkFail((err) => {
+        this.$message.error(err.msg || '获取供应器列表失败');
+        RequestService.reAjaxFun(() => {
+          this.getModelProviders(params, callback);
+        });
+      }).send();
+  },
+
+  /**
+   * 新增模型供应器配置
+   * @param {Object} params - 请求参数对象，例如 { modelType: '1', providerCode: '1', name: '1', fields: '1', sort: 1 }
+   * @param {Function} callback - 成功回调函数
+   */
+  addModelProvider(params, callback) {
+    const postData = {
+      modelType: params.modelType || '',
+      providerCode: params.providerCode || '',
+      name: params.name || '',
+      fields: JSON.stringify(params.fields || []),
+      sort: params.sort || 0
+    };
+
+    RequestService.sendRequest()
+      .url(`${getServiceUrl()}/models/provider`)
+      .method('POST')
+      .data(postData)
+      .success((res) => {
+        RequestService.clearRequestTime();
+        callback(res);
+      })
+      .networkFail((err) => {
+        console.error('新增模型供应器失败:', err)
+        this.$message.error(err.msg || '新增模型供应器失败')
+        RequestService.reAjaxFun(() => {
+          this.addModelProvider(params, callback);
+        });
+      }).send();
+  },
+
+  /**
+   * 更新模型供应器配置
+   * @param {Object} params - 请求参数对象，例如 { id: '111', modelType: '1', providerCode: '1', name: '1', fields: '1', sort: 1 }
+   * @param {Function} callback - 成功回调函数
+   */
+  updateModelProvider(params, callback) {
+    const putData = {
+      id: params.id || '',
+      modelType: params.modelType || '',
+      providerCode: params.providerCode || '',
+      name: params.name || '',
+      fields: JSON.stringify(params.fields || []),
+      sort: params.sort || 0
+    };
+
+    RequestService.sendRequest()
+      .url(`${getServiceUrl()}/models/provider`)
+      .method('PUT')
+      .data(putData)
+      .success((res) => {
+        RequestService.clearRequestTime();
+        callback(res);
+      })
+      .networkFail((err) => {
+        this.$message.error(err.msg || '更新模型供应器失败')
+        RequestService.reAjaxFun(() => {
+          this.updateModelProvider(params, callback);
+        });
+      }).send();
+  },
+  // 删除
+  deleteModelProviderByIds(ids, callback) {
+    RequestService.sendRequest()
+      .url(`${getServiceUrl()}/models/provider/delete`)
+      .method('POST')
+      .data(ids)
+      .success((res) => {
+        RequestService.clearRequestTime()
+        callback(res);
+      })
+      .networkFail((err) => {
+        this.$message.error(err.msg || '删除模型供应器失败')
+        RequestService.reAjaxFun(() => {
+          this.deleteModelProviderByIds(ids, callback)
+        })
+      }).send()
+  },
 }
