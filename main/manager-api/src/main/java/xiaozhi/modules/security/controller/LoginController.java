@@ -174,19 +174,19 @@ public class LoginController {
         // 验证用户是否是手机号码
         boolean validPhone = ValidatorUtils.isValidPhone(dto.getPhone());
         if (!validPhone) {
-            throw new RenException("用户名不是手机号码，无法提供找回密码服务");
+            throw new RenException("输入的手机号码格式不正确");
         }
 
         // 按照用户名获取用户
         SysUserDTO userDTO = sysUserService.getByUsername(dto.getPhone());
         if (userDTO == null) {
-            throw new RenException("用户名或验证码错误");
+            throw new RenException("输入的手机号码未注册");
         }
         // 验证短信验证码是否正常
         boolean validate = captchaService.validateSMSValidateCode(dto.getPhone(), dto.getCode(), false);
         // 判断是否通过验证
         if (!validate) {
-            throw new RenException("用户名或验证码错误");
+            throw new RenException("输入的手机验证码错误");
         }
 
         sysUserService.changePasswordDirectly(userDTO.getId(), dto.getPassword());
