@@ -56,6 +56,7 @@
             <div
               style="font-weight: 400;font-size: 14px;text-align: left;color: #5778ff;display: flex;justify-content: space-between;margin-top: 20px;">
               <div v-if="allowUserRegister" style="cursor: pointer;" @click="goToRegister">新用户注册</div>
+              <div style="cursor: pointer;" @click="goToForgetPassword">忘记密码?</div>
             </div>
           </div>
           <div class="login-btn" @click="login">登录</div>
@@ -213,6 +214,9 @@ export default {
 
     goToRegister() {
       goToPage('/register')
+    },
+    goToForgetPassword() {
+      goToPage('/retrieve-password')
     },
   }
 }
