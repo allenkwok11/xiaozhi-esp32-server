@@ -119,10 +119,9 @@ public class CaptchaServiceImpl implements CaptchaService {
 
         // 更新今日发送次数
         if (todayCount == 0) {
-            // 如果是今天第一次发送，设置24小时过期
-            redisUtils.set(todayCountKey, 1, RedisUtils.DEFAULT_EXPIRE);
+            redisUtils.increment(todayCountKey,RedisUtils.DEFAULT_EXPIRE);
         } else {
-            redisUtils.set(todayCountKey, todayCount + 1, RedisUtils.DEFAULT_EXPIRE);
+            redisUtils.increment(todayCountKey);
         }
 
         // 发送验证码短信

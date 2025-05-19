@@ -10,7 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.RenException;
+import xiaozhi.common.redis.RedisKeys;
+import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.modules.sms.service.SmsService;
+import xiaozhi.modules.sms.service.common.SmsUtils;
 import xiaozhi.modules.sys.service.SysParamsService;
 
 @Service
@@ -18,9 +21,12 @@ import xiaozhi.modules.sys.service.SysParamsService;
 @Slf4j
 public class ALiYunSmsService implements SmsService {
     private final SysParamsService  sysParamsService;
+    private final SmsUtils smsUtils;
+    private final RedisUtils redisUtils;
 
     @Override
     public void sendVerificationCodeSms(String phone, String VerificationCode) {
+        smsUtils.isPhoneEligibleForSmsSend(phone,true);
         Client client = createClient();
         String SignName = sysParamsService.getValue(Constant.SysMSMParam
                 .ALIYUN_SMS_SIGN_NAME.getValue(),true);
@@ -37,6 +43,9 @@ public class ALiYunSmsService implements SmsService {
             SendSmsResponse sendSmsResponse = client.sendSmsWithOptions(sendSmsRequest, runtime);
             log.info("发送短信响应的requestID: {}", sendSmsResponse.getBody().getRequestId());
         } catch (Exception e) {
+            // 如果发送失败了退还这次发送数
+            String todayCountKey = RedisKeys.getSMSTodayCountKey(phone);
+            redisUtils.delete(todayCountKey);
             // 错误 message
             log.error(e.getMessage());
             throw new RenException("短信发送失败");
