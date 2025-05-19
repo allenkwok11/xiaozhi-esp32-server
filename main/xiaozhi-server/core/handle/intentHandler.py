@@ -13,10 +13,11 @@ TAG = __name__
 
 async def handle_user_intent(conn, text):
     # 检查是否有明确的退出命令
-    if await check_direct_exit(conn, text):
+    filtered_text = remove_punctuation_and_length(text)[1]
+    if await check_direct_exit(conn, filtered_text):
         return True
     # 检查是否是唤醒词
-    if await checkWakeupWords(conn, text):
+    if await checkWakeupWords(conn, filtered_text):
         return True
 
     if conn.intent_type == "function_call":
