@@ -45,6 +45,24 @@ public class RedisUtils {
      */
     public final static long NOT_EXPIRE = -1L;
 
+    public Long increment(String key, long expire) {
+        Long increment = redisTemplate.opsForValue().increment(key, 1L);
+        if (expire != NOT_EXPIRE) {
+            expire(key, expire);
+        }
+        return increment;
+    }
+
+    public Long increment(String key) {
+        return redisTemplate.opsForValue().increment(key, 1L);
+    }
+
+    public Long decrement(String key) {
+        return redisTemplate.opsForValue().decrement(key, 1L);
+    }
+
+
+
     public void set(String key, Object value, long expire) {
         redisTemplate.opsForValue().set(key, value);
         if (expire != NOT_EXPIRE) {
@@ -139,7 +157,7 @@ public class RedisUtils {
      */
     public void emptyAll() {
         // Lua 脚本 FLUSHALL是redis清空所有库的命令
-        String luaScript ="redis.call('FLUSHALL')";
+        String luaScript =resourceUtils.loadString("lua/emptyAll.lua");
 
         // 创建 DefaultRedisScript 对象
         DefaultRedisScript<Void> redisScript = new DefaultRedisScript<>();
