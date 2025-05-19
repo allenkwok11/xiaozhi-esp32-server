@@ -1,4 +1,7 @@
 # 阿里云短信集成指南
+
+登录阿里云控制台，进入“短信服务”页面：https://dysms.console.aliyun.com/overview
+
 ## 第一步 添加签名
 ![步骤](images/alisms/sms-01.png)
 ![步骤](images/alisms/sms-02.png)
@@ -19,6 +22,9 @@
 可以等报备成功后，再继续往下操作。
 
 ## 第三步 创建短信账户和开通权限
+
+登录阿里云控制台，进入“访问控制”页面：https://ram.console.aliyun.com/overview?activeTab=overview
+
 ![步骤](images/alisms/sms-21.png)
 ![步骤](images/alisms/sms-22.png)
 ![步骤](images/alisms/sms-23.png)
@@ -28,7 +34,7 @@
 以上步骤，会得到access_key_id和access_key_secret，请把它写入到智控台参数，`aliyun.sms.access_key_id`、`aliyun.sms.access_key_secret`
 ## 第四步 启动手机注册功能
 
-1、正常来说，以上信息都填完后，会有这个效果
+1、正常来说，以上信息都填完后，会有这个效果，如果没有，可能缺少了某个步骤
 
 ![步骤](images/alisms/sms-31.png)
 
