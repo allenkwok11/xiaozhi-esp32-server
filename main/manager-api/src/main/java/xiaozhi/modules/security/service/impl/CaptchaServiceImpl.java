@@ -119,7 +119,7 @@ public class CaptchaServiceImpl implements CaptchaService {
 
         // 更新今日发送次数
         if (todayCount == 0) {
-            redisUtils.increment(todayCountKey,RedisUtils.DEFAULT_EXPIRE);
+            redisUtils.increment(todayCountKey, RedisUtils.DEFAULT_EXPIRE);
         } else {
             redisUtils.increment(todayCountKey);
         }

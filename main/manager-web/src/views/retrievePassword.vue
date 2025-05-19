@@ -24,56 +24,56 @@
             </div>
 
             <div style="padding: 0 30px;">
-                  <!-- 手机号输入 -->
-                  <div class="input-box">
-                    <div style="display: flex; align-items: center; width: 100%;">
-                      <el-select v-model="form.areaCode" style="width: 220px; margin-right: 10px;">
-                        <el-option v-for="item in mobileAreaList" :key="item.key"
-                          :label="`${item.name} (${item.key})`" :value="item.key" />
-                      </el-select>
-                      <el-input v-model="form.mobile" placeholder="请输入手机号码" />
-                    </div>
-                  </div>
-
-                  <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
-                    <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
-                      <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png" />
-                      <el-input v-model="form.captcha" placeholder="请输入验证码" style="flex: 1;" />
-                    </div>
-                    <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="验证码"
-                      style="width: 150px; height: 40px; cursor: pointer;" @click="fetchCaptcha" />
-                  </div>
-
-                  <!-- 手机验证码 -->
-                  <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
-                    <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
-                      <img loading="lazy" alt="" class="input-icon" src="@/assets/login/phone.png" />
-                      <el-input v-model="form.mobileCaptcha" placeholder="请输入手机验证码" style="flex: 1;" maxlength="6" />
-                    </div>
-                    <el-button type="primary" class="send-captcha-btn" :disabled="!canSendMobileCaptcha"
-                      @click="sendMobileCaptcha">
-                      <span>
-                        {{ countdown > 0 ? `${countdown}秒后重试` : '发送验证码' }}
-                      </span>
-                    </el-button>
-                  </div>
-
-                <!-- 新密码 -->
-                <div class="input-box">
-                  <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
-                  <el-input v-model="form.newPassword" placeholder="请输入新密码" type="password" />
+              <!-- 手机号输入 -->
+              <div class="input-box">
+                <div style="display: flex; align-items: center; width: 100%;">
+                  <el-select v-model="form.areaCode" style="width: 220px; margin-right: 10px;">
+                    <el-option v-for="item in mobileAreaList" :key="item.key" :label="`${item.name} (${item.key})`"
+                      :value="item.key" />
+                  </el-select>
+                  <el-input v-model="form.mobile" placeholder="请输入手机号码" />
                 </div>
+              </div>
 
-                <!-- 确认新密码 -->
-                <div class="input-box">
-                  <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
-                  <el-input v-model="form.confirmPassword" placeholder="请确认新密码" type="password" />
+              <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
+                <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
+                  <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png" />
+                  <el-input v-model="form.captcha" placeholder="请输入验证码" style="flex: 1;" />
                 </div>
+                <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="验证码"
+                  style="width: 150px; height: 40px; cursor: pointer;" @click="fetchCaptcha" />
+              </div>
 
-                <!-- 修改底部链接 -->
-                <div style="font-weight: 400;font-size: 14px;text-align: left;color: #5778ff;margin-top: 20px;">
-                  <div style="cursor: pointer;" @click="goToLogin">返回登录</div>
+              <!-- 手机验证码 -->
+              <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
+                <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
+                  <img loading="lazy" alt="" class="input-icon" src="@/assets/login/phone.png" />
+                  <el-input v-model="form.mobileCaptcha" placeholder="请输入手机验证码" style="flex: 1;" maxlength="6" />
                 </div>
+                <el-button type="primary" class="send-captcha-btn" :disabled="!canSendMobileCaptcha"
+                  @click="sendMobileCaptcha">
+                  <span>
+                    {{ countdown > 0 ? `${countdown}秒后重试` : '发送验证码' }}
+                  </span>
+                </el-button>
+              </div>
+
+              <!-- 新密码 -->
+              <div class="input-box">
+                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
+                <el-input v-model="form.newPassword" placeholder="请输入新密码" type="password" />
+              </div>
+
+              <!-- 确认新密码 -->
+              <div class="input-box">
+                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
+                <el-input v-model="form.confirmPassword" placeholder="请确认新密码" type="password" />
+              </div>
+
+              <!-- 修改底部链接 -->
+              <div style="font-weight: 400;font-size: 14px;text-align: left;color: #5778ff;margin-top: 20px;">
+                <div style="cursor: pointer;" @click="goToLogin">返回登录</div>
+              </div>
             </div>
 
             <!-- 修改按钮文本 -->
@@ -171,6 +171,7 @@ export default {
 
       // 验证图形验证码
       if (!this.validateInput(this.form.captcha, '请输入图形验证码')) {
+        this.fetchCaptcha();
         return;
       }
 
@@ -225,18 +226,18 @@ export default {
         return;
       }
 
-      Api.user.resetPassword({
+      Api.user.retrievePassword({
         phone: this.form.areaCode + this.form.mobile,
-        newPassword: this.form.newPassword,
-        smsCode: this.form.mobileCaptcha,
-        captcha: this.form.captcha,
-        captchaId: this.form.captchaId
+        password: this.form.newPassword,
+        code: this.form.mobileCaptcha
       }, (res) => {
         showSuccess('密码重置成功');
         goToPage('/login');
       }, (err) => {
         showDanger(err.data.msg || '重置失败');
-        this.fetchCaptcha();
+        if (err.data != null && err.data.msg != null && err.data.msg.indexOf('图形验证码') > -1) {
+          this.fetchCaptcha()
+        }
       });
     },
 
