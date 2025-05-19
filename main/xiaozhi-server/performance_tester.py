@@ -145,7 +145,7 @@ class AsyncPerformanceTester:
                 return {"name": stt_name, "type": "stt", "errors": 1}
 
             total_time = 0
-            test_count = len(self.test_sentences[:2])
+            test_count = len(self.test_wav_list)
 
             for i, sentence in enumerate(self.test_wav_list, 1):
                 start = time.time()
