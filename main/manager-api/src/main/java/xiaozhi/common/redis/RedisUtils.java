@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+import xiaozhi.common.utils.ResourcesUtils;
 
 /**
  * Redis工具类
@@ -22,6 +24,9 @@ import jakarta.annotation.Resource;
 public class RedisUtils {
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private ResourcesUtils resourceUtils;
 
     /**
      * 默认过期时长为24小时，单位：秒
@@ -146,5 +151,27 @@ public class RedisUtils {
         redisTemplate.execute(redisScript, keys);
 
     }
+
+    /**
+     * 获取在redis指定key的值，如果值为空，着设置key的默认值
+     * @param key redis的key
+     * @param defaultValue 默认值
+     * @param expiresInSecond 过期时间
+     * @return 返回key的值
+     */
+    public String getKeyOrCreate(String key, String defaultValue,Long expiresInSecond) {
+        // Lua 脚本
+        String luaScript = resourceUtils.loadString("lua/getKeyOrCreate.lua");
+
+        DefaultRedisScript<String> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptText(luaScript);
+        redisScript.setResultType(String.class);
+
+        // 执行 Lua 脚本
+        List<String> keys = Collections.singletonList(key);
+        return redisTemplate.execute(redisScript, keys, defaultValue,expiresInSecond);
+    }
+
+
 
 }
