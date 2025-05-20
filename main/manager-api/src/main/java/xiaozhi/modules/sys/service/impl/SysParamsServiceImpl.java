@@ -1,6 +1,10 @@
 package xiaozhi.modules.sys.service.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -52,7 +56,7 @@ public class SysParamsServiceImpl extends BaseServiceImpl<SysParamsDao, SysParam
 
         QueryWrapper<SysParamsEntity> wrapper = new QueryWrapper<>();
         wrapper.eq("param_type", 1);
-        wrapper.nested(StringUtils.isNotBlank(paramCode),i->i.like("param_code", paramCode)
+        wrapper.nested(StringUtils.isNotBlank(paramCode), i -> i.like("param_code", paramCode)
                 .or()
                 .like("remark", paramCode));
 
@@ -81,7 +85,7 @@ public class SysParamsServiceImpl extends BaseServiceImpl<SysParamsDao, SysParam
     @Transactional(rollbackFor = Exception.class)
     public void update(SysParamsDTO dto) {
         validateParamValue(dto);
-        detectingSMSParameters(dto.getParamCode(),dto.getParamValue());
+        detectingSMSParameters(dto.getParamCode(), dto.getParamValue());
         SysParamsEntity entity = ConvertUtils.sourceToTarget(dto, SysParamsEntity.class);
         updateById(entity);
 
@@ -206,13 +210,14 @@ public class SysParamsServiceImpl extends BaseServiceImpl<SysParamsDao, SysParam
 
     /**
      * 检测短信参数是否符合要求
-     * @param paramCode 参数编码
+     * 
+     * @param paramCode  参数编码
      * @param paramValue 参数值
      * @return 是否通过
      */
-    private boolean detectingSMSParameters(String paramCode, String paramValue){
+    private boolean detectingSMSParameters(String paramCode, String paramValue) {
         // 判断是否是开启手机注册的参数编码，如果不是参数编码，着不需要检测其他短信参数，直接返回true
-        if (!Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue().equals(paramCode)){
+        if (!Constant.SysMSMParam.SERVER_ENABLE_MOBILE_REGISTER.getValue().equals(paramCode)) {
             return true;
         }
         // 判断是否为关闭，如果是关闭短信注册，着不需要检测其他短信参数，直接返回true
@@ -221,13 +226,13 @@ public class SysParamsServiceImpl extends BaseServiceImpl<SysParamsDao, SysParam
         }
         // 检测短信关联参数是否为空
         ArrayList<String> list = new ArrayList<String>();
-        list.add(Constant.SysMSMParam.SYSTEM_SMS_MAX_SEND_COUNT.getValue());
+        list.add(Constant.SysMSMParam.SERVER_SMS_MAX_SEND_COUNT.getValue());
         list.add(Constant.SysMSMParam.ALIYUN_SMS_ACCESS_KEY_ID.getValue());
         list.add(Constant.SysMSMParam.ALIYUN_SMS_ACCESS_KEY_SECRET.getValue());
         list.add(Constant.SysMSMParam.ALIYUN_SMS_SIGN_NAME.getValue());
         list.add(Constant.SysMSMParam.ALIYUN_SMS_SMS_CODE_TEMPLATE_CODE.getValue());
         StringBuilder str = new StringBuilder();
-        list.forEach( item -> {
+        list.forEach(item -> {
             if (!StringUtils.isNoneBlank(item)) {
                 str.append(",").append(item);
             }
