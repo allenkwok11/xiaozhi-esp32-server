@@ -1,14 +1,9 @@
 <template>
   <div class="welcome">
-    <HeaderBar/>
+    <HeaderBar />
 
     <div class="operation-bar">
       <h2 class="page-title">服务端管理</h2>
-      <div class="right-operations">
-        <el-input placeholder="请输入服务端ws地址查询" v-model="searchCode" class="search-input"
-                  @keyup.enter.native="handleSearch" clearable/>
-        <el-button class="btn-search" @click="handleSearch">搜索</el-button>
-      </div>
     </div>
 
     <div class="main-wrapper">
@@ -16,9 +11,8 @@
         <div class="content-area">
           <el-card class="params-card" shadow="never">
             <el-table ref="paramsTable" :data="paramsList" class="transparent-table" v-loading="loading"
-                      element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
-                      element-loading-background="rgba(255, 255, 255, 0.7)"
-                      :header-cell-class-name="headerCellClassName">
+              element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
+              element-loading-background="rgba(255, 255, 255, 0.7)" :header-cell-class-name="headerCellClassName">
               <el-table-column label="选择" align="center" width="120">
                 <template slot-scope="scope">
                   <el-checkbox v-model="scope.row.selected"></el-checkbox>
@@ -28,34 +22,11 @@
               <el-table-column label="操作" prop="operator" align="center" show-overflow-tooltip>
                 <template slot-scope="scope">
                   <el-button size="medium" type="text" @click="emitAction(scope.row, actionMap.restart)">重启</el-button>
-                  <el-button size="medium" type="text" @click="emitAction(scope.row, actionMap.update_config)">更新配置</el-button>
+                  <el-button size="medium" type="text"
+                    @click="emitAction(scope.row, actionMap.update_config)">更新配置</el-button>
                 </template>
               </el-table-column>
             </el-table>
-
-            <div class="table_bottom">
-              <div class="custom-pagination">
-                <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
-                  <el-option v-for="item in pageSizeOptions" :key="item" :label="`${item}条/页`"
-                             :value="item">
-                  </el-option>
-                </el-select>
-                <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
-                  首页
-                </button>
-                <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">
-                  上一页
-                </button>
-                <button v-for="page in visiblePages" :key="page" class="pagination-btn"
-                        :class="{ active: page === currentPage }" @click="goToPage(page)">
-                  {{ page }}
-                </button>
-                <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">
-                  下一页
-                </button>
-                <span class="total-text">共{{ total }}条记录</span>
-              </div>
-            </div>
           </el-card>
         </div>
       </div>
@@ -63,7 +34,7 @@
 
 
     <el-footer>
-      <version-footer/>
+      <version-footer />
     </el-footer>
   </div>
 </template>
@@ -75,10 +46,9 @@ import ParamDialog from "@/components/ParamDialog.vue";
 import VersionFooter from "@/components/VersionFooter.vue";
 
 export default {
-  components: {HeaderBar, ParamDialog, VersionFooter},
+  components: { HeaderBar, ParamDialog, VersionFooter },
   data() {
     return {
-      searchCode: "",
       paramsList: [],
       actionMap: {
         restart: {
@@ -144,24 +114,20 @@ export default {
     fetchParams() {
       this.loading = true;
       Api.admin.getWsServerList(
-          {},
-          ({data}) => {
-            this.loading = false;
-            if (data.code === 0) {
-              this.paramsList = data.data.map(item => ({address: item}));
-              this.total = data.data.length;
-            } else {
-              this.$message.error({
-                message: data.msg || '获取参数列表失败',
-                showClose: true
-              });
-            }
+        {},
+        ({ data }) => {
+          this.loading = false;
+          if (data.code === 0) {
+            this.paramsList = data.data.map(item => ({ address: item }));
+            this.total = data.data.length;
+          } else {
+            this.$message.error({
+              message: data.msg || '获取参数列表失败',
+              showClose: true
+            });
           }
+        }
       );
-    },
-    handleSearch() {
-      this.currentPage = 1;
-      this.fetchParams();
     },
     emitAction(rowItem, actionItem) {
       if (actionItem === undefined || rowItem.address === undefined) {
@@ -175,7 +141,7 @@ export default {
         Api.admin.sendWsServerAction({
           targetWs: rowItem.address,
           action: actionItem.value
-        }, ({data}) => {
+        }, ({ data }) => {
           if (data.code !== 0) {
             this.$message.error({
               message: data.msg || '操作失败',
@@ -190,31 +156,11 @@ export default {
         })
       })
     },
-    headerCellClassName({columnIndex}) {
+    headerCellClassName({ columnIndex }) {
       if (columnIndex === 0) {
         return "custom-selection-header";
       }
       return "";
-    },
-    goFirst() {
-      this.currentPage = 1;
-      this.fetchParams();
-    },
-    goPrev() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.fetchParams();
-      }
-    },
-    goNext() {
-      if (this.currentPage < this.pageCount) {
-        this.currentPage++;
-        this.fetchParams();
-      }
-    },
-    goToPage(page) {
-      this.currentPage = page;
-      this.fetchParams();
     }
   },
 };
@@ -356,74 +302,6 @@ export default {
   }
 }
 
-.custom-pagination {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  .el-select {
-    margin-right: 8px;
-  }
-
-  .pagination-btn:first-child,
-  .pagination-btn:nth-child(2),
-  .pagination-btn:nth-last-child(2),
-  .pagination-btn:nth-child(3) {
-    min-width: 60px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 4px;
-    border: 1px solid #e4e7ed;
-    background: #dee7ff;
-    color: #606266;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: #d7dce6;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-
-  .pagination-btn:not(:first-child):not(:nth-child(3)):not(:nth-child(2)):not(:nth-last-child(2)) {
-    min-width: 28px;
-    height: 32px;
-    padding: 0;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: #606266;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: rgba(245, 247, 250, 0.3);
-    }
-  }
-
-  .pagination-btn.active {
-    background: #5f70f3 !important;
-    color: #ffffff !important;
-    border-color: #5f70f3 !important;
-
-    &:hover {
-      background: #6d7cf5 !important;
-    }
-  }
-
-  .total-text {
-    color: #909399;
-    font-size: 14px;
-    margin-left: 10px;
-  }
-}
-
 :deep(.transparent-table) {
   background: white;
   flex: 1;
@@ -490,7 +368,7 @@ export default {
         padding-bottom: 16px;
       }
 
-      & + tr {
+      &+tr {
         margin-top: 10px;
       }
     }
