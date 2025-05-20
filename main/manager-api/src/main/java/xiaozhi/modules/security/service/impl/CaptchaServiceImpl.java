@@ -98,7 +98,7 @@ public class CaptchaServiceImpl implements CaptchaService {
 
         // 获取最大发送次数限制
         Integer maxSendCount = sysParamsService.getValueObject(
-                Constant.SysMSMParam.SYSTEM_SMS_MAX_SEND_COUNT.getValue(),
+                Constant.SysMSMParam.SERVER_SMS_MAX_SEND_COUNT.getValue(),
                 Integer.class);
         if (maxSendCount == null) {
             maxSendCount = 5; // 默认值

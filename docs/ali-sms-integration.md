@@ -40,5 +40,5 @@
 
 2、开启允许非管理员用户可注册，将参数`server.allow_user_register`设置成`true`
 
-3、开启手机注册功能，将参数`system.enable_mobile_register`设置成`true`
+3、开启手机注册功能，将参数`server.enable_mobile_register`设置成`true`
 ![步骤](images/alisms/sms-32.png)
