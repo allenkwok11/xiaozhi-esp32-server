@@ -71,10 +71,15 @@ public class RenExceptionHandler {
         List<ObjectError> allErrors = ex.getBindingResult().getAllErrors();
         String errorMsg = allErrors.stream()
                 .filter(Objects::nonNull)
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .map(err -> {
+                    String msg = err.getDefaultMessage();
+                    return (msg != null && !msg.trim().isEmpty()) ? msg : null;
+                })
+                .filter(Objects::nonNull)
                 .findFirst()
-                .orElse("");
-        return new Result<Void>().error(400, errorMsg);
+                .orElse("请求参数错误！");
+
+        return new Result<Void>().error(ErrorCode.PARAM_VALUE_NULL, errorMsg);
     }
 
 }

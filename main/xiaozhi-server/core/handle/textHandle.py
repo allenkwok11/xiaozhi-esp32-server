@@ -95,9 +95,10 @@ async def handleTextMessage(conn, message):
                         await conn.websocket.send(
                             json.dumps(
                                 {
-                                    "type": "config_update_response",
+                                    "type": "server",
                                     "status": "error",
                                     "message": "无法获取服务器实例",
+                                    "content": {"action": "update_config"}
                                 }
                             )
                         )
@@ -107,9 +108,10 @@ async def handleTextMessage(conn, message):
                         await conn.websocket.send(
                             json.dumps(
                                 {
-                                    "type": "config_update_response",
+                                    "type": "server",
                                     "status": "error",
                                     "message": "更新服务器配置失败",
+                                    "content": {"action": "update_config"}
                                 }
                             )
                         )
@@ -119,9 +121,10 @@ async def handleTextMessage(conn, message):
                     await conn.websocket.send(
                         json.dumps(
                             {
-                                "type": "config_update_response",
+                                "type": "server",
                                 "status": "success",
                                 "message": "配置更新成功",
+                                "content": {"action": "update_config"}
                             }
                         )
                     )
@@ -130,9 +133,10 @@ async def handleTextMessage(conn, message):
                     await conn.websocket.send(
                         json.dumps(
                             {
-                                "type": "config_update_response",
+                                "type": "server",
                                 "status": "error",
                                 "message": f"更新配置失败: {str(e)}",
+                                "content": {"action": "update_config"}
                             }
                         )
                     )
