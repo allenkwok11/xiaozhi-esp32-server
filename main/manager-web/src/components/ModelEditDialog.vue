@@ -66,8 +66,12 @@
           <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
             <el-form-item v-for="field in row" :key="field.prop" :label="field.label" :prop="field.prop"
               style="flex: 1;">
-              <el-input v-model="form.configJson[field.prop]" :placeholder="field.placeholder" :type="field.type"
-                class="custom-input-bg" :show-password="field.type === 'password'">
+              <el-input v-if="field.type !== 'json-textarea'" v-model="form.configJson[field.prop]" :placeholder="field.placeholder"
+                :type="field.type" class="custom-input-bg" :show-password="field.type === 'password'">
+              </el-input>
+
+              <el-input v-else v-model="variablesJson" type="textarea" :rows="3" placeholder="请输入JSON格式变量（示例：{'key':'value'}）"
+                class="custom-input-bg" @change="handleVariablesChange">
               </el-input>
             </el-form-item>
           </div>
@@ -112,6 +116,7 @@ export default {
       pendingProviderType: null,
       pendingModelData: null,
       dynamicCallInfoFields: [],
+      variablesJson: '',
       form: {
         id: "",
         modelType: "",
@@ -173,7 +178,8 @@ export default {
         docLink: "",
         remark: "",
         sort: 0,
-        configJson: {}
+        configJson: {},
+        variablesJson: {},
       };
       this.dynamicCallInfoFields.forEach(field => {
         this.$set(this.form.configJson, field.prop, '');
@@ -202,6 +208,16 @@ export default {
     },
     handleSave() {
       this.saving = true; // 开始保存加载
+
+      // 确保 variables 是字典
+      if (typeof this.form.configJson.variables === 'string') {
+        const parsed = this.validateVariablesJson(this.form.configJson.variables);
+        if (parsed === null) {
+          this.saving = false;
+          return;
+        }
+        this.form.configJson.variables = parsed;
+      }
 
       const provideCode = this.form.configJson.type;
       const formData = {
@@ -255,7 +271,7 @@ export default {
           this.dynamicCallInfoFields = JSON.parse(provider.fields || '[]').map(f => ({
             label: f.label,
             prop: f.key,
-            type: f.type === 'password' ? 'password' : 'text',
+            type: f.key === 'variables' ? 'json-textarea' : (f.type === 'password' ? 'password' : 'text'),
             placeholder: `请输入${f.label}`
           }));
 
@@ -272,7 +288,7 @@ export default {
       this.dynamicCallInfoFields.forEach(field => {
         if (!configJson.hasOwnProperty(field.prop)) {
           configJson[field.prop] = '';
-        } else if (typeof configJson[field.prop] !== 'string') {
+        } else if (field.prop !== 'variables' && typeof configJson[field.prop] !== 'string') {
           configJson[field.prop] = String(configJson[field.prop]);
         }
       });
@@ -291,6 +307,38 @@ export default {
           ...configJson
         }
       };
+      // 读出时的JSON转换
+      if (this.form.configJson.variables) {
+        this.variablesJson = JSON.stringify(this.form.configJson.variables, null, 2)
+      }
+    },
+
+    // 输入监听
+    handleVariablesChange(value) {
+      const parsed = this.validateVariablesJson(value);
+      if (parsed !== null) this.form.configJson.variables = parsed;
+    },
+
+    // 数据校验
+    validateVariablesJson(value) {
+      try {
+        const parsed = JSON.parse(value);
+        // 校验是否为非空字典
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          return parsed;
+        }
+        this.$message.error({
+          message: '必须输入字典格式（如 {"key":"value"}），保存则保留原数据',
+          showClose: true
+        });
+        return null;
+      } catch (e) {
+        this.$message.error({
+          message: 'JSON格式错误（如 {"key":"value"}），保存则保留原数据',
+          showClose: true
+        });
+        return null;
+      }
     }
   }
 };

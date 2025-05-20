@@ -322,6 +322,12 @@ export default {
   line-height: 30px;
 }
 
+.custom-search-input::v-deep .el-input__suffix-inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
 .avatar-img {
   width: 21px;
   height: 21px;
