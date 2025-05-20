@@ -52,7 +52,9 @@ public class SysParamsServiceImpl extends BaseServiceImpl<SysParamsDao, SysParam
 
         QueryWrapper<SysParamsEntity> wrapper = new QueryWrapper<>();
         wrapper.eq("param_type", 1);
-        wrapper.like(StringUtils.isNotBlank(paramCode), "param_code", paramCode);
+        wrapper.nested(StringUtils.isNotBlank(paramCode),i->i.like("param_code", paramCode)
+                .or()
+                .like("remark", paramCode));
 
         return wrapper;
     }

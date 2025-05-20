@@ -1,6 +1,7 @@
 package xiaozhi.modules.security.controller;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class LoginController {
             throw new RenException("图形验证码错误");
         }
         Boolean isMobileRegister = sysParamsService
-                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+                .getValueObject(Constant.SysMSMParam.SERVER_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
         if (!isMobileRegister) {
             throw new RenException("没有开启手机注册，没法使用短信验证码功能");
         }
@@ -108,7 +109,7 @@ public class LoginController {
         }
         // 是否开启手机注册
         Boolean isMobileRegister = sysParamsService
-                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+                .getValueObject(Constant.SysMSMParam.SERVER_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
         boolean validate;
         if (isMobileRegister) {
             // 验证用户是否是手机号码
@@ -165,7 +166,7 @@ public class LoginController {
     public Result<?> retrievePassword(@RequestBody RetrievePasswordDTO dto) {
         // 是否开启手机注册
         Boolean isMobileRegister = sysParamsService
-                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
+                .getValueObject(Constant.SysMSMParam.SERVER_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
         if (!isMobileRegister) {
             throw new RenException("没有开启手机注册，没法使用找回密码功能");
         }
@@ -198,11 +199,15 @@ public class LoginController {
     public Result<Map<String, Object>> pubConfig() {
         Map<String, Object> config = new HashMap<>();
         config.put("enableMobileRegister", sysParamsService
-                .getValueObject(Constant.SysMSMParam.SYSTEM_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class));
+                .getValueObject(Constant.SysMSMParam.SERVER_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class));
         config.put("version", Constant.VERSION);
+        config.put("year", "©" + Calendar.getInstance().get(Calendar.YEAR));
         config.put("allowUserRegister", sysUserService.getAllowUserRegister());
-        List<SysDictDataItem> list = sysDictDataService.getDictDataByType("MOBILE_AREA");
+        List<SysDictDataItem> list = sysDictDataService.getDictDataByType(Constant.DictType.MOBILE_AREA.getValue());
         config.put("mobileAreaList", list);
+        config.put("beianIcpNum", sysParamsService.getValue(Constant.SysBaseParam.BEIAN_ICP_NUM.getValue(), true));
+        config.put("beianGaNum", sysParamsService.getValue(Constant.SysBaseParam.BEIAN_GA_NUM.getValue(), true));
+        config.put("name", sysParamsService.getValue(Constant.SysBaseParam.SERVER_NAME.getValue(), true));
 
         return new Result<Map<String, Object>>().ok(config);
     }
