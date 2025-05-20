@@ -80,6 +80,18 @@ const routes = [
       title: '参数管理'
     }
   },
+
+  {
+    path: '/server-side-management',
+    name: 'ServerSideManager',
+    component: function () {
+      return import('../views/ServerSideManager.vue')
+    },
+    meta: {
+      requiresAuth: true,
+      title: '服务端管理'
+    }
+  },
   {
     path: '/ota-management',
     name: 'OtaManagement',

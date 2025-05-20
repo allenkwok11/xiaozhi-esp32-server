@@ -273,9 +273,10 @@ class ConnectionHandler:
             await self.websocket.send(
                 json.dumps(
                     {
-                        "type": "server_response",
+                        "type": "server",
                         "status": "success",
                         "message": "服务器重启中...",
+                        "content": {'action': "restart"}
                     }
                 )
             )
@@ -302,9 +303,10 @@ class ConnectionHandler:
             await self.websocket.send(
                 json.dumps(
                     {
-                        "type": "server_response",
+                        "type": "server",
                         "status": "error",
                         "message": f"Restart failed: {str(e)}",
+                        'content': {'action': "restart"}
                     }
                 )
             )
