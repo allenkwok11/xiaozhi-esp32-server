@@ -22,7 +22,10 @@ class TTSProvider(TTSProviderBase):
         self.output_file = config.get("output_dir", "tmp/")
 
     def generate_filename(self):
-        return os.path.join(self.output_file, f"tts-{datetime.now().date()}@{uuid.uuid4().hex}.{self.format}")
+        return os.path.join(
+            self.output_file,
+            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}.{self.format}",
+        )
 
     async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):
         request_params = {}
@@ -37,13 +40,20 @@ class TTSProvider(TTSProviderBase):
             with open(tmp_file, "wb") as file:
                 file.write(resp.content)
         else:
-            logger.bind(tag=TAG).error(f"Custom TTS请求失败: {resp.status_code} - {resp.text}")
+            logger.bind(tag=TAG).error(
+                f"Custom TTS请求失败: {resp.status_code} - {resp.text}"
+            )
         # 使用 pydub 读取临时文件
         audio = AudioSegment.from_file(tmp_file, format=self.format)
         audio = audio.set_channels(1).set_frame_rate(16000)
         opus_datas = self.wav_to_opus_data_audio_raw(audio.raw_data)
-        yield TTSMessageDTO(u_id=u_id, msg_type=MsgType.TTS_TEXT_RESPONSE, content=opus_datas, tts_finish_text=text,
-                            sentence_type=SentenceType.SENTENCE_START)
+        yield TTSMessageDTO(
+            u_id=u_id,
+            msg_type=MsgType.TTS_TEXT_RESPONSE,
+            content=opus_datas,
+            tts_finish_text=text,
+            sentence_type=SentenceType.SENTENCE_START,
+        )
         # 用完后删除临时文件
         try:
             os.remove(tmp_file)

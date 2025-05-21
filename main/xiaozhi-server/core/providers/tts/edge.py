@@ -17,7 +17,10 @@ logger = setup_logging()
 class TTSProvider(TTSProviderBase):
     def __init__(self, config, delete_audio_file):
         super().__init__(config, delete_audio_file)
-        self.voice = config.get("voice")
+        if config.get("private_voice"):
+            self.voice = config.get("private_voice")
+        else:
+            self.voice = config.get("voice")
 
     def generate_filename(self, extension=".mp3"):
         return os.path.join(

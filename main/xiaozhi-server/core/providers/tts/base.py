@@ -10,12 +10,11 @@ import torch
 import torchaudio
 
 from config.logger import setup_logging
-import os
 import numpy as np
-import opuslib_next
 from pydub import AudioSegment
 from abc import ABC, abstractmethod
 from core.utils import textUtils
+from core.utils.util import audio_to_data
 from core.opus import opus_encoder_utils
 import queue
 
@@ -34,7 +33,9 @@ class TTSProviderBase(ABC):
         self.tts_audio_queue = queue.Queue()
         self.enable_two_way = False
         self.stop_event = threading.Event()
-        self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(sample_rate=16000, channels=1, frame_size_ms=60)
+        self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
+            sample_rate=16000, channels=1, frame_size_ms=60
+        )
 
         self.tts_text_buff = []
         self.punctuations = (
@@ -79,12 +80,12 @@ class TTSProviderBase(ABC):
     def _get_segment_text(self):
         # 合并当前全部文本并处理未分割部分
         full_text = "".join(self.tts_text_buff)
-        current_text = full_text[self.processed_chars:]  # 从未处理的位置开始
+        current_text = full_text[self.processed_chars :]  # 从未处理的位置开始
         last_punct_pos = -1
         for punct in self.punctuations:
             pos = current_text.rfind(punct)
             if (pos != -1 and last_punct_pos == -1) or (
-                    pos != -1 and pos < last_punct_pos
+                pos != -1 and pos < last_punct_pos
             ):
                 last_punct_pos = pos
         if last_punct_pos != -1:
@@ -220,6 +221,7 @@ class TTSProviderBase(ABC):
                             )
                             self.active_tasks.add(future)
                         if self.active_tasks:
+
                             async def wrap_future(future):
                                 return await asyncio.wrap_future(future)
 
@@ -292,48 +294,13 @@ class TTSProviderBase(ABC):
     async def text_to_speak_stream(self, text, queue: queue.Queue, text_index=0):
         raise Exception("该TTS还没有实现stream模式")
 
+    def audio_to_pcm_data(self, audio_file_path):
+        """音频文件转换为PCM编码"""
+        return audio_to_data(audio_file_path, is_opus=False)
+
     def audio_to_opus_data(self, audio_file_path):
         """音频文件转换为Opus编码"""
-        # 获取文件后缀名
-        file_type = os.path.splitext(audio_file_path)[1]
-        if file_type:
-            file_type = file_type.lstrip(".")
-        audio = AudioSegment.from_file(audio_file_path, format=file_type)
-
-        # 转换为单声道/16kHz采样率/16位小端编码（确保与编码器匹配）
-        audio = audio.set_channels(1).set_frame_rate(16000).set_sample_width(2)
-
-        # 音频时长(秒)
-        duration = len(audio) / 1000.0
-
-        # 获取原始PCM数据（16位小端）
-        raw_data = audio.raw_data
-
-        # 初始化Opus编码器
-        encoder = opuslib_next.Encoder(16000, 1, opuslib_next.APPLICATION_AUDIO)
-
-        # 编码参数
-        frame_duration = 60  # 60ms per frame
-        frame_size = int(16000 * frame_duration / 1000)  # 960 samples/frame
-
-        opus_datas = []
-        # 按帧处理所有音频数据（包括最后一帧可能补零）
-        for i in range(0, len(raw_data), frame_size * 2):  # 16bit=2bytes/sample
-            # 获取当前帧的二进制数据
-            chunk = raw_data[i: i + frame_size * 2]
-
-            # 如果最后一帧不足，补零
-            if len(chunk) < frame_size * 2:
-                chunk += b"\x00" * (frame_size * 2 - len(chunk))
-
-            # 转换为numpy数组处理
-            np_frame = np.frombuffer(chunk, dtype=np.int16)
-
-            # 编码Opus数据
-            opus_data = encoder.encode(np_frame.tobytes(), frame_size)
-            opus_datas.append(opus_data)
-
-        return opus_datas, duration
+        return audio_to_data(audio_file_path, is_opus=True)
 
     def get_audio_from_tts(self, data_bytes, src_rate, to_rate=16000):
         tts_speech = torch.from_numpy(
