@@ -165,3 +165,6 @@ my_wakeup_words.mp3
 main/manager-api/.vscode
 # Ignore webpack cache directory
 main/manager-web/.webpack_cache/
+main/xiaozhi-server/mysql
+uploadfile
+*.json
