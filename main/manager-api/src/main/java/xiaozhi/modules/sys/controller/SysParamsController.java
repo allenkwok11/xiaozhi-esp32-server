@@ -111,7 +111,7 @@ public class SysParamsController {
 
     /**
      * 验证WebSocket地址列表
-     * 
+     *
      * @param urls WebSocket地址列表，以分号分隔
      * @return 验证结果
      */
@@ -141,6 +141,19 @@ public class SysParamsController {
                 }
             }
         }
+    }
+
+    @PostMapping("/delete")
+    @Operation(summary = "删除")
+    @LogOperation("删除")
+    @RequiresPermissions("sys:role:superAdmin")
+    public Result<Void> delete(@RequestBody String[] ids) {
+        // 效验数据
+        AssertUtils.isArrayEmpty(ids, "id");
+
+        sysParamsService.delete(ids);
+        configService.getConfig(false);
+        return new Result<Void>();
     }
 
     /**
@@ -181,18 +194,5 @@ public class SysParamsController {
         } catch (Exception e) {
             throw new RenException("OTA接口验证失败：" + e.getMessage());
         }
-    }
-
-    @PostMapping("/delete")
-    @Operation(summary = "删除")
-    @LogOperation("删除")
-    @RequiresPermissions("sys:role:superAdmin")
-    public Result<Void> delete(@RequestBody String[] ids) {
-        // 效验数据
-        AssertUtils.isArrayEmpty(ids, "id");
-
-        sysParamsService.delete(ids);
-        configService.getConfig(false);
-        return new Result<Void>();
     }
 }

@@ -9,6 +9,7 @@ import opuslib_next
 from pydub import AudioSegment
 from typing import Dict, Any
 from core.utils import tts, llm, intent, memory, vad, asr
+import copy
 
 TAG = __name__
 emoji_map = {
@@ -319,7 +320,7 @@ def initialize_modules(
         modules["memory"] = memory.create_instance(
             memory_type,
             config["Memory"][select_memory_module],
-            config.get('summaryMemory', None),
+            config.get("summaryMemory", None),
         )
         logger.bind(tag=TAG).info(f"初始化组件: memory成功 {select_memory_module}")
 
@@ -956,3 +957,37 @@ def check_asr_update(before_config, new_config):
     )
     update_asr = current_asr_type != new_asr_type
     return update_asr
+
+
+def filter_sensitive_info(config: dict) -> dict:
+    """
+    过滤配置中的敏感信息
+    Args:
+        config: 原始配置字典
+    Returns:
+        过滤后的配置字典
+    """
+    sensitive_keys = [
+        "api_key",
+        "personal_access_token",
+        "access_token",
+        "token",
+        "secret",
+        "access_key_secret",
+        "secret_key",
+    ]
+
+    def _filter_dict(d: dict) -> dict:
+        filtered = {}
+        for k, v in d.items():
+            if any(sensitive in k.lower() for sensitive in sensitive_keys):
+                filtered[k] = "***"
+            elif isinstance(v, dict):
+                filtered[k] = _filter_dict(v)
+            elif isinstance(v, list):
+                filtered[k] = [_filter_dict(i) if isinstance(i, dict) else i for i in v]
+            else:
+                filtered[k] = v
+        return filtered
+
+    return _filter_dict(copy.deepcopy(config))

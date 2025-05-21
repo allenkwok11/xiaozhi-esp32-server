@@ -22,6 +22,7 @@ from core.utils.util import (
     initialize_modules,
     check_vad_update,
     check_asr_update,
+    filter_sensitive_info,
 )
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from core.handle.sendAudioHandle import sendAudioMessage
@@ -273,9 +274,10 @@ class ConnectionHandler:
             await self.websocket.send(
                 json.dumps(
                     {
-                        "type": "server_response",
+                        "type": "server",
                         "status": "success",
                         "message": "服务器重启中...",
+                        "content": {"action": "restart"},
                     }
                 )
             )
@@ -302,9 +304,10 @@ class ConnectionHandler:
             await self.websocket.send(
                 json.dumps(
                     {
-                        "type": "server_response",
+                        "type": "server",
                         "status": "error",
                         "message": f"Restart failed: {str(e)}",
+                        "content": {"action": "restart"},
                     }
                 )
             )
@@ -1087,37 +1090,3 @@ class ConnectionHandler:
                     break
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"超时检查任务出错: {e}")
-
-
-def filter_sensitive_info(config: dict) -> dict:
-    """
-    过滤配置中的敏感信息
-    Args:
-        config: 原始配置字典
-    Returns:
-        过滤后的配置字典
-    """
-    sensitive_keys = [
-        "api_key",
-        "personal_access_token",
-        "access_token",
-        "token",
-        "secret",
-        "access_key_secret",
-        "secret_key",
-    ]
-
-    def _filter_dict(d: dict) -> dict:
-        filtered = {}
-        for k, v in d.items():
-            if any(sensitive in k.lower() for sensitive in sensitive_keys):
-                filtered[k] = "***"
-            elif isinstance(v, dict):
-                filtered[k] = _filter_dict(v)
-            elif isinstance(v, list):
-                filtered[k] = [_filter_dict(i) if isinstance(i, dict) else i for i in v]
-            else:
-                filtered[k] = v
-        return filtered
-
-    return _filter_dict(copy.deepcopy(config))
