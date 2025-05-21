@@ -30,6 +30,7 @@ import xiaozhi.modules.sys.dto.PasswordDTO;
 import xiaozhi.modules.sys.dto.SysUserDTO;
 import xiaozhi.modules.sys.entity.SysUserEntity;
 import xiaozhi.modules.sys.enums.SuperAdminEnum;
+import xiaozhi.modules.sys.service.SysParamsService;
 import xiaozhi.modules.sys.service.SysUserService;
 import xiaozhi.modules.sys.vo.AdminPageUserVO;
 
@@ -44,6 +45,8 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     private final DeviceService deviceService;
 
     private final AgentService agentService;
+
+    private final SysParamsService sysParamsService;
 
     @Override
     public SysUserDTO getByUsername(String username) {
@@ -130,6 +133,10 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void changePasswordDirectly(Long userId, String password) {
+        // 新密码强度
+        if (!isStrongPassword(password)) {
+            throw new RenException(ErrorCode.PASSWORD_WEAK_ERROR);
+        }
         SysUserEntity sysUserEntity = new SysUserEntity();
         sysUserEntity.setId(userId);
         sysUserEntity.setPassword(PasswordUtils.encode(password));
@@ -156,7 +163,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
         params.put(Constant.LIMIT, dto.getLimit());
         IPage<SysUserEntity> page = baseDao.selectPage(
                 getPage(params, "id", true),
-                new QueryWrapper<SysUserEntity>().eq(StringUtils.isNotBlank(dto.getMobile()), "username",
+                new QueryWrapper<SysUserEntity>().like(StringUtils.isNotBlank(dto.getMobile()), "username",
                         dto.getMobile()));
         // 循环处理page获取回来的数据，返回需要的字段
         List<AdminPageUserVO> list = page.getRecords().stream().map(user -> {
@@ -166,6 +173,7 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
             String deviceCount = deviceService.selectCountByUserId(user.getId()).toString();
             adminPageUserVO.setDeviceCount(deviceCount);
             adminPageUserVO.setStatus(user.getStatus());
+            adminPageUserVO.setCreateDate(user.getCreateDate());
             return adminPageUserVO;
         }).toList();
         return new PageData<>(list, page.getTotal());
@@ -204,5 +212,18 @@ public class SysUserServiceImpl extends BaseServiceImpl<SysUserDao, SysUserEntit
             entity.setStatus(status);
             updateById(entity);
         }
+    }
+
+    @Override
+    public boolean getAllowUserRegister() {
+        String allowUserRegister = sysParamsService.getValue(Constant.SERVER_ALLOW_USER_REGISTER, true);
+        if (allowUserRegister.equals("true")) {
+            return true;
+        }
+        Long userCount = baseDao.selectCount(new QueryWrapper<SysUserEntity>());
+        if (userCount == 0) {
+            return true;
+        }
+        return false;
     }
 }

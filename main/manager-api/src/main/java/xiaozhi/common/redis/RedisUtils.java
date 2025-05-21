@@ -1,14 +1,19 @@
 package xiaozhi.common.redis;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+import xiaozhi.common.utils.ResourcesUtils;
 
 /**
  * Redis工具类
@@ -20,6 +25,9 @@ public class RedisUtils {
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Autowired
+    private ResourcesUtils resourceUtils;
+
     /**
      * 默认过期时长为24小时，单位：秒
      */
@@ -27,7 +35,7 @@ public class RedisUtils {
     /**
      * 过期时长为1小时，单位：秒
      */
-    public final static long HOUR_ONE_EXPIRE = 60 * 60 * 1L;
+    public final static long HOUR_ONE_EXPIRE = (long) 60 * 60;
     /**
      * 过期时长为6小时，单位：秒
      */
@@ -36,6 +44,24 @@ public class RedisUtils {
      * 不设置过期时长
      */
     public final static long NOT_EXPIRE = -1L;
+
+    public Long increment(String key, long expire) {
+        Long increment = redisTemplate.opsForValue().increment(key, 1L);
+        if (expire != NOT_EXPIRE) {
+            expire(key, expire);
+        }
+        return increment;
+    }
+
+    public Long increment(String key) {
+        return redisTemplate.opsForValue().increment(key, 1L);
+    }
+
+    public Long decrement(String key) {
+        return redisTemplate.opsForValue().decrement(key, 1L);
+    }
+
+
 
     public void set(String key, Object value, long expire) {
         redisTemplate.opsForValue().set(key, value);
@@ -124,4 +150,46 @@ public class RedisUtils {
     public Object rightPop(String key) {
         return redisTemplate.opsForList().rightPop(key);
     }
+
+
+    /**
+     * 清空所有 Redis 数据库中的所有键
+     */
+    public void emptyAll() {
+        // Lua 脚本 FLUSHALL是redis清空所有库的命令
+        String luaScript =resourceUtils.loadString("lua/emptyAll.lua");
+
+        // 创建 DefaultRedisScript 对象
+        DefaultRedisScript<Void> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptText(luaScript); // 设置 Lua 脚本内容
+        redisScript.setResultType(Void.class); // 设置返回值类型
+
+        // 执行 Lua 脚本
+        List<String> keys = Collections.emptyList(); // 如果脚本不依赖 key，可以传入空列表
+        redisTemplate.execute(redisScript, keys);
+
+    }
+
+    /**
+     * 获取在redis指定key的值，如果值为空，着设置key的默认值
+     * @param key redis的key
+     * @param defaultValue 默认值
+     * @param expiresInSecond 过期时间
+     * @return 返回key的值
+     */
+    public String getKeyOrCreate(String key, String defaultValue,Long expiresInSecond) {
+        // Lua 脚本
+        String luaScript = resourceUtils.loadString("lua/getKeyOrCreate.lua");
+
+        DefaultRedisScript<String> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptText(luaScript);
+        redisScript.setResultType(String.class);
+
+        // 执行 Lua 脚本
+        List<String> keys = Collections.singletonList(key);
+        return redisTemplate.execute(redisScript, keys, defaultValue,expiresInSecond);
+    }
+
+
+
 }

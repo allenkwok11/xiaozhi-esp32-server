@@ -1,6 +1,6 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" width="975px" center custom-class="custom-dialog" :show-close="false"
-    class="center-dialog">
+  <el-dialog :visible.sync="dialogVisible" width="57%" center custom-class="custom-dialog" :show-close="false"
+    class="center-dialog" >
     <div style="margin: 0 18px; text-align: left; padding: 10px; border-radius: 10px;">
       <div style="font-size: 30px; color: #3d4566; margin-top: -10px; margin-bottom: 10px; text-align: center;">
         修改模型
@@ -17,7 +17,7 @@
             <span style="margin-right: 8px;">是否启用</span>
             <el-switch v-model="form.isEnabled" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: none; align-items: center;">
             <span style="margin-right: 8px;">设为默认</span>
             <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" class="custom-switch"></el-switch>
           </div>
@@ -53,7 +53,7 @@
         </el-form-item>
 
         <el-form-item label="备注" prop="remark" class="prop-remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入模型备注"
+          <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入模型备注" :autosize="{ minRows: 3, maxRows: 5 }"
             class="custom-input-bg"></el-input>
         </el-form-item>
       </el-form>
@@ -64,18 +64,10 @@
       <el-form :model="form.configJson" ref="callInfoForm" label-width="auto" class="custom-form">
         <template v-for="(row, rowIndex) in chunkedCallInfoFields">
           <div :key="rowIndex" style="display: flex; gap: 20px; margin-bottom: 0;">
-            <el-form-item
-              v-for="field in row"
-              :key="field.prop"
-              :label="field.label"
-              :prop="field.prop"
+            <el-form-item v-for="field in row" :key="field.prop" :label="field.label" :prop="field.prop"
               style="flex: 1;">
-              <el-input
-                v-model="form.configJson[field.prop]"
-                :placeholder="field.placeholder"
-                :type="field.type"
-                class="custom-input-bg"
-                :show-password="field.type === 'password'">
+              <el-input v-model="form.configJson[field.prop]" :placeholder="field.placeholder" :type="field.type"
+                class="custom-input-bg" :show-password="field.type === 'password'">
               </el-input>
             </el-form-item>
           </div>
@@ -84,7 +76,12 @@
     </div>
 
     <div style="display: flex;justify-content: center;">
-      <el-button type="primary" @click="handleSave" class="save-btn">
+      <el-button
+        type="primary"
+        @click="handleSave"
+        class="save-btn"
+        :loading="saving"
+        :disabled="saving">
         保存
       </el-button>
     </div>
@@ -93,26 +90,6 @@
 
 <script>
 import Api from '@/apis/api';
-
-const DEFAULT_CONFIG_JSON = {
-  type: "",
-  base_url: "",
-  model_name: "",
-  api_key: "",
-  raw: {},
-  config: {
-    keyComparator: {},
-    ignoreError: false,
-    ignoreCase: false,
-    dateFormat: "",
-    ignoreNullValue: false,
-    transientSupport: false,
-    stripTrailingZeros: false,
-    checkDuplicate: false,
-    order: false
-  },
-  empty: false
-};
 
 export default {
   name: "ModelEditDialog",
@@ -130,6 +107,7 @@ export default {
       dialogVisible: this.visible,
       providers: [],
       providersLoaded: false,
+      saving: false,
       allProvidersData: null,
       pendingProviderType: null,
       pendingModelData: null,
@@ -144,7 +122,7 @@ export default {
         docLink: "",
         remark: "",
         sort: 0,
-        configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
+        configJson: {}
       }
     };
   },
@@ -194,9 +172,12 @@ export default {
         isEnabled: false,
         docLink: "",
         remark: "",
-        sort: "",
-        configJson: JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON))
+        sort: 0,
+        configJson: {}
       };
+      this.dynamicCallInfoFields.forEach(field => {
+        this.$set(this.form.configJson, field.prop, '');
+      });
     },
     resetProviders() {
       this.providers = [];
@@ -220,10 +201,11 @@ export default {
       }
     },
     handleSave() {
+      this.saving = true; // 开始保存加载
+
       const provideCode = this.form.configJson.type;
-      const { provider, ...restConfigJson } = this.form.configJson;
       const formData = {
-        id: this.form.id,
+        id: this.modelData.id,
         modelCode: this.form.modelCode,
         modelName: this.form.modelName,
         isDefault: this.form.isDefault ? 1 : 0,
@@ -232,16 +214,22 @@ export default {
         remark: this.form.remark,
         sort: this.form.sort || 0,
         configJson: {
-          ...restConfigJson,
-          config: {
-            ...restConfigJson.config,
-            ignoreError: !!restConfigJson.config?.ignoreError,
-            ignoreCase: !!restConfigJson.config?.ignoreCase,
-          }
+          ...this.form.configJson,
         }
       };
-      this.$emit("save", { provideCode, formData });
-      this.dialogVisible = false;
+
+      this.$emit("save", {
+        provideCode,
+        formData,
+        done: () => {
+          this.saving = false; // 保存完成后回调
+        }
+      });
+
+      // 如果父组件不处理done回调，3秒后自动关闭加载状态
+      setTimeout(() => {
+        this.saving = false;
+      }, 3000);
     },
     loadProviders() {
       if (this.providersLoaded) return;
@@ -249,7 +237,7 @@ export default {
       Api.model.getModelProviders(this.modelType, (data) => {
         this.providers = data.map(item => ({
           label: item.name,
-          value: item.providerCode
+          value: String(item.providerCode)
         }));
         this.providersLoaded = true;
 
@@ -284,35 +272,31 @@ export default {
       this.dynamicCallInfoFields.forEach(field => {
         if (!configJson.hasOwnProperty(field.prop)) {
           configJson[field.prop] = '';
+        } else if (typeof configJson[field.prop] !== 'string') {
+          configJson[field.prop] = String(configJson[field.prop]);
         }
       });
 
       this.form = {
-        id: model.id || "",
-        modelType: model.modelType || "",
-        modelCode: model.modelCode || "",
-        modelName: model.modelName || "",
-        isDefault: model.isDefault || 0,
-        isEnabled: model.isEnabled || 0,
-        docLink: model.docLink || "",
-        remark: model.remark || "",
+        id: model.id,
+        modelType: model.modelType,
+        modelCode: model.modelCode,
+        modelName: model.modelName,
+        isDefault: model.isDefault,
+        isEnabled: model.isEnabled,
+        docLink: model.docLink,
+        remark: model.remark,
         sort: Number(model.sort) || 0,
         configJson: {
-          ...JSON.parse(JSON.stringify(DEFAULT_CONFIG_JSON)),
-          ...configJson,
-          config: {
-            ...DEFAULT_CONFIG_JSON.config,
-            ...(configJson.config || {})
-          }
+          ...configJson
         }
       };
     }
-
   }
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .custom-dialog {
   position: relative;
   border-radius: 20px;
@@ -332,11 +316,6 @@ export default {
   justify-content: center;
 }
 
-.center-dialog .el-dialog {
-  margin: 4% 0 auto !important;
-  display: flex;
-  flex-direction: column;
-}
 
 .custom-close-btn {
   position: absolute;

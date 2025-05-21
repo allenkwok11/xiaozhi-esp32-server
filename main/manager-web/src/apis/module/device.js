@@ -11,7 +11,7 @@ export default {
                 RequestService.clearRequestTime();
                 callback(res);
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('获取设备列表失败:', err);
                 RequestService.reAjaxFun(() => {
                     this.getAgentBindDevices(agentId, callback);
@@ -28,7 +28,7 @@ export default {
                 RequestService.clearRequestTime();
                 callback(res);
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('解绑设备失败:', err);
                 RequestService.reAjaxFun(() => {
                     this.unbindDevice(device_id, callback);
@@ -44,11 +44,27 @@ export default {
                 RequestService.clearRequestTime();
                 callback(res);
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('绑定设备失败:', err);
                 RequestService.reAjaxFun(() => {
                     this.bindDevice(agentId, deviceCode, callback);
                 });
             }).send();
+    },
+    enableOtaUpgrade(id, status, callback) {
+        RequestService.sendRequest()
+            .url(`${getServiceUrl()}/device/enableOta/${id}/${status}`)
+            .method('PUT')
+            .success((res) => {
+                RequestService.clearRequestTime()
+                callback(res)
+            })
+            .networkFail((err) => {
+                console.error('更新OTA状态失败:', err)
+                this.$message.error(err.msg || '更新OTA状态失败')
+                RequestService.reAjaxFun(() => {
+                    this.enableOtaUpgrade(id, status, callback)
+                })
+            }).send()
     },
 }

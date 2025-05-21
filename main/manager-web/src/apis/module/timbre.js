@@ -1,11 +1,8 @@
-// timbre.js
-import {getServiceUrl} from '../api';
+import { getServiceUrl } from '../api';
 import RequestService from '../httpRequest';
 
 export default {
-    /**
-     * 获取音色数据
-     */
+    // 获取音色
     getVoiceList(params, callback) {
         const queryParams = new URLSearchParams({
             ttsModelId: params.ttsModelId,
@@ -21,16 +18,14 @@ export default {
                 RequestService.clearRequestTime();
                 callback(res.data || []);
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('获取音色列表失败:', err);
                 RequestService.reAjaxFun(() => {
                     this.getVoiceList(params, callback);
                 });
             }).send();
     },
-    /**
-     * 音色保存
-     */
+    // 音色保存
     saveVoice(params, callback) {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/ttsVoice`)
@@ -47,36 +42,31 @@ export default {
             .success((res) => {
                 callback(res.data);
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('保存音色失败:', err);
                 RequestService.reAjaxFun(() => {
                     this.saveVoice(params, callback);
                 });
             }).send();
     },
-    /**
-     * 音色删除
-     */
-    deleteVoice(id, callback) {
-        console.log('尝试删除音色，ID:', id);
+    // 音色删除
+    deleteVoice(ids, callback) {
         RequestService.sendRequest()
-            .url(`${getServiceUrl()}/ttsVoice`)
-            .method('DELETE')
-            .data({ ids: [id] })
+            .url(`${getServiceUrl()}/ttsVoice/delete`)
+            .method('POST')
+            .data(ids)
             .success((res) => {
                 RequestService.clearRequestTime()
                 callback(res);
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('删除音色失败:', err);
                 RequestService.reAjaxFun(() => {
-                    this.deleteVoice(id, callback);
+                    this.deleteVoice(ids, callback);
                 });
             }).send();
     },
-    /**
-     * 音色修改
-     */
+    // 音色修改
     updateVoice(params, callback) {
         RequestService.sendRequest()
             .url(`${getServiceUrl()}/ttsVoice/${params.id}`)
@@ -92,7 +82,7 @@ export default {
             .success((res) => {
                 callback(res.data);
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('修改音色失败:', err);
                 RequestService.reAjaxFun(() => {
                     this.updateVoice(params, callback);
