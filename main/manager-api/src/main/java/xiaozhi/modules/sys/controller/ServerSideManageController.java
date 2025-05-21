@@ -89,7 +89,7 @@ public class ServerSideManageController {
 
         try (WebSocketClientManager client = new WebSocketClientManager.Builder()
                 .connectTimeout(3, TimeUnit.SECONDS)
-                .maxSessionDuration(5, TimeUnit.SECONDS)
+                .maxSessionDuration(120, TimeUnit.SECONDS)
                 .uri(targetWsUri)
                 .headers(headers)
                 .build()) {
@@ -104,8 +104,9 @@ public class ServerSideManageController {
                     return false;
                 }
                 try {
-                    return ServerActionResponseDTO
-                            .isSuccess(objectMapper.readValue(jsonText, ServerActionResponseDTO.class));
+                    ServerActionResponseDTO response = objectMapper.readValue(jsonText, ServerActionResponseDTO.class);
+                    Boolean isSuccess = ServerActionResponseDTO.isSuccess(response);
+                    return isSuccess;
                 } catch (JsonProcessingException e) {
                     return false;
                 }

@@ -139,7 +139,7 @@ export default {
                 RequestService.clearRequestTime()
                 callback(res)
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 console.error('获取ws服务端列表失败:', err)
                 RequestService.reAjaxFun(() => {
                     this.getWsServerList(params, callback)
@@ -156,7 +156,7 @@ export default {
                 RequestService.clearRequestTime()
                 callback(res)
             })
-            .fail((err) => {
+            .networkFail((err) => {
                 RequestService.reAjaxFun(() => {
                     this.sendWsServerAction(data, callback)
                 })
