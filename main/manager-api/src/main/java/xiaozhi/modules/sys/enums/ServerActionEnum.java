@@ -6,9 +6,6 @@ import xiaozhi.common.exception.RenException;
 
 /**
  * 服务端动作枚举
- *
- * @Author CAIXYPROMISE
- * @since 2025/5/15 4:57
  */
 public enum ServerActionEnum
 {

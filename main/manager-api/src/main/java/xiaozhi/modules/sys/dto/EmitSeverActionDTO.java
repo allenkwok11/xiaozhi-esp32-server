@@ -10,9 +10,6 @@ import xiaozhi.modules.sys.enums.ServerActionEnum;
 
 /**
  * 发送python服务端操作DTO
- *
- * @Author CAIXYPROMISE
- * @since 2025/5/15 4:55
  */
 @Data
 @NoArgsConstructor
