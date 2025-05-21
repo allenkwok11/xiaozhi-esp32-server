@@ -542,12 +542,6 @@ class ConnectionHandler:
             response_message.append(content)
             if self.client_abort:
                 break
-
-            end_time = time.time()
-
-            self.logger.bind(tag=TAG).debug(
-                f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}"
-            )
             if text_index == 0:
                 self.tts.tts_text_queue.put(
                     TTSMessageDTO(
