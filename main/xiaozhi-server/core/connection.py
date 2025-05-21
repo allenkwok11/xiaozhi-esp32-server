@@ -869,19 +869,6 @@ class ConnectionHandler:
 
         self.logger.bind(tag=TAG).info("聊天记录上报线程已退出")
 
-    def speak_and_play(self, text, text_index=0):
-        if text is None or len(text) <= 0:
-            self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{text}")
-            return None, text, text_index
-        tts_file = self.tts.to_tts(text)
-        if tts_file is None:
-            self.logger.bind(tag=TAG).error(f"tts转换失败，{text}")
-            return None, text, text_index
-        self.logger.bind(tag=TAG).debug(f"TTS 文件生成完毕: {tts_file}")
-        if self.max_output_size > 0:
-            add_device_output(self.headers.get("device-id"), len(text))
-        return tts_file, text, text_index
-
     def clearSpeakStatus(self):
         self.logger.bind(tag=TAG).debug(f"清除服务端讲话状态")
         self.asr_server_receive = True
