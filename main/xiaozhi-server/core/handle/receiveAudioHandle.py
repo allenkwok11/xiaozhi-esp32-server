@@ -39,14 +39,14 @@ async def handleAudioMessage(conn, audio):
         if len(conn.asr_audio) < 15:
             conn.asr_server_receive = True
         else:
-            text, _ = await conn.asr.speech_to_text(conn.asr_audio, conn.session_id)
-            conn.logger.bind(tag=TAG).info(f"识别文本: {text}")
-            text_len, _ = remove_punctuation_and_length(text)
+            raw_text, _ = await conn.asr.speech_to_text(conn.asr_audio, conn.session_id)  # 确保ASR模块返回原始文本
+            conn.logger.bind(tag=TAG).info(f"识别文本: {raw_text}")
+            text_len, _ = remove_punctuation_and_length(raw_text)
             if text_len > 0:
                 # 使用自定义模块进行上报
-                enqueue_asr_report(conn, text, copy.deepcopy(conn.asr_audio))
+                enqueue_asr_report(conn, raw_text, copy.deepcopy(conn.asr_audio))
 
-                await startToChat(conn, text)
+                await startToChat(conn, raw_text)
             else:
                 conn.asr_server_receive = True
         conn.asr_audio.clear()
