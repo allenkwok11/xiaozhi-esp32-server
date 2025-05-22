@@ -1,6 +1,12 @@
 from config.logger import setup_logging
 import json
-from plugins_func.register import FunctionRegistry, ActionResponse, Action, ToolType
+from plugins_func.register import (
+    FunctionRegistry,
+    ActionResponse,
+    Action,
+    ToolType,
+    DeviceTypeRegistry,
+)
 from plugins_func.functions.hass_init import append_devices_to_prompt
 
 TAG = __name__
@@ -10,6 +16,7 @@ class FunctionHandler:
     def __init__(self, conn):
         self.conn = conn
         self.config = conn.config
+        self.device_type_registry = DeviceTypeRegistry()
         self.function_registry = FunctionRegistry()
         self.register_nessary_functions()
         self.register_config_functions()
