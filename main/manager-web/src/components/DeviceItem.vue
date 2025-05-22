@@ -28,7 +28,7 @@
       </div>
       <div class="settings-btn" @click="handleChatHistory"
         :class="{ 'disabled-btn': device.memModelId === 'Memory_nomem' }">
-        <el-tooltip v-if="device.memModelId === 'Memory_nomem'" content="未开启记忆" placement="top">
+        <el-tooltip v-if="device.memModelId === 'Memory_nomem'" content="请先在“配置角色”界面开启记忆" placement="top">
           <span>聊天记录</span>
         </el-tooltip>
         <span v-else>聊天记录</span>
