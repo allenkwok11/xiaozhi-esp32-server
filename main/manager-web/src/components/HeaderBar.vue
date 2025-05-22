@@ -52,6 +52,9 @@
             <el-dropdown-item @click.native="goProviderManagement">
               供应器管理
             </el-dropdown-item>
+            <el-dropdown-item @click.native="goServerSideManagement">
+              服务端管理
+            </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -144,6 +147,9 @@ export default {
     },
     goProviderManagement() {
       this.$router.push('/provider-management')
+    },
+    goServerSideManagement() {
+      this.$router.push('/server-side-management')
     },
     // 获取用户信息
     fetchUserInfo() {
@@ -320,6 +326,12 @@ export default {
   margin-right: 8px;
   font-size: 14px;
   line-height: 30px;
+}
+
+.custom-search-input::v-deep .el-input__suffix-inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
 .avatar-img {

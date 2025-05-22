@@ -1,6 +1,12 @@
 from config.logger import setup_logging
 import json
-from plugins_func.register import FunctionRegistry, ActionResponse, Action, ToolType
+from plugins_func.register import (
+    FunctionRegistry,
+    ActionResponse,
+    Action,
+    ToolType,
+    DeviceTypeRegistry,
+)
 from plugins_func.functions.hass_init import append_devices_to_prompt
 
 TAG = __name__
@@ -10,6 +16,7 @@ class FunctionHandler:
     def __init__(self, conn):
         self.conn = conn
         self.config = conn.config
+        self.device_type_registry = DeviceTypeRegistry()
         self.function_registry = FunctionRegistry()
         self.register_nessary_functions()
         self.register_config_functions()
@@ -54,7 +61,7 @@ class FunctionHandler:
         self.function_registry.register_function("plugin_loader")
         self.function_registry.register_function("get_time")
         self.function_registry.register_function("get_lunar")
-        self.function_registry.register_function("handle_device")
+        self.function_registry.register_function("handle_speaker_volume_or_screen_brightness")
 
     def register_config_functions(self):
         """注册配置中的函数,可以不同客户端使用不同的配置"""
