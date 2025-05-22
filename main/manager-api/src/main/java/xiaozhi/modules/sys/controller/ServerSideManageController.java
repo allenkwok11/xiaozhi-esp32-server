@@ -1,9 +1,6 @@
 package xiaozhi.modules.sys.controller;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +35,7 @@ import xiaozhi.modules.sys.utils.WebSocketClientManager;
  * 服务端管理控制器
  */
 @RestController
-@RequestMapping("admin/server")
+@RequestMapping("/admin/server")
 @Tag(name = "服务端管理")
 @AllArgsConstructor
 public class ServerSideManageController {
@@ -46,6 +43,7 @@ public class ServerSideManageController {
     private static final ObjectMapper objectMapper;
     static {
         objectMapper = new ObjectMapper();
+        // 忽略json字符串中存在，但pojo中不存在对应字段的情况
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
@@ -53,8 +51,11 @@ public class ServerSideManageController {
     @GetMapping("/server-list")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<List<String>> getWsServerList() {
-        String cachedWs = sysParamsService.getValue(Constant.SERVER_WEBSOCKET, true);
-        return new Result<List<String>>().ok(Arrays.asList(cachedWs.split(";")));
+        String wsText = sysParamsService.getValue(Constant.SERVER_WEBSOCKET, true);
+        if (StringUtils.isBlank(wsText)) {
+            return new Result<List<String>>().ok(Collections.emptyList());
+        }
+        return new Result<List<String>>().ok(Arrays.asList(wsText.split(";")));
     }
 
     @Operation(summary = "通知python服务端更新配置")
