@@ -7,9 +7,6 @@ import java.util.Map;
 
 /**
  * 服务端动作DTO
- *
- * @Author CAIXYPROMISE
- * @since 2025/5/15 5:10
  */
 @Data
 public class ServerActionPayloadDTO

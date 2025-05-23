@@ -102,7 +102,7 @@ async def main():
         await asyncio.wait(
             [stdin_task, ws_task, ota_task] if ota_task else [stdin_task, ws_task],
             timeout=3.0,
-            return_when=asyncio.ALL_COMPLETED
+            return_when=asyncio.ALL_COMPLETED,
         )
         print("服务器已关闭，程序退出。")
 

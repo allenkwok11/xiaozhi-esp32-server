@@ -40,8 +40,8 @@ async def checkWakeupWords(conn, text):
     if not enable_wakeup_words_response_cache:
         return False
     """检查是否是唤醒词"""
-    _, text = remove_punctuation_and_length(text)
-    if text in conn.config.get("wakeup_words"):
+    _, filtered_text = remove_punctuation_and_length(text)
+    if filtered_text in conn.config.get("wakeup_words"):
         await send_stt_message(conn, text)
         conn.tts_first_text_index = 0
         conn.tts_last_text_index = 0

@@ -54,20 +54,29 @@ def _handle_device_action(conn, func, success_message, error_message, *args, **k
 handle_device_function_desc = {
     "type": "function",
     "function": {
-        "name": "handle_device",
+        "name": "handle_speaker_volume_or_screen_brightness",
         "description": (
-            "用户想要获取或者设置设备的音量/亮度大小，或者用户觉得声音/亮度过高或过低，或者用户想提高或降低音量/亮度。"
-            "比如用户说现在亮度多少，参数为：device_type:Screen,action:get。"
-            "比如用户说设置音量为50，参数为：device_type:Speaker,action:set,value:50。"
-            "比如用户说亮度太高了，参数为：device_type:Screen,action:lower。"
-            "比如用户说调大音量，参数为：device_type:Speaker,action:raise。"
+            "用户想要获取或者设置设备的音量/亮度大小，或者用户觉得声音/亮度过高或过低，或者用户想提高或降低音量/亮度。\n"
+            "**严格限制**：仅当用户明确操作 **Speaker（音量）或Screen（亮度）** 时才能调用此函数！\n"
+            "对于其他设备（如AC、Battery、Switch等），请不要调用此函数，而是继续正常的对话。\n\n"
+            "示例：\n"
+            "- 用户说『现在亮度多少』 → 调用函数：device_type: Screen, action: get\n"
+            "- 用户说『设置音量为50』 → 调用函数：device_type: Speaker, action: set, value: 50\n"
+            "- 用户说『亮度太高了』 → 调用函数：device_type: Screen, action: lower\n"
+            "- 用户说『调大音量』 → 调用函数：device_type: Speaker, action: raise\n\n"
+            "**拒绝调用示例**（应继续对话而非调用本函数）：\n"
+            "- 用户说『空调调低一度』 → 不调用（设备类型为AC）\n"
+            "- 用户说『开关灯』 → 不调用（设备类型为Switch）\n"
+            "- 用户说『电量多少』 → 不调用（设备类型为Battery）\n"
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "device_type": {
                     "type": "string",
-                    "description": "设备类型，可选值：Speaker(音量),Screen(亮度)"
+                    "description": "设备类型，**严格限定为Speaker（音量）或Screen（亮度）**，其他设备类型禁止调用此函数",
+                    "enum": ["Speaker", "Screen"]
+
                 },
                 "action": {
                     "type": "string",
@@ -84,8 +93,8 @@ handle_device_function_desc = {
 }
 
 
-@register_function('handle_device', handle_device_function_desc, ToolType.IOT_CTL)
-def handle_device(conn, device_type: str, action: str, value: int = None):
+@register_function('handle_speaker_volume_or_screen_brightness', handle_device_function_desc, ToolType.IOT_CTL)
+def handle_speaker_volume_or_screen_brightness(conn, device_type: str, action: str, value: int = None):
     if device_type == "Speaker":
         method_name, property_name, device_name = "SetVolume", "volume", "音量"
     elif device_type == "Screen":
