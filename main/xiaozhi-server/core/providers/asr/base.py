@@ -30,15 +30,25 @@ class ASRProviderBase(ABC):
     @staticmethod
     def decode_opus(opus_data: List[bytes]) -> bytes:
         """将Opus音频数据解码为PCM数据"""
+        try:
+            decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
+            pcm_data = []
+            buffer_size = 960  # 每次处理960个采样点
 
-        decoder = opuslib_next.Decoder(16000, 1)  # 16kHz, 单声道
-        pcm_data = []
+            for opus_packet in opus_data:
+                try:
+                    # 使用较小的缓冲区大小进行处理
+                    pcm_frame = decoder.decode(opus_packet, buffer_size)
+                    if pcm_frame:
+                        pcm_data.append(pcm_frame)
+                except opuslib_next.OpusError as e:
+                    logger.bind(tag=TAG).warning(f"Opus解码错误，跳过当前数据包: {e}")
+                    continue
+                except Exception as e:
+                    logger.bind(tag=TAG).error(f"音频处理错误: {e}", exc_info=True)
+                    continue
 
-        for opus_packet in opus_data:
-            try:
-                pcm_frame = decoder.decode(opus_packet, 960)  # 960 samples = 60ms
-                pcm_data.append(pcm_frame)
-            except opuslib_next.OpusError as e:
-                logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
-
-        return pcm_data
+            return pcm_data
+        except Exception as e:
+            logger.bind(tag=TAG).error(f"音频解码过程发生错误: {e}", exc_info=True)
+            return []
