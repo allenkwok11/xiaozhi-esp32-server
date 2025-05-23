@@ -9,9 +9,13 @@ import uuid
 from core.providers.asr.base import ASRProviderBase
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
+import shutil
 
 TAG = __name__
 logger = setup_logging()
+
+MAX_RETRIES = 2
+RETRY_DELAY = 1  # 重试延迟（秒）
 
 
 # 捕获标准输出
@@ -68,46 +72,69 @@ class ASRProvider(ASRProviderBase):
     ) -> Tuple[Optional[str], Optional[str]]:
         """语音转文本主处理逻辑"""
         file_path = None
-        try:
-            # 合并所有opus数据包
-            if self.audio_format == "pcm":
-                pcm_data = opus_data
-            else:
-                pcm_data = self.decode_opus(opus_data)
+        retry_count = 0
 
-            combined_pcm_data = b"".join(pcm_data)
+        while retry_count < MAX_RETRIES:
+            try:
+                # 合并所有opus数据包
+                if self.audio_format == "pcm":
+                    pcm_data = opus_data
+                else:
+                    pcm_data = self.decode_opus(opus_data)
 
-            # 判断是否保存为WAV文件
-            if self.delete_audio_file:
-                pass
-            else:
-                file_path = self.save_audio_to_file(pcm_data, session_id)
+                combined_pcm_data = b"".join(pcm_data)
 
-            # 语音识别
-            start_time = time.time()
-            result = self.model.generate(
-                input=combined_pcm_data,
-                cache={},
-                language="auto",
-                use_itn=True,
-                batch_size_s=60,
-            )
-            text = rich_transcription_postprocess(result[0]["text"])
-            logger.bind(tag=TAG).debug(
-                f"语音识别耗时: {time.time() - start_time:.3f}s | 结果: {text}"
-            )
+                # 检查磁盘空间
+                if not self.delete_audio_file:
+                    free_space = shutil.disk_usage(self.output_dir).free
+                    if free_space < len(combined_pcm_data) * 2:  # 预留2倍空间
+                        raise OSError("磁盘空间不足")
 
-            return text, file_path
+                # 判断是否保存为WAV文件
+                if self.delete_audio_file:
+                    pass
+                else:
+                    file_path = self.save_audio_to_file(pcm_data, session_id)
 
-        except Exception as e:
-            logger.bind(tag=TAG).error(f"语音识别失败: {e}", exc_info=True)
-            return "", file_path
+                # 语音识别
+                start_time = time.time()
+                result = self.model.generate(
+                    input=combined_pcm_data,
+                    cache={},
+                    language="auto",
+                    use_itn=True,
+                    batch_size_s=60,
+                )
+                text = rich_transcription_postprocess(result[0]["text"])
+                logger.bind(tag=TAG).debug(
+                    f"语音识别耗时: {time.time() - start_time:.3f}s | 结果: {text}"
+                )
 
-        # finally:
-        #     # 文件清理逻辑
-        #     if self.delete_audio_file and file_path and os.path.exists(file_path):
-        #         try:
-        #             os.remove(file_path)
-        #             logger.bind(tag=TAG).debug(f"已删除临时音频文件: {file_path}")
-        #         except Exception as e:
-        #             logger.bind(tag=TAG).error(f"文件删除失败: {file_path} | 错误: {e}")
+                return text, file_path
+
+            except OSError as e:
+                retry_count += 1
+                if retry_count >= MAX_RETRIES:
+                    logger.bind(tag=TAG).error(
+                        f"语音识别失败（已重试{retry_count}次）: {e}", exc_info=True
+                    )
+                    return "", file_path
+                logger.bind(tag=TAG).warning(
+                    f"语音识别失败，正在重试（{retry_count}/{MAX_RETRIES}）: {e}"
+                )
+                time.sleep(RETRY_DELAY)
+
+            except Exception as e:
+                logger.bind(tag=TAG).error(f"语音识别失败: {e}", exc_info=True)
+                return "", file_path
+
+            finally:
+                # 文件清理逻辑
+                if self.delete_audio_file and file_path and os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                        logger.bind(tag=TAG).debug(f"已删除临时音频文件: {file_path}")
+                    except Exception as e:
+                        logger.bind(tag=TAG).error(
+                            f"文件删除失败: {file_path} | 错误: {e}"
+                        )
