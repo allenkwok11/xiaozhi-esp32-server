@@ -39,7 +39,9 @@ async def handleAudioMessage(conn, audio):
         if len(conn.asr_audio) < 15:
             conn.asr_server_receive = True
         else:
-            raw_text, _ = await conn.asr.speech_to_text(conn.asr_audio, conn.session_id)  # 确保ASR模块返回原始文本
+            raw_text, _ = await conn.asr.speech_to_text(
+                conn.asr_audio, conn.session_id
+            )  # 确保ASR模块返回原始文本
             conn.logger.bind(tag=TAG).info(f"识别文本: {raw_text}")
             text_len, _ = remove_punctuation_and_length(raw_text)
             if text_len > 0:
@@ -76,11 +78,7 @@ async def startToChat(conn, text):
 
     # 意图未被处理，继续常规聊天流程
     await send_stt_message(conn, text)
-    if conn.intent_type == "function_call":
-        # 使用支持function calling的聊天方法
-        conn.executor.submit(conn.chat_with_function_calling, text)
-    else:
-        conn.executor.submit(conn.chat, text)
+    conn.executor.submit(conn.chat, text)
 
 
 async def no_voice_close_connect(conn):
@@ -117,7 +115,7 @@ async def max_out_size(conn):
     conn.llm_finish_task = True
     file_path = "config/assets/max_output_size.wav"
     opus_packets, _ = audio_to_data(file_path)
-    conn.audio_play_queue.put((opus_packets, text, 0))
+    conn.tts.audio_play_queue.put((opus_packets, text, 0))
     conn.close_after_chat = True
 
 
@@ -139,7 +137,7 @@ async def check_bind_device(conn):
         # 播放提示音
         music_path = "config/assets/bind_code.wav"
         opus_packets, _ = audio_to_data(music_path)
-        conn.audio_play_queue.put((opus_packets, text, 0))
+        conn.tts.audio_play_queue.put((opus_packets, text, 0))
 
         # 逐个播放数字
         for i in range(6):  # 确保只播放6位数字
@@ -147,7 +145,7 @@ async def check_bind_device(conn):
                 digit = conn.bind_code[i]
                 num_path = f"config/assets/bind_code/{digit}.wav"
                 num_packets, _ = audio_to_data(num_path)
-                conn.audio_play_queue.put((num_packets, None, i + 1))
+                conn.tts.audio_play_queue.put((num_packets, None, i + 1))
             except Exception as e:
                 conn.logger.bind(tag=TAG).error(f"播放数字音频失败: {e}")
                 continue
@@ -159,4 +157,4 @@ async def check_bind_device(conn):
         conn.llm_finish_task = True
         music_path = "config/assets/bind_not_found.wav"
         opus_packets, _ = audio_to_data(music_path)
-        conn.audio_play_queue.put((opus_packets, text, 0))
+        conn.tts.audio_play_queue.put((opus_packets, text, 0))

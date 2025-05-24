@@ -4,10 +4,6 @@ import json
 import base64
 import requests
 from datetime import datetime
-
-from pydub import AudioSegment
-
-from core.providers.tts.dto.dto import TTSMessageDTO, MsgType, SentenceType
 from core.utils.util import check_model_key
 from core.providers.tts.base import TTSProviderBase
 from config.logger import setup_logging
@@ -51,8 +47,7 @@ class TTSProvider(TTSProviderBase):
             f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
         )
 
-    async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):
-        tmp_file = self.generate_filename()
+    async def text_to_speak(self, text, output_file):
         request_json = {
             "app": {
                 "appid": f"{self.appid}",
@@ -83,7 +78,7 @@ class TTSProvider(TTSProviderBase):
             )
             if "data" in resp.json():
                 data = resp.json()["data"]
-                file_to_save = open(tmp_file, "wb")
+                file_to_save = open(output_file, "wb")
                 file_to_save.write(base64.b64decode(data))
             else:
                 raise Exception(
@@ -91,15 +86,3 @@ class TTSProvider(TTSProviderBase):
                 )
         except Exception as e:
             raise Exception(f"{__name__} error: {e}")
-        # 使用 pydub 读取临时文件
-        audio = AudioSegment.from_file(tmp_file, format="wav")
-        audio = audio.set_channels(1).set_frame_rate(16000)
-        opus_datas = self.wav_to_opus_data_audio_raw(audio.raw_data)
-        yield TTSMessageDTO(u_id=u_id, msg_type=MsgType.TTS_TEXT_RESPONSE, content=opus_datas, tts_finish_text=text,
-                            sentence_type=SentenceType.SENTENCE_START)
-        # 用完后删除临时文件
-        try:
-            os.remove(tmp_file)
-        except FileNotFoundError:
-            # 若文件不存在，忽略该异常
-            pass

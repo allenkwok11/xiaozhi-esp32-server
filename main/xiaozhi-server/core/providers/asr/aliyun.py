@@ -239,7 +239,7 @@ class ASRProvider(ASRProviderBase):
     ) -> Tuple[Optional[str], Optional[str]]:
         """将语音数据转换为文本"""
         if self._is_token_expired():
-            logger.bind(tag=TAG).warning("Token已过期，正在自动刷新...")
+            logger.warning("Token已过期，正在自动刷新...")
             self._refresh_token()
 
         file_path = None

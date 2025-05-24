@@ -1,17 +1,8 @@
-import io
 import os
 import uuid
 import edge_tts
 from datetime import datetime
-
-from pydub import AudioSegment
-
-from config.logger import setup_logging
 from core.providers.tts.base import TTSProviderBase
-from core.providers.tts.dto.dto import TTSMessageDTO, MsgType, SentenceType
-
-TAG = __name__
-logger = setup_logging()
 
 
 class TTSProvider(TTSProviderBase):
@@ -28,37 +19,19 @@ class TTSProvider(TTSProviderBase):
             f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
         )
 
-    async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):
+    async def text_to_speak(self, text, output_file):
         try:
-            communicate = edge_tts.Communicate(
-                text, voice=self.voice
-            )  # Use your preferred voice
-            tmp_file = self.generate_filename()
-            await communicate.save(tmp_file)
-
-            # 使用 pydub 读取临时文件
-            audio = AudioSegment.from_file(tmp_file, format="mp3")
-            audio = audio.set_channels(1).set_frame_rate(16000)
-            opus_datas = self.wav_to_opus_data_audio_raw(audio.raw_data)
-            yield TTSMessageDTO(
-                u_id=u_id,
-                msg_type=MsgType.TTS_TEXT_RESPONSE,
-                content=opus_datas,
-                tts_finish_text=text,
-                sentence_type=SentenceType.SENTENCE_START,
-            )
-            # 用完后删除临时文件
-            try:
-                os.remove(tmp_file)
-            except FileNotFoundError:
-                # 若文件不存在，忽略该异常
+            communicate = edge_tts.Communicate(text, voice=self.voice)
+            # 确保目录存在并创建空文件
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            with open(output_file, "wb") as f:
                 pass
+
+            # 流式写入音频数据
+            with open(output_file, "ab") as f:  # 改为追加模式避免覆盖
+                async for chunk in communicate.stream():
+                    if chunk["type"] == "audio":  # 只处理音频数据块
+                        f.write(chunk["data"])
         except Exception as e:
-            logger.bind(tag=TAG).error(f"TTSProvider text_to_speak error: {e}")
-            yield TTSMessageDTO(
-                u_id=u_id,
-                msg_type=MsgType.TTS_TEXT_RESPONSE,
-                content=[],
-                tts_finish_text=text,
-                sentence_type=SentenceType.SENTENCE_START,
-            )
+            error_msg = f"Edge TTS请求失败: {e}"
+            raise Exception(error_msg)  # 抛出异常，让调用方捕获

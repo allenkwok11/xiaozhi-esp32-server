@@ -2,11 +2,9 @@ import os
 import uuid
 import json
 import requests
-from core.utils.util import parse_string_to_list
 from datetime import datetime
-from pydub import AudioSegment
 from core.providers.tts.base import TTSProviderBase
-from core.providers.tts.dto.dto import TTSMessageDTO, MsgType, SentenceType
+from core.utils.util import parse_string_to_list
 
 
 class TTSProvider(TTSProviderBase):
@@ -61,8 +59,7 @@ class TTSProvider(TTSProviderBase):
             f"tts-{__name__}{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
         )
 
-    async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):
-        tmp_file = self.generate_filename()
+    async def text_to_speak(self, text, output_file):
         request_json = {
             "model": self.model,
             "text": text,
@@ -83,7 +80,7 @@ class TTSProvider(TTSProviderBase):
             # 检查返回请求数据的status_code是否为0
             if resp.json()["base_resp"]["status_code"] == 0:
                 data = resp.json()["data"]["audio"]
-                file_to_save = open(tmp_file, "wb")
+                file_to_save = open(output_file, "wb")
                 file_to_save.write(bytes.fromhex(data))
             else:
                 raise Exception(
@@ -91,20 +88,3 @@ class TTSProvider(TTSProviderBase):
                 )
         except Exception as e:
             raise Exception(f"{__name__} error: {e}")
-        # 使用 pydub 读取临时文件
-        audio = AudioSegment.from_file(tmp_file, format="mp3")
-        audio = audio.set_channels(1).set_frame_rate(16000)
-        opus_datas = self.wav_to_opus_data_audio_raw(audio.raw_data)
-        yield TTSMessageDTO(
-            u_id=u_id,
-            msg_type=MsgType.TTS_TEXT_RESPONSE,
-            content=opus_datas,
-            tts_finish_text=text,
-            sentence_type=SentenceType.SENTENCE_START,
-        )
-        # 用完后删除临时文件
-        try:
-            os.remove(tmp_file)
-        except FileNotFoundError:
-            # 若文件不存在，忽略该异常
-            pass
