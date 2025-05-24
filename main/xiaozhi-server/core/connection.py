@@ -29,6 +29,7 @@ from core.handle.receiveAudioHandle import handleAudioMessage
 from core.handle.functionHandler import FunctionHandler
 from plugins_func.register import Action, ActionResponse
 from core.auth import AuthMiddleware, AuthenticationError
+from core.providers.tts.base import TTSImplementationType
 from core.mcp.manager import MCPManager
 from config.config_loader import get_private_config_from_api
 from config.manage_api_client import DeviceNotFoundException, DeviceBindException
@@ -576,16 +577,23 @@ class ConnectionHandler:
                     if self.client_abort:
                         break
 
-                    end_time = time.time()
-                    # self.logger.bind(tag=TAG).debug(f"大模型返回时间: {end_time - start_time} 秒, 生成token={content}")
-
                     # 处理文本分段和TTS逻辑
                     # 合并当前全部文本并处理未分割部分
                     full_text = "".join(response_message)
                     current_text = full_text[processed_chars:]  # 从未处理的位置开始
 
                     # 查找最后一个有效标点
-                    punctuations = ("。", ".", "？", "?", "！", "!", "；", ";", "：")
+                    punctuations = (
+                        "。",
+                        ".",
+                        "？",
+                        "?",
+                        "！",
+                        "!",
+                        "；",
+                        ";",
+                        "：",
+                    )
                     last_punct_pos = -1
                     number_flag = True
                     for punct in punctuations:
@@ -807,7 +815,7 @@ class ConnectionHandler:
         if content is None or len(content) <= 0:
             self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{content}")
             return None, content, text_index
-        tts_file = self.tts.to_tts(content)
+        tts_file = self.tts.to_tts(content, text_index)
         if tts_file is None:
             self.logger.bind(tag=TAG).error(f"tts转换失败，{content}")
             return None, content, text_index

@@ -11,7 +11,6 @@ from core.handle.reportHandle import enqueue_tts_report
 from abc import ABC, abstractmethod
 from core.utils.tts import MarkdownCleaner
 from core.utils.util import audio_to_data
-from core.utils import opus_encoder_utils
 
 TAG = __name__
 logger = setup_logging()
@@ -33,9 +32,6 @@ class TTSProviderBase(ABC):
         self.output_file = config.get("output_dir")
         self.tts_queue = queue.Queue()
         self.audio_play_queue = queue.Queue()
-        self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
-            sample_rate=16000, channels=1, frame_size_ms=60
-        )
         # 添加实现类型属性，默认为非流式
         self.interface_type = TTSImplementationType.NON_STREAMING
 
@@ -43,9 +39,14 @@ class TTSProviderBase(ABC):
     def generate_filename(self):
         pass
 
-    def to_tts(self, text):
+    def to_tts(self, text, index):
         """如果是流式实现，一般没有文件生成，我们返回枚举值"""
-        if self.interface_type != TTSImplementationType.SINGLE_STREAMING:
+        if self.interface_type != TTSImplementationType.NON_STREAMING:
+            if index == 1:
+                future = asyncio.run_coroutine_threadsafe(
+                    self.start_session(self.conn.session_id), loop=self.conn.loop
+                )
+                future.result()
             asyncio.run(self.text_to_speak(text, None))
             return self.interface_type.value
 
@@ -220,10 +221,6 @@ class TTSProviderBase(ABC):
                 logger.bind(tag=TAG).error(
                     f"audio_play_priority priority_thread: {text} {e}"
                 )
-
-    def wav_to_opus_data_audio_raw(self, raw_data_var, is_end=False):
-        opus_datas = self.opus_encoder.encode_pcm_to_opus(raw_data_var, is_end)
-        return opus_datas
 
     async def start_session(self, session_id):
         pass

@@ -882,7 +882,10 @@ def audio_to_data(audio_file_path, is_opus=True):
 
     # 获取原始PCM数据（16位小端）
     raw_data = audio.raw_data
+    return pcm_to_data(raw_data, is_opus), duration
 
+
+def pcm_to_data(raw_data, is_opus=True):
     # 初始化Opus编码器
     encoder = opuslib_next.Encoder(16000, 1, opuslib_next.APPLICATION_AUDIO)
 
@@ -910,7 +913,7 @@ def audio_to_data(audio_file_path, is_opus=True):
 
         datas.append(frame_data)
 
-    return datas, duration
+    return datas
 
 
 def check_vad_update(before_config, new_config):

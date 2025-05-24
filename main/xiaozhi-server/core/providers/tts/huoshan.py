@@ -4,12 +4,11 @@ import threading
 import traceback
 import uuid
 import json
-from datetime import datetime
-
 import websockets
-
+from datetime import datetime
 from config.logger import setup_logging
 from core.providers.tts.base import TTSProviderBase, TTSImplementationType
+from core.utils.util import pcm_to_data
 
 TAG = __name__
 logger = setup_logging()
@@ -167,7 +166,6 @@ class TTSProvider(TTSProviderBase):
             target=self._start_monitor_tts_response_thread(), daemon=True
         )
         tts_priority.start()
-        await self.start_session(conn.session_id)
 
     def generate_filename(self, extension=".wav"):
         return os.path.join(
@@ -381,7 +379,7 @@ class TTSProvider(TTSProviderBase):
                     and res.header.message_type == AUDIO_ONLY_RESPONSE
                 ):
                     logger.bind(tag=TAG).info(f"推送数据到队列里面～～")
-                    opus_datas = self.wav_to_opus_data_audio_raw(res.payload)
+                    opus_datas = pcm_to_data(res.payload)
                     logger.bind(tag=TAG).info(
                         f"推送数据到队列里面帧数～～{len(opus_datas)}"
                     )
@@ -390,15 +388,15 @@ class TTSProvider(TTSProviderBase):
                     json_data = json.loads(res.payload.decode("utf-8"))
                     self.tts_text = json_data.get("text", "")
                     logger.bind(tag=TAG).info(f"句子开始～～{self.tts_text}")
-                    self.audio_play_queue.put((None, self.tts_text, 0))
+                    self.audio_play_queue.put(([], self.tts_text, 0))
 
                 elif res.optional.event == EVENT_TTSSentenceEnd:
                     logger.bind(tag=TAG).info(f"句子结束～～{self.tts_text}")
-                    self.audio_play_queue.put((None, self.tts_text, 0))
+                    self.audio_play_queue.put(([], self.tts_text, 0))
                 elif res.optional.event == EVENT_SessionFinished:
                     logger.bind(tag=TAG).info(f"会话结束～～,最后一句补零")
-                    # opus_datas = self.wav_to_opus_data_audio_raw(b"", is_end=True)
-                    self.audio_play_queue.put((None, self.tts_text, 0))
+                    opus_datas = pcm_to_data(b"")
+                    self.audio_play_queue.put((opus_datas, self.tts_text, 0))
                 else:
                     continue
             except websockets.ConnectionClosed:
