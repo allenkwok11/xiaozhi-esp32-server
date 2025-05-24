@@ -216,23 +216,15 @@ async def play_local_music(conn, specific_file=None):
         text = _get_random_play_prompt(selected_music)
         await send_stt_message(conn, text)
         conn.dialogue.put(Message(role="assistant", content=text))
-        conn.tts_first_text_index = 0
-        conn.tts_last_text_index = 0
 
-        tts_file = await asyncio.to_thread(conn.tts.to_tts, text)
-        if tts_file is not None and os.path.exists(tts_file):
-            conn.tts_last_text_index = 1
-            opus_packets, _ = conn.tts.audio_to_opus_data(tts_file)
-            conn.audio_play_queue.put((opus_packets, None, 0))
-            os.remove(tts_file)
+        conn.recode_first_last_text(text, 0)
+        future = conn.executor.submit(conn.speak_and_play, None, text, 0)
+        conn.tts_queue.put((future, 0))
 
+        conn.recode_first_last_text(text, 1)
+        future = conn.executor.submit(conn.speak_and_play, music_path, None, 1)
+        conn.tts_queue.put((future, 1))
         conn.llm_finish_task = True
-
-        if music_path.endswith(".p3"):
-            opus_packets, _ = p3.decode_opus_from_file(music_path)
-        else:
-            opus_packets, _ = conn.tts.audio_to_opus_data(music_path)
-        conn.audio_play_queue.put((opus_packets, None, conn.tts_last_text_index))
 
     except Exception as e:
         conn.logger.bind(tag=TAG).error(f"播放音乐失败: {str(e)}")

@@ -14,6 +14,8 @@ import websockets
 from typing import Dict, Any
 from plugins_func.loadplugins import auto_import_modules
 from config.logger import setup_logging
+from config.config_loader import get_project_dir
+from core.utils import p3
 from core.utils.dialogue import Message, Dialogue
 from core.handle.textHandle import handleTextMessage
 from core.utils.util import (
@@ -615,7 +617,7 @@ class ConnectionHandler:
                             text_index += 1
                             self.recode_first_last_text(segment_text, text_index)
                             future = self.executor.submit(
-                                self.speak_and_play, segment_text, text_index
+                                self.speak_and_play, None, segment_text, text_index
                             )
                             self.tts_queue.put((future, text_index))
                             # 更新已处理字符位置
@@ -674,7 +676,7 @@ class ConnectionHandler:
                 text_index += 1
                 self.recode_first_last_text(segment_text, text_index)
                 future = self.executor.submit(
-                    self.speak_and_play, segment_text, text_index
+                    self.speak_and_play, None, segment_text, text_index
                 )
                 self.tts_queue.put((future, text_index))
 
@@ -737,7 +739,7 @@ class ConnectionHandler:
         if result.action == Action.RESPONSE:  # 直接回复前端
             text = result.response
             self.recode_first_last_text(text, text_index)
-            future = self.executor.submit(self.speak_and_play, text, text_index)
+            future = self.executor.submit(self.speak_and_play, None, text, text_index)
             self.tts_queue.put((future, text_index))
             self.dialogue.put(Message(role="assistant", content=text))
         elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
@@ -776,7 +778,7 @@ class ConnectionHandler:
         elif result.action == Action.NOTFOUND or result.action == Action.ERROR:
             text = result.result
             self.recode_first_last_text(text, text_index)
-            future = self.executor.submit(self.speak_and_play, text, text_index)
+            future = self.executor.submit(self.speak_and_play, None, text, text_index)
             self.tts_queue.put((future, text_index))
             self.dialogue.put(Message(role="assistant", content=text))
         else:
@@ -803,11 +805,7 @@ class ConnectionHandler:
                     self.logger.bind(tag=TAG).debug("正在处理TTS任务...")
                     tts_timeout = int(self.config.get("tts_timeout", 10))
                     tts_file, text, _ = future.result(timeout=tts_timeout)
-                    if text is None or len(text) <= 0:
-                        self.logger.bind(tag=TAG).error(
-                            f"TTS出错：{text_index}: tts text is empty"
-                        )
-                    elif tts_file is None:
+                    if tts_file is None:
                         self.logger.bind(tag=TAG).error(
                             f"TTS出错： file is empty: {text_index}: {text}"
                         )
@@ -816,12 +814,16 @@ class ConnectionHandler:
                             f"TTS生成：文件路径: {tts_file}"
                         )
                         if os.path.exists(tts_file):
-                            if self.audio_format == "pcm":
+                            if tts_file.endswith(".p3"):
+                                audio_datas, _ = p3.decode_opus_from_file(tts_file)
+                            elif self.audio_format == "pcm":
                                 audio_datas, _ = self.tts.audio_to_pcm_data(tts_file)
                             else:
                                 audio_datas, _ = self.tts.audio_to_opus_data(tts_file)
                             # 在这里上报TTS数据
-                            enqueue_tts_report(self, text, audio_datas)
+                            enqueue_tts_report(
+                                self, tts_file if text is None else text, audio_datas
+                            )
                         else:
                             self.logger.bind(tag=TAG).error(
                                 f"TTS出错：文件不存在{tts_file}"
@@ -837,6 +839,7 @@ class ConnectionHandler:
                     self.tts.delete_audio_file
                     and tts_file is not None
                     and os.path.exists(tts_file)
+                    and tts_file.startswith(self.tts.output_file)
                 ):
                     os.remove(tts_file)
             except Exception as e:
@@ -903,18 +906,21 @@ class ConnectionHandler:
 
         self.logger.bind(tag=TAG).info("聊天记录上报线程已退出")
 
-    def speak_and_play(self, text, text_index=0):
-        if text is None or len(text) <= 0:
-            self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{text}")
-            return None, text, text_index
-        tts_file = self.tts.to_tts(text)
+    def speak_and_play(self, file_path, content, text_index=0):
+        if file_path is not None:
+            self.logger.bind(tag=TAG).info(f"无需tts转换: 从文件播放，{file_path}")
+            return file_path, content, text_index
+        if content is None or len(content) <= 0:
+            self.logger.bind(tag=TAG).info(f"无需tts转换，query为空，{content}")
+            return None, content, text_index
+        tts_file = self.tts.to_tts(content)
         if tts_file is None:
-            self.logger.bind(tag=TAG).error(f"tts转换失败，{text}")
-            return None, text, text_index
+            self.logger.bind(tag=TAG).error(f"tts转换失败，{content}")
+            return None, content, text_index
         self.logger.bind(tag=TAG).debug(f"TTS 文件生成完毕: {tts_file}")
         if self.max_output_size > 0:
-            add_device_output(self.headers.get("device-id"), len(text))
-        return tts_file, text, text_index
+            add_device_output(self.headers.get("device-id"), len(content))
+        return tts_file, content, text_index
 
     def clearSpeakStatus(self):
         self.logger.bind(tag=TAG).debug(f"清除服务端讲话状态")
