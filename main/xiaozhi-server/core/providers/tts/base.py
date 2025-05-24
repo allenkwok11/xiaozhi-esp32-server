@@ -10,6 +10,7 @@ from core.handle.reportHandle import enqueue_tts_report
 from abc import ABC, abstractmethod
 from core.utils.tts import MarkdownCleaner
 from core.utils.util import audio_to_data
+from core.utils import opus_encoder_utils
 
 TAG = __name__
 logger = setup_logging()
@@ -23,6 +24,9 @@ class TTSProviderBase(ABC):
         self.output_file = config.get("output_dir")
         self.tts_queue = queue.Queue()
         self.audio_play_queue = queue.Queue()
+        self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
+            sample_rate=16000, channels=1, frame_size_ms=60
+        )
 
     @abstractmethod
     def generate_filename(self):
@@ -177,3 +181,7 @@ class TTSProviderBase(ABC):
                 logger.bind(tag=TAG).error(
                     f"audio_play_priority priority_thread: {text} {e}"
                 )
+
+    def wav_to_opus_data_audio_raw(self, raw_data_var, is_end=False):
+        opus_datas = self.opus_encoder.encode_pcm_to_opus(raw_data_var, is_end)
+        return opus_datas
