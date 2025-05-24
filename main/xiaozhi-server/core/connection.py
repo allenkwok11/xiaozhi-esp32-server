@@ -315,7 +315,9 @@ class ConnectionHandler:
             self.asr = self._asr
         if self.tts is None:
             self.tts = self._tts
-        self.tts.startSession(self)
+        # 使用事件循环运行异步方法
+        asyncio.run_coroutine_threadsafe(self.tts.open_audio_channels(self), self.loop)
+
         """加载记忆"""
         self._initialize_memory()
         """加载意图识别"""

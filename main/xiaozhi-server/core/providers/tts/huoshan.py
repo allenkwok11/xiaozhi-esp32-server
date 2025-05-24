@@ -1,5 +1,4 @@
 import asyncio
-import io
 import os
 import threading
 import traceback
@@ -10,7 +9,7 @@ from datetime import datetime
 import websockets
 
 from config.logger import setup_logging
-from core.providers.tts.base import TTSProviderBase
+from core.providers.tts.base import TTSProviderBase, TTSImplementationType
 
 TAG = __name__
 logger = setup_logging()
@@ -151,34 +150,24 @@ class TTSProvider(TTSProviderBase):
         self.enable_two_way = True
         self.start_connection_flag = False
         self.tts_text = ""
+        self.interface_type = TTSImplementationType.DOUBLE_STREAMING
 
-    def startSession(self, conn):
-        self.conn = conn
-        self.tts_timeout = conn.config.get("tts_timeout", 10)
-        # tts 消化线程
-        self.tts_priority_thread = threading.Thread(
-            target=self._tts_priority_thread, daemon=True
-        )
-        self.tts_priority_thread.start()
-
-        # 音频播放 消化线程
-        self.audio_play_priority_thread = threading.Thread(
-            target=self._audio_play_priority_thread, daemon=True
-        )
-        self.audio_play_priority_thread.start()
+    async def open_audio_channels(self, conn):
+        await super().open_audio_channels(conn)
         ws_header = {
             "X-Api-App-Key": self.appId,
             "X-Api-Access-Key": self.access_token,
             "X-Api-Resource-Id": self.resource_id,
             "X-Api-Connect-Id": uuid.uuid4(),
         }
-        self.ws = websockets.connect(
+        self.ws = await websockets.connect(
             self.ws_url, additional_headers=ws_header, max_size=1000000000
         )
         tts_priority = threading.Thread(
             target=self._start_monitor_tts_response_thread(), daemon=True
         )
         tts_priority.start()
+        await self.start_session(conn.session_id)
 
     def generate_filename(self, extension=".wav"):
         return os.path.join(
@@ -381,7 +370,7 @@ class TTSProvider(TTSProviderBase):
 
     async def _start_monitor_tts_response(self):
         chunk_total = b""
-        while not self.stop_event.is_set():
+        while not self.conn.stop_event.is_set():
             try:
                 msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
                 res = self.parser_response(msg)
