@@ -7,7 +7,7 @@ import json
 import websockets
 from datetime import datetime
 from config.logger import setup_logging
-from core.providers.tts.base import TTSProviderBase, TTSImplementationType
+from core.providers.tts.base import TTSProviderBase
 from core.utils.util import pcm_to_data
 
 TAG = __name__
@@ -149,7 +149,6 @@ class TTSProvider(TTSProviderBase):
         self.enable_two_way = True
         self.start_connection_flag = False
         self.tts_text = ""
-        self.interface_type = TTSImplementationType.DOUBLE_STREAMING
 
     async def open_audio_channels(self, conn):
         await super().open_audio_channels(conn)
@@ -173,17 +172,21 @@ class TTSProvider(TTSProviderBase):
             f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
         )
 
-    def to_tts(self, text, index):
-        if index == self.conn.tts_first_text_index:
-            future = asyncio.run_coroutine_threadsafe(
-                self.start_session(self.conn.tts_session_id), loop=self.conn.loop
-            )
-            future.result()
+    def to_tts(self, text):
         future = asyncio.run_coroutine_threadsafe(
-            self.text_to_speak(text, None), loop=self.conn.loop
+            self.start_session(self.conn.sentence_id), loop=self.loop
+        )
+        future.result()
+        future = asyncio.run_coroutine_threadsafe(
+            self.text_to_speak(text, None), loop=self.loop
+        )
+        future.result()
+        future = asyncio.run_coroutine_threadsafe(
+            self.finish_session(self.conn.sentence_id), loop=self.loop
         )
         future.result()
         return self.interface_type.value
+
     async def send_event(
         self, header: bytes, optional: bytes | None = None, payload: bytes = None
     ):
@@ -341,6 +344,7 @@ class TTSProvider(TTSProviderBase):
         logger.bind(tag=TAG).info(f"会话开始～～{session_id}")
 
     async def finish_session(self, session_id):
+        logger.bind(tag=TAG).info(f"会话结束～～{session_id}")
         self.stop_event_response.set()
         header = Header(
             message_type=FULL_CLIENT_REQUEST,
@@ -369,19 +373,18 @@ class TTSProvider(TTSProviderBase):
 
     async def text_to_speak(self, text, _):
         # 发送文本
-        await self.send_text(self.speaker, text, self.conn.tts_session_id)
+        await self.send_text(self.speaker, text, self.conn.sentence_id)
         logger.bind(tag=TAG).info(f"发送文本～～{text}")
         return
 
     def _start_monitor_tts_response_thread(self):
         # 初始化链接
         asyncio.run_coroutine_threadsafe(
-            self._start_monitor_tts_response(), loop=self.conn.loop
+            self._start_monitor_tts_response(), loop=self.loop
         )
 
     async def _start_monitor_tts_response(self):
-        chunk_total = b""
-        while not self.conn.stop_event.is_set():
+        while not self.stop_event.is_set():
             try:
                 msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
                 res = self.parser_response(msg)
@@ -396,20 +399,19 @@ class TTSProvider(TTSProviderBase):
                     logger.bind(tag=TAG).info(
                         f"推送数据到队列里面帧数～～{len(opus_datas)}"
                     )
-                    self.audio_play_queue.put(
+                    self.tts_audio_queue.put(
                         (opus_datas, None, self.conn.tts_last_text_index - 1)
                     )
                 elif res.optional.event == EVENT_TTSSentenceStart:
                     json_data = json.loads(res.payload.decode("utf-8"))
                     self.tts_text = json_data.get("text", "")
                     logger.bind(tag=TAG).info(f"句子开始～～{self.tts_text}")
-                    self.audio_play_queue.put(
+                    self.tts_audio_queue.put(
                         ([], self.tts_text, self.conn.tts_first_text_index)
                     )
-
                 elif res.optional.event == EVENT_TTSSentenceEnd:
                     logger.bind(tag=TAG).info(f"句子结束～～{self.tts_text}")
-                    self.audio_play_queue.put(
+                    self.tts_audio_queue.put(
                         ([], self.tts_text, self.conn.tts_last_text_index)
                     )
                 elif res.optional.event == EVENT_SessionFinished:

@@ -44,9 +44,6 @@ async def checkWakeupWords(conn, text):
     _, filtered_text = remove_punctuation_and_length(text)
     if filtered_text in conn.config.get("wakeup_words"):
         await send_stt_message(conn, text)
-        conn.tts_first_text_index = 0
-        conn.tts_last_text_index = 0
-        conn.llm_finish_task = True
 
         file = getWakeupWordFile(WAKEUP_CONFIG["file_name"])
         if file is None:
@@ -56,7 +53,7 @@ async def checkWakeupWords(conn, text):
         text_hello = WAKEUP_CONFIG["text"]
         if not text_hello:
             text_hello = text
-        conn.tts.audio_play_queue.put((opus_packets, text_hello, 0))
+        conn.tts.tts_audio_queue.put((opus_packets, text_hello, 0))
         if time.time() - WAKEUP_CONFIG["create_time"] > WAKEUP_CONFIG["refresh_time"]:
             asyncio.create_task(wakeupWordsResponse(conn))
         return True
@@ -91,7 +88,7 @@ async def wakeupWordsResponse(conn):
     result = conn.llm.response_no_stream(conn.config["prompt"], wakeup_word)
     if result is None or result == "":
         return
-    tts_file = await asyncio.to_thread(conn.tts.to_tts, result, 0)
+    tts_file = await asyncio.to_thread(conn.tts.to_tts, result)
 
     if tts_file is not None and os.path.exists(tts_file):
         file_type = os.path.splitext(tts_file)[1]
