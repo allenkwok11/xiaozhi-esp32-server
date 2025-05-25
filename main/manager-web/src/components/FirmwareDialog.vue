@@ -198,13 +198,13 @@ export default {
       if (!this.form.id) {  // 只在新增时重置
         this.form.firmwarePath = ''
         this.form.size = 0
-        // 重置上传组件
-        this.$nextTick(() => {
-          if (this.$refs.upload) {
-            this.$refs.upload.clearFiles()
-          }
-        })
       }
+      // 无论是否编辑模式，都重置上传组件
+      this.$nextTick(() => {
+        if (this.$refs.upload) {
+          this.$refs.upload.clearFiles()
+        }
+      })
     }
   }
 }

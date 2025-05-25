@@ -35,12 +35,13 @@
           OTA管理
         </div>
         <el-dropdown v-if="isSuperAdmin" trigger="click" class="equipment-management more-dropdown"
-          :class="{ 'active-tab': $route.path === '/dict-management' || $route.path === '/params-management' }">
+          :class="{ 'active-tab': $route.path === '/dict-management' || $route.path === '/params-management' || $route.path === '/provider-management' || $route.path === '/server-side-management' }"
+          @visible-change="handleParamDropdownVisibleChange">
           <span class="el-dropdown-link">
             <img loading="lazy" alt="" src="@/assets/header/param_management.png"
-              :style="{ filter: $route.path === '/dict-management' || $route.path === '/params-management' ? 'brightness(0) invert(1)' : 'None' }" />
+              :style="{ filter: $route.path === '/dict-management' || $route.path === '/params-management' || $route.path === '/provider-management' || $route.path === '/server-side-management' ? 'brightness(0) invert(1)' : 'None' }" />
             参数字典
-            <i class="el-icon-arrow-down el-icon--right"></i>
+            <i class="el-icon-arrow-down el-icon--right" :class="{ 'rotate-down': paramDropdownVisible }"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item @click.native="goParamManagement">
@@ -49,22 +50,29 @@
             <el-dropdown-item @click.native="goDictManagement">
               字典管理
             </el-dropdown-item>
+            <el-dropdown-item @click.native="goProviderManagement">
+              字段管理
+            </el-dropdown-item>
+            <el-dropdown-item @click.native="goServerSideManagement">
+              服务端管理
+            </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
 
       <!-- 右侧元素 -->
       <div class="header-right">
-        <div class="search-container" v-if="$route.path === '/home'">
+        <div class="search-container" v-if="$route.path === '/home' && !(isSuperAdmin && isSmallScreen)">
           <el-input v-model="search" placeholder="输入名称搜索.." class="custom-search-input"
             @keyup.enter.native="handleSearch">
             <i slot="suffix" class="el-icon-search search-icon" @click="handleSearch"></i>
           </el-input>
         </div>
         <img loading="lazy" alt="" src="@/assets/home/avatar.png" class="avatar-img" />
-        <el-dropdown trigger="click" class="user-dropdown">
+        <el-dropdown trigger="click" class="user-dropdown" @visible-change="handleUserDropdownVisibleChange">
           <span class="el-dropdown-link">
-            {{ userInfo.username || '加载中...' }}<i class="el-icon-arrow-down el-icon--right"></i>
+            {{ userInfo.username || '加载中...' }}
+            <i class="el-icon-arrow-down el-icon--right" :class="{ 'rotate-down': userDropdownVisible }"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item @click.native="showChangePasswordDialog">修改密码</el-dropdown-item>
@@ -84,7 +92,6 @@ import userApi from '@/apis/module/user';
 import { mapActions, mapGetters } from 'vuex';
 import ChangePasswordDialog from './ChangePasswordDialog.vue'; // 引入修改密码弹窗组件
 
-
 export default {
   name: 'HeaderBar',
   components: {
@@ -98,7 +105,10 @@ export default {
         username: '',
         mobile: ''
       },
-      isChangePasswordDialogVisible: false // 控制修改密码弹窗的显示
+      isChangePasswordDialogVisible: false, // 控制修改密码弹窗的显示
+      userDropdownVisible: false,
+      paramDropdownVisible: false,
+      isSmallScreen: false
     }
   },
   computed: {
@@ -108,7 +118,13 @@ export default {
     }
   },
   mounted() {
-    this.fetchUserInfo()
+    this.fetchUserInfo();
+    this.checkScreenSize();
+    window.addEventListener('resize', this.checkScreenSize);
+  },
+  //移除事件监听器
+  beforeDestroy() {
+    window.removeEventListener('resize', this.checkScreenSize);
   },
   methods: {
     goHome() {
@@ -130,6 +146,12 @@ export default {
     goDictManagement() {
       this.$router.push('/dict-management')
     },
+    goProviderManagement() {
+      this.$router.push('/provider-management')
+    },
+    goServerSideManagement() {
+      this.$router.push('/server-side-management')
+    },
     // 获取用户信息
     fetchUserInfo() {
       userApi.getUserInfo(({ data }) => {
@@ -139,7 +161,9 @@ export default {
         }
       })
     },
-
+    checkScreenSize() {
+      this.isSmallScreen = window.innerWidth <= 1386;
+    },
     // 处理搜索
     handleSearch() {
       const searchValue = this.search.trim();
@@ -184,6 +208,13 @@ export default {
         });
       }
     },
+    handleUserDropdownVisibleChange(visible) {
+      this.userDropdownVisible = visible;
+    },
+    // 监听第二个下拉菜单的可见状态变化
+    handleParamDropdownVisibleChange(visible) {
+      this.paramDropdownVisible = visible;
+    },
 
     // 使用 mapActions 引入 Vuex 的 logout action
     ...mapActions(['logout'])
@@ -191,7 +222,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .header {
   background: #f6fcfe66;
   border: 1px solid #fff;
@@ -243,8 +274,6 @@ export default {
 }
 
 .equipment-management {
-  padding: 0 9px;
-  width: px;
   height: 30px;
   border-radius: 15px;
   background: #deeafe;
@@ -260,7 +289,8 @@ export default {
   cursor: pointer;
   flex-shrink: 0;
   /* 防止导航按钮被压缩 */
-  padding: 0px 15px;
+  padding: 0 15px;
+  position: relative;
 }
 
 .equipment-management.active-tab {
@@ -299,6 +329,12 @@ export default {
   line-height: 30px;
 }
 
+.custom-search-input::v-deep .el-input__suffix-inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
 .avatar-img {
   width: 21px;
   height: 21px;
@@ -309,6 +345,25 @@ export default {
   flex-shrink: 0;
 }
 
+.more-dropdown {
+  padding-right: 20px;
+}
+
+.more-dropdown .el-dropdown-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.rotate-down {
+  transform: rotate(180deg);
+  transition: transform 0.3s ease;
+}
+
+.el-icon-arrow-down {
+  transition: transform 0.3s ease;
+}
+
 /* 响应式调整 */
 @media (max-width: 1200px) {
   .header-center {
@@ -316,47 +371,8 @@ export default {
   }
 
   .equipment-management {
-    width: 70px;
+    width: 79px;
     font-size: 9px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .search-container {
-    margin-right: 10px;
-    max-width: 150px;
-  }
-
-  .header-right {
-    gap: 5px;
-  }
-}
-
-@media (max-width: 900px) {
-  .header-left {
-    margin-right: auto;
-  }
-
-  .search-container {
-    max-width: 150px;
-  }
-}
-
-@media (max-width: 768px) {
-  .search-container {
-    max-width: 145px;
-  }
-
-  .custom-search-input>>>.el-input__inner {
-    padding-left: 10px;
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 600px) {
-  .search-container {
-    max-width: 120px;
-    min-width: 100px;
   }
 }
 
@@ -377,14 +393,5 @@ export default {
   font-size: 14px;
   color: #606266;
   white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-  .equipment-management.more-dropdown .el-dropdown-menu {
-    position: fixed;
-    right: 10px;
-    top: 60px;
-    z-index: 2000;
-  }
 }
 </style>

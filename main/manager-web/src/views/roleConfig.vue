@@ -15,9 +15,17 @@
                 <img loading="lazy" src="@/assets/home/setting-user.png" alt="">
               </div>
               <span class="header-title">{{ form.agentName }}</span>
-              <button class="custom-close-btn" @click="goToHome">
-                ×
-              </button>
+              <div class="header-actions">
+                <div class="hint-text">
+                  <img loading="lazy" src="@/assets/home/info.png" alt="">
+                  <span>保存配置后，需要重启设备，新的配置才会生效。</span>
+                </div>
+                <el-button type="primary" class="save-btn" @click="saveConfig">保存配置</el-button>
+                <el-button class="reset-btn" @click="resetConfig">重置</el-button>
+                <button class="custom-close-btn" @click="goToHome">
+                  ×
+                </button>
+              </div>
             </div>
             <div class="divider"></div>
 
@@ -26,7 +34,7 @@
                 <div class="form-grid">
                   <div class="form-column">
                     <el-form-item label="助手昵称：">
-                      <el-input v-model="form.agentName" class="form-input" />
+                      <el-input v-model="form.agentName" class="form-input" maxlength="10" />
                     </el-form-item>
                     <el-form-item label="角色模版：">
                       <div class="template-container">
@@ -37,8 +45,14 @@
                       </div>
                     </el-form-item>
                     <el-form-item label="角色介绍：">
-                      <el-input type="textarea" rows="12" resize="none" placeholder="请输入内容" v-model="form.systemPrompt"
+                      <el-input type="textarea" rows="9" resize="none" placeholder="请输入内容" v-model="form.systemPrompt"
                         maxlength="2000" show-word-limit class="form-textarea" />
+                    </el-form-item>
+
+                    <el-form-item label="记忆：">
+                      <el-input type="textarea" rows="6" resize="none" v-model="form.summaryMemory" maxlength="2000"
+                        show-word-limit class="form-textarea"
+                        :disabled="form.model.memModelId !== 'Memory_mem_local_short'" />
                     </el-form-item>
                     <el-form-item label="语言编码：" style="display: none;">
                       <el-input v-model="form.langCode" placeholder="请输入语言编码，如：zh_CN" maxlength="10" show-word-limit
@@ -48,14 +62,6 @@
                       <el-input v-model="form.language" placeholder="请输入交互语种，如：中文" maxlength="10" show-word-limit
                         class="form-input" />
                     </el-form-item>
-                    <div class="action-bar">
-                      <el-button type="primary" class="save-btn" @click="saveConfig">保存配置</el-button>
-                      <el-button class="reset-btn" @click="resetConfig">重置</el-button>
-                      <div class="hint-text">
-                        <img loading="lazy" src="@/assets/home/red-info.png" alt="">
-                        <span>保存配置后，需要重启设备，新的配置才会生效。</span>
-                      </div>
-                    </div>
                   </div>
                   <div class="form-column">
                     <el-form-item v-for="(model, index) in models" :key="`model-${index}`" :label="model.label"
@@ -133,6 +139,7 @@ export default {
         ttsVoiceId: "",
         chatHistoryConf: 0,
         systemPrompt: "",
+        summaryMemory: "",
         langCode: "",
         language: "",
         sort: "",
@@ -188,6 +195,7 @@ export default {
         memModelId: this.form.model.memModelId,
         intentModelId: this.form.model.intentModelId,
         systemPrompt: this.form.systemPrompt,
+        summaryMemory: this.form.summaryMemory,
         langCode: this.form.langCode,
         language: this.form.language,
         sort: this.form.sort,
@@ -219,6 +227,7 @@ export default {
           ttsVoiceId: "",
           chatHistoryConf: 0,
           systemPrompt: "",
+          summaryMemory: "",
           langCode: "",
           language: "",
           sort: "",
@@ -273,6 +282,7 @@ export default {
         ttsVoiceId: templateData.ttsVoiceId || this.form.ttsVoiceId,
         chatHistoryConf: templateData.chatHistoryConf || this.form.chatHistoryConf,
         systemPrompt: templateData.systemPrompt || this.form.systemPrompt,
+        summaryMemory: templateData.summaryMemory || this.form.summaryMemory,
         langCode: templateData.langCode || this.form.langCode,
         model: {
           ttsModelId: templateData.ttsModelId || this.form.model.ttsModelId,
@@ -571,49 +581,6 @@ export default {
   background-color: #d0d8ff;
 }
 
-.action-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 2vh;
-  align-items: center;
-}
-
-.action-bar {
-  .el-button.save-btn {
-    background: #5778ff;
-    color: white;
-    border: none;
-    border-radius: 18px;
-    padding: 10px 20px;
-    width: 100px;
-    height: 35px;
-    font-size: 14px;
-  }
-
-  .el-button.reset-btn {
-    background: #e6ebff;
-    color: #5778ff;
-    border: 1px solid #adbdff;
-    border-radius: 18px;
-    padding: 10px 20px;
-  }
-}
-
-.hint-text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #979db1;
-  font-size: 11px;
-  margin-left: 16px;
-}
-
-.hint-text img {
-  width: 19px;
-  height: 19px;
-}
-
 .model-select-wrapper {
   display: flex;
   align-items: center;
@@ -703,5 +670,53 @@ export default {
   gap: 10px;
   min-width: 250px;
   justify-content: flex-end;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.header-actions .hint-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #979db1;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.header-actions .hint-text img {
+  width: 16px;
+  height: 16px;
+}
+
+.header-actions .save-btn {
+  background: #5778ff;
+  color: white;
+  border: none;
+  border-radius: 18px;
+  padding: 8px 16px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.header-actions .reset-btn {
+  background: #e6ebff;
+  color: #5778ff;
+  border: 1px solid #adbdff;
+  border-radius: 18px;
+  padding: 8px 16px;
+  height: 32px;
+}
+
+.header-actions .custom-close-btn {
+  position: static;
+  transform: none;
+  width: 32px;
+  height: 32px;
+  margin-left: 8px;
 }
 </style>

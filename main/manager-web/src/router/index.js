@@ -39,6 +39,13 @@ const routes = [
       return import('../views/register.vue')
     }
   },
+  {
+    path: '/retrieve-password',
+    name: 'RetrievePassword',
+    component: function () {
+      return import('../views/retrievePassword.vue')
+    }
+  },
   // 设备管理页面路由
   {
     path: '/device-management',
@@ -73,6 +80,18 @@ const routes = [
       title: '参数管理'
     }
   },
+
+  {
+    path: '/server-side-management',
+    name: 'ServerSideManager',
+    component: function () {
+      return import('../views/ServerSideManager.vue')
+    },
+    meta: {
+      requiresAuth: true,
+      title: '服务端管理'
+    }
+  },
   {
     path: '/ota-management',
     name: 'OtaManagement',
@@ -90,7 +109,14 @@ const routes = [
     component: function () {
       return import('../views/DictManagement.vue')
     }
-  }
+  },
+  {
+    path: '/provider-management',
+    name: 'ProviderManagement',
+    component: function () {
+      return import('../views/ProviderManagement.vue')
+    }
+  },
 ]
 const router = new VueRouter({
   base: process.env.VUE_APP_PUBLIC_PATH || '/',

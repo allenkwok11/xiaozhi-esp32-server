@@ -39,14 +39,16 @@ async def handleAudioMessage(conn, audio):
         if len(conn.asr_audio) < 15:
             conn.asr_server_receive = True
         else:
-            text, _ = await conn.asr.speech_to_text(conn.asr_audio, conn.session_id)
-            conn.logger.bind(tag=TAG).info(f"识别文本: {text}")
-            text_len, _ = remove_punctuation_and_length(text)
+            raw_text, _ = await conn.asr.speech_to_text(
+                conn.asr_audio, conn.session_id
+            )  # 确保ASR模块返回原始文本
+            conn.logger.bind(tag=TAG).info(f"识别文本: {raw_text}")
+            text_len, _ = remove_punctuation_and_length(raw_text)
             if text_len > 0:
                 # 使用自定义模块进行上报
-                enqueue_asr_report(conn, text, copy.deepcopy(conn.asr_audio))
+                enqueue_asr_report(conn, raw_text, copy.deepcopy(conn.asr_audio))
 
-                await startToChat(conn, text)
+                await startToChat(conn, raw_text)
             else:
                 conn.asr_server_receive = True
         conn.asr_audio.clear()
@@ -76,11 +78,7 @@ async def startToChat(conn, text):
 
     # 意图未被处理，继续常规聊天流程
     await send_stt_message(conn, text)
-    if conn.intent_type == "function_call":
-        # 使用支持function calling的聊天方法
-        conn.executor.submit(conn.chat_with_function_calling, text)
-    else:
-        conn.executor.submit(conn.chat, text)
+    conn.executor.submit(conn.chat, text)
 
 
 async def no_voice_close_connect(conn):
@@ -98,9 +96,14 @@ async def no_voice_close_connect(conn):
             conn.close_after_chat = True
             conn.client_abort = False
             conn.asr_server_receive = False
-            prompt = (
-                "请你以“时间过得真快”未来头，用富有感情、依依不舍的话来结束这场对话吧。"
-            )
+            end_prompt = conn.config.get("end_prompt", {})
+            if end_prompt and end_prompt.get("enable", True) is False:
+                conn.logger.bind(tag=TAG).info("结束对话，无需发送结束提示语")
+                await conn.close()
+                return
+            prompt = end_prompt.get("prompt")
+            if not prompt:
+                prompt = "请你以“时间过得真快”未来头，用富有感情、依依不舍的话来结束这场对话吧。！"
             await startToChat(conn, prompt)
 
 

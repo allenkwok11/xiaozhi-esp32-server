@@ -13,10 +13,11 @@ TAG = __name__
 
 async def handle_user_intent(conn, text):
     # 检查是否有明确的退出命令
-    if await check_direct_exit(conn, text):
+    filtered_text = remove_punctuation_and_length(text)[1]
+    if await check_direct_exit(conn, filtered_text):
         return True
     # 检查是否是唤醒词
-    if await checkWakeupWords(conn, text):
+    if await checkWakeupWords(conn, filtered_text):
         return True
 
     if conn.intent_type == "function_call":
@@ -108,21 +109,21 @@ async def process_intent_result(conn, intent_result, original_text):
                     if result.action == Action.RESPONSE:  # 直接回复前端
                         text = result.response
                         if text is not None:
-                            speak_and_play(conn, text)
+                            speak_txt(conn, text)
                     elif result.action == Action.REQLLM:  # 调用函数后再请求llm生成回复
                         text = result.result
                         conn.dialogue.put(Message(role="tool", content=text))
                         llm_result = conn.intent.replyResult(text, original_text)
                         if llm_result is None:
                             llm_result = text
-                        speak_and_play(conn, llm_result)
+                        speak_txt(conn, llm_result)
                     elif (
                         result.action == Action.NOTFOUND
                         or result.action == Action.ERROR
                     ):
                         text = result.result
                         if text is not None:
-                            speak_and_play(conn, text)
+                            speak_txt(conn, text)
                     elif function_name != "play_music":
                         # For backward compatibility with original code
                         # 获取当前最新的文本索引
@@ -130,7 +131,7 @@ async def process_intent_result(conn, intent_result, original_text):
                         if text is None:
                             text = result.result
                         if text is not None:
-                            speak_and_play(conn, text)
+                            speak_txt(conn, text)
 
             # 将函数执行放在线程池中
             conn.executor.submit(process_function_call)
@@ -141,12 +142,12 @@ async def process_intent_result(conn, intent_result, original_text):
         return False
 
 
-def speak_and_play(conn, text):
+def speak_txt(conn, text):
     text_index = (
         conn.tts_last_text_index + 1 if hasattr(conn, "tts_last_text_index") else 0
     )
     conn.recode_first_last_text(text, text_index)
-    future = conn.executor.submit(conn.speak_and_play, text, text_index)
+    future = conn.executor.submit(conn.speak_and_play, None, text, text_index)
     conn.llm_finish_task = True
     conn.tts_queue.put((future, text_index))
     conn.dialogue.put(Message(role="assistant", content=text))
