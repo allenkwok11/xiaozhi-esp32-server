@@ -58,6 +58,7 @@ async def sendAudioMessage(conn, audios, text, text_index=0):
     # 发送结束消息（如果是最后一个文本）
     if conn.llm_finish_task and text_index == conn.tts_last_text_index:
         await send_tts_message(conn, "stop", None)
+        await conn.tts.finish_session(conn.tts_session_id)
         if conn.close_after_chat:
             await conn.close()
 

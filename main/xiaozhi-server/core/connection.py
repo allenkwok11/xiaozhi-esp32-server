@@ -123,6 +123,7 @@ class ConnectionHandler:
         # tts相关变量
         self.tts_first_text_index = -1
         self.tts_last_text_index = -1
+        self.tts_session_id = None
 
         # iot相关变量
         self.iot_descriptors = {}
@@ -520,6 +521,9 @@ class ConnectionHandler:
                     self.memory.query_memory(query), self.loop
                 )
                 memory_str = future.result()
+
+            uuid_str = str(uuid.uuid4()).replace("-", "")
+            self.tts_session_id = uuid_str
 
             if functions is not None:
                 # 使用支持functions的streaming接口

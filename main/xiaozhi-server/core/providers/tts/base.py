@@ -40,17 +40,6 @@ class TTSProviderBase(ABC):
         pass
 
     def to_tts(self, text, index):
-        """如果是流式实现，一般没有文件生成，我们返回枚举值"""
-        if self.interface_type != TTSImplementationType.NON_STREAMING:
-            if index == 1:
-                future = asyncio.run_coroutine_threadsafe(
-                    self.start_session(self.conn.session_id), loop=self.conn.loop
-                )
-                future.result()
-            asyncio.run(self.text_to_speak(text, None))
-            return self.interface_type.value
-
-        """以下是非流式实现，会返回文件"""
         tmp_file = self.generate_filename()
         try:
             max_repeat_time = 5
