@@ -71,12 +71,6 @@ class TTSProvider(TTSProviderBase):
             config.get("aux_ref_audio_paths")
         )
 
-    def generate_filename(self, extension=".wav"):
-        return os.path.join(
-            self.output_file,
-            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
-        )
-
     async def text_to_speak(self, text, output_file):
         request_json = {
             "text": text,

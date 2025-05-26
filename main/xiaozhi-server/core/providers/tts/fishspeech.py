@@ -133,12 +133,6 @@ class TTSProvider(TTSProviderBase):
         self.seed = int(config.get("seed")) if config.get("seed") else None
         self.api_url = config.get("api_url", "http://127.0.0.1:8080/v1/tts")
 
-    def generate_filename(self, extension=".wav"):
-        return os.path.join(
-            self.output_file,
-            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
-        )
-
     async def text_to_speak(self, text, output_file):
         # Prepare reference data
         byte_audios = [audio_to_bytes(ref_audio) for ref_audio in self.reference_audio]

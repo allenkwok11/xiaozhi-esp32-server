@@ -8,6 +8,7 @@ import websockets
 from datetime import datetime
 from config.logger import setup_logging
 from core.providers.tts.base import TTSProviderBase
+from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
 from core.utils.util import pcm_to_data
 
 TAG = __name__
@@ -148,43 +149,6 @@ class TTSProvider(TTSProviderBase):
         self.enable_two_way = True
         self.start_connection_flag = False
         self.tts_text = ""
-
-    async def open_audio_channels(self, conn):
-        await super().open_audio_channels(conn)
-        ws_header = {
-            "X-Api-App-Key": self.appId,
-            "X-Api-Access-Key": self.access_token,
-            "X-Api-Resource-Id": self.resource_id,
-            "X-Api-Connect-Id": uuid.uuid4(),
-        }
-        self.ws = await websockets.connect(
-            self.ws_url, additional_headers=ws_header, max_size=1000000000
-        )
-        tts_priority = threading.Thread(
-            target=self._start_monitor_tts_response_thread, daemon=True
-        )
-        tts_priority.start()
-
-    def generate_filename(self, extension=".wav"):
-        return os.path.join(
-            self.output_file,
-            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
-        )
-
-    def to_tts(self, text):
-        future = asyncio.run_coroutine_threadsafe(
-            self.start_session(self.conn.sentence_id), loop=self.conn.loop
-        )
-        future.result()
-        future = asyncio.run_coroutine_threadsafe(
-            self.text_to_speak(text, None), loop=self.conn.loop
-        )
-        future.result()
-        future = asyncio.run_coroutine_threadsafe(
-            self.finish_session(self.conn.sentence_id), loop=self.conn.loop
-        )
-        future.result()
-        return self.interface_type.value
 
     async def send_event(
         self, header: bytes, optional: bytes | None = None, payload: bytes = None
@@ -360,13 +324,64 @@ class TTSProvider(TTSProviderBase):
             self.start_connection_flag = False
         await self.start_connection()
         self.start_connection_flag = True
-        await super().reset()
 
     async def close(self):
-        super().close()
         """资源清理方法"""
         await self.finish_connection()
         await self.ws.close()
+
+    ###################################################################################
+    # 以下是火山双流式TTS重写父类的方法
+    ###################################################################################
+
+    async def open_audio_channels(self, conn):
+        await super().open_audio_channels(conn)
+        ws_header = {
+            "X-Api-App-Key": self.appId,
+            "X-Api-Access-Key": self.access_token,
+            "X-Api-Resource-Id": self.resource_id,
+            "X-Api-Connect-Id": uuid.uuid4(),
+        }
+        self.ws = await websockets.connect(
+            self.ws_url, additional_headers=ws_header, max_size=1000000000
+        )
+        tts_priority = threading.Thread(
+            target=self._start_monitor_tts_response_thread, daemon=True
+        )
+        tts_priority.start()
+
+    def tts_text_priority_thread(self):
+        while not self.conn.stop_event.is_set():
+            try:
+                message = self.tts_text_queue.get(timeout=1)
+                if message.sentence_type == SentenceType.FIRST:
+                    # 初始化参数
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.start_session(self.conn.sentence_id), loop=self.conn.loop
+                    )
+                    future.result()
+                elif ContentType.TEXT == message.content_type:
+                    if message.content_detail:
+                        future = asyncio.run_coroutine_threadsafe(
+                            self.text_to_speak(message.content_detail, None),
+                            loop=self.conn.loop,
+                        )
+                        future.result()
+                elif ContentType.FILE == message.content_type:
+                    pass
+
+                if message.sentence_type == SentenceType.LAST:
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.finish_session(self.conn.sentence_id), loop=self.conn.loop
+                    )
+                    future.result()
+
+            except queue.Empty:
+                continue
+            except Exception as e:
+                logger.bind(tag=TAG).error(
+                    f"处理TTS文本失败: {str(e)}, 类型: {type(e).__name__}, 堆栈: {traceback.format_exc()}"
+                )
 
     async def text_to_speak(self, text, _):
         # 发送文本

@@ -29,12 +29,6 @@ class TTSProvider(TTSProviderBase):
         self.output_file = config.get("output_dir", "tmp/")
         check_model_key("TTS", self.api_key)
 
-    def generate_filename(self, extension=".wav"):
-        return os.path.join(
-            self.output_file,
-            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
-        )
-
     async def text_to_speak(self, text, output_file):
         headers = {
             "Authorization": f"Bearer {self.api_key}",

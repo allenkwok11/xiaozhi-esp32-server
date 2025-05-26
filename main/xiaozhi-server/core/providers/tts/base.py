@@ -3,6 +3,7 @@ from config.logger import setup_logging
 import queue
 import os
 import uuid
+import datetime
 import threading
 from core.utils import p3
 from core.utils import textUtils
@@ -57,9 +58,11 @@ class TTSProviderBase(ABC):
         self.processed_chars = 0
         self.is_first_sentence = True
 
-    @abstractmethod
-    def generate_filename(self):
-        pass
+    def generate_filename(self, extension=".wav"):
+        return os.path.join(
+            self.output_file,
+            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
+        )
 
     def to_tts(self, text):
         tmp_file = self.generate_filename()
@@ -148,7 +151,7 @@ class TTSProviderBase(ABC):
         self.tts_timeout = conn.config.get("tts_timeout", 10)
         # tts 消化线程
         self.tts_priority_thread = threading.Thread(
-            target=self._tts_text_priority_thread, daemon=True
+            target=self.tts_text_priority_thread, daemon=True
         )
         self.tts_priority_thread.start()
 
@@ -160,7 +163,7 @@ class TTSProviderBase(ABC):
 
     # 这里默认是非流式的处理方式
     # 流式处理方式请在子类中重写
-    def _tts_text_priority_thread(self):
+    def tts_text_priority_thread(self):
         while not self.conn.stop_event.is_set():
             try:
                 message = self.tts_text_queue.get(timeout=1)
@@ -219,9 +222,6 @@ class TTSProviderBase(ABC):
                     self.conn.loop,
                 )
                 result = future.result()
-                logger.bind(tag=TAG).info(
-                    f"audio_play_priority result: {text} {result}"
-                )
             except Exception as e:
                 logger.bind(tag=TAG).error(
                     f"audio_play_priority priority_thread: {text} {e}"
