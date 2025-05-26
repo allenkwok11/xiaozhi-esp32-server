@@ -453,14 +453,14 @@ TTS:
     volume_ratio: 1.0
     pitch_ratio: 1.0
   #火山tts，支持双向流式tts
-  HuoshanTTS:
-    type: huoshan
+  HuoshanDoubleStreamTTS:
+    type: huoshan_double_stream
     # 如果是机智云 wss://bytedance.gizwitsapi.com/api/v3/tts/bidirection
     # 机智云不需要天填 appid
     ws_url: wss://openspeech.bytedance.com/api/v3/tts/bidirection
     appid: 你的火山引擎语音合成服务appid
     access_token: 你的火山引擎语音合成服务access_token
-    # 产看https://www.volcengine.com/docs/6561/1329505，volc.service_type.10029，volc.megatts.default
+    # 资源信息ID，https://www.volcengine.com/docs/6561/1329505，volc.service_type.10029，大模型语音合成及混音
     resource_id: volc.service_type.10029
     speaker: zh_female_meilinvyou_moon_bigtts
   CosyVoiceSiliconflow:
