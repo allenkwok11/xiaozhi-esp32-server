@@ -4,11 +4,11 @@ import traceback
 import uuid
 import json
 import websockets
+from core.utils import opus_encoder_utils
 import queue
 from config.logger import setup_logging
 from core.providers.tts.base import TTSProviderBase
 from core.providers.tts.dto.dto import SentenceType, ContentType
-from core.utils.util import pcm_to_data
 
 TAG = __name__
 logger = setup_logging()
@@ -150,6 +150,9 @@ class TTSProvider(TTSProviderBase):
         self.tts_text = ""
         # 合成文字语音后，播放的音频文件列表
         self.tts_audio_files = []
+        self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
+            sample_rate=16000, channels=1, frame_size_ms=60
+        )
 
     ###################################################################################
     # 火山双流式TTS重写父类的方法--开始
@@ -239,7 +242,7 @@ class TTSProvider(TTSProviderBase):
                     and res.header.message_type == AUDIO_ONLY_RESPONSE
                 ):
                     logger.bind(tag=TAG).debug(f"推送数据到队列里面～～")
-                    opus_datas = pcm_to_data(res.payload)
+                    opus_datas = self.wav_to_opus_data_audio_raw(res.payload)
                     logger.bind(tag=TAG).debug(
                         f"推送数据到队列里面帧数～～{len(opus_datas)}"
                     )
@@ -436,3 +439,7 @@ class TTSProvider(TTSProviderBase):
         """资源清理方法"""
         await self.finish_connection()
         await self.ws.close()
+
+    def wav_to_opus_data_audio_raw(self, raw_data_var, is_end=False):
+        opus_datas = self.opus_encoder.encode_pcm_to_opus(raw_data_var, is_end)
+        return opus_datas

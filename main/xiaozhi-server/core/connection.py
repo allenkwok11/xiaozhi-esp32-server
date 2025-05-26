@@ -23,6 +23,7 @@ from core.utils.util import (
     check_vad_update,
     check_asr_update,
     filter_sensitive_info,
+    initialize_tts,
 )
 from concurrent.futures import ThreadPoolExecutor
 from core.handle.receiveAudioHandle import handleAudioMessage
@@ -51,7 +52,6 @@ class ConnectionHandler:
         _vad,
         _asr,
         _llm,
-        _tts,
         _memory,
         _intent,
         server=None,
@@ -96,9 +96,9 @@ class ConnectionHandler:
         # 依赖的组件
         self.vad = None
         self.asr = None
+        self.tts = None
         self._asr = _asr
         self._vad = _vad
-        self.tts = _tts
         self.llm = _llm
         self.memory = _memory
         self.intent = _intent
@@ -312,7 +312,7 @@ class ConnectionHandler:
         if self.asr is None:
             self.asr = self._asr
         if self.tts is None:
-            self.tts = DefaultTTS(self.config, delete_audio_file=True)
+            self.tts = self._initialize_tts()
         # 使用事件循环运行异步方法
         asyncio.run_coroutine_threadsafe(self.tts.open_audio_channels(self), self.loop)
 
@@ -335,6 +335,17 @@ class ConnectionHandler:
             )
             self.report_thread.start()
             self.logger.bind(tag=TAG).info("TTS上报线程已启动")
+
+    def _initialize_tts(self):
+        """初始化TTS"""
+        tts = None
+        if not self.need_bind:
+            tts = initialize_tts(self.config)
+
+        if tts is None:
+            tts = DefaultTTS(self.config, delete_audio_file=True)
+
+        return tts
 
     def _initialize_private_config(self):
         """如果是从配置文件获取，则进行二次实例化"""
@@ -497,8 +508,8 @@ class ConnectionHandler:
         self.dialogue.update_system_message(self.prompt)
 
     def chat(self, query, tool_call=False):
+        self.logger.bind(tag=TAG).info(f"大模型收到用户消息: {query}")
         self.llm_finish_task = False
-        self.logger.bind(tag=TAG).debug(f"Chat: {query}")
 
         if not tool_call:
             self.dialogue.put(Message(role="user", content=query))

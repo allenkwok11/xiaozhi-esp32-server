@@ -269,16 +269,7 @@ def initialize_modules(
     # 初始化TTS模块
     if init_tts:
         select_tts_module = config["selected_module"]["TTS"]
-        tts_type = (
-            select_tts_module
-            if "type" not in config["TTS"][select_tts_module]
-            else config["TTS"][select_tts_module]["type"]
-        )
-        modules["tts"] = tts.create_instance(
-            tts_type,
-            config["TTS"][select_tts_module],
-            str(config.get("delete_audio", True)).lower() in ("true", "1", "yes"),
-        )
+        modules["tts"] = initialize_tts(config)
         logger.bind(tag=TAG).info(f"初始化组件: tts成功 {select_tts_module}")
 
     # 初始化LLM模块
@@ -353,6 +344,21 @@ def initialize_modules(
         )
         logger.bind(tag=TAG).info(f"初始化组件: asr成功 {select_asr_module}")
     return modules
+
+
+def initialize_tts(config):
+    select_tts_module = config["selected_module"]["TTS"]
+    tts_type = (
+        select_tts_module
+        if "type" not in config["TTS"][select_tts_module]
+        else config["TTS"][select_tts_module]["type"]
+    )
+    new_tts = tts.create_instance(
+        tts_type,
+        config["TTS"][select_tts_module],
+        str(config.get("delete_audio", True)).lower() in ("true", "1", "yes"),
+    )
+    return new_tts
 
 
 def analyze_emotion(text):
