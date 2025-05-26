@@ -1,11 +1,10 @@
 import asyncio
-import os
 import threading
 import traceback
 import uuid
 import json
 import websockets
-from datetime import datetime
+import queue
 from config.logger import setup_logging
 from core.providers.tts.base import TTSProviderBase
 from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
@@ -149,6 +148,109 @@ class TTSProvider(TTSProviderBase):
         self.enable_two_way = True
         self.start_connection_flag = False
         self.tts_text = ""
+
+    ###################################################################################
+    # 火山双流式TTS重写父类的方法--开始
+    ###################################################################################
+
+    async def open_audio_channels(self, conn):
+        await super().open_audio_channels(conn)
+        ws_header = {
+            "X-Api-App-Key": self.appId,
+            "X-Api-Access-Key": self.access_token,
+            "X-Api-Resource-Id": self.resource_id,
+            "X-Api-Connect-Id": uuid.uuid4(),
+        }
+        self.ws = await websockets.connect(
+            self.ws_url, additional_headers=ws_header, max_size=1000000000
+        )
+        tts_priority = threading.Thread(
+            target=self._start_monitor_tts_response_thread, daemon=True
+        )
+        tts_priority.start()
+
+    def tts_text_priority_thread(self):
+        while not self.conn.stop_event.is_set():
+            try:
+                message = self.tts_text_queue.get(timeout=1)
+                if message.sentence_type == SentenceType.FIRST:
+                    # 初始化参数
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.start_session(self.conn.sentence_id), loop=self.conn.loop
+                    )
+                    future.result()
+                elif ContentType.TEXT == message.content_type:
+                    if message.content_detail:
+                        future = asyncio.run_coroutine_threadsafe(
+                            self.text_to_speak(message.content_detail, None),
+                            loop=self.conn.loop,
+                        )
+                        future.result()
+                elif ContentType.FILE == message.content_type:
+                    pass
+
+                if message.sentence_type == SentenceType.LAST:
+                    future = asyncio.run_coroutine_threadsafe(
+                        self.finish_session(self.conn.sentence_id), loop=self.conn.loop
+                    )
+                    future.result()
+
+            except queue.Empty:
+                continue
+            except Exception as e:
+                logger.bind(tag=TAG).error(
+                    f"处理TTS文本失败: {str(e)}, 类型: {type(e).__name__}, 堆栈: {traceback.format_exc()}"
+                )
+
+    async def text_to_speak(self, text, _):
+        # 发送文本
+        await self.send_text(self.speaker, text, self.conn.sentence_id)
+        logger.bind(tag=TAG).info(f"发送文本～～{text}")
+        return
+
+    ###################################################################################
+    # 火山双流式TTS重写父类的方法--结束
+    ###################################################################################
+    def _start_monitor_tts_response_thread(self):
+        # 初始化链接
+        asyncio.run_coroutine_threadsafe(
+            self._start_monitor_tts_response(), loop=self.conn.loop
+        )
+
+    async def _start_monitor_tts_response(self):
+        while not self.conn.stop_event.is_set():
+            try:
+                msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
+                res = self.parser_response(msg)
+                self.print_response(res, "send_text res:")
+
+                if res.optional.event == EVENT_TTSSentenceStart:
+                    json_data = json.loads(res.payload.decode("utf-8"))
+                    self.tts_text = json_data.get("text", "")
+                    logger.bind(tag=TAG).info(f"句子开始～～{self.tts_text}")
+                    self.tts_audio_queue.put((SentenceType.FIRST, [], self.tts_text))
+                elif (
+                    res.optional.event == EVENT_TTSResponse
+                    and res.header.message_type == AUDIO_ONLY_RESPONSE
+                ):
+                    logger.bind(tag=TAG).info(f"推送数据到队列里面～～")
+                    opus_datas = pcm_to_data(res.payload)
+                    logger.bind(tag=TAG).info(
+                        f"推送数据到队列里面帧数～～{len(opus_datas)}"
+                    )
+                    self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas, None))
+                elif res.optional.event == EVENT_TTSSentenceEnd:
+                    logger.bind(tag=TAG).info(f"句子结束～～{self.tts_text}")
+                elif res.optional.event == EVENT_SessionFinished:
+                    logger.bind(tag=TAG).info(f"会话结束～～")
+                    self.tts_audio_queue.put((SentenceType.LAST, [], None))
+                    continue
+            except websockets.ConnectionClosed:
+                break  # 连接关闭时退出监听
+            except Exception as e:
+                logger.bind(tag=TAG).error(f"Error in _start_monitor_tts_response: {e}")
+                traceback.print_exc()
+                continue
 
     async def send_event(
         self, header: bytes, optional: bytes | None = None, payload: bytes = None
@@ -329,109 +431,3 @@ class TTSProvider(TTSProviderBase):
         """资源清理方法"""
         await self.finish_connection()
         await self.ws.close()
-
-    ###################################################################################
-    # 以下是火山双流式TTS重写父类的方法
-    ###################################################################################
-
-    async def open_audio_channels(self, conn):
-        await super().open_audio_channels(conn)
-        ws_header = {
-            "X-Api-App-Key": self.appId,
-            "X-Api-Access-Key": self.access_token,
-            "X-Api-Resource-Id": self.resource_id,
-            "X-Api-Connect-Id": uuid.uuid4(),
-        }
-        self.ws = await websockets.connect(
-            self.ws_url, additional_headers=ws_header, max_size=1000000000
-        )
-        tts_priority = threading.Thread(
-            target=self._start_monitor_tts_response_thread, daemon=True
-        )
-        tts_priority.start()
-
-    def tts_text_priority_thread(self):
-        while not self.conn.stop_event.is_set():
-            try:
-                message = self.tts_text_queue.get(timeout=1)
-                if message.sentence_type == SentenceType.FIRST:
-                    # 初始化参数
-                    future = asyncio.run_coroutine_threadsafe(
-                        self.start_session(self.conn.sentence_id), loop=self.conn.loop
-                    )
-                    future.result()
-                elif ContentType.TEXT == message.content_type:
-                    if message.content_detail:
-                        future = asyncio.run_coroutine_threadsafe(
-                            self.text_to_speak(message.content_detail, None),
-                            loop=self.conn.loop,
-                        )
-                        future.result()
-                elif ContentType.FILE == message.content_type:
-                    pass
-
-                if message.sentence_type == SentenceType.LAST:
-                    future = asyncio.run_coroutine_threadsafe(
-                        self.finish_session(self.conn.sentence_id), loop=self.conn.loop
-                    )
-                    future.result()
-
-            except queue.Empty:
-                continue
-            except Exception as e:
-                logger.bind(tag=TAG).error(
-                    f"处理TTS文本失败: {str(e)}, 类型: {type(e).__name__}, 堆栈: {traceback.format_exc()}"
-                )
-
-    async def text_to_speak(self, text, _):
-        # 发送文本
-        await self.send_text(self.speaker, text, self.conn.sentence_id)
-        logger.bind(tag=TAG).info(f"发送文本～～{text}")
-        return
-
-    def _start_monitor_tts_response_thread(self):
-        # 初始化链接
-        asyncio.run_coroutine_threadsafe(
-            self._start_monitor_tts_response(), loop=self.conn.loop
-        )
-
-    async def _start_monitor_tts_response(self):
-        while not self.conn.stop_event.is_set():
-            try:
-                msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
-                res = self.parser_response(msg)
-                self.print_response(res, "send_text res:")
-
-                if (
-                    res.optional.event == EVENT_TTSResponse
-                    and res.header.message_type == AUDIO_ONLY_RESPONSE
-                ):
-                    logger.bind(tag=TAG).info(f"推送数据到队列里面～～")
-                    opus_datas = pcm_to_data(res.payload)
-                    logger.bind(tag=TAG).info(
-                        f"推送数据到队列里面帧数～～{len(opus_datas)}"
-                    )
-                    self.tts_audio_queue.put(
-                        (opus_datas, None, self.conn.tts_last_text_index - 1)
-                    )
-                elif res.optional.event == EVENT_TTSSentenceStart:
-                    json_data = json.loads(res.payload.decode("utf-8"))
-                    self.tts_text = json_data.get("text", "")
-                    logger.bind(tag=TAG).info(f"句子开始～～{self.tts_text}")
-                    self.tts_audio_queue.put(
-                        ([], self.tts_text, self.conn.tts_first_text_index)
-                    )
-                elif res.optional.event == EVENT_TTSSentenceEnd:
-                    logger.bind(tag=TAG).info(f"句子结束～～{self.tts_text}")
-                    self.tts_audio_queue.put(
-                        ([], self.tts_text, self.conn.tts_last_text_index)
-                    )
-                elif res.optional.event == EVENT_SessionFinished:
-                    logger.bind(tag=TAG).info(f"会话结束～～,最后一句补零")
-                    continue
-            except websockets.ConnectionClosed:
-                break  # 连接关闭时退出监听
-            except Exception as e:
-                logger.bind(tag=TAG).error(f"Error in _start_monitor_tts_response: {e}")
-                traceback.print_exc()
-                continue

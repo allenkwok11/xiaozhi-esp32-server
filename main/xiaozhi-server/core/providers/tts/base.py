@@ -221,7 +221,7 @@ class TTSProviderBase(ABC):
                     sendAudioMessage(self.conn, sentence_type, audio_datas, text),
                     self.conn.loop,
                 )
-                result = future.result()
+                future.result()
             except Exception as e:
                 logger.bind(tag=TAG).error(
                     f"audio_play_priority priority_thread: {text} {e}"
