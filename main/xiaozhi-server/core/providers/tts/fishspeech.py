@@ -1,12 +1,9 @@
 import base64
-import os
-import uuid
 import requests
 import ormsgpack
 from pathlib import Path
 from pydantic import BaseModel, Field, conint, model_validator
 from typing_extensions import Annotated
-from datetime import datetime
 from typing import Literal
 from core.utils.util import check_model_key, parse_string_to_list
 from core.providers.tts.base import TTSProviderBase

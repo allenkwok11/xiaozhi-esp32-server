@@ -47,17 +47,21 @@ async def sendAudioMessage(conn, sentenceType, audios, text):
                 }
             )
         )
+    pre_buffer = False
+    if conn.tts.tts_audio_first_sentence and text is not None:
+        conn.logger.bind(tag=TAG).info(f"发送第一段语音: {text}")
+        conn.tts.tts_audio_first_sentence = False
+        pre_buffer = True
 
     await send_tts_message(conn, "sentence_start", text)
 
-    await sendAudio(conn, audios, False)
+    await sendAudio(conn, audios, pre_buffer)
 
     await send_tts_message(conn, "sentence_end", text)
 
     # 发送结束消息（如果是最后一个文本）
     if conn.llm_finish_task and sentenceType == SentenceType.LAST:
         await send_tts_message(conn, "stop", None)
-        await conn.tts.finish_session(conn.sentence_id)
         if conn.close_after_chat:
             await conn.close()
 

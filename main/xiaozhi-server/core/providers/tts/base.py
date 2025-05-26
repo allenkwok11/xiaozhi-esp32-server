@@ -1,17 +1,19 @@
-import asyncio
-from config.logger import setup_logging
-import queue
 import os
+import queue
 import uuid
-import datetime
+import asyncio
 import threading
 from core.utils import p3
+from datetime import datetime
 from core.utils import textUtils
+from abc import ABC, abstractmethod
+from config.logger import setup_logging
+from core.utils.util import audio_to_data
+from core.utils.tts import MarkdownCleaner
 from core.handle.sendAudioHandle import sendAudioMessage
 from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
-from abc import ABC, abstractmethod
-from core.utils.tts import MarkdownCleaner
-from core.utils.util import audio_to_data
+
+
 import traceback
 
 TAG = __name__
@@ -26,6 +28,7 @@ class TTSProviderBase(ABC):
         self.output_file = config.get("output_dir")
         self.tts_text_queue = queue.Queue()
         self.tts_audio_queue = queue.Queue()
+        self.tts_audio_first_sentence = True
 
         self.tts_text_buff = []
         self.punctuations = (
@@ -173,6 +176,7 @@ class TTSProviderBase(ABC):
                     self.processed_chars = 0
                     self.tts_text_buff = []
                     self.is_first_sentence = True
+                    self.tts_audio_first_sentence = True
                 elif ContentType.TEXT == message.content_type:
                     self.tts_text_buff.append(message.content_detail)
                     segment_text = self._get_segment_text()
