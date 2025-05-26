@@ -96,10 +96,9 @@ class ConnectionHandler:
         # 依赖的组件
         self.vad = None
         self.asr = None
-        self.tts = None
         self._asr = _asr
         self._vad = _vad
-        self._tts = _tts
+        self.tts = _tts
         self.llm = _llm
         self.memory = _memory
         self.intent = _intent

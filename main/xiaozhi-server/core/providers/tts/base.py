@@ -38,7 +38,21 @@ class TTSProviderBase(ABC):
             ";",
             "：",
         )
-        self.first_sentence_punctuations = ("，", ",")
+        self.first_sentence_punctuations = (
+            "，",
+            "~",
+            "、",
+            ",",
+            "。",
+            ".",
+            "？",
+            "?",
+            "！",
+            "!",
+            "；",
+            ";",
+            "：",
+        )
         self.tts_stop_request = False
         self.processed_chars = 0
         self.is_first_sentence = True
