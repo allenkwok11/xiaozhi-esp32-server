@@ -890,11 +890,11 @@ class ConnectionHandler:
                 if item is None:  # 检测毒丸对象
                     break
 
-                type, text, audio_data = item
+                type, text, audio_data, report_time = item
 
                 try:
                     # 提交任务到线程池
-                    self.report_thread_pool.submit(self._process_report, type, text, audio_data)
+                    self.report_thread_pool.submit(self._process_report, type, text, audio_data, report_time)
                 except Exception as e:
                     self.logger.bind(tag=TAG).error(f"聊天记录上报线程异常: {e}")
             except queue.Empty:
@@ -904,11 +904,11 @@ class ConnectionHandler:
 
         self.logger.bind(tag=TAG).info("聊天记录上报线程已退出")
 
-    def _process_report(self, type, text, audio_data):
+    def _process_report(self, type, text, audio_data, report_time):
         """处理上报任务"""
         try:
             # 执行上报（传入二进制数据）
-            report(self, type, text, audio_data)
+            report(self, type, text, audio_data, report_time)
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"上报处理异常: {e}")
         finally:
@@ -972,6 +972,12 @@ class ConnectionHandler:
         if self.executor:
             self.executor.shutdown(wait=False)
             self.executor = None
+
+        # 关闭上报线程池
+        if self.report_thread_pool:
+            self.report_thread_pool.shutdown(wait=False)
+            self.report_thread_pool = None
+            self.logger.bind(tag=TAG).info("上报线程池已关闭")
 
         self.logger.bind(tag=TAG).info("连接资源已释放")
 
