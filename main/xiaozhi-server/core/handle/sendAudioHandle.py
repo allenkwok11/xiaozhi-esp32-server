@@ -3,6 +3,7 @@ import asyncio
 import time
 from core.providers.tts.dto.dto import SentenceType
 from core.utils.util import get_string_no_punctuation_or_emoji, analyze_emotion
+from loguru import logger
 
 TAG = __name__
 
@@ -49,7 +50,7 @@ async def sendAudioMessage(conn, sentenceType, audios, text):
 
     await send_tts_message(conn, "sentence_start", text)
 
-    await sendAudio(conn, audios, True)
+    await sendAudio(conn, audios, False)
 
     await send_tts_message(conn, "sentence_end", text)
 

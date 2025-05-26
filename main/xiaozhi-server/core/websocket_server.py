@@ -2,7 +2,6 @@ import asyncio
 import websockets
 from config.logger import setup_logging
 from core.connection import ConnectionHandler
-from core.providers.tts.default import DefaultTTS
 from core.utils.util import initialize_modules, check_vad_update, check_asr_update
 from config.config_loader import get_config_from_api
 
@@ -30,9 +29,6 @@ class WebSocketServer:
         self._llm = modules["llm"] if "llm" in modules else None
         self._intent = modules["intent"] if "intent" in modules else None
         self._memory = modules["memory"] if "memory" in modules else None
-
-        if self._tts is None:
-            self._tts = DefaultTTS(self.config, delete_audio_file=True)
 
         self.active_connections = set()
 

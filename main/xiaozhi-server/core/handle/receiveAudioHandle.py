@@ -5,6 +5,7 @@ from core.handle.sendAudioHandle import send_stt_message
 from core.handle.intentHandler import handle_user_intent
 from core.utils.output_counter import check_device_output_limit
 from core.handle.reportHandle import enqueue_asr_report
+from core.handle.sendAudioHandle import SentenceType
 from core.utils.util import audio_to_data
 
 TAG = __name__
@@ -112,7 +113,7 @@ async def max_out_size(conn):
     await send_stt_message(conn, text)
     file_path = "config/assets/max_output_size.wav"
     opus_packets, _ = audio_to_data(file_path)
-    conn.tts.tts_audio_queue.put((opus_packets, text, 0))
+    conn.tts.tts_audio_queue.put((SentenceType.LAST, opus_packets, text))
     conn.close_after_chat = True
 
 
@@ -131,7 +132,7 @@ async def check_bind_device(conn):
         # 播放提示音
         music_path = "config/assets/bind_code.wav"
         opus_packets, _ = audio_to_data(music_path)
-        conn.tts.tts_audio_queue.put((opus_packets, text, 0))
+        conn.tts.tts_audio_queue.put((SentenceType.FIRST, opus_packets, text))
 
         # 逐个播放数字
         for i in range(6):  # 确保只播放6位数字
@@ -139,13 +140,14 @@ async def check_bind_device(conn):
                 digit = conn.bind_code[i]
                 num_path = f"config/assets/bind_code/{digit}.wav"
                 num_packets, _ = audio_to_data(num_path)
-                conn.tts.tts_audio_queue.put((num_packets, None, i + 1))
+                conn.tts.tts_audio_queue.put((SentenceType.MIDDLE, num_packets, None))
             except Exception as e:
                 conn.logger.bind(tag=TAG).error(f"播放数字音频失败: {e}")
                 continue
+        conn.tts.tts_audio_queue.put((SentenceType.LAST, [], None))
     else:
         text = f"没有找到该设备的版本信息，请正确配置 OTA地址，然后重新编译固件。"
         await send_stt_message(conn, text)
         music_path = "config/assets/bind_not_found.wav"
         opus_packets, _ = audio_to_data(music_path)
-        conn.tts.tts_audio_queue.put((opus_packets, text, 0))
+        conn.tts.tts_audio_queue.put((SentenceType.LAST, opus_packets, text))

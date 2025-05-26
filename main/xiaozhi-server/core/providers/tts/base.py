@@ -11,6 +11,7 @@ from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
 from abc import ABC, abstractmethod
 from core.utils.tts import MarkdownCleaner
 from core.utils.util import audio_to_data
+import traceback
 
 TAG = __name__
 logger = setup_logging()
@@ -24,8 +25,6 @@ class TTSProviderBase(ABC):
         self.output_file = config.get("output_dir")
         self.tts_text_queue = queue.Queue()
         self.tts_audio_queue = queue.Queue()
-        self.stop_event = threading.Event()
-        self.loop = asyncio.get_event_loop()
 
         self.tts_text_buff = []
         self.punctuations = (
@@ -148,9 +147,9 @@ class TTSProviderBase(ABC):
     # 这里默认是非流式的处理方式
     # 流式处理方式请在子类中重写
     def _tts_text_priority_thread(self):
-        while not self.stop_event.is_set():
+        while not self.conn.stop_event.is_set():
             try:
-                message = self.tts_text_queue.get()
+                message = self.tts_text_queue.get(timeout=1)
                 if message.sentence_type == SentenceType.FIRST:
                     # 初始化参数
                     self.tts_stop_request = False
@@ -162,30 +161,35 @@ class TTSProviderBase(ABC):
                     segment_text = self._get_segment_text()
                     if segment_text:
                         tts_file = self.to_tts(segment_text)
-                        audio_datas = self._process_audio_file(tts_file)
-                        self.tts_audio_queue.put(
-                            (message.sentence_type, audio_datas, segment_text)
-                        )
+                        if tts_file:
+                            audio_datas = self._process_audio_file(tts_file)
+                            self.tts_audio_queue.put(
+                                (message.sentence_type, audio_datas, segment_text)
+                            )
                 elif ContentType.FILE == message.content_type:
                     self._process_remaining_text()
-
                     tts_file = message.content_file
-                    audio_datas = self._process_audio_file(tts_file)
-                    self.tts_audio_queue.put(
-                        (message.sentence_type, audio_datas, message.content_detail)
-                    )
+                    if tts_file and os.path.exists(tts_file):
+                        audio_datas = self._process_audio_file(tts_file)
+                        self.tts_audio_queue.put(
+                            (message.sentence_type, audio_datas, message.content_detail)
+                        )
+
                 if message.sentence_type == SentenceType.LAST:
                     self._process_remaining_text()
-
                     self.tts_audio_queue.put(
                         (message.sentence_type, [], message.content_detail)
                     )
 
+            except queue.Empty:
+                continue
             except Exception as e:
-                logger.bind(tag=TAG).error(f"Failed to process TTS text: {e}")
+                logger.bind(tag=TAG).error(
+                    f"处理TTS文本失败: {str(e)}, 类型: {type(e).__name__}, 堆栈: {traceback.format_exc()}"
+                )
 
     def _audio_play_priority_thread(self):
-        while not self.stop_event.is_set():
+        while not self.conn.stop_event.is_set():
             text = None
             try:
                 try:
@@ -193,14 +197,17 @@ class TTSProviderBase(ABC):
                         timeout=1
                     )
                 except queue.Empty:
-                    if self.stop_event.is_set():
+                    if self.conn.stop_event.is_set():
                         break
                     continue
                 future = asyncio.run_coroutine_threadsafe(
                     sendAudioMessage(self.conn, sentence_type, audio_datas, text),
-                    self.loop,
+                    self.conn.loop,
                 )
-                future.result()
+                result = future.result()
+                logger.bind(tag=TAG).info(
+                    f"audio_play_priority result: {text} {result}"
+                )
             except Exception as e:
                 logger.bind(tag=TAG).error(
                     f"audio_play_priority priority_thread: {text} {e}"

@@ -15,6 +15,7 @@ from plugins_func.loadplugins import auto_import_modules
 from config.logger import setup_logging
 from core.utils.dialogue import Message, Dialogue
 from core.providers.tts.dto.dto import ContentType, TTSMessageDTO, SentenceType
+from core.providers.tts.default import DefaultTTS
 from core.handle.textHandle import handleTextMessage
 from core.utils.util import (
     extract_json_from_string,
@@ -312,7 +313,7 @@ class ConnectionHandler:
         if self.asr is None:
             self.asr = self._asr
         if self.tts is None:
-            self.tts = self._tts
+            self.tts = DefaultTTS(self.config, delete_audio_file=True)
         # 使用事件循环运行异步方法
         asyncio.run_coroutine_threadsafe(self.tts.open_audio_channels(self), self.loop)
 

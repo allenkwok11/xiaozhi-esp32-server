@@ -145,7 +145,6 @@ class TTSProvider(TTSProviderBase):
         self.authorization = config.get("authorization")
         self.speaker = config.get("speaker")
         self.header = {"Authorization": f"{self.authorization}{self.access_token}"}
-        self.stop_event_response = threading.Event()
         self.enable_two_way = True
         self.start_connection_flag = False
         self.tts_text = ""
@@ -162,7 +161,7 @@ class TTSProvider(TTSProviderBase):
             self.ws_url, additional_headers=ws_header, max_size=1000000000
         )
         tts_priority = threading.Thread(
-            target=self._start_monitor_tts_response_thread(), daemon=True
+            target=self._start_monitor_tts_response_thread, daemon=True
         )
         tts_priority.start()
 
@@ -174,15 +173,15 @@ class TTSProvider(TTSProviderBase):
 
     def to_tts(self, text):
         future = asyncio.run_coroutine_threadsafe(
-            self.start_session(self.conn.sentence_id), loop=self.loop
+            self.start_session(self.conn.sentence_id), loop=self.conn.loop
         )
         future.result()
         future = asyncio.run_coroutine_threadsafe(
-            self.text_to_speak(text, None), loop=self.loop
+            self.text_to_speak(text, None), loop=self.conn.loop
         )
         future.result()
         future = asyncio.run_coroutine_threadsafe(
-            self.finish_session(self.conn.sentence_id), loop=self.loop
+            self.finish_session(self.conn.sentence_id), loop=self.conn.loop
         )
         future.result()
         return self.interface_type.value
@@ -332,7 +331,6 @@ class TTSProvider(TTSProviderBase):
         return
 
     async def start_session(self, session_id):
-        self.stop_event_response.clear()
         header = Header(
             message_type=FULL_CLIENT_REQUEST,
             message_type_specific_flags=MsgTypeFlagWithEvent,
@@ -345,7 +343,6 @@ class TTSProvider(TTSProviderBase):
 
     async def finish_session(self, session_id):
         logger.bind(tag=TAG).info(f"会话结束～～{session_id}")
-        self.stop_event_response.set()
         header = Header(
             message_type=FULL_CLIENT_REQUEST,
             message_type_specific_flags=MsgTypeFlagWithEvent,
@@ -380,11 +377,11 @@ class TTSProvider(TTSProviderBase):
     def _start_monitor_tts_response_thread(self):
         # 初始化链接
         asyncio.run_coroutine_threadsafe(
-            self._start_monitor_tts_response(), loop=self.loop
+            self._start_monitor_tts_response(), loop=self.conn.loop
         )
 
     async def _start_monitor_tts_response(self):
-        while not self.stop_event.is_set():
+        while not self.conn.stop_event.is_set():
             try:
                 msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
                 res = self.parser_response(msg)
