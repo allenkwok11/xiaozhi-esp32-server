@@ -879,6 +879,7 @@
                                         // 流已结束且没有更多数据
                                         log("音频播放完成", 'info');
                                         isAudioPlaying = false;
+                                        this.endOfStream = false;
                                         streamingContext = null;
                                     } else {
                                         // 等待更多数据
@@ -1562,6 +1563,10 @@
         function sendTextMessage() {
             const message = messageInput.value.trim();
             if (message === '' || !websocket || websocket.readyState !== WebSocket.OPEN) return;
+
+            audioBufferQueue = [];
+            isAudioBuffering = false;
+            isAudioPlaying = false;
 
             try {
                 // 直接发送listen消息，不需要重复发送hello
