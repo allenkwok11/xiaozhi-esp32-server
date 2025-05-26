@@ -26,7 +26,8 @@ async def handleHelloMessage(conn, msg_json):
         format = audio_params.get("format")
         conn.logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
         conn.audio_format = format
-        conn.asr.set_audio_format(format)
+        if conn.asr is not None:
+            conn.asr.set_audio_format(format)
         conn.welcome_msg["audio_params"] = audio_params
 
     await conn.websocket.send(json.dumps(conn.welcome_msg))
@@ -43,9 +44,6 @@ async def checkWakeupWords(conn, text):
     _, filtered_text = remove_punctuation_and_length(text)
     if filtered_text in conn.config.get("wakeup_words"):
         await send_stt_message(conn, text)
-        conn.tts_first_text_index = 0
-        conn.tts_last_text_index = 0
-        conn.llm_finish_task = True
 
         file = getWakeupWordFile(WAKEUP_CONFIG["file_name"])
         if file is None:
@@ -55,7 +53,7 @@ async def checkWakeupWords(conn, text):
         text_hello = WAKEUP_CONFIG["text"]
         if not text_hello:
             text_hello = text
-        conn.audio_play_queue.put((opus_packets, text_hello, 0))
+        conn.tts.tts_audio_queue.put((opus_packets, text_hello, 0))
         if time.time() - WAKEUP_CONFIG["create_time"] > WAKEUP_CONFIG["refresh_time"]:
             asyncio.create_task(wakeupWordsResponse(conn))
         return True

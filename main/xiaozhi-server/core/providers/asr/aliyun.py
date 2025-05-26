@@ -155,12 +155,6 @@ class ASRProvider(ASRProviderBase):
         #              f"剩余 {remaining:.2f}秒")
         return time.time() > self.expire_time
 
-    def generate_filename(self, extension=".wav"):
-        return os.path.join(
-            self.output_file,
-            f"tts-{__name__}{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
-        )
-
     def _construct_request_url(self) -> str:
         """构造请求URL，包含参数"""
         request = f"{self.base_url}?appkey={self.app_key}"
@@ -239,7 +233,7 @@ class ASRProvider(ASRProviderBase):
     ) -> Tuple[Optional[str], Optional[str]]:
         """将语音数据转换为文本"""
         if self._is_token_expired():
-            logger.bind(tag=TAG).warning("Token已过期，正在自动刷新...")
+            logger.warning("Token已过期，正在自动刷新...")
             self._refresh_token()
 
         file_path = None

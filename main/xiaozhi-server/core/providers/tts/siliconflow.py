@@ -1,12 +1,5 @@
-import os
-import uuid
 import requests
-from datetime import datetime
-
-from pydub import AudioSegment
-
 from core.providers.tts.base import TTSProviderBase
-from core.providers.tts.dto.dto import TTSMessageDTO, MsgType, SentenceType
 
 
 class TTSProvider(TTSProviderBase):
@@ -26,14 +19,7 @@ class TTSProvider(TTSProviderBase):
         self.host = "api.siliconflow.cn"
         self.api_url = f"https://{self.host}/v1/audio/speech"
 
-    def generate_filename(self, extension=".wav"):
-        return os.path.join(
-            self.output_file,
-            f"tts-{datetime.now().date()}@{uuid.uuid4().hex}{extension}",
-        )
-
-    async def text_to_speak(self, u_id, text, is_last_text=False, is_first_text=False):
-        tmp_file = self.generate_filename()
+    async def text_to_speak(self, text, output_file):
         request_json = {
             "model": self.model,
             "input": text,
@@ -44,26 +30,12 @@ class TTSProvider(TTSProviderBase):
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
         }
-        response = requests.request(
-            "POST", self.api_url, json=request_json, headers=headers
-        )
-        data = response.content
-        file_to_save = open(tmp_file, "wb")
-        file_to_save.write(data)
-        # 使用 pydub 读取临时文件
-        audio = AudioSegment.from_file(tmp_file, format="wav")
-        audio = audio.set_channels(1).set_frame_rate(16000)
-        opus_datas = self.wav_to_opus_data_audio_raw(audio.raw_data)
-        yield TTSMessageDTO(
-            u_id=u_id,
-            msg_type=MsgType.TTS_TEXT_RESPONSE,
-            content=opus_datas,
-            tts_finish_text=text,
-            sentence_type=SentenceType.SENTENCE_START,
-        )
-        # 用完后删除临时文件
         try:
-            os.remove(tmp_file)
-        except FileNotFoundError:
-            # 若文件不存在，忽略该异常
-            pass
+            response = requests.request(
+                "POST", self.api_url, json=request_json, headers=headers
+            )
+            data = response.content
+            file_to_save = open(output_file, "wb")
+            file_to_save.write(data)
+        except Exception as e:
+            raise Exception(f"{__name__} error: {e}")

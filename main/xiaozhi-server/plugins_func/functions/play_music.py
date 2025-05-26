@@ -7,12 +7,11 @@ import asyncio
 import difflib
 import traceback
 from pathlib import Path
-
-from core.providers.tts.dto.dto import TTSMessageDTO, MsgType
 from core.utils import p3
 from core.handle.sendAudioHandle import send_stt_message
 from plugins_func.register import register_function, ToolType, ActionResponse, Action
 from core.utils.dialogue import Message
+from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
 
 TAG = __name__
 
@@ -38,7 +37,7 @@ play_music_function_desc = {
 
 
 @register_function("play_music", play_music_function_desc, ToolType.SYSTEM_CTL)
-def play_music(conn, song_name=None):
+def play_music(conn, song_name: str):
     try:
         music_intent = (
             f"播放音乐 {song_name}" if song_name != "random" else "随机播放音乐"
@@ -122,8 +121,8 @@ def get_music_files(music_dir, music_ext):
 def initialize_music_handler(conn):
     global MUSIC_CACHE
     if MUSIC_CACHE == {}:
-        if "music" in conn.config:
-            MUSIC_CACHE["music_config"] = conn.config["music"]
+        if "play_music" in conn.config["plugins"]:
+            MUSIC_CACHE["music_config"] = conn.config["plugins"]["play_music"]
             MUSIC_CACHE["music_dir"] = os.path.abspath(
                 MUSIC_CACHE["music_config"].get("music_dir", "./music")  # 默认路径修改
             )
@@ -219,29 +218,34 @@ async def play_local_music(conn, specific_file=None):
         await send_stt_message(conn, text)
         conn.dialogue.put(Message(role="assistant", content=text))
 
-        conn.tts.tts_one_sentence(conn, text)
-
-        if music_path.endswith(".p3"):
-            opus_packets, _ = p3.decode_opus_from_file(music_path)
-        else:
-            opus_packets, _ = conn.tts.audio_to_opus_data(music_path)
-        conn.tts.tts_audio_queue.put(
+        conn.tts.tts_text_queue.put(
             TTSMessageDTO(
-                u_id=conn.u_id,
-                msg_type=MsgType.TTS_TEXT_RESPONSE,
-                content=opus_packets,
-                tts_finish_text="",
-                sentence_type=None,
-                duration=0,
+                sentence_id=conn.sentence_id,
+                sentence_type=SentenceType.FIRST,
+                content_type=ContentType.ACTION,
             )
         )
-        conn.tts.tts_audio_queue.put(
+        conn.tts.tts_text_queue.put(
             TTSMessageDTO(
-                u_id=conn.u_id,
-                msg_type=MsgType.STOP_TTS_RESPONSE,
-                content=[],
-                tts_finish_text="",
-                sentence_type=None,
+                sentence_id=conn.sentence_id,
+                sentence_type=SentenceType.MIDDLE,
+                content_type=ContentType.TEXT,
+                content_detail=text,
+            )
+        )
+        conn.tts.tts_text_queue.put(
+            TTSMessageDTO(
+                sentence_id=conn.sentence_id,
+                sentence_type=SentenceType.MIDDLE,
+                content_type=ContentType.FILE,
+                content_file=music_path,
+            )
+        )
+        conn.tts.tts_text_queue.put(
+            TTSMessageDTO(
+                sentence_id=conn.sentence_id,
+                sentence_type=SentenceType.LAST,
+                content_type=ContentType.ACTION,
             )
         )
 

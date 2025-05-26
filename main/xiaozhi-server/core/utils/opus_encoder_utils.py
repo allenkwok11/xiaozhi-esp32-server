@@ -3,7 +3,6 @@ Opus编码工具类
 将PCM音频数据编码为Opus格式
 """
 
-import array
 import logging
 import traceback
 

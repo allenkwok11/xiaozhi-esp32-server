@@ -15,15 +15,26 @@ async def _get_device_status(conn, device_name, device_type, property_name):
     return status
 
 
-async def _set_device_property(conn, device_name, device_type, method_name, property_name, new_value=None, action=None, step=10):
+async def _set_device_property(
+    conn,
+    device_name,
+    device_type,
+    method_name,
+    property_name,
+    new_value=None,
+    action=None,
+    step=10,
+):
     """设置设备属性"""
-    current_value = await _get_device_status(conn, device_name, device_type, property_name)
+    current_value = await _get_device_status(
+        conn, device_name, device_type, property_name
+    )
 
-    if action == 'raise':
+    if action == "raise":
         current_value += step
-    elif action == 'lower':
+    elif action == "lower":
         current_value -= step
-    elif action == 'set':
+    elif action == "set":
         if new_value is None:
             raise Exception(f"缺少{property_name}参数")
         current_value = new_value
@@ -37,8 +48,7 @@ async def _set_device_property(conn, device_name, device_type, method_name, prop
 
 def _handle_device_action(conn, func, success_message, error_message, *args, **kwargs):
     """处理设备操作的通用函数"""
-    future = asyncio.run_coroutine_threadsafe(
-        func(conn, *args, **kwargs), conn.loop)
+    future = asyncio.run_coroutine_threadsafe(func(conn, *args, **kwargs), conn.loop)
     try:
         result = future.result()
         logger.bind(tag=TAG).info(f"{success_message}: {result}")
@@ -75,26 +85,41 @@ handle_device_function_desc = {
                 "device_type": {
                     "type": "string",
                     "description": "设备类型，**严格限定为Speaker（音量）或Screen（亮度）**，其他设备类型禁止调用此函数",
-                    "enum": ["Speaker", "Screen"]
-
+                    "enum": ["Speaker", "Screen"],
                 },
                 "action": {
                     "type": "string",
-                    "description": "动作名称，可选值：get(获取),set(设置),raise(提高),lower(降低)"
+                    "description": "动作名称，可选值：get(获取),set(设置),raise(提高),lower(降低)",
                 },
                 "value": {
                     "type": "integer",
-                    "description": "值大小，可选值：0-100之间的整数"
-                }
+                    "description": "值大小，可选值：0-100之间的整数",
+                },
             },
-            "required": ["device_type", "action"]
-        }
-    }
+            "required": ["device_type", "action"],
+        },
+    },
 }
 
 
-@register_function('handle_speaker_volume_or_screen_brightness', handle_device_function_desc, ToolType.IOT_CTL)
-def handle_speaker_volume_or_screen_brightness(conn, device_type: str, action: str, value: int = None):
+@register_function(
+    "handle_speaker_volume_or_screen_brightness",
+    handle_device_function_desc,
+    ToolType.IOT_CTL,
+)
+def handle_speaker_volume_or_screen_brightness(
+    conn, device_type: str, action: str, value: int = None
+):
+    # 检查value是否为中文值
+    if (
+        value is not None
+        and isinstance(value, str)
+        and any("\u4e00" <= char <= "\u9fff" for char in str(value))
+    ):
+        raise Exception(
+            f"请直接告诉我要将{'音量' if device_type=='Speaker' else '亮度'}调整成多少"
+        )
+
     if device_type == "Speaker":
         method_name, property_name, device_name = "SetVolume", "volume", "音量"
     elif device_type == "Screen":
@@ -108,13 +133,25 @@ def handle_speaker_volume_or_screen_brightness(conn, device_type: str, action: s
     if action == "get":
         # get
         return _handle_device_action(
-            conn, _get_device_status, f"当前{device_name}", f"获取{device_name}失败",
-            device_name=device_name, device_type=device_type, property_name=property_name,
+            conn,
+            _get_device_status,
+            f"当前{device_name}",
+            f"获取{device_name}失败",
+            device_name=device_name,
+            device_type=device_type,
+            property_name=property_name,
         )
     else:
         # set, raise, lower
         return _handle_device_action(
-            conn, _set_device_property, f"{device_name}已调整到", f"{device_name}调整失败",
-            device_name=device_name, device_type=device_type, method_name=method_name,
-            property_name=property_name, new_value=value, action=action
+            conn,
+            _set_device_property,
+            f"{device_name}已调整到",
+            f"{device_name}调整失败",
+            device_name=device_name,
+            device_type=device_type,
+            method_name=method_name,
+            property_name=property_name,
+            new_value=value,
+            action=action,
         )

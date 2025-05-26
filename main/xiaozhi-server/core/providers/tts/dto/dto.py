@@ -1,42 +1,36 @@
 from enum import Enum
-from typing import Union
-
-
-class MsgType(Enum):
-    # 请求类型
-    START_TTS_REQUEST = "START_TTS_REQUEST"
-    TTS_TEXT_REQUEST = "TTS_TEXT_REQUEST"
-    STOP_TTS_REQUEST = "STOP_TTS_REQUEST"
-
-    # 返回类型
-    START_TTS_RESPONSE = "START_TTS_RESPONSE"
-    TTS_TEXT_RESPONSE = "TTS_TEXT_RESPONSE"
-    STOP_TTS_RESPONSE = "STOP_TTS_RESPONSE"
+from typing import Union, Optional
 
 
 class SentenceType(Enum):
-    # 句子开始
-    SENTENCE_START = "SENTENCE_START"
-    # 句子结束
-    SENTENCE_END = "SENTENCE_END"
+    # 说话阶段
+    FIRST = "FIRST"  # 首句话
+    MIDDLE = "MIDDLE"  # 说话中
+    LAST = "LAST"  # 最后一句
+
+
+class ContentType(Enum):
+    # 内容类型
+    TEXT = "TEXT"  # 文本内容
+    FILE = "FILE"  # 文件内容
+    ACTION = "ACTION"  # 动作内容
 
 
 class TTSMessageDTO:
-    def __init__(self, u_id: str, msg_type: MsgType, content: Union[str, bytes], tts_finish_text=None,
-                 sentence_type: SentenceType = None, duration=0):
-        if not isinstance(msg_type, MsgType):
-            raise ValueError("msg_type must be an instance of MsgType Enum")
-        if not isinstance(content, (str, list, bytes)):
-            raise ValueError("content must be of type str or bytes")
-
-        # 唯一id，每个合成到合成结束，使用同一个id
-        self.u_id = u_id
-        self.msg_type = msg_type
+    def __init__(
+        self,
+        sentence_id: str,
+        # 说话阶段
+        sentence_type: SentenceType,
+        # 内容类型
+        content_type: ContentType,
+        # 内容详情，一般是需要转换的文本或者音频的歌词
+        content_detail: Optional[str] = None,
+        # 如果内容类型为文件，则需要传入文件路径
+        content_file: Optional[str] = None,
+    ):
+        self.sentence_id = sentence_id
         self.sentence_type = sentence_type
-        self.content = content
-        self.tts_finish_text = tts_finish_text
-        self.duration = duration
-
-    def __repr__(self):
-        content_preview = self.content if isinstance(self.content, str) else "<binary data>"
-        return f"MessageDTO(msg_type={self.msg_type}, content={content_preview})"
+        self.content_type = content_type
+        self.content_detail = content_detail
+        self.content_file = content_file
