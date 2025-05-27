@@ -167,7 +167,12 @@ class MemoryProvider(MemoryProviderBase):
         msgStr += f"当前时间：{time_str}"
 
         if self.save_to_file:
-            result = self.llm.response_no_stream(short_term_memory_prompt, msgStr)
+            result = self.llm.response_no_stream(
+                short_term_memory_prompt,
+                msgStr,
+                max_tokens=2000,
+                temperature=0.2,
+            )
             json_str = extract_json_data(result)
             try:
                 json.loads(json_str)  # 检查json格式是否正确
@@ -177,7 +182,10 @@ class MemoryProvider(MemoryProviderBase):
                 print("Error:", e)
         else:
             result = self.llm.response_no_stream(
-                short_term_memory_prompt_only_content, msgStr
+                short_term_memory_prompt_only_content,
+                msgStr,
+                max_tokens=2000,
+                temperature=0.2,
             )
             save_mem_local_short(self.role_id, result)
         logger.bind(tag=TAG).info(f"Save memory successful - Role: {self.role_id}")

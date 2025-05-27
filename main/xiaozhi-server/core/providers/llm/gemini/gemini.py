@@ -112,7 +112,7 @@ class LLMProvider(LLMProviderBase):
         ]
 
     # Gemini文档提到，无需维护session-id，直接用dialogue拼接而成
-    def response(self, session_id, dialogue):
+    def response(self, session_id, dialogue, **kwargs):
         yield from self._generate(dialogue, None)
 
     def response_with_functions(self, session_id, dialogue, functions=None):

@@ -251,6 +251,7 @@ public class ConfigServiceImpl implements ConfigService {
         String[] modelTypes = { "VAD", "ASR", "TTS", "Memory", "Intent", "LLM" };
         String[] modelIds = { vadModelId, asrModelId, ttsModelId, memModelId, intentModelId, llmModelId };
         String intentLLMModelId = null;
+        String memLocalShortLLMModelId = null;
 
         for (int i = 0; i < modelIds.length; i++) {
             if (modelIds[i] == null) {
@@ -269,7 +270,7 @@ public class ConfigServiceImpl implements ConfigService {
                     Map<String, Object> map = (Map<String, Object>) model.getConfigJson();
                     if ("intent_llm".equals(map.get("type"))) {
                         intentLLMModelId = (String) map.get("llm");
-                        if (intentLLMModelId != null && intentLLMModelId.equals(llmModelId)) {
+                        if (StringUtils.isNotBlank(intentLLMModelId) && intentLLMModelId.equals(llmModelId)) {
                             intentLLMModelId = null;
                         }
                     }
@@ -281,10 +282,31 @@ public class ConfigServiceImpl implements ConfigService {
                         }
                     }
                 }
+                if ("Memory".equals(modelTypes[i])) {
+                    Map<String, Object> map = (Map<String, Object>) model.getConfigJson();
+                    if ("mem_local_short".equals(map.get("type"))) {
+                        memLocalShortLLMModelId = (String) map.get("llm");
+                        if (StringUtils.isNotBlank(memLocalShortLLMModelId)
+                                && memLocalShortLLMModelId.equals(llmModelId)) {
+                            memLocalShortLLMModelId = null;
+                        }
+                    }
+                }
                 // 如果是LLM类型，且intentLLMModelId不为空，则添加附加模型
-                if ("LLM".equals(modelTypes[i]) && intentLLMModelId != null) {
-                    ModelConfigEntity intentLLM = modelConfigService.getModelById(intentLLMModelId, isCache);
-                    typeConfig.put(intentLLM.getId(), intentLLM.getConfigJson());
+                if ("LLM".equals(modelTypes[i])) {
+                    if (StringUtils.isNotBlank(intentLLMModelId)) {
+                        if (!typeConfig.containsKey(intentLLMModelId)) {
+                            ModelConfigEntity intentLLM = modelConfigService.getModelById(intentLLMModelId, isCache);
+                            typeConfig.put(intentLLM.getId(), intentLLM.getConfigJson());
+                        }
+                    }
+                    if (StringUtils.isNotBlank(memLocalShortLLMModelId)) {
+                        if (!typeConfig.containsKey(memLocalShortLLMModelId)) {
+                            ModelConfigEntity memLocalShortLLM = modelConfigService
+                                    .getModelById(memLocalShortLLMModelId, isCache);
+                            typeConfig.put(memLocalShortLLM.getId(), memLocalShortLLM.getConfigJson());
+                        }
+                    }
                 }
             }
             result.put(modelTypes[i], typeConfig);
