@@ -315,6 +315,10 @@ class ConnectionHandler:
             )
 
     def _initialize_components(self):
+        self.selected_module_str = build_module_string(
+            self.config.get("selected_module", {})
+        )
+        update_module_string(self.selected_module_str)
         """初始化组件"""
         if self.config.get("prompt") is not None:
             self.prompt = self.config["prompt"]
@@ -351,8 +355,6 @@ class ConnectionHandler:
     def _initialize_private_config(self):
         """如果是从配置文件获取，则进行二次实例化"""
         if not self.read_config_from_api:
-            self.selected_module_str = build_module_string(self.config.get("selected_module", {}))
-            update_module_string(self.selected_module_str)
             return
         """从接口获取差异化的配置进行二次实例化，非全量重新实例化"""
         try:
@@ -431,10 +433,6 @@ class ConnectionHandler:
                 init_memory,
                 init_intent,
             )
-            # 在初始化组件后更新模块字符串
-            self.selected_module_str = build_module_string(self.config.get("selected_module", {}))
-            # 更新日志模块配置
-            update_module_string(self.selected_module_str)
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"初始化组件失败: {e}")
             modules = {}
