@@ -1,24 +1,15 @@
 import os
+import sys
 import copy
 import json
-import subprocess
-import sys
 import uuid
 import time
 import queue
 import asyncio
-import traceback
 import threading
+import traceback
+import subprocess
 import websockets
-from typing import Dict, Any
-from plugins_func.loadplugins import auto_import_modules
-from config.logger import setup_logging
-from config.config_loader import get_project_dir
-from core.utils import p3
-from core.utils.dialogue import Message, Dialogue
-from core.providers.tts.dto.dto import ContentType, TTSMessageDTO, SentenceType
-from core.providers.tts.default import DefaultTTS
-from core.handle.textHandle import handleTextMessage
 from core.utils.util import (
     extract_json_from_string,
     initialize_modules,
@@ -27,16 +18,23 @@ from core.utils.util import (
     filter_sensitive_info,
     initialize_tts,
 )
+from typing import Dict, Any
+from config.logger import setup_logging
+from core.mcp.manager import MCPManager
+from core.handle.reportHandle import report
+from core.providers.tts.default import DefaultTTS
 from concurrent.futures import ThreadPoolExecutor
-from core.handle.receiveAudioHandle import handleAudioMessage
+from core.utils.dialogue import Message, Dialogue
+from core.handle.textHandle import handleTextMessage
 from core.handle.functionHandler import FunctionHandler
+from plugins_func.loadplugins import auto_import_modules
 from plugins_func.register import Action, ActionResponse
 from core.auth import AuthMiddleware, AuthenticationError
-from core.mcp.manager import MCPManager
 from config.config_loader import get_private_config_from_api
+from core.handle.receiveAudioHandle import handleAudioMessage
+from core.providers.tts.dto.dto import ContentType, TTSMessageDTO, SentenceType
 from config.manage_api_client import DeviceNotFoundException, DeviceBindException
-from core.utils.output_counter import add_device_output
-from core.handle.reportHandle import report
+
 
 TAG = __name__
 
@@ -860,23 +858,24 @@ class ConnectionHandler:
 
     def clear_queues(self):
         """清空所有任务队列"""
-        self.logger.bind(tag=TAG).debug(
-            f"开始清理: TTS队列大小={self.tts.tts_text_queue.qsize()}, 音频队列大小={self.tts.tts_audio_queue.qsize()}"
-        )
+        if self.tts:
+            self.logger.bind(tag=TAG).debug(
+                f"开始清理: TTS队列大小={self.tts.tts_text_queue.qsize()}, 音频队列大小={self.tts.tts_audio_queue.qsize()}"
+            )
 
-        # 使用非阻塞方式清空队列
-        for q in [self.tts.tts_text_queue, self.tts.tts_audio_queue]:
-            if not q:
-                continue
-            while True:
-                try:
-                    q.get_nowait()
-                except queue.Empty:
-                    break
+            # 使用非阻塞方式清空队列
+            for q in [self.tts.tts_text_queue, self.tts.tts_audio_queue]:
+                if not q:
+                    continue
+                while True:
+                    try:
+                        q.get_nowait()
+                    except queue.Empty:
+                        break
 
-        self.logger.bind(tag=TAG).debug(
-            f"清理结束: TTS队列大小={self.tts.tts_text_queue.qsize()}, 音频队列大小={self.tts.tts_audio_queue.qsize()}"
-        )
+            self.logger.bind(tag=TAG).debug(
+                f"清理结束: TTS队列大小={self.tts.tts_text_queue.qsize()}, 音频队列大小={self.tts.tts_audio_queue.qsize()}"
+            )
 
     def reset_vad_states(self):
         self.client_audio_buffer = bytearray()

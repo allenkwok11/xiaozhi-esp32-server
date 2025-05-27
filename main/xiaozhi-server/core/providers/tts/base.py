@@ -10,6 +10,8 @@ from abc import ABC, abstractmethod
 from config.logger import setup_logging
 from core.utils.util import audio_to_data
 from core.utils.tts import MarkdownCleaner
+from core.utils.output_counter import add_device_output
+from core.handle.reportHandle import enqueue_tts_report
 from core.handle.sendAudioHandle import sendAudioMessage
 from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
 
@@ -226,6 +228,9 @@ class TTSProviderBase(ABC):
                     self.conn.loop,
                 )
                 future.result()
+                if self.conn.max_output_size > 0 and text:
+                    add_device_output(self.conn.headers.get("device-id"), len(text))
+                enqueue_tts_report(self.conn, text, audio_datas)
             except Exception as e:
                 logger.bind(tag=TAG).error(
                     f"audio_play_priority priority_thread: {text} {e}"
@@ -298,6 +303,14 @@ class TTSProviderBase(ABC):
             audio_datas, _ = self.audio_to_pcm_data(tts_file)
         else:
             audio_datas, _ = self.audio_to_opus_data(tts_file)
+
+        if (
+            self.delete_audio_file
+            and tts_file is not None
+            and os.path.exists(tts_file)
+            and tts_file.startswith(self.output_file)
+        ):
+            os.remove(tts_file)
         return audio_datas
 
     def _process_remaining_text(self):

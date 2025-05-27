@@ -146,7 +146,7 @@ tmp
 .history
 .DS_Store
 main/xiaozhi-server/data
-main/xiaozhi-server/config/assets/wakeup_words.*
+
 main/manager-web/node_modules
 .config.yaml
 .secrets.yaml
@@ -163,6 +163,7 @@ main/xiaozhi-server/models/sherpa-onnx*
 /models/SenseVoiceSmall/model.pt
 my_wakeup_words.mp3
 !main/xiaozhi-server/config/assets/bind_code.wav
+!main/xiaozhi-server/config/assets/wakeup_words.wav
 !main/xiaozhi-server/config/assets/bind_not_found.wav
 !main/xiaozhi-server/config/assets/bind_code/*.wav
 !main/xiaozhi-server/config/assets/max_output_size.wav

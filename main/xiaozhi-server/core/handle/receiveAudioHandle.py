@@ -47,9 +47,8 @@ async def handleAudioMessage(conn, audio):
             text_len, _ = remove_punctuation_and_length(raw_text)
             if text_len > 0:
                 # 使用自定义模块进行上报
-                enqueue_asr_report(conn, raw_text, copy.deepcopy(conn.asr_audio))
-
                 await startToChat(conn, raw_text)
+                enqueue_asr_report(conn, raw_text, copy.deepcopy(conn.asr_audio))
             else:
                 conn.asr_server_receive = True
         conn.asr_audio.clear()

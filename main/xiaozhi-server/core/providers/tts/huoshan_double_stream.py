@@ -1,3 +1,4 @@
+import os
 import asyncio
 import threading
 import traceback
@@ -149,7 +150,7 @@ class TTSProvider(TTSProviderBase):
         self.start_connection_flag = False
         self.tts_text = ""
         # 合成文字语音后，播放的音频文件列表
-        self.tts_audio_files = []
+        self.before_stop_play_files = []
         self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
             sample_rate=16000, channels=1, frame_size_ms=60
         )
@@ -188,6 +189,7 @@ class TTSProvider(TTSProviderBase):
                     )
                     future.result()
                     self.tts_audio_first_sentence = True
+                    self.before_stop_play_files.clear()
                 elif ContentType.TEXT == message.content_type:
                     if message.content_detail:
                         future = asyncio.run_coroutine_threadsafe(
@@ -196,9 +198,18 @@ class TTSProvider(TTSProviderBase):
                         )
                         future.result()
                 elif ContentType.FILE == message.content_type:
-                    pass
+                    self.before_stop_play_files.append(
+                        (message.content_file, message.content_detail)
+                    )
 
                 if message.sentence_type == SentenceType.LAST:
+                    for tts_file, text in self.before_stop_play_files:
+                        if tts_file and os.path.exists(tts_file):
+                            audio_datas = self._process_audio_file(tts_file)
+                            self.tts_audio_queue.put(
+                                (message.sentence_type, audio_datas, text)
+                            )
+                    self.before_stop_play_files.clear()
                     future = asyncio.run_coroutine_threadsafe(
                         self.finish_session(self.conn.sentence_id), loop=self.conn.loop
                     )
