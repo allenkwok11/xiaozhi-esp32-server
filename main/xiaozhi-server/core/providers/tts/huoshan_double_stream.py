@@ -143,10 +143,13 @@ class TTSProvider(TTSProviderBase):
         self.access_token = config.get("access_token")
         self.cluster = config.get("cluster")
         self.resource_id = config.get("resource_id")
+        if config.get("private_voice"):
+            self.speaker = config.get("private_voice")
+        else:
+            self.speaker = config.get("speaker")
         self.voice = config.get("voice")
         self.ws_url = config.get("ws_url")
         self.authorization = config.get("authorization")
-        self.speaker = config.get("speaker")
         self.header = {"Authorization": f"{self.authorization}{self.access_token}"}
         self.enable_two_way = True
         self.start_connection_flag = False
