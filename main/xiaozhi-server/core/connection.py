@@ -13,7 +13,7 @@ import threading
 import websockets
 from typing import Dict, Any
 from plugins_func.loadplugins import auto_import_modules
-from config.logger import setup_logging
+from config.logger import setup_logging, build_module_string, update_module_string
 from config.config_loader import get_project_dir
 from core.utils import p3
 from core.utils.dialogue import Message, Dialogue
@@ -351,6 +351,8 @@ class ConnectionHandler:
     def _initialize_private_config(self):
         """如果是从配置文件获取，则进行二次实例化"""
         if not self.read_config_from_api:
+            self.selected_module_str = build_module_string(self.config.get("selected_module", {}))
+            update_module_string(self.selected_module_str)
             return
         """从接口获取差异化的配置进行二次实例化，非全量重新实例化"""
         try:
@@ -429,6 +431,10 @@ class ConnectionHandler:
                 init_memory,
                 init_intent,
             )
+            # 在初始化组件后更新模块字符串
+            self.selected_module_str = build_module_string(self.config.get("selected_module", {}))
+            # 更新日志模块配置
+            update_module_string(self.selected_module_str)
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"初始化组件失败: {e}")
             modules = {}
