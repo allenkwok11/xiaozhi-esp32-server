@@ -89,13 +89,12 @@ class ConnectionHandler:
         self.stop_event = threading.Event()
         self.tts_queue = queue.Queue()
         self.audio_play_queue = queue.Queue()
-        self.executor = ThreadPoolExecutor(max_workers=10)
+        self.executor = ThreadPoolExecutor(max_workers=5)
 
         # 添加上报线程池
-        self.report_thread_pool = ThreadPoolExecutor(max_workers=5, thread_name_prefix="report_worker")
         self.report_queue = queue.Queue()
         self.report_thread = None
-        # TODO(haotian): 2025/5/12 可以通过修改此处，调节asr的上报和tts的上报
+        # 未来可以通过修改此处，调节asr的上报和tts的上报，目前默认都开启
         self.report_asr_enable = self.read_config_from_api
         self.report_tts_enable = self.read_config_from_api
 
@@ -465,10 +464,13 @@ class ConnectionHandler:
             return
         # 使用 mem_local_short 模式
         elif memory_type == "mem_local_short":
-            memory_llm_name = memory_config[self.config["selected_module"]["Memory"]]["llm"]
+            memory_llm_name = memory_config[self.config["selected_module"]["Memory"]][
+                "llm"
+            ]
             if memory_llm_name and memory_llm_name in self.config["LLM"]:
                 # 如果配置了专用LLM，则创建独立的LLM实例
                 from core.utils import llm as llm_utils
+
                 memory_llm_config = self.config["LLM"][memory_llm_name]
                 memory_llm_type = memory_llm_config.get("type", memory_llm_name)
                 memory_llm = llm_utils.create_instance(
@@ -922,7 +924,9 @@ class ConnectionHandler:
 
                 try:
                     # 提交任务到线程池
-                    self.report_thread_pool.submit(self._process_report, type, text, audio_data, report_time)
+                    self.executor.submit(
+                        self._process_report, type, text, audio_data, report_time
+                    )
                 except Exception as e:
                     self.logger.bind(tag=TAG).error(f"聊天记录上报线程异常: {e}")
             except queue.Empty:
@@ -1000,12 +1004,6 @@ class ConnectionHandler:
         if self.executor:
             self.executor.shutdown(wait=False)
             self.executor = None
-
-        # 关闭上报线程池
-        if self.report_thread_pool:
-            self.report_thread_pool.shutdown(wait=False)
-            self.report_thread_pool = None
-            self.logger.bind(tag=TAG).info("上报线程池已关闭")
 
         self.logger.bind(tag=TAG).info("连接资源已释放")
 
