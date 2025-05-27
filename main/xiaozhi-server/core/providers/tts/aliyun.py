@@ -81,7 +81,10 @@ class TTSProvider(TTSProviderBase):
         self.appkey = config.get("appkey")
         self.format = config.get("format", "wav")
         self.sample_rate = config.get("sample_rate", 16000)
-        self.voice = config.get("voice", "xiaoyun")
+        if config.get("private_voice"):
+            self.voice = config.get("private_voice")
+        else:
+            self.voice = config.get("voice","xiaoyun")
         self.volume = config.get("volume", 50)
         self.speech_rate = config.get("speech_rate", 0)
         self.pitch_rate = config.get("pitch_rate", 0)
