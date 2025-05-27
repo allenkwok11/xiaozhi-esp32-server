@@ -13,7 +13,12 @@ from core.utils.tts import MarkdownCleaner
 from core.utils.output_counter import add_device_output
 from core.handle.reportHandle import enqueue_tts_report
 from core.handle.sendAudioHandle import sendAudioMessage
-from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
+from core.providers.tts.dto.dto import (
+    TTSMessageDTO,
+    SentenceType,
+    ContentType,
+    InterfaceType,
+)
 
 
 import traceback
@@ -24,10 +29,11 @@ logger = setup_logging()
 
 class TTSProviderBase(ABC):
     def __init__(self, config, delete_audio_file):
+        self.interface_type = InterfaceType.NON_STREAM
         self.conn = None
         self.tts_timeout = 10
         self.delete_audio_file = delete_audio_file
-        self.output_file = config.get("output_dir")
+        self.output_file = config.get("output_dir", "tmp/")
         self.tts_text_queue = queue.Queue()
         self.tts_audio_queue = queue.Queue()
         self.tts_audio_first_sentence = True

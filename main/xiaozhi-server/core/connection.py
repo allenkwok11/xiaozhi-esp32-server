@@ -298,30 +298,36 @@ class ConnectionHandler:
             )
 
     def _initialize_components(self):
-        """初始化组件"""
-        if self.config.get("prompt") is not None:
-            self.prompt = self.config["prompt"]
-            self.change_system_prompt(self.prompt)
-            self.logger.bind(tag=TAG).info(
-                f"初始化组件: prompt成功 {self.prompt[:50]}..."
+        try:
+
+            """初始化组件"""
+            if self.config.get("prompt") is not None:
+                self.prompt = self.config["prompt"]
+                self.change_system_prompt(self.prompt)
+                self.logger.bind(tag=TAG).info(
+                    f"初始化组件: prompt成功 {self.prompt[:50]}..."
+                )
+
+            """初始化本地组件"""
+            if self.vad is None:
+                self.vad = self._vad
+            if self.asr is None:
+                self.asr = self._asr
+            if self.tts is None:
+                self.tts = self._initialize_tts()
+            # 使用事件循环运行异步方法
+            asyncio.run_coroutine_threadsafe(
+                self.tts.open_audio_channels(self), self.loop
             )
 
-        """初始化本地组件"""
-        if self.vad is None:
-            self.vad = self._vad
-        if self.asr is None:
-            self.asr = self._asr
-        if self.tts is None:
-            self.tts = self._initialize_tts()
-        # 使用事件循环运行异步方法
-        asyncio.run_coroutine_threadsafe(self.tts.open_audio_channels(self), self.loop)
-
-        """加载记忆"""
-        self._initialize_memory()
-        """加载意图识别"""
-        self._initialize_intent()
-        """初始化上报线程"""
-        self._init_report_threads()
+            """加载记忆"""
+            self._initialize_memory()
+            """加载意图识别"""
+            self._initialize_intent()
+            """初始化上报线程"""
+            self._init_report_threads()
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"实例化组件失败: {e}")
 
     def _init_report_threads(self):
         """初始化ASR和TTS上报线程"""

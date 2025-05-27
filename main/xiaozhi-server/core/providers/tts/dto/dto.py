@@ -16,6 +16,13 @@ class ContentType(Enum):
     ACTION = "ACTION"  # 动作内容
 
 
+class InterfaceType(Enum):
+    # 接口类型
+    DUAL_STREAM = "DUAL_STREAM"  # 双流式
+    SINGLE_STREAM = "SINGLE_STREAM"  # 单流式
+    NON_STREAM = "NON_STREAM"  # 非流式
+
+
 class TTSMessageDTO:
     def __init__(
         self,

@@ -4,10 +4,9 @@ import json
 import random
 import shutil
 import asyncio
-from core.providers.tts.dto.dto import ContentType
-from core.providers.tts.dto.dto import SentenceType
 from core.handle.sendAudioHandle import send_stt_message
 from core.utils.util import remove_punctuation_and_length
+from core.providers.tts.dto.dto import ContentType, InterfaceType
 
 
 TAG = __name__
@@ -40,6 +39,10 @@ async def checkWakeupWords(conn, text):
     enable_wakeup_words_response_cache = conn.config[
         "enable_wakeup_words_response_cache"
     ]
+    """是否用的是非流式tts"""
+    if conn.tts and conn.tts.interface_type != InterfaceType.NON_STREAM:
+        return False
+
     """是否开启唤醒词加速"""
     if not enable_wakeup_words_response_cache:
         return False

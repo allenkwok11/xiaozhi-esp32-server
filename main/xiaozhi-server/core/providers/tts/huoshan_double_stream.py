@@ -1,15 +1,16 @@
 import os
+import uuid
+import json
+import queue
 import asyncio
 import threading
 import traceback
-import uuid
-import json
 import websockets
-from core.utils import opus_encoder_utils
-import queue
 from config.logger import setup_logging
+from core.utils import opus_encoder_utils
+from core.utils.util import check_model_key
 from core.providers.tts.base import TTSProviderBase
-from core.providers.tts.dto.dto import SentenceType, ContentType
+from core.providers.tts.dto.dto import SentenceType, ContentType, InterfaceType
 
 TAG = __name__
 logger = setup_logging()
@@ -137,6 +138,7 @@ class Response:
 class TTSProvider(TTSProviderBase):
     def __init__(self, config, delete_audio_file):
         super().__init__(config, delete_audio_file)
+        self.interface_type = InterfaceType.DUAL_STREAM
         self.appId = config.get("appid")
         self.access_token = config.get("access_token")
         self.cluster = config.get("cluster")
@@ -154,6 +156,7 @@ class TTSProvider(TTSProviderBase):
         self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
             sample_rate=16000, channels=1, frame_size_ms=60
         )
+        check_model_key("TTS", self.access_token)
 
     ###################################################################################
     # 火山双流式TTS重写父类的方法--开始
@@ -203,13 +206,6 @@ class TTSProvider(TTSProviderBase):
                     )
 
                 if message.sentence_type == SentenceType.LAST:
-                    for tts_file, text in self.before_stop_play_files:
-                        if tts_file and os.path.exists(tts_file):
-                            audio_datas = self._process_audio_file(tts_file)
-                            self.tts_audio_queue.put(
-                                (message.sentence_type, audio_datas, text)
-                            )
-                    self.before_stop_play_files.clear()
                     future = asyncio.run_coroutine_threadsafe(
                         self.finish_session(self.conn.sentence_id), loop=self.conn.loop
                     )
@@ -262,6 +258,13 @@ class TTSProvider(TTSProviderBase):
                     logger.bind(tag=TAG).debug(f"句子结束～～{self.tts_text}")
                 elif res.optional.event == EVENT_SessionFinished:
                     logger.bind(tag=TAG).debug(f"会话结束～～")
+                    for tts_file, text in self.before_stop_play_files:
+                        if tts_file and os.path.exists(tts_file):
+                            audio_datas = self._process_audio_file(tts_file)
+                            self.tts_audio_queue.put(
+                                (SentenceType.MIDDLE, audio_datas, text)
+                            )
+                    self.before_stop_play_files.clear()
                     self.tts_audio_queue.put((SentenceType.LAST, [], None))
                     continue
             except websockets.ConnectionClosed:
