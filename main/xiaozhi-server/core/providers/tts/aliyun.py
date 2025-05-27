@@ -91,11 +91,24 @@ class TTSProvider(TTSProviderBase):
 
         self.appkey = config.get("appkey")
         self.format = config.get("format", "wav")
-        self.sample_rate = config.get("sample_rate", 16000)
-        self.voice = config.get("voice", "xiaoyun")
-        self.volume = config.get("volume", 50)
-        self.speech_rate = config.get("speech_rate", 0)
-        self.pitch_rate = config.get("pitch_rate", 0)
+
+        sample_rate = config.get("sample_rate", "16000")
+        self.sample_rate = int(sample_rate) if sample_rate else 16000
+
+        if config.get("private_voice"):
+            self.voice = config.get("private_voice")
+        else:
+            self.voice = config.get("voice", "xiaoyun")
+
+        volume = config.get("volume", "50")
+        self.volume = int(volume) if volume else 50
+
+        speech_rate = config.get("speech_rate", "0")
+        self.speech_rate = int(speech_rate) if speech_rate else 0
+
+        pitch_rate = config.get("pitch_rate", "0")
+        self.pitch_rate = int(pitch_rate) if pitch_rate else 0
+
         self.host = config.get("host", "nls-gateway-cn-shanghai.aliyuncs.com")
         self.api_url = f"https://{self.host}/stream/v1/tts"
         self.header = {"Content-Type": "application/json"}

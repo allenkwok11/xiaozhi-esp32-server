@@ -145,3 +145,5 @@ async def process_intent_result(conn, intent_result, original_text):
 
 def speak_txt(conn, text):
     conn.tts.tts_one_sentence(conn, ContentType.TEXT, content_detail=text)
+    conn.dialogue.put(Message(role="assistant", content=text))
+ 
