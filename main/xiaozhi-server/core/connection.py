@@ -89,12 +89,12 @@ class ConnectionHandler:
         self.stop_event = threading.Event()
         self.tts_queue = queue.Queue()
         self.audio_play_queue = queue.Queue()
-        self.executor = ThreadPoolExecutor(max_workers=10)
+        self.executor = ThreadPoolExecutor(max_workers=5)
 
-        # 上报线程
+        # 添加上报线程池
         self.report_queue = queue.Queue()
         self.report_thread = None
-        # TODO(haotian): 2025/5/12 可以通过修改此处，调节asr的上报和tts的上报
+        # 未来可以通过修改此处，调节asr的上报和tts的上报，目前默认都开启
         self.report_asr_enable = self.read_config_from_api
         self.report_tts_enable = self.read_config_from_api
 
@@ -453,6 +453,37 @@ class ConnectionHandler:
             summary_memory=self.config.get("summaryMemory", None),
             save_to_file=not self.read_config_from_api,
         )
+
+        # 获取记忆总结配置
+        memory_config = self.config["Memory"]
+        memory_type = self.config["Memory"][self.config["selected_module"]["Memory"]][
+            "type"
+        ]
+        # 如果使用 nomen，直接返回
+        if memory_type == "nomem":
+            return
+        # 使用 mem_local_short 模式
+        elif memory_type == "mem_local_short":
+            memory_llm_name = memory_config[self.config["selected_module"]["Memory"]][
+                "llm"
+            ]
+            if memory_llm_name and memory_llm_name in self.config["LLM"]:
+                # 如果配置了专用LLM，则创建独立的LLM实例
+                from core.utils import llm as llm_utils
+
+                memory_llm_config = self.config["LLM"][memory_llm_name]
+                memory_llm_type = memory_llm_config.get("type", memory_llm_name)
+                memory_llm = llm_utils.create_instance(
+                    memory_llm_type, memory_llm_config
+                )
+                self.logger.bind(tag=TAG).info(
+                    f"为记忆总结创建了专用LLM: {memory_llm_name}, 类型: {memory_llm_type}"
+                )
+                self.memory.set_llm(memory_llm)
+            else:
+                # 否则使用主LLM
+                self.memory.set_llm(self.llm)
+                self.logger.bind(tag=TAG).info("使用主LLM作为意图识别模型")
 
     def _initialize_intent(self):
         self.intent_type = self.config["Intent"][
@@ -889,22 +920,32 @@ class ConnectionHandler:
                 if item is None:  # 检测毒丸对象
                     break
 
-                type, text, audio_data = item
+                type, text, audio_data, report_time = item
 
                 try:
-                    # 执行上报（传入二进制数据）
-                    report(self, type, text, audio_data)
+                    # 提交任务到线程池
+                    self.executor.submit(
+                        self._process_report, type, text, audio_data, report_time
+                    )
                 except Exception as e:
                     self.logger.bind(tag=TAG).error(f"聊天记录上报线程异常: {e}")
-                finally:
-                    # 标记任务完成
-                    self.report_queue.task_done()
             except queue.Empty:
                 continue
             except Exception as e:
                 self.logger.bind(tag=TAG).error(f"聊天记录上报工作线程异常: {e}")
 
         self.logger.bind(tag=TAG).info("聊天记录上报线程已退出")
+
+    def _process_report(self, type, text, audio_data, report_time):
+        """处理上报任务"""
+        try:
+            # 执行上报（传入二进制数据）
+            report(self, type, text, audio_data, report_time)
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"上报处理异常: {e}")
+        finally:
+            # 标记任务完成
+            self.report_queue.task_done()
 
     def speak_and_play(self, file_path, content, text_index=0):
         if file_path is not None:
