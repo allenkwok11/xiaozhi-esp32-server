@@ -19,7 +19,6 @@ from core.utils.util import (
     initialize_tts,
 )
 from typing import Dict, Any
-from config.logger import setup_logging
 from core.mcp.manager import MCPManager
 from core.handle.reportHandle import report
 from core.providers.tts.default import DefaultTTS
@@ -33,6 +32,7 @@ from core.auth import AuthMiddleware, AuthenticationError
 from config.config_loader import get_private_config_from_api
 from core.handle.receiveAudioHandle import handleAudioMessage
 from core.providers.tts.dto.dto import ContentType, TTSMessageDTO, SentenceType
+from config.logger import setup_logging, build_module_string, update_module_string
 from config.manage_api_client import DeviceNotFoundException, DeviceBindException
 
 
@@ -299,7 +299,10 @@ class ConnectionHandler:
 
     def _initialize_components(self):
         try:
-
+            self.selected_module_str = build_module_string(
+                self.config.get("selected_module", {})
+            )
+            update_module_string(self.selected_module_str)
             """初始化组件"""
             if self.config.get("prompt") is not None:
                 self.prompt = self.config["prompt"]
