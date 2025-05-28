@@ -163,3 +163,10 @@ databaseChangeLog:
         - sqlFile:
             encoding: utf8
             path: classpath:db/changelog/202505151451.sql
+  - changeSet:
+      id: 202505232203
+      author: CAIXYPROMISE
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/changelog/202505232203.sql
