@@ -3,7 +3,7 @@
     <HeaderBar />
 
     <div class="operation-bar">
-      <h2 class="page-title">供应器管理</h2>
+      <h2 class="page-title">字段管理</h2>
       <div class="right-operations">
         <el-dropdown trigger="click" @command="handleSelectModelType" @visible-change="handleDropdownVisibleChange">
           <el-button class="category-btn">

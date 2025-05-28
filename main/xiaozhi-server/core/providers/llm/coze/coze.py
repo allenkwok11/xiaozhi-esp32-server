@@ -25,7 +25,7 @@ class LLMProvider(LLMProviderBase):
         self.session_conversation_map = {}  # 存储session_id和conversation_id的映射
         check_model_key("CozeLLM", self.personal_access_token)
 
-    def response(self, session_id, dialogue):
+    def response(self, session_id, dialogue, **kwargs):
         coze_api_token = self.personal_access_token
         coze_api_base = COZE_CN_BASE_URL
 
