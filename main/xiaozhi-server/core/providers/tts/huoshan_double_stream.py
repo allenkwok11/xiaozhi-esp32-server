@@ -161,6 +161,12 @@ class TTSProvider(TTSProviderBase):
         )
         check_model_key("TTS", self.access_token)
 
+        # 添加会话状态控制
+        self._session_lock = asyncio.Lock()  # 会话操作的并发锁
+        self._current_session_id = None  # 当前会话ID
+        self._session_started = False  # 会话是否已开始
+        self._session_finished = False  # 会话是否已结束
+
     ###################################################################################
     # 火山双流式TTS重写父类的方法--开始
     ###################################################################################
@@ -444,27 +450,66 @@ class TTSProvider(TTSProviderBase):
         return
 
     async def start_session(self, session_id):
-        header = Header(
-            message_type=FULL_CLIENT_REQUEST,
-            message_type_specific_flags=MsgTypeFlagWithEvent,
-            serial_method=JSON,
-        ).as_bytes()
-        optional = Optional(event=EVENT_StartSession, sessionId=session_id).as_bytes()
-        payload = self.get_payload_bytes(event=EVENT_StartSession, speaker=self.speaker)
-        await self.send_event(header, optional, payload)
         logger.bind(tag=TAG).debug(f"开始会话～～{session_id}")
+        async with self._session_lock:
+            # 如果已有会话未结束，先关闭它
+            if self._session_started and not self._session_finished:
+                logger.bind(tag=TAG).warning(
+                    f"发现未关闭的会话 {self._current_session_id}，正在关闭..."
+                )
+                await self.finish_session(self._current_session_id)
+
+            # 重置会话状态
+            self._current_session_id = session_id
+            self._session_started = True
+            self._session_finished = False
+
+            header = Header(
+                message_type=FULL_CLIENT_REQUEST,
+                message_type_specific_flags=MsgTypeFlagWithEvent,
+                serial_method=JSON,
+            ).as_bytes()
+            optional = Optional(
+                event=EVENT_StartSession, sessionId=session_id
+            ).as_bytes()
+            payload = self.get_payload_bytes(
+                event=EVENT_StartSession, speaker=self.speaker
+            )
+            await self.send_event(header, optional, payload)
 
     async def finish_session(self, session_id):
         logger.bind(tag=TAG).debug(f"关闭会话～～{session_id}")
-        header = Header(
-            message_type=FULL_CLIENT_REQUEST,
-            message_type_specific_flags=MsgTypeFlagWithEvent,
-            serial_method=JSON,
-        ).as_bytes()
-        optional = Optional(event=EVENT_FinishSession, sessionId=session_id).as_bytes()
-        payload = str.encode("{}")
-        await self.send_event(header, optional, payload)
-        return
+        async with self._session_lock:
+            # 检查会话状态
+            if not self._session_started:
+                logger.bind(tag=TAG).warning(f"尝试关闭未开始的会话 {session_id}")
+                return
+
+            if self._session_finished:
+                logger.bind(tag=TAG).warning(f"会话 {session_id} 已经关闭")
+                return
+
+            if self._current_session_id != session_id:
+                logger.bind(tag=TAG).warning(
+                    f"尝试关闭错误的会话 {session_id}，当前会话为 {self._current_session_id}"
+                )
+                return
+
+            header = Header(
+                message_type=FULL_CLIENT_REQUEST,
+                message_type_specific_flags=MsgTypeFlagWithEvent,
+                serial_method=JSON,
+            ).as_bytes()
+            optional = Optional(
+                event=EVENT_FinishSession, sessionId=session_id
+            ).as_bytes()
+            payload = str.encode("{}")
+            await self.send_event(header, optional, payload)
+
+            # 更新会话状态
+            self._session_finished = True
+            self._session_started = False
+            self._current_session_id = None
 
     async def reset(self):
         # 关闭之前的对话
