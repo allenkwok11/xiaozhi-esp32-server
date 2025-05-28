@@ -597,7 +597,7 @@ class ConnectionHandler:
         text_index = 0
 
         for response in llm_responses:
-            if self.intent_type == "function_call":
+            if functions is not None:
                 content, tools_call = response
                 if "content" in response:
                     content = response["content"]
@@ -852,16 +852,6 @@ class ConnectionHandler:
             if self.stop_event:
                 self.stop_event.set()
 
-            # 等待上报队列处理完成
-            if hasattr(self, "report_queue"):
-                try:
-                    # 添加毒丸对象
-                    self.report_queue.put(None)
-                    # 等待队列处理完成
-                    self.report_queue.join()
-                except Exception as e:
-                    self.logger.bind(tag=TAG).error(f"等待上报队列处理完成时出错: {e}")
-
             # 清空任务队列
             self.clear_queues()
 
@@ -888,7 +878,11 @@ class ConnectionHandler:
             )
 
             # 使用非阻塞方式清空队列
-            for q in [self.tts.tts_text_queue, self.tts.tts_audio_queue]:
+            for q in [
+                self.tts.tts_text_queue,
+                self.tts.tts_audio_queue,
+                self.report_queue,
+            ]:
                 if not q:
                     continue
                 while True:
