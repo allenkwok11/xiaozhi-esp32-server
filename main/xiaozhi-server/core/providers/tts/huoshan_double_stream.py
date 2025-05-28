@@ -237,9 +237,12 @@ class TTSProvider(TTSProviderBase):
 
     async def _start_monitor_tts_response(self):
         opus_datas_cache = []
+        # 添加标志来区分是否是第一句话
+        is_first_sentence = True
         while not self.conn.stop_event.is_set():
             try:
-                msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
+                # 确保 `recv()` 运行在同一个 event loop
+                msg = await self.ws.recv()
                 res = self.parser_response(msg)
                 self.print_response(res, "send_text res:")
 
@@ -258,10 +261,23 @@ class TTSProvider(TTSProviderBase):
                     logger.bind(tag=TAG).debug(
                         f"推送数据到队列里面帧数～～{len(opus_datas)}"
                     )
-                    opus_datas_cache = opus_datas_cache + opus_datas
+                    if is_first_sentence:
+                        # 第一句话直接发送
+                        self.tts_audio_queue.put(
+                            (SentenceType.MIDDLE, opus_datas, self.tts_text)
+                        )
+                    else:
+                        # 后续句子缓存
+                        opus_datas_cache = opus_datas_cache + opus_datas
                 elif res.optional.event == EVENT_TTSSentenceEnd:
                     logger.bind(tag=TAG).info(f"句子语音生成成功：{self.tts_text}")
-                    self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas_cache, self.tts_text))
+                    if not is_first_sentence:
+                        # 只有非第一句话才发送缓存的数据
+                        self.tts_audio_queue.put(
+                            (SentenceType.MIDDLE, opus_datas_cache, self.tts_text)
+                        )
+                    # 第一句话结束后，将标志设置为False
+                    is_first_sentence = False
                 elif res.optional.event == EVENT_SessionFinished:
                     logger.bind(tag=TAG).debug(f"会话结束～～")
                     for tts_file, text in self.before_stop_play_files:
@@ -272,6 +288,9 @@ class TTSProvider(TTSProviderBase):
                             )
                     self.before_stop_play_files.clear()
                     self.tts_audio_queue.put((SentenceType.LAST, [], None))
+
+                    opus_datas_cache = []
+                    is_first_sentence = True
                     continue
             except websockets.ConnectionClosed:
                 break  # 连接关闭时退出监听
