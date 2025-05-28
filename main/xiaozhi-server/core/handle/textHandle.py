@@ -72,6 +72,8 @@ async def handleTextMessage(conn, message):
                 asyncio.create_task(handleIotDescriptors(conn, msg_json["descriptors"]))
             if "states" in msg_json:
                 asyncio.create_task(handleIotStatus(conn, msg_json["states"]))
+        elif msg_json["type"] == "mcp":
+            conn.logger.bind(tag=TAG).info(f"收到mcp消息：{message}")
         elif msg_json["type"] == "server":
             # 记录日志时过滤敏感信息
             conn.logger.bind(tag=TAG).info(
@@ -151,5 +153,7 @@ async def handleTextMessage(conn, message):
             # 重启服务器
             elif msg_json["action"] == "restart":
                 await conn.handle_restart(msg_json)
+        else:
+            conn.logger.bind(tag=TAG).error(f"收到未知类型消息：{message}")
     except json.JSONDecodeError:
         await conn.websocket.send(message)
