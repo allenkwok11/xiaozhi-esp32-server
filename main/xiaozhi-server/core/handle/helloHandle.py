@@ -35,6 +35,27 @@ async def handleHelloMessage(conn, msg_json):
     if features:
         conn.logger.bind(tag=TAG).info(f"客户端特性: {features}")
         conn.features = features
+        if features.get("mcp"):
+            conn.logger.bind(tag=TAG).info("客户端支持MCP")
+            # 发送初始化
+            await conn.websocket.send(json.dumps({
+                "type": "mcp",
+                "payload": {
+                    "jsonrpc": "2.0",
+                    "method": "notifications/initialized"
+                }
+            }))
+            # 发送mcp消息，获取tools列表
+            await conn.websocket.send(json.dumps( {
+                "type": "mcp",
+                "payload": {
+                    "jsonrpc": "2.0",
+                    "method": "tools/list",
+                    "id": 10001,
+                    "params": {
+                    }
+                }
+            }))
 
     await conn.websocket.send(json.dumps(conn.welcome_msg))
 

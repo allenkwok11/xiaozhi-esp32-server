@@ -74,6 +74,31 @@ async def handleTextMessage(conn, message):
                 asyncio.create_task(handleIotStatus(conn, msg_json["states"]))
         elif msg_json["type"] == "mcp":
             conn.logger.bind(tag=TAG).info(f"收到mcp消息：{message}")
+            if "payload" in msg_json:
+                payload = msg_json["payload"]
+                id = payload.get("id", None)
+                if id is None:
+                    conn.logger.bind(tag=TAG).error("MCP消息缺少ID")
+                    return
+                # result: 包含工具列表和上下文
+                # TODO: 处理MCP消息时，进行不同的处理
+                if "jsonrpc" not in payload or payload["jsonrpc"] != "2.0":
+                    conn.logger.bind(tag=TAG).error("MCP消息缺少jsonrpc版本")
+                    return
+                if "result" in payload:
+                    result = payload["result"]
+                    if "tools" in result:
+                        # 初始化处理工具列表
+                        tools = result["tools"]
+                        conn.features["mcp"] = True
+                        # 设置工具列表到连接对象，方便后续使用
+                        conn.features["mcp_tools"] = tools
+                        conn.logger.bind(tag=TAG).info(f"收到MCP工具列表：{tools}")
+                    elif "context" in result:
+                        # 处理上下文,上下文根据id进行管理，上报的id对应Server下发时的id
+                        context = result["context"]
+                        conn.logger.bind(tag=TAG).info(f"收到MCP上下文：{context}, ID: {id}")
+
         elif msg_json["type"] == "server":
             # 记录日志时过滤敏感信息
             conn.logger.bind(tag=TAG).info(
