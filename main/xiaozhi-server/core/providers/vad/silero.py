@@ -12,13 +12,12 @@ logger = setup_logging()
 class VADProvider(VADProviderBase):
     def __init__(self, config):
         logger.bind(tag=TAG).info("SileroVAD", config)
-        self.model, self.utils = torch.hub.load(
+        self.model, _ = torch.hub.load(
             repo_or_dir=config["model_dir"],
             source="local",
             model="silero_vad",
             force_reload=False,
         )
-        get_speech_timestamps, *_ = self.utils
 
         self.decoder = opuslib_next.Decoder(16000, 1)
 
