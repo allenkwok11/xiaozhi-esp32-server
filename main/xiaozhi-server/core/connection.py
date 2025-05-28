@@ -142,6 +142,8 @@ class ConnectionHandler:
         )  # 在原来第一道关闭的基础上加60秒，进行二道关闭
 
         self.audio_format = "opus"
+        # {"mcp":true} 表示启用MCP功能
+        self.features = None
 
     async def handle_connection(self, ws):
         try:

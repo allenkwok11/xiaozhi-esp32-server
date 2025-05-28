@@ -31,6 +31,10 @@ async def handleHelloMessage(conn, msg_json):
         if conn.asr is not None:
             conn.asr.set_audio_format(format)
         conn.welcome_msg["audio_params"] = audio_params
+    features = msg_json.get("features")
+    if features:
+        conn.logger.bind(tag=TAG).info(f"客户端特性: {features}")
+        conn.features = features
 
     await conn.websocket.send(json.dumps(conn.welcome_msg))
 
