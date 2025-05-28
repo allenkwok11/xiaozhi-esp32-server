@@ -423,7 +423,6 @@ class ConnectionHandler:
                 for plugin, config_str in plugin_from_server.items():
                     plugin_from_server[plugin] = json.loads(config_str)
                 self.config['plugins'] = plugin_from_server
-                print(f"self.config['plugins']: {self.config['plugins']}")
         if private_config.get("prompt", None) is not None:
             self.config["prompt"] = private_config["prompt"]
         if private_config.get("summaryMemory", None) is not None:
