@@ -222,7 +222,6 @@ export default {
       if (!key) {
         return;
       }
-      console.log(field);
       const text = this.textCache[key] || '';
       try {
         const obj = JSON.parse(text);
@@ -297,7 +296,6 @@ export default {
               : {...f.params}
         }
       });
-      console.log(selected);
 
       this.$emit('update-functions', selected);
       this.dialogVisible = false;

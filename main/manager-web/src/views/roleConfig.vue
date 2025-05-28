@@ -205,7 +205,6 @@ export default {
         language: this.form.language,
         sort: this.form.sort,
         functions: this.currentFunctions.map(item => {
-          console.log(item)
           return ({
             pluginId: item.id,
             paramInfo: item.params
@@ -432,7 +431,6 @@ export default {
     },
     handleUpdateFunctions(selected) {
       this.currentFunctions = selected;
-      console.log('保存的功能列表:', selected);
       this.$message.success('功能配置已保存');
     },
     handleDialogClosed(saved) {
