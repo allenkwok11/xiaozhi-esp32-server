@@ -236,6 +236,7 @@ class TTSProvider(TTSProviderBase):
         )
 
     async def _start_monitor_tts_response(self):
+        opus_datas_cache = []
         while not self.conn.stop_event.is_set():
             try:
                 msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
@@ -245,8 +246,9 @@ class TTSProvider(TTSProviderBase):
                 if res.optional.event == EVENT_TTSSentenceStart:
                     json_data = json.loads(res.payload.decode("utf-8"))
                     self.tts_text = json_data.get("text", "")
-                    logger.bind(tag=TAG).info(f"语音生成成功: {self.tts_text}")
+                    logger.bind(tag=TAG).debug(f"句子语音生成开始: {self.tts_text}")
                     self.tts_audio_queue.put((SentenceType.FIRST, [], self.tts_text))
+                    opus_datas_cache = []
                 elif (
                     res.optional.event == EVENT_TTSResponse
                     and res.header.message_type == AUDIO_ONLY_RESPONSE
@@ -256,9 +258,10 @@ class TTSProvider(TTSProviderBase):
                     logger.bind(tag=TAG).debug(
                         f"推送数据到队列里面帧数～～{len(opus_datas)}"
                     )
-                    self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas, None))
+                    opus_datas_cache = opus_datas_cache + opus_datas
                 elif res.optional.event == EVENT_TTSSentenceEnd:
-                    logger.bind(tag=TAG).debug(f"句子结束～～{self.tts_text}")
+                    logger.bind(tag=TAG).info(f"句子语音生成成功：{self.tts_text}")
+                    self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas_cache, self.tts_text))
                 elif res.optional.event == EVENT_SessionFinished:
                     logger.bind(tag=TAG).debug(f"会话结束～～")
                     for tts_file, text in self.before_stop_play_files:
