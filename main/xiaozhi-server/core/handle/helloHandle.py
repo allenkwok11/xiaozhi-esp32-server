@@ -4,7 +4,7 @@ import json
 import random
 import shutil
 import asyncio
-from core.handle.mcpHandle import send_mcp_initialized, send_mcp_tools_list
+from core.handle.mcpHandle import MCPClient, send_mcp_initialize_message, send_mcp_tools_list_request
 from core.handle.sendAudioHandle import send_stt_message
 from core.utils.util import remove_punctuation_and_length
 from core.providers.tts.dto.dto import ContentType, InterfaceType
@@ -38,10 +38,11 @@ async def handleHelloMessage(conn, msg_json):
         conn.features = features
         if features.get("mcp"):
             conn.logger.bind(tag=TAG).info("客户端支持MCP")
+            conn.mcp_client = MCPClient()
             # 发送初始化
-            asyncio.create_task(send_mcp_initialized(conn))
+            asyncio.create_task(send_mcp_initialize_message(conn))
             # 发送mcp消息，获取tools列表
-            asyncio.create_task(send_mcp_tools_list(conn))
+            asyncio.create_task(send_mcp_tools_list_request(conn))
 
     await conn.websocket.send(json.dumps(conn.welcome_msg))
 
