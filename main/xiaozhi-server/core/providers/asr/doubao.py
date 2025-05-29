@@ -289,7 +289,7 @@ class ASRProvider(ASRProviderBase):
                             for utterance in utterances:
                                 if utterance.get("definite", False):
                                     self.text = utterance["text"]
-                                    await self.handle_voice_stop()
+                                    await self.handle_voice_stop(None)
                                     break
                 except websockets.ConnectionClosed:
                     logger.bind(tag=TAG).debug("ASR服务连接已关闭，准备重连...")

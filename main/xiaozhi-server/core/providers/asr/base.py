@@ -38,34 +38,32 @@ class ASRProviderBase(ABC):
         else:
             have_voice = self.conn.client_have_voice
         # 如果本次没有声音，本段也没声音，就把声音丢弃了
+        self.conn.asr_audio.append(audio)
         if have_voice == False and self.conn.client_have_voice == False:
-            self.conn.asr_audio.append(audio)
             self.conn.asr_audio = self.conn.asr_audio[-10:]
             return
 
         # 如果本段有声音，且已经停止了
         if self.conn.client_voice_stop:
+            asr_audio_task = copy.deepcopy(self.conn.asr_audio)
+            self.conn.asr_audio.clear()
             self.conn.client_abort = False
             # 音频太短了，无法识别
-            if len(self.conn.asr_audio) < 15:
-                self.conn.asr_audio.clear()
-                self.conn.reset_vad_states()
-            else:
-                await self.handle_voice_stop()
+            self.conn.reset_vad_states()
+            if len(asr_audio_task) > 15:
+                await self.handle_voice_stop(asr_audio_task)
 
     # 处理语音停止
-    async def handle_voice_stop(self):
+    async def handle_voice_stop(self, asr_audio_task):
         raw_text, _ = await self.speech_to_text(
-            self.conn.asr_audio, self.conn.session_id
+            asr_audio_task, self.conn.session_id
         )  # 确保ASR模块返回原始文本
         self.conn.logger.bind(tag=TAG).info(f"识别文本: {raw_text}")
         text_len, _ = remove_punctuation_and_length(raw_text)
         if text_len > 0:
             # 使用自定义模块进行上报
             await startToChat(self.conn, raw_text)
-            enqueue_asr_report(self.conn, raw_text, copy.deepcopy(self.conn.asr_audio))
-        self.conn.asr_audio.clear()
-        self.conn.reset_vad_states()
+            enqueue_asr_report(self.conn, raw_text, asr_audio_task)
 
     def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
         """PCM数据保存为WAV文件"""

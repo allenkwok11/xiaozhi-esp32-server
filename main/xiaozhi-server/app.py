@@ -1,13 +1,13 @@
-import asyncio
 import sys
 import signal
+import asyncio
+from aioconsole import ainput
 from config.settings import load_config
-from core.websocket_server import WebSocketServer
-from core.ota_server import SimpleOtaServer
-from core.utils.util import check_ffmpeg_installed
 from config.logger import setup_logging
 from core.utils.util import get_local_ip
-from aioconsole import ainput
+from core.ota_server import SimpleOtaServer
+from core.websocket_server import WebSocketServer
+from core.utils.util import check_ffmpeg_installed
 
 TAG = __name__
 logger = setup_logging()
