@@ -109,7 +109,7 @@ async def handle_mcp_message(conn, mcp_client: MCPClient, payload: dict):
 
         # Check for tool call response first
         if msg_id in mcp_client.call_results:
-            conn.logger.bind(tag=TAG).info(f"收到工具调用响应，ID: {msg_id}, 结果: {result}")
+            conn.logger.bind(tag=TAG).debug(f"收到工具调用响应，ID: {msg_id}, 结果: {result}")
             await mcp_client.resolve_call_result(msg_id, result)
             return
 
@@ -227,7 +227,7 @@ async def send_mcp_tools_list_continue_request(conn, cursor: str):
     conn.logger.bind(tag=TAG).info(f"发送带cursor的MCP工具列表请求: {cursor}")
     await send_mcp_message(conn, payload)
 
-async def call_mcp_tool(conn, mcp_client: MCPClient, tool_name: str, args: dict, timeout: int = 30):
+async def call_mcp_tool(conn, mcp_client: MCPClient, tool_name: str, args: str = '{}', timeout: int = 30):
     """
     调用指定的工具，并等待响应
     """
@@ -247,7 +247,7 @@ async def call_mcp_tool(conn, mcp_client: MCPClient, tool_name: str, args: dict,
         "method": "tools/call",
         "params": {
             "name": tool_name,
-            "arguments": args,
+            "arguments": json.loads(args) if isinstance(args, str) else args
         },
     }
 
