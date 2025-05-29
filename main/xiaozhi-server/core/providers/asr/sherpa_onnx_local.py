@@ -5,8 +5,7 @@ import sys
 import io
 from config.logger import setup_logging
 from typing import Optional, Tuple, List
-import uuid
-import opuslib_next
+from core.providers.asr.dto.dto import InterfaceType
 from core.providers.asr.base import ASRProviderBase
 
 import numpy as np
@@ -38,6 +37,7 @@ class CaptureOutput:
 class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool):
         super().__init__()
+        self.interface_type = InterfaceType.LOCAL
         self.model_dir = config.get("model_dir")
         self.output_dir = config.get("output_dir")
         self.delete_audio_file = delete_audio_file

@@ -1,18 +1,10 @@
-import base64
-import hashlib
-import hmac
-import json
 import time
-from datetime import datetime, timezone
 import os
-import uuid
 from typing import Optional, Tuple, List
-import wave
-import opuslib_next
-
 from aip import AipSpeech
 from core.providers.asr.base import ASRProviderBase
 from config.logger import setup_logging
+from core.providers.asr.dto.dto import InterfaceType
 
 TAG = __name__
 logger = setup_logging()
@@ -21,6 +13,7 @@ logger = setup_logging()
 class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool = True):
         super().__init__()
+        self.interface_type = InterfaceType.NON_STREAM
         self.app_id = config.get("app_id")
         self.api_key = config.get("api_key")
         self.secret_key = config.get("secret_key")

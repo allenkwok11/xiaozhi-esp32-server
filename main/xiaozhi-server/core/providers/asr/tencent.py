@@ -5,9 +5,8 @@ import json
 import time
 from datetime import datetime, timezone
 import os
-import uuid
 from typing import Optional, Tuple, List
-import wave
+from core.providers.asr.dto.dto import InterfaceType
 import requests
 from core.providers.asr.base import ASRProviderBase
 from config.logger import setup_logging
@@ -23,6 +22,7 @@ class ASRProvider(ASRProviderBase):
 
     def __init__(self, config: dict, delete_audio_file: bool = True):
         super().__init__()
+        self.interface_type = InterfaceType.NON_STREAM
         self.secret_id = config.get("secret_id")
         self.secret_key = config.get("secret_key")
         self.output_dir = config.get("output_dir")

@@ -41,12 +41,13 @@ async def handleTextMessage(conn, message):
                 if len(conn.asr_audio) > 0:
                     await handleAudioMessage(conn, b"")
             elif msg_json["state"] == "detect":
-                conn.asr_server_receive = False
                 conn.client_have_voice = False
                 conn.asr_audio.clear()
                 if "text" in msg_json:
                     original_text = msg_json["text"]  # 保留原始文本
-                    filtered_len, filtered_text = remove_punctuation_and_length(original_text)
+                    filtered_len, filtered_text = remove_punctuation_and_length(
+                        original_text
+                    )
 
                     # 识别是否是唤醒词
                     is_wakeup_words = filtered_text in conn.config.get("wakeup_words")

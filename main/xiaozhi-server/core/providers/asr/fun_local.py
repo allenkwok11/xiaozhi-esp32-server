@@ -1,15 +1,14 @@
 import time
-import wave
 import os
 import sys
 import io
 from config.logger import setup_logging
 from typing import Optional, Tuple, List
-import uuid
 from core.providers.asr.base import ASRProviderBase
 from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
 import shutil
+from core.providers.asr.dto.dto import InterfaceType
 
 TAG = __name__
 logger = setup_logging()
@@ -38,6 +37,7 @@ class CaptureOutput:
 class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool):
         super().__init__()
+        self.interface_type = InterfaceType.LOCAL
         self.model_dir = config.get("model_dir")
         self.output_dir = config.get("output_dir")  # 修正配置键名
         self.delete_audio_file = delete_audio_file

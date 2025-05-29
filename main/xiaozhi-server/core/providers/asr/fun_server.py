@@ -1,11 +1,8 @@
 from typing import Optional, Tuple, List
-import opuslib_next
 from core.providers.asr.base import ASRProviderBase
-import os
+from core.providers.asr.dto.dto import InterfaceType
 import ssl
 import json
-import uuid
-import wave
 import websockets
 from config.logger import setup_logging
 import asyncio
@@ -23,6 +20,7 @@ class ASRProvider(ASRProviderBase):
         :param delete_audio_file: Boolean to indicate whether to delete audio files after processing.
         """
         super().__init__()
+        self.interface_type = InterfaceType.NON_STREAM
         self.host = config.get("host", "localhost")
         self.port = config.get("port", 10095)
         self.api_key = config.get("api_key", "none")

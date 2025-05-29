@@ -12,18 +12,22 @@ import subprocess
 import websockets
 from core.utils.util import (
     extract_json_from_string,
-    initialize_modules,
     check_vad_update,
     check_asr_update,
     filter_sensitive_info,
-    initialize_tts,
 )
 from typing import Dict, Any
 from core.mcp.manager import MCPManager
+from core.utils.modules_initialize import (
+    initialize_modules,
+    initialize_tts,
+    initialize_asr,
+)
 from core.handle.reportHandle import report
 from core.providers.tts.default import DefaultTTS
 from concurrent.futures import ThreadPoolExecutor
 from core.utils.dialogue import Message, Dialogue
+from core.providers.asr.dto.dto import InterfaceType
 from core.handle.textHandle import handleTextMessage
 from core.handle.functionHandler import FunctionHandler
 from plugins_func.loadplugins import auto_import_modules
@@ -112,7 +116,6 @@ class ConnectionHandler:
 
         # asr相关变量
         self.asr_audio = []
-        self.asr_server_receive = True
 
         # llm相关变量
         self.llm_finish_task = True
@@ -315,10 +318,14 @@ class ConnectionHandler:
             if self.vad is None:
                 self.vad = self._vad
             if self.asr is None:
-                self.asr = self._asr
+                self.asr = self._initialize_asr()
+            # 打开语音识别通道
+            asyncio.run_coroutine_threadsafe(
+                self.asr.open_audio_channels(self), self.loop
+            )
             if self.tts is None:
                 self.tts = self._initialize_tts()
-            # 使用事件循环运行异步方法
+            # 打开语音合成通道
             asyncio.run_coroutine_threadsafe(
                 self.tts.open_audio_channels(self), self.loop
             )
@@ -355,6 +362,19 @@ class ConnectionHandler:
             tts = DefaultTTS(self.config, delete_audio_file=True)
 
         return tts
+
+    def _initialize_asr(self):
+        """初始化ASR"""
+        if self._asr.interface_type == InterfaceType.LOCAL:
+            # 如果公共ASR是本地服务，则直接返回
+            # 因为本地一个实例ASR，可以被多个连接共享
+            asr = self._asr
+        else:
+            # 如果公共ASR是远程服务，则初始化一个新实例
+            # 因为远程ASR，涉及到websocket连接和接收线程，需要每个连接一个实例
+            asr = initialize_asr(self.config)
+
+        return asr
 
     def _initialize_private_config(self):
         """如果是从配置文件获取，则进行二次实例化"""
@@ -597,6 +617,8 @@ class ConnectionHandler:
         text_index = 0
 
         for response in llm_responses:
+            if self.client_abort:
+                break
             if functions is not None:
                 content, tools_call = response
                 if "content" in response:
@@ -622,9 +644,6 @@ class ConnectionHandler:
             if content is not None and len(content) > 0:
                 if not tool_call_flag:
                     response_message.append(content)
-                    if self.client_abort:
-                        break
-
                     if text_index == 0:
                         self.tts.tts_text_queue.put(
                             TTSMessageDTO(
@@ -801,9 +820,7 @@ class ConnectionHandler:
                 item = self.report_queue.get(timeout=1)
                 if item is None:  # 检测毒丸对象
                     break
-
                 type, text, audio_data, report_time = item
-
                 try:
                     # 检查线程池状态
                     if self.executor is None:
@@ -834,7 +851,6 @@ class ConnectionHandler:
 
     def clearSpeakStatus(self):
         self.logger.bind(tag=TAG).debug(f"清除服务端讲话状态")
-        self.asr_server_receive = True
 
     async def close(self, ws=None):
         """资源清理方法"""

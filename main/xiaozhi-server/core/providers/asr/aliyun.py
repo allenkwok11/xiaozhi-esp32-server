@@ -2,7 +2,6 @@ import http.client
 import json
 import asyncio
 from typing import Optional, Tuple, List
-import opuslib_next
 import os
 import uuid
 import hmac
@@ -14,6 +13,7 @@ import time
 from datetime import datetime
 from config.logger import setup_logging
 from core.providers.asr.base import ASRProviderBase
+from core.providers.asr.dto.dto import InterfaceType
 
 TAG = __name__
 logger = setup_logging()
@@ -90,6 +90,7 @@ class AccessToken:
 class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool):
         super().__init__()
+        self.interface_type = InterfaceType.NON_STREAM
         """阿里云ASR初始化"""
         # 新增空值判断逻辑
         self.access_key_id = config.get("access_key_id")
