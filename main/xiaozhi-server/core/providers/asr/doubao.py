@@ -1,17 +1,13 @@
 import time
-import io
-import wave
 import os
-from typing import Optional, Tuple, List
 import uuid
-import websockets
 import json
 import gzip
-
-import opuslib_next
+import websockets
+from config.logger import setup_logging
+from typing import Optional, Tuple, List
 from core.providers.asr.base import ASRProviderBase
 
-from config.logger import setup_logging
 
 TAG = __name__
 logger = setup_logging()
@@ -101,20 +97,6 @@ class ASRProvider(ASRProviderBase):
 
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
-
-    def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
-        """PCM数据保存为WAV文件"""
-        module_name = __name__.split(".")[-1]
-        file_name = f"asr_{module_name}_{session_id}_{uuid.uuid4()}.wav"
-        file_path = os.path.join(self.output_dir, file_name)
-
-        with wave.open(file_path, "wb") as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)  # 2 bytes = 16-bit
-            wf.setframerate(16000)
-            wf.writeframes(b"".join(pcm_data))
-
-        return file_path
 
     @staticmethod
     def _generate_header(
