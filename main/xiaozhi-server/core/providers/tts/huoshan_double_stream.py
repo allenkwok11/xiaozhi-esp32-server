@@ -161,6 +161,12 @@ class TTSProvider(TTSProviderBase):
         )
         check_model_key("TTS", self.access_token)
 
+        # 添加会话状态控制
+        self._session_lock = asyncio.Lock()  # 会话操作的并发锁
+        self._current_session_id = None  # 当前会话ID
+        self._session_started = False  # 会话是否已开始
+        self._session_finished = False  # 会话是否已结束
+
     ###################################################################################
     # 火山双流式TTS重写父类的方法--开始
     ###################################################################################
@@ -236,17 +242,22 @@ class TTSProvider(TTSProviderBase):
         )
 
     async def _start_monitor_tts_response(self):
+        opus_datas_cache = []
+        # 添加标志来区分是否是第一句话
+        is_first_sentence = True
         while not self.conn.stop_event.is_set():
             try:
-                msg = await self.ws.recv()  # 确保 `recv()` 运行在同一个 event loop
+                # 确保 `recv()` 运行在同一个 event loop
+                msg = await self.ws.recv()
                 res = self.parser_response(msg)
                 self.print_response(res, "send_text res:")
 
                 if res.optional.event == EVENT_TTSSentenceStart:
                     json_data = json.loads(res.payload.decode("utf-8"))
                     self.tts_text = json_data.get("text", "")
-                    logger.bind(tag=TAG).info(f"语音生成成功: {self.tts_text}")
+                    logger.bind(tag=TAG).debug(f"句子语音生成开始: {self.tts_text}")
                     self.tts_audio_queue.put((SentenceType.FIRST, [], self.tts_text))
+                    opus_datas_cache = []
                 elif (
                     res.optional.event == EVENT_TTSResponse
                     and res.header.message_type == AUDIO_ONLY_RESPONSE
@@ -256,9 +267,23 @@ class TTSProvider(TTSProviderBase):
                     logger.bind(tag=TAG).debug(
                         f"推送数据到队列里面帧数～～{len(opus_datas)}"
                     )
-                    self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas, None))
+                    if is_first_sentence:
+                        # 第一句话直接发送
+                        self.tts_audio_queue.put(
+                            (SentenceType.MIDDLE, opus_datas, self.tts_text)
+                        )
+                    else:
+                        # 后续句子缓存
+                        opus_datas_cache = opus_datas_cache + opus_datas
                 elif res.optional.event == EVENT_TTSSentenceEnd:
-                    logger.bind(tag=TAG).debug(f"句子结束～～{self.tts_text}")
+                    logger.bind(tag=TAG).info(f"句子语音生成成功：{self.tts_text}")
+                    if not is_first_sentence:
+                        # 只有非第一句话才发送缓存的数据
+                        self.tts_audio_queue.put(
+                            (SentenceType.MIDDLE, opus_datas_cache, self.tts_text)
+                        )
+                    # 第一句话结束后，将标志设置为False
+                    is_first_sentence = False
                 elif res.optional.event == EVENT_SessionFinished:
                     logger.bind(tag=TAG).debug(f"会话结束～～")
                     for tts_file, text in self.before_stop_play_files:
@@ -269,6 +294,9 @@ class TTSProvider(TTSProviderBase):
                             )
                     self.before_stop_play_files.clear()
                     self.tts_audio_queue.put((SentenceType.LAST, [], None))
+
+                    opus_datas_cache = []
+                    is_first_sentence = True
                     continue
             except websockets.ConnectionClosed:
                 break  # 连接关闭时退出监听
@@ -422,27 +450,66 @@ class TTSProvider(TTSProviderBase):
         return
 
     async def start_session(self, session_id):
-        header = Header(
-            message_type=FULL_CLIENT_REQUEST,
-            message_type_specific_flags=MsgTypeFlagWithEvent,
-            serial_method=JSON,
-        ).as_bytes()
-        optional = Optional(event=EVENT_StartSession, sessionId=session_id).as_bytes()
-        payload = self.get_payload_bytes(event=EVENT_StartSession, speaker=self.speaker)
-        await self.send_event(header, optional, payload)
         logger.bind(tag=TAG).debug(f"开始会话～～{session_id}")
+        async with self._session_lock:
+            # 如果已有会话未结束，先关闭它
+            if self._session_started and not self._session_finished:
+                logger.bind(tag=TAG).warning(
+                    f"发现未关闭的会话 {self._current_session_id}，正在关闭..."
+                )
+                await self.finish_session(self._current_session_id)
+
+            # 重置会话状态
+            self._current_session_id = session_id
+            self._session_started = True
+            self._session_finished = False
+
+            header = Header(
+                message_type=FULL_CLIENT_REQUEST,
+                message_type_specific_flags=MsgTypeFlagWithEvent,
+                serial_method=JSON,
+            ).as_bytes()
+            optional = Optional(
+                event=EVENT_StartSession, sessionId=session_id
+            ).as_bytes()
+            payload = self.get_payload_bytes(
+                event=EVENT_StartSession, speaker=self.speaker
+            )
+            await self.send_event(header, optional, payload)
 
     async def finish_session(self, session_id):
         logger.bind(tag=TAG).debug(f"关闭会话～～{session_id}")
-        header = Header(
-            message_type=FULL_CLIENT_REQUEST,
-            message_type_specific_flags=MsgTypeFlagWithEvent,
-            serial_method=JSON,
-        ).as_bytes()
-        optional = Optional(event=EVENT_FinishSession, sessionId=session_id).as_bytes()
-        payload = str.encode("{}")
-        await self.send_event(header, optional, payload)
-        return
+        async with self._session_lock:
+            # 检查会话状态
+            if not self._session_started:
+                logger.bind(tag=TAG).warning(f"尝试关闭未开始的会话 {session_id}")
+                return
+
+            if self._session_finished:
+                logger.bind(tag=TAG).warning(f"会话 {session_id} 已经关闭")
+                return
+
+            if self._current_session_id != session_id:
+                logger.bind(tag=TAG).warning(
+                    f"尝试关闭错误的会话 {session_id}，当前会话为 {self._current_session_id}"
+                )
+                return
+
+            header = Header(
+                message_type=FULL_CLIENT_REQUEST,
+                message_type_specific_flags=MsgTypeFlagWithEvent,
+                serial_method=JSON,
+            ).as_bytes()
+            optional = Optional(
+                event=EVENT_FinishSession, sessionId=session_id
+            ).as_bytes()
+            payload = str.encode("{}")
+            await self.send_event(header, optional, payload)
+
+            # 更新会话状态
+            self._session_finished = True
+            self._session_started = False
+            self._current_session_id = None
 
     async def reset(self):
         # 关闭之前的对话

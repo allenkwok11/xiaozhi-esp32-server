@@ -606,7 +606,7 @@ class ConnectionHandler:
         text_index = 0
 
         for response in llm_responses:
-            if self.intent_type == "function_call":
+            if functions is not None:
                 content, tools_call = response
                 if "content" in response:
                     content = response["content"]
@@ -822,6 +822,9 @@ class ConnectionHandler:
                 type, text, audio_data, report_time = item
 
                 try:
+                    # 检查线程池状态
+                    if self.executor is None:
+                        continue
                     # 提交任务到线程池
                     self.executor.submit(
                         self._process_report, type, text, audio_data, report_time
@@ -852,35 +855,37 @@ class ConnectionHandler:
 
     async def close(self, ws=None):
         """资源清理方法"""
+        try:
+            # 取消超时任务
+            if self.timeout_task:
+                self.timeout_task.cancel()
+                self.timeout_task = None
 
-        # 取消超时任务
-        if self.timeout_task:
-            self.timeout_task.cancel()
-            self.timeout_task = None
+            # 清理MCP资源
+            if hasattr(self, "mcp_manager") and self.mcp_manager:
+                await self.mcp_manager.cleanup_all()
 
-        # 清理MCP资源
-        if hasattr(self, "mcp_manager") and self.mcp_manager:
-            await self.mcp_manager.cleanup_all()
+            # 触发停止事件
+            if self.stop_event:
+                self.stop_event.set()
 
-        # 触发停止事件
-        if self.stop_event:
-            self.stop_event.set()
+            # 清空任务队列
+            self.clear_queues()
 
-        # 清空任务队列
-        self.clear_queues()
+            # 关闭WebSocket连接
+            if ws:
+                await ws.close()
+            elif self.websocket:
+                await self.websocket.close()
 
-        # 关闭WebSocket连接
-        if ws:
-            await ws.close()
-        elif self.websocket:
-            await self.websocket.close()
+            # 最后关闭线程池（避免阻塞）
+            if self.executor:
+                self.executor.shutdown(wait=False)
+                self.executor = None
 
-        # 最后关闭线程池（避免阻塞）
-        if self.executor:
-            self.executor.shutdown(wait=False)
-            self.executor = None
-
-        self.logger.bind(tag=TAG).info("连接资源已释放")
+            self.logger.bind(tag=TAG).info("连接资源已释放")
+        except Exception as e:
+            self.logger.bind(tag=TAG).error(f"关闭连接时出错: {e}")
 
     def clear_queues(self):
         """清空所有任务队列"""
@@ -890,7 +895,11 @@ class ConnectionHandler:
             )
 
             # 使用非阻塞方式清空队列
-            for q in [self.tts.tts_text_queue, self.tts.tts_audio_queue]:
+            for q in [
+                self.tts.tts_text_queue,
+                self.tts.tts_audio_queue,
+                self.report_queue,
+            ]:
                 if not q:
                     continue
                 while True:
