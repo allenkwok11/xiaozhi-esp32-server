@@ -107,7 +107,6 @@ class ASRProvider(ASRProviderBase):
                 # 等待初始化响应
                 try:
                     init_res = await self.asr_ws.recv()
-                    logger.bind(tag=TAG).debug(f"收到原始响应: {init_res}")
                     result = self.parse_response(init_res)
                     logger.bind(tag=TAG).info(f"ASR服务初始化响应: {result}")
                 except Exception as e:
@@ -328,7 +327,6 @@ class ASRProvider(ASRProviderBase):
                                     self.retry_delay
                                 )  # 继续等待，以便后续重试
                 except Exception as e:
-                    logger.bind(tag=TAG).error(f"处理ASR结果时发生错误: {e}")
                     if not self.conn.stop_event.is_set():
                         await asyncio.sleep(2)  # 增加重试延迟
         except Exception as e:
