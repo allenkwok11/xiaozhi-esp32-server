@@ -164,8 +164,6 @@ async def handle_mcp_message(conn, mcp_client: MCPClient, payload: dict):
                 else:
                     await mcp_client.set_ready(True)
                     conn.logger.bind(tag=TAG).info("所有工具已获取，MCP客户端准备就绪")
-                tool_result = await call_mcp_tool(conn, mcp_client, "self.get_device_status", {})
-                print(f"Tool call result: {tool_result}")
             return
 
     # Handle method calls (requests from the client)
