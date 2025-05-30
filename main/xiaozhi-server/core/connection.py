@@ -10,6 +10,7 @@ import threading
 import traceback
 import subprocess
 import websockets
+from core.handle.mcpHandle import call_mcp_tool
 from core.utils.util import (
     extract_json_from_string,
     check_vad_update,
@@ -146,6 +147,8 @@ class ConnectionHandler:
         )  # 在原来第一道关闭的基础上加60秒，进行二道关闭
 
         self.audio_format = "opus"
+        # {"mcp":true} 表示启用MCP功能
+        self.features = None
 
     async def handle_connection(self, ws):
         try:
@@ -579,6 +582,12 @@ class ConnectionHandler:
         functions = None
         if self.intent_type == "function_call" and hasattr(self, "func_handler"):
             functions = self.func_handler.get_functions()
+        if hasattr(self, "mcp_client"):
+            mcp_tools = self.mcp_client.get_available_tools()
+            if mcp_tools is not None and len(mcp_tools) > 0:
+                if functions is None:
+                    functions = []
+                functions.extend(mcp_tools)
         response_message = []
 
         try:
@@ -696,9 +705,23 @@ class ConnectionHandler:
                     "arguments": function_arguments,
                 }
 
-                # 处理MCP工具调用
+                # 处理Server端MCP工具调用
                 if self.mcp_manager.is_mcp_tool(function_name):
                     result = self._handle_mcp_tool_call(function_call_data)
+                elif hasattr(self, "mcp_client") and self.mcp_client.has_tool(function_name):
+                    # 如果是小智端MCP工具调用 
+                    self.logger.bind(tag=TAG).debug(
+                        f"调用小智端MCP工具: {function_name}, 参数: {function_arguments}"
+                    )
+                    try:
+                        result = asyncio.run_coroutine_threadsafe(call_mcp_tool(self, self.mcp_client, function_name, function_arguments), self.loop).result()
+                        self.logger.bind(tag=TAG).debug(f"MCP工具调用结果: {result}")
+                        result = ActionResponse(action=Action.REQLLM, result=result, response="")
+                    except Exception as e:
+                        self.logger.bind(tag=TAG).error(f"MCP工具调用失败: {e}")
+                        result = ActionResponse(
+                            action=Action.REQLLM, result="MCP工具调用失败", response=""
+                        )
                 else:
                     # 处理系统函数
                     result = self.func_handler.handle_llm_function_call(
