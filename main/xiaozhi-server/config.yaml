@@ -718,6 +718,7 @@ TTS:
     #各参数意义见开发文档：https://tts.linkerai.top/docs#/default/text_to_speech_tts_get
     type: linkerai
     api_url: https://tts.linkerai.top/tts
+    audio_format: "pcm"
     access_token: "test"
     voice: "OUeAo1mhq6IBExi"
     output_dir: tmp/
