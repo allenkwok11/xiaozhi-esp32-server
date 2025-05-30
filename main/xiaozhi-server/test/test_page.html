@@ -1484,6 +1484,23 @@
                                 if (message.text && message.text !== '😊') {
                                     addMessage(message.text);
                                 }
+                            }else if (message.type === 'mcp') {
+                                const payload = message.payload || {};
+                                log(`服务器下发: ${JSON.stringify(message)}`, 'info');
+                                if (payload) {
+                                    // 模拟小智客户端行为
+                                    if(payload.method === 'tools/list'){
+                                        const replay_message = JSON.stringify({"session_id":"","type":"mcp","payload":{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"self.get_device_status","description":"Provides the real-time information of the device, including the current status of the audio speaker, screen, battery, network, etc.\nUse this tool for: \n1. Answering questions about current condition (e.g. what is the current volume of the audio speaker?)\n2. As the first step to control the device (e.g. turn up / down the volume of the audio speaker, etc.)","inputSchema":{"type":"object","properties":{}}},{"name":"self.audio_speaker.set_volume","description":"Set the volume of the audio speaker. If the current volume is unknown, you must call `self.get_device_status` tool first and then call this tool.","inputSchema":{"type":"object","properties":{"volume":{"type":"integer","minimum":0,"maximum":100}},"required":["volume"]}},{"name":"self.screen.set_brightness","description":"Set the brightness of the screen.","inputSchema":{"type":"object","properties":{"brightness":{"type":"integer","minimum":0,"maximum":100}},"required":["brightness"]}},{"name":"self.screen.set_theme","description":"Set the theme of the screen. The theme can be 'light' or 'dark'.","inputSchema":{"type":"object","properties":{"theme":{"type":"string"}},"required":["theme"]}}]}}})
+                                        websocket.send(replay_message);
+                                        log(`回复MCP消息: ${replay_message}`, 'info');
+                                    } else if(payload.method === 'tools/call'){
+                                        // 模拟回复
+                                        const replay_message = JSON.stringify({"session_id":"9f261599","type":"mcp","payload":{"jsonrpc":"2.0","id": payload.id,"result":{"content":[{"type":"text","text":"true"}],"isError":false}}})
+                                        websocket.send(replay_message);
+                                        log(`回复MCP消息: ${replay_message}`, 'info');
+                                    }
+                                }
+                                
                             } else {
                                 // 未知消息类型
                                 log(`未知消息类型: ${message.type}`, 'info');
@@ -1523,7 +1540,10 @@
                     device_id: config.deviceId,
                     device_name: config.deviceName,
                     device_mac: config.deviceMac,
-                    token: config.token
+                    token: config.token,
+                    features: {
+                        mcp: true
+                    }
                 };
 
                 log('发送hello握手消息', 'info');

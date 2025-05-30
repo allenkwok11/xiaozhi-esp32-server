@@ -1,6 +1,7 @@
 from core.handle.sendAudioHandle import send_stt_message
 from core.handle.intentHandler import handle_user_intent
 from core.utils.output_counter import check_device_output_limit
+from core.handle.abortHandle import handleAbortMessage
 import time
 from core.handle.sendAudioHandle import SentenceType
 from core.utils.util import audio_to_data
@@ -12,11 +13,14 @@ async def handleAudioMessage(conn, audio):
     if conn.vad is None:
         conn.logger.bind(tag=TAG).warning("VAD模块未初始化，继续等待")
         return
-    if conn.asr is None:
-        conn.logger.bind(tag=TAG).warning("ASR模块未初始化，继续等待")
+    if conn.asr is None or not hasattr(conn.asr, "conn") or conn.asr.conn is None:
+        conn.logger.bind(tag=TAG).warning("ASR模块未初始化或通道未就绪，继续等待")
         return
     # 当前片段是否有人说话
     have_voice = conn.vad.is_vad(conn, audio)
+    if have_voice:
+        if conn.client_is_speaking:
+            await handleAbortMessage(conn)
     # 设备长时间空闲检测，用于say goodbye
     await no_voice_close_connect(conn, have_voice)
     # 接收音频
@@ -35,6 +39,8 @@ async def startToChat(conn, text):
         ):
             await max_out_size(conn)
             return
+    if conn.client_is_speaking:
+        await handleAbortMessage(conn)
 
     # 首先进行意图分析
     intent_handled = await handle_user_intent(conn, text)
@@ -72,7 +78,7 @@ async def no_voice_close_connect(conn, have_voice):
                 return
             prompt = end_prompt.get("prompt")
             if not prompt:
-                prompt = "请你以“时间过得真快”未来头，用富有感情、依依不舍的话来结束这场对话吧。！"
+                prompt = "请你以```时间过得真快```未来头，用富有感情、依依不舍的话来结束这场对话吧。！"
             await startToChat(conn, prompt)
 
 

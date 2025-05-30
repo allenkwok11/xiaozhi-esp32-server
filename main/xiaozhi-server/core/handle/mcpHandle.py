@@ -7,33 +7,36 @@ TAG = __name__
 class MCPClient:
     """MCPClient，用于管理MCP状态和工具"""
     def __init__(self):
-        self.tools = []
+        self.tools = {}  # Dictionary for O(1) lookup
         self.ready = False
         self.call_results = {}  # To store Futures for tool call responses
         self.next_id = 1
         self.lock = asyncio.Lock()
+        self._cached_available_tools = None # Cache for get_available_tools
 
-    async def has_tool(self, name: str) -> bool:
-        async with self.lock:
-            for tool in self.tools:
-                if tool["name"] == name:
-                    return True
-            return False
+    def has_tool(self, name: str) -> bool:
+        return name in self.tools
 
     def get_available_tools(self) -> list:
-        # async with self.lock:
+        # Check if the cache is valid
+        if self._cached_available_tools is not None:
+            return self._cached_available_tools
+
+        # If cache is not valid, regenerate the list
         result = []
-        for tool in self.tools:
+        for tool_name, tool_data in self.tools.items():
             function_def = {
-                "name": tool["name"],
-                "description": tool["description"],
+                "name": tool_data["name"],
+                "description": tool_data["description"],
                 "parameters": {
-                    "type": tool["inputSchema"].get("type", "object"),
-                    "properties": tool["inputSchema"].get("properties", {}),
-                    "required": tool["inputSchema"].get("required", [])
+                    "type": tool_data["inputSchema"].get("type", "object"),
+                    "properties": tool_data["inputSchema"].get("properties", {}),
+                    "required": tool_data["inputSchema"].get("required", [])
                 }
             }
             result.append({"type": "function", "function": function_def})
+        
+        self._cached_available_tools = result # Store the generated list in cache
         return result
 
     async def is_ready(self) -> bool:
@@ -46,8 +49,9 @@ class MCPClient:
 
     async def add_tool(self, tool_data: dict):
         async with self.lock:
-            self.tools.append(tool_data)
-
+            self.tools[tool_data["name"]] = tool_data
+            self._cached_available_tools = None # Invalidate the cache when a tool is added
+            
     async def get_next_id(self) -> int:
         async with self.lock:
             current_id = self.next_id
@@ -232,7 +236,7 @@ async def call_mcp_tool(conn, mcp_client: MCPClient, tool_name: str, args: str =
     if not await mcp_client.is_ready():
         raise RuntimeError("MCP客户端尚未准备就绪")
 
-    if not await mcp_client.has_tool(tool_name):
+    if not mcp_client.has_tool(tool_name):
         raise ValueError(f"工具 {tool_name} 不存在")
 
     tool_call_id = await mcp_client.get_next_id()
