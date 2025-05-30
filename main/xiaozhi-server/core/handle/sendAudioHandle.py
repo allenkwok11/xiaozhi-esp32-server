@@ -131,6 +131,11 @@ async def send_tts_message(conn, state, text=None):
 
 
 async def send_stt_message(conn, text):
+    end_prompt_str = conn.config.get("end_prompt", {}).get("prompt")
+    if end_prompt_str and end_prompt_str == text:
+        await send_tts_message(conn, "start")
+        return
+
     """发送 STT 状态消息"""
     stt_text = get_string_no_punctuation_or_emoji(text)
     await conn.websocket.send(

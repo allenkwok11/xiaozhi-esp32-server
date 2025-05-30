@@ -3,8 +3,8 @@ import time
 import asyncio
 from aiohttp import web
 from config.logger import setup_logging
-from core.connection import ConnectionHandler
-from core.utils.util import get_local_ip, initialize_modules
+from core.utils.util import get_local_ip
+from core.utils.modules_initialize import initialize_modules
 
 TAG = __name__
 
