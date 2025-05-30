@@ -704,17 +704,23 @@ class ConnectionHandler:
                     "arguments": function_arguments,
                 }
 
-                # 处理MCP工具调用
+                # 处理Server端MCP工具调用
                 if self.mcp_manager.is_mcp_tool(function_name):
                     result = self._handle_mcp_tool_call(function_call_data)
                 elif hasattr(self, "mcp_client") and self.mcp_client.has_tool(function_name):
-                    # 如果是MCP工具调用 
+                    # 如果是小智端MCP工具调用 
                     self.logger.bind(tag=TAG).debug(
-                        f"调用MCP工具: {function_name}, 参数: {function_arguments}"
+                        f"调用小智端MCP工具: {function_name}, 参数: {function_arguments}"
                     )
-                    result = asyncio.run_coroutine_threadsafe(call_mcp_tool(self, self.mcp_client, function_name, function_arguments), self.loop).result()
-                    self.logger.bind(tag=TAG).debug(f"MCP工具调用结果: {result}")
-                    result = ActionResponse(action=Action.REQLLM, result=result, response="")
+                    try:
+                        result = asyncio.run_coroutine_threadsafe(call_mcp_tool(self, self.mcp_client, function_name, function_arguments), self.loop).result()
+                        self.logger.bind(tag=TAG).debug(f"MCP工具调用结果: {result}")
+                        result = ActionResponse(action=Action.REQLLM, result=result, response="")
+                    except Exception as e:
+                        self.logger.bind(tag=TAG).error(f"MCP工具调用失败: {e}")
+                        result = ActionResponse(
+                            action=Action.REQLLM, result="MCP工具调用失败", response=""
+                        )
                 else:
                     # 处理系统函数
                     result = self.func_handler.handle_llm_function_call(
