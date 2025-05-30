@@ -581,7 +581,7 @@ class ConnectionHandler:
         functions = None
         if self.intent_type == "function_call" and hasattr(self, "func_handler"):
             functions = self.func_handler.get_functions()
-        if self.mcp_client is not None:
+        if hasattr(self, "mcp_client"):
             mcp_tools = self.mcp_client.get_available_tools()
             if mcp_tools is not None and len(mcp_tools) > 0:
                 if functions is None:
@@ -707,7 +707,7 @@ class ConnectionHandler:
                 # 处理MCP工具调用
                 if self.mcp_manager.is_mcp_tool(function_name):
                     result = self._handle_mcp_tool_call(function_call_data)
-                elif self.mcp_client is not None and self.mcp_client.has_tool(function_name):
+                elif hasattr(self, "mcp_client") and self.mcp_client.has_tool(function_name):
                     # 如果是MCP工具调用 
                     self.logger.bind(tag=TAG).debug(
                         f"调用MCP工具: {function_name}, 参数: {function_arguments}"
