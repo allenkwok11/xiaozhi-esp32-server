@@ -96,7 +96,11 @@ class MCPClient:
                     read_stream, write_stream = stdio_r, stdio_w
                 # 建立SSEClient
                 elif "url" in self.config:
-                    sse_r, sse_w = await stack.enter_async_context(sse_client(self.config["url"]))
+                    if "API_ACCESS_TOKEN" in self.config:
+                        headers = {"Authorization": f"Bearer {self.config['API_ACCESS_TOKEN']}"}
+                    else:
+                        headers = {}
+                    sse_r, sse_w = await stack.enter_async_context(sse_client(self.config["url"], , headers=headers))
                     read_stream, write_stream = sse_r, sse_w
 
                 else:
