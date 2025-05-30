@@ -47,6 +47,7 @@ class ASRProviderBase(ABC):
         if self.conn.client_voice_stop:
             asr_audio_task = copy.deepcopy(self.conn.asr_audio)
             self.conn.asr_audio.clear()
+
             # 音频太短了，无法识别
             self.conn.reset_vad_states()
             if len(asr_audio_task) > 15:
