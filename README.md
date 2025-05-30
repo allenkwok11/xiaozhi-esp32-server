@@ -121,6 +121,28 @@
         </a>
     </td>
   </tr>
+  <tr>
+    <td>
+      <a href="https://www.bilibili.com/video/BV12J7WzBEaH" target="_blank">
+         <picture>
+           <img alt="实时打断" src="docs/images/demo10.png" />
+         </picture>
+        </a>
+    </td>
+    <td>
+      <a href="https://www.bilibili.com/video/BV1TJ7WzzEo6" target="_blank">
+         <picture>
+           <img alt="客户端MCP" src="docs/images/demo11.png" />
+         </picture>
+        </a>
+    </td>
+    <td>
+    </td>
+    <td>
+    </td>
+    <td>
+    </td>
+  </tr>
 </table>
 
 ---
