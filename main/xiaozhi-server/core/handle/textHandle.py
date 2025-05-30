@@ -58,6 +58,7 @@ async def handleTextMessage(conn, message):
                         # 如果是唤醒词，且关闭了唤醒词回复，就不用回答
                         await send_stt_message(conn, original_text)
                         await send_tts_message(conn, "stop", None)
+                        conn.client_is_speaking = False
                     elif is_wakeup_words:
                         # 上报纯文字数据（复用ASR上报功能，但不提供音频数据）
                         enqueue_asr_report(conn, "嘿，你好呀", [])

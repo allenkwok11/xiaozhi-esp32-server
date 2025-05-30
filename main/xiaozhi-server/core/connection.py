@@ -83,6 +83,7 @@ class ConnectionHandler:
 
         # 客户端状态相关
         self.client_abort = False
+        self.client_is_speaking = False
         self.client_listen_mode = "auto"
 
         # 线程任务相关
@@ -615,7 +616,7 @@ class ConnectionHandler:
         function_arguments = ""
         content_arguments = ""
         text_index = 0
-
+        self.client_abort = False
         for response in llm_responses:
             if self.client_abort:
                 break
@@ -850,6 +851,7 @@ class ConnectionHandler:
             self.report_queue.task_done()
 
     def clearSpeakStatus(self):
+        self.client_is_speaking = False
         self.logger.bind(tag=TAG).debug(f"清除服务端讲话状态")
 
     async def close(self, ws=None):
