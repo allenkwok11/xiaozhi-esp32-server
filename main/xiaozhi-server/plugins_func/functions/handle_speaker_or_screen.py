@@ -102,11 +102,11 @@ handle_device_function_desc = {
 }
 
 
-# @register_function(
-#     "handle_speaker_volume_or_screen_brightness",
-#     handle_device_function_desc,
-#     ToolType.IOT_CTL,
-# )
+@register_function(
+    "handle_speaker_volume_or_screen_brightness",
+    handle_device_function_desc,
+    ToolType.IOT_CTL,
+)
 def handle_speaker_volume_or_screen_brightness(
     conn, device_type: str, action: str, value: int = None
 ):
