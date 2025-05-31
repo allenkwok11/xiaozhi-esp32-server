@@ -882,3 +882,51 @@ def filter_sensitive_info(config: dict) -> dict:
         return filtered
 
     return _filter_dict(copy.deepcopy(config))
+
+
+def get_vision_url(config: dict) -> str:
+    """获取 vision URL
+
+    Args:
+        config: 配置字典
+
+    Returns:
+        str: vision URL
+    """
+    server_config = config["server"]
+    vision_explain = server_config.get("vision_explain", "")
+    if "你的" in vision_explain:
+        local_ip = get_local_ip()
+        port = int(server_config.get("http_port", 8003))
+        vision_explain = f"http://{local_ip}:{port}/mcp/vision/explain"
+    return vision_explain
+
+
+def is_valid_image_file(file_data: bytes) -> bool:
+    """
+    检查文件数据是否为有效的图片格式
+
+    Args:
+        file_data: 文件的二进制数据
+
+    Returns:
+        bool: 如果是有效的图片格式返回True，否则返回False
+    """
+    # 常见图片格式的魔数（文件头）
+    image_signatures = {
+        b"\xff\xd8\xff": "JPEG",
+        b"\x89PNG\r\n\x1a\n": "PNG",
+        b"GIF87a": "GIF",
+        b"GIF89a": "GIF",
+        b"BM": "BMP",
+        b"II*\x00": "TIFF",
+        b"MM\x00*": "TIFF",
+        b"RIFF": "WEBP",
+    }
+
+    # 检查文件头是否匹配任何已知的图片格式
+    for signature in image_signatures:
+        if file_data.startswith(signature):
+            return True
+
+    return False

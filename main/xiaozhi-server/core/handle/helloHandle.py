@@ -4,10 +4,14 @@ import json
 import random
 import shutil
 import asyncio
-from core.handle.mcpHandle import MCPClient, send_mcp_initialize_message, send_mcp_tools_list_request
 from core.handle.sendAudioHandle import send_stt_message
 from core.utils.util import remove_punctuation_and_length
 from core.providers.tts.dto.dto import ContentType, InterfaceType
+from core.handle.mcpHandle import (
+    MCPClient,
+    send_mcp_initialize_message,
+    send_mcp_tools_list_request,
+)
 
 
 TAG = __name__
