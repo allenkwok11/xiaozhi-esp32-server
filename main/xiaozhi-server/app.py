@@ -5,7 +5,7 @@ from aioconsole import ainput
 from config.settings import load_config
 from config.logger import setup_logging
 from core.utils.util import get_local_ip
-from core.ota_server import SimpleOtaServer
+from core.http_server import SimpleHttpServer
 from core.websocket_server import WebSocketServer
 from core.utils.util import check_ffmpeg_installed
 
@@ -51,19 +51,23 @@ async def main():
     # 启动 WebSocket 服务器
     ws_server = WebSocketServer(config)
     ws_task = asyncio.create_task(ws_server.start())
-    ota_task = None
+    # 启动 Simple OTA 服务器
+    ota_server = SimpleHttpServer(config)
+    ota_task = asyncio.create_task(ota_server.start())
 
     read_config_from_api = config.get("read_config_from_api", False)
+    port = int(config["server"].get("http_port", 8003))
     if not read_config_from_api:
-        # 启动 Simple OTA 服务器
-        ota_server = SimpleOtaServer(config)
-        ota_task = asyncio.create_task(ota_server.start())
-
         logger.bind(tag=TAG).info(
             "OTA接口是\t\thttp://{}:{}/xiaozhi/ota/",
             get_local_ip(),
-            config["server"]["ota_port"],
+            port,
         )
+    logger.bind(tag=TAG).info(
+        "视觉分析接口是\thttp://{}:{}/mcp/vision/explain",
+        get_local_ip(),
+        port,
+    )
 
     # 获取WebSocket配置，使用安全的默认值
     websocket_port = 8000
