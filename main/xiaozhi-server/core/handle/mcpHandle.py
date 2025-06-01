@@ -2,6 +2,7 @@ import json
 import asyncio
 from concurrent.futures import Future
 from core.utils.util import get_vision_url
+from core.utils.auth import AuthToken
 
 TAG = __name__
 
@@ -207,15 +208,18 @@ async def handle_mcp_message(conn, mcp_client: MCPClient, payload: dict):
 async def send_mcp_initialize_message(conn):
     """发送MCP初始化消息"""
 
-    # 智控台暂时不启动视觉分析
-    if conn.read_config_from_api:
-        vision = {}
-    else:
-        vision_url = get_vision_url(conn.config)
-        vision = {
-            "url": vision_url,
-            "token": "test_token",
-        }
+    vision_url = get_vision_url(conn.config)
+
+    # 密钥生成token
+    auth = AuthToken(conn.config["server"]["auth_key"])
+    token = auth.generate_token(conn.headers.get("device-id"))
+
+    vision = {
+        "url": vision_url,
+        "token": token,
+    }
+
+    conn.logger.bind(tag=TAG).info(f"视觉服务信息: {vision}")
 
     payload = {
         "jsonrpc": "2.0",

@@ -478,6 +478,8 @@ class ConnectionHandler:
             self.memory = modules["memory"]
 
     def _initialize_memory(self):
+        if self.memory is None:
+            return
         """初始化记忆模块"""
         self.memory.init_memory(
             role_id=self.device_id,
@@ -518,6 +520,8 @@ class ConnectionHandler:
                 self.logger.bind(tag=TAG).info("使用主LLM作为意图识别模型")
 
     def _initialize_intent(self):
+        if self.intent is None:
+            return
         self.intent_type = self.config["Intent"][
             self.config["selected_module"]["Intent"]
         ]["type"]
