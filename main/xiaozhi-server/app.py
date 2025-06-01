@@ -1,4 +1,5 @@
 import sys
+import uuid
 import signal
 import asyncio
 from aioconsole import ainput
@@ -45,13 +46,16 @@ async def main():
     check_ffmpeg_installed()
     config = load_config()
 
+    # 生成随机密钥并添加到配置中
+    config["server"]["auth_key"] = str(uuid.uuid4().hex)
+
     # 添加 stdin 监控任务
     stdin_task = asyncio.create_task(monitor_stdin())
 
     # 启动 WebSocket 服务器
     ws_server = WebSocketServer(config)
     ws_task = asyncio.create_task(ws_server.start())
-    # 启动 Simple OTA 服务器
+    # 启动 Simple http 服务器
     ota_server = SimpleHttpServer(config)
     ota_task = asyncio.create_task(ota_server.start())
 

@@ -35,16 +35,25 @@ class SimpleHttpServer:
     async def start(self):
         server_config = self.config["server"]
         host = server_config.get("ip", "0.0.0.0")
-        port = int(server_config.get("http_port"))
+        port = int(server_config.get("http_port", 8003))
 
         if port:
             app = web.Application()
+
+            read_config_from_api = server_config.get("read_config_from_api", False)
+
+            if not read_config_from_api:
+                # 如果没有开启智控台，只是单模块运行，就需要再添加简单OTA接口，用于下发websocket接口
+                app.add_routes(
+                    [
+                        web.get("/xiaozhi/ota/", self.ota_handler.handle_get),
+                        web.post("/xiaozhi/ota/", self.ota_handler.handle_post),
+                        web.options("/xiaozhi/ota/", self.ota_handler.handle_post),
+                    ]
+                )
             # 添加路由
             app.add_routes(
                 [
-                    web.get("/xiaozhi/ota/", self.ota_handler.handle_get),
-                    web.post("/xiaozhi/ota/", self.ota_handler.handle_post),
-                    web.options("/xiaozhi/ota/", self.ota_handler.handle_post),
                     web.get("/mcp/vision/explain", self.vision_handler.handle_get),
                     web.post("/mcp/vision/explain", self.vision_handler.handle_post),
                     web.options("/mcp/vision/explain", self.vision_handler.handle_post),
