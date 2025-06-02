@@ -74,6 +74,8 @@ async def checkWakeupWords(conn, text):
         text_hello = WAKEUP_CONFIG["text"]
         if not text_hello:
             text_hello = text
+        if conn.tts is None:
+            return False
         conn.tts.tts_one_sentence(
             conn, ContentType.FILE, content_file=file, content_detail=text_hello
         )
