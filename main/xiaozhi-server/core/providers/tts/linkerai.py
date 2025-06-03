@@ -35,10 +35,6 @@ class TTSProvider(TTSProviderBase):
 
         # 添加文本缓冲区
         self.text_buffer = ""
-        # 句子结束标点集合
-        self.sentence_endings = ("。", "？", "！", "；", ":", ".", "?", "!", ";","……")
-        # 逗号类标点（用于第一句话分割）
-        self.comma_endings = ("，", "~", "、", ",", "。", ".", "？", "?", "！", "!", "；", ";", "：",)
 
         # PCM缓冲区
         self.pcm_buffer = bytearray()
@@ -52,9 +48,9 @@ class TTSProvider(TTSProviderBase):
         while not self.conn.stop_event.is_set():
             try:
                 message = self.tts_text_queue.get(timeout=1)
-                logger.bind(tag=TAG).debug(
-                    f"TTS任务｜{message.sentence_type.name}｜{message.content_type.name}"
-                )
+                # logger.bind(tag=TAG).debug(
+                #     f"TTS任务｜{message.sentence_type.name}｜{message.content_type.name}"
+                # )
 
                 if message.sentence_type == SentenceType.FIRST:
                     # 初始化流式状态
@@ -83,7 +79,7 @@ class TTSProvider(TTSProviderBase):
                     self._flush_text_buffer()
                     # 发送结束帧
                     if self.pcm_buffer:
-                        opus_datas = self.wav_to_opus_data_audio_raw(self.pcm_buffer, is_end=True)
+                        opus_datas = self.wav_to_opus_data_audio_raw(self.pcm_buffer, end_of_stream=True)
                         self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas, ""))
                         self.pcm_buffer = bytearray()
                     self.tts_audio_queue.put((SentenceType.LAST, [], None))
@@ -98,17 +94,20 @@ class TTSProvider(TTSProviderBase):
 
     def _process_text_buffer(self):
         """处理文本缓冲区，分割并发送完整句子"""
+        # 使用父类的标点集合
+        sentence_endings = self.punctuations
+        comma_endings = self.first_sentence_punctuations
         while True:
             # 查找最近的句子结束位置
             end_pos = -1
-            for punct in self.sentence_endings:
+            for punct in sentence_endings:
                 pos = self.text_buffer.find(punct)
                 if pos != -1 and (end_pos == -1 or pos < end_pos):
                     end_pos = pos
 
             # 如果是第一句话，也允许在逗号处分隔
             if self.tts_audio_first_sentence and end_pos == -1:
-                for punct in self.comma_endings:
+                for punct in comma_endings:
                     pos = self.text_buffer.find(punct)
                     if pos != -1 and (end_pos == -1 or pos < end_pos):
                         end_pos = pos
@@ -160,7 +159,7 @@ class TTSProvider(TTSProviderBase):
     ###################################################################################
 
     async def send_text(self, text: str):
-        """流式处理TTS音频"""
+        """流式处理TTS音频，每句只推送一次音频列表"""
         try:
             params = {
                 "tts_text": text,
@@ -172,32 +171,44 @@ class TTSProvider(TTSProviderBase):
             }
             headers = {"Authorization": f"Bearer {self.access_token}"}
 
-            with requests.get(self.api_url, params=params, headers=headers, stream=True) as response:
+            with requests.get(self.api_url, params=params, headers=headers, stream=True, timeout=5) as response:
                 if response.status_code != 200:
                     logger.error(f"TTS请求失败: {response.status_code}, {response.text}")
+                    # 推送空LAST，防止播放端卡死
+                    self.tts_audio_queue.put((SentenceType.LAST, [], None))
                     return
 
                 logger.debug(f"处理TTS文本: {text}")
 
-                # 流式处理音频数据
-                for chunk in response.iter_content(chunk_size=1024):
+                pcm_buffer = bytearray()
+                frame_bytes = self.opus_encoder.frame_size * 4  # 每帧字节数（int16=2字节）
+                opus_datas = []
+                for chunk in response.iter_content(chunk_size=960):
                     if chunk:
-                        # 实时编码并发送音频帧
-                        self.pcm_buffer.extend(chunk)
-
-                # 处理剩余缓冲区数据
-                if self.pcm_buffer:
-                    opus_datas = self.wav_to_opus_data_audio_raw(self.pcm_buffer, is_end=True)
-                    self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas, text))
-                    self.pcm_buffer = bytearray()
+                        pcm_buffer.extend(chunk)
+                        # 只要够帧就编码
+                        while len(pcm_buffer) >= frame_bytes:
+                            frame = pcm_buffer[:frame_bytes]
+                            opus_chunk = self.opus_encoder.encode_pcm_to_opus(frame, end_of_stream=False)
+                            if opus_chunk:
+                                opus_datas.extend(opus_chunk)
+                            pcm_buffer = pcm_buffer[frame_bytes:]  # 剩余部分继续累积
+                # 处理最后剩余数据
+                if pcm_buffer:
+                    opus_chunk = self.opus_encoder.encode_pcm_to_opus(pcm_buffer, end_of_stream=True)
+                    if opus_chunk:
+                        opus_datas.extend(opus_chunk)
+                # 推送本句所有音频帧
+                self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas, text))
 
         except Exception as e:
             logger.error(f"TTS流式处理异常：{str(e)}")
-            raise
+            # 推送空LAST，防止播放端卡死
+            self.tts_audio_queue.put((SentenceType.LAST, [], None))
 
     # 保持原有方法
-    def wav_to_opus_data_audio_raw(self, raw_data_var, is_end=False):
-        opus_datas = self.opus_encoder.encode_pcm_to_opus(raw_data_var, is_end)
+    def wav_to_opus_data_audio_raw(self, raw_data_var):
+        opus_datas = self.opus_encoder.encode_pcm_to_opus(raw_data_var, end_of_stream=True)
         return opus_datas
 
     async def close(self):
