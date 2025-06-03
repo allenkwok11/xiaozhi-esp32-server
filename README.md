@@ -195,10 +195,21 @@ Websocket接口地址: wss://2662r3426b.vicp.fun/xiaozhi/v1/
 |---------|---------|------|
 | ASR(语音识别) | FunASR(本地) | ✅DoubaoASR(火山流式语音识别) |
 | LLM(大模型) | ChatGLMLLM(智谱glm-4-flash) | ✅DoubaoLLM(火山doubao-1-5-pro-32k-250115) |
-| VLLM(视觉大模型) | ChatGLMVLLM(智谱glm-4v-flash) | ✅ChatGLMVLLM(智谱glm-4v-flash) |
+| VLLM(视觉大模型) | ChatGLMVLLM(智谱glm-4v-flash) | ✅QwenVLVLLM(千问qwen2.5-vl-3b-instructh) |
 | TTS(语音合成) | EdgeTTS(微软语音) | ✅HuoshanDoubleStreamTTS(火山双流式语音合成) |
 | Intent(意图识别) | function_call(函数调用) | ✅function_call(函数调用) |
 | Memory(记忆功能) | mem_local_short(本地短期记忆） | ✅mem_local_short（本地短期记忆） |
+
+#### 🔧 测试工具
+本项目提供以下测试工具，帮助您验证系统和选择合适的模型：
+
+| 工具名称 | 位置 | 使用方法 | 功能说明 |
+|---------|------|---------|---------|
+| test_page | `main/xiaozhi-server/test/test_page.html` | 使用谷歌浏览器直接打开 | 测试音频播放和接收功能，验证Python端音频处理是否正常 |
+| performance_tester | `main/xiaozhi-server/performance_tester.py` | 执行 `python performance_tester.py` | 测试ASR(语音识别)、LLM(大模型)、TTS(语音合成)三个核心模块的响应速度 |
+| performance_tester_vllm | `main/xiaozhi-server/performance_tester_vllm.py` | 执行 `python performance_tester_vllm.py` | 测试VLLM(视觉模型)的响应速度 |
+
+> 💡 提示：测试模型速度时，只会测试配置了密钥的模型。
 
 ---
 ## 功能清单 ✨
@@ -248,6 +259,16 @@ Websocket接口地址: wss://2662r3426b.vicp.fun/xiaozhi/v1/
 | coze 接口调用 | Coze | - |
 
 实际上，任何支持 openai 接口调用的 LLM 均可接入使用。
+
+---
+
+### VLLM 视觉模型
+
+| 使用方式 | 支持平台 | 免费平台 |
+|:---:|:---:|:---:|
+| openai 接口调用 | 阿里百炼、智谱ChatGLMVLLM | 智谱ChatGLMVLLM |
+
+实际上，任何支持 openai 接口调用的 VLLM 均可接入使用。
 
 ---
 

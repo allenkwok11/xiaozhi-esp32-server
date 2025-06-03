@@ -467,6 +467,12 @@ VLLM:
     model_name: glm-4v-flash  # 智谱AI的视觉模型
     url: https://open.bigmodel.cn/api/paas/v4/
     api_key: 你的api_key
+  QwenVLVLLM:
+    type: openai
+    model_name: qwen2.5-vl-3b-instruct
+    url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    # 可在这里找到你的api key https://bailian.console.aliyun.com/?apiKey=1#/api-key
+    api_key: 你的api_key
 TTS:
   # 当前支持的type为edge、doubao，可自行适配
   EdgeTTS:
