@@ -171,7 +171,7 @@
 | 部署方式 | 特点 | 适用场景 | 部署文档 | 配置要求 | 视频教程 | 
 |---------|------|---------|---------|---------|---------|
 | **最简化安装** | 智能对话、IOT功能，数据存储在配置文件 | 低配置环境，无需数据库 | [Docker版](./docs/Deployment.md#%E6%96%B9%E5%BC%8F%E4%B8%80docker%E5%8F%AA%E8%BF%90%E8%A1%8Cserver) / [源码部署](./docs/Deployment.md#%E6%96%B9%E5%BC%8F%E4%BA%8C%E6%9C%AC%E5%9C%B0%E6%BA%90%E7%A0%81%E5%8F%AA%E8%BF%90%E8%A1%8Cserver)| 如果使用`FunASR`要2核4G，如果全API，要2核2G | - | 
-| **全模块安装** | 智能对话、IOT、OTA、智控台，数据存储在数据库 | 完整功能体验 |[Docker版](./docs/Deployment_all.md#%E6%96%B9%E5%BC%8F%E4%B8%80docker%E8%BF%90%E8%A1%8C%E5%85%A8%E6%A8%A1%E5%9D%97) / [源码部署](./docs/Deployment_all.md#%E6%96%B9%E5%BC%8F%E4%BA%8C%E6%9C%AC%E5%9C%B0%E6%BA%90%E7%A0%81%E8%BF%90%E8%A1%8C%E5%85%A8%E6%A8%A1%E5%9D%97) | 如果使用`FunASR`要4核8G，如果全API，要2核4G| [本地源码视频教程](https://www.bilibili.com/video/BV1wBJhz4Ewe) | 
+| **全模块安装** | 智能对话、IOT、OTA、智控台，数据存储在数据库 | 完整功能体验 |[Docker版](./docs/Deployment_all.md#%E6%96%B9%E5%BC%8F%E4%B8%80docker%E8%BF%90%E8%A1%8C%E5%85%A8%E6%A8%A1%E5%9D%97) / [源码部署](./docs/Deployment_all.md#%E6%96%B9%E5%BC%8F%E4%BA%8C%E6%9C%AC%E5%9C%B0%E6%BA%90%E7%A0%81%E8%BF%90%E8%A1%8C%E5%85%A8%E6%A8%A1%E5%9D%97) | 如果使用`FunASR`要4核8G，如果全API，要2核4G| [本地源码启动视频教程](https://www.bilibili.com/video/BV1wBJhz4Ewe) / [本地源码自动更新教程](./docs/dev-ops-integration.md) | 
 
 
 > 💡 提示：以下是按最新代码部署后的测试平台，有需要可烧录测试，并发为6个，每天会清空数据
@@ -195,6 +195,7 @@ Websocket接口地址: wss://2662r3426b.vicp.fun/xiaozhi/v1/
 |---------|---------|------|
 | ASR(语音识别) | FunASR(本地) | ✅DoubaoASR(火山流式语音识别) |
 | LLM(大模型) | ChatGLMLLM(智谱glm-4-flash) | ✅DoubaoLLM(火山doubao-1-5-pro-32k-250115) |
+| VLLM(视觉大模型) | ChatGLMVLLM(智谱glm-4v-flash) | ✅ChatGLMVLLM(智谱glm-4v-flash) |
 | TTS(语音合成) | EdgeTTS(微软语音) | ✅HuoshanDoubleStreamTTS(火山双流式语音合成) |
 | Intent(意图识别) | function_call(函数调用) | ✅function_call(函数调用) |
 | Memory(记忆功能) | mem_local_short(本地短期记忆） | ✅mem_local_short（本地短期记忆） |
