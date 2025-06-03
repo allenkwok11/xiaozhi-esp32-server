@@ -245,3 +245,67 @@ Xiaozhi is an ecosystem. When using this product, you might also want to check o
 | coze interface call | Coze | - |
 
 In fact, any LLM that supports openai interface calls can be integrated and used.
+
+### TTS Speech Synthesis
+
+| Usage Method | Supported Platforms | Free Platforms |
+|:---:|:---:|:---:|
+| API Call | EdgeTTS, Volcano Engine Doubao TTS, Tencent Cloud, Alibaba Cloud TTS, CosyVoiceSiliconflow, TTS302AI, CozeCnTTS, GizwitsTTS, ACGNTTS, OpenAITTS | EdgeTTS, CosyVoiceSiliconflow(partial) |
+| Local Service | FishSpeech, GPT_SOVITS_V2, GPT_SOVITS_V3, MinimaxTTS | FishSpeech, GPT_SOVITS_V2, GPT_SOVITS_V3, MinimaxTTS |
+
+---
+
+### VAD Voice Activity Detection
+
+| Type | Platform Name | Usage Method | Pricing Model | Notes |
+|:---:|:---------:|:----:|:----:|:--:|
+| VAD | SileroVAD | Local Usage | Free | |
+
+---
+
+### ASR Speech Recognition
+
+| Usage Method | Supported Platforms | Free Platforms |
+|:---:|:---:|:---:|
+| Local Usage | FunASR, SherpaASR | FunASR, SherpaASR |
+| API Call | DoubaoASR, FunASRServer, TencentASR, AliyunASR | FunASRServer |
+
+---
+
+### Memory Storage
+
+| Type | Platform Name | Usage Method | Pricing Model | Notes |
+|:------:|:---------------:|:----:|:---------:|:--:|
+| Memory | mem0ai | API Call | 1000 calls/month quota | |
+| Memory | mem_local_short | Local Summary | Free | |
+
+---
+
+### Intent Recognition
+
+| Type | Platform Name | Usage Method | Pricing Model | Notes |
+|:------:|:-------------:|:----:|:-------:|:---------------------:|
+| Intent | intent_llm | API Call | Based on LLM pricing | Uses large model for intent recognition, highly versatile |
+| Intent | function_call | API Call | Based on LLM pricing | Uses large model function calls for intent, fast and effective |
+
+---
+
+## Acknowledgments 🙏
+
+| Logo | Project/Company | Description |
+|:---:|:---:|:---|
+| <img src="./docs/images/logo_bailing.png" width="160"> | [Bailing Voice Dialogue Robot](https://github.com/wwbin2017/bailing) | This project was inspired by [Bailing Voice Dialogue Robot](https://github.com/wwbin2017/bailing) and implemented based on it |
+| <img src="./docs/images/logo_tenclass.png" width="160"> | [Tenclass](https://www.tenclass.com/) | Thanks to [Tenclass](https://www.tenclass.com/) for establishing standard communication protocols, multi-device compatibility solutions, and high-concurrency scenario practices for the Xiaozhi ecosystem; providing full-chain technical documentation support for this project |
+| <img src="./docs/images/logo_xuanfeng.png" width="160"> | [Xuanfeng Technology](https://github.com/Eric0308) | Thanks to [Xuanfeng Technology](https://github.com/Eric0308) for contributing the function call framework, MCP communication protocol, and plugin call mechanism implementation code, significantly improving front-end device (IoT) interaction efficiency and functional extensibility through standardized instruction scheduling system and dynamic expansion capabilities |
+| <img src="./docs/images/logo_huiyuan.png" width="160"> | [Huiyuan Design](http://ui.kwd988.net/) | Thanks to [Huiyuan Design](http://ui.kwd988.net/) for providing professional visual solutions for this project, empowering the product user experience with their design experience serving over a thousand enterprises |
+| <img src="./docs/images/logo_qinren.png" width="160"> | [Xi'an Qinren Information Technology](https://www.029app.com/) | Thanks to [Xi'an Qinren Information Technology](https://www.029app.com/) for deepening the visual system of this project, ensuring consistency and extensibility of the overall design style in multi-scenario applications |
+
+
+<a href="https://star-history.com/#xinnan-tech/xiaozhi-esp32-server&Date">
+
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=xinnan-tech/xiaozhi-esp32-server&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=xinnan-tech/xiaozhi-esp32-server&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=xinnan-tech/xiaozhi-esp32-server&type=Date" />
+ </picture>
+</a>
