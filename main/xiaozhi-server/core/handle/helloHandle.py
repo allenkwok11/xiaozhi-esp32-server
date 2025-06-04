@@ -33,8 +33,6 @@ async def handleHelloMessage(conn, msg_json):
         format = audio_params.get("format")
         conn.logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
         conn.audio_format = format
-        if conn.asr is not None:
-            conn.asr.set_audio_format(format)
         conn.welcome_msg["audio_params"] = audio_params
     features = msg_json.get("features")
     if features:
