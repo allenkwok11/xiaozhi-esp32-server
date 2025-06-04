@@ -2,10 +2,9 @@ import os
 import time
 import json
 import random
-import shutil
 import asyncio
 from core.handle.sendAudioHandle import send_stt_message
-from core.utils.util import remove_punctuation_and_length
+from core.utils.util import remove_punctuation_and_length, opus_datas_to_wav_bytes
 from core.providers.tts.dto.dto import ContentType, InterfaceType
 from core.handle.mcpHandle import (
     MCPClient,
@@ -119,19 +118,18 @@ async def wakeupWordsResponse(conn):
     result = conn.llm.response_no_stream(conn.config["prompt"], question)
     if result is None or result == "":
         return
-    tts_file = await asyncio.to_thread(conn.tts.to_tts, result)
 
-    if tts_file is not None and os.path.exists(tts_file):
-        file_type = os.path.splitext(tts_file)[1]
-        if file_type:
-            file_type = file_type.lstrip(".")
-        old_file = getWakeupWordFile("my_" + WAKEUP_CONFIG["file_name"])
-        if old_file is not None:
-            os.remove(old_file)
-        """将文件挪到"wakeup_words.mp3"""
-        shutil.move(
-            tts_file,
-            WAKEUP_CONFIG["dir"] + "my_" + WAKEUP_CONFIG["file_name"] + "." + file_type,
-        )
-        WAKEUP_CONFIG["create_time"] = time.time()
-        WAKEUP_CONFIG["text"] = result
+    opus_datas = await asyncio.to_thread(conn.tts.to_tts, result)
+    if not opus_datas:
+        return
+
+    wav_bytes = opus_datas_to_wav_bytes(opus_datas, sample_rate=16000)
+    file_path = os.path.join(
+        WAKEUP_CONFIG["dir"], "my_" + WAKEUP_CONFIG["file_name"] + ".wav"
+    )
+    # 写入wav数据
+    with open(file_path, "wb") as f:
+        f.write(wav_bytes)
+
+    WAKEUP_CONFIG["create_time"] = time.time()
+    WAKEUP_CONFIG["text"] = result

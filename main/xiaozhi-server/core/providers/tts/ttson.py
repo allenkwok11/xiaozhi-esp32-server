@@ -30,6 +30,7 @@ class TTSProvider(TTSProviderBase):
         self.output_file = config.get("output_dir")
         self.pitch_factor = int(config.get("pitch_factor", 0))
         self.format = config.get("format", "mp3")
+        self.audio_file_type = config.get("format", "mp3")
         self.emotion = int(config.get("emotion", 1))
         self.header = {"Content-Type": "application/json"}
 
@@ -73,9 +74,11 @@ class TTSProvider(TTSProviderBase):
             )
 
             audio_content = requests.get(result)
-            with open(output_file, "wb") as f:
-                f.write(audio_content.content)
-                return True
+            if output_file:
+                with open(output_file, "wb") as f:
+                    f.write(audio_content.content)
+            else:
+                return audio_content.content
             voice_path = resp_json.get("voice_path")
             des_path = output_file
             shutil.move(voice_path, des_path)

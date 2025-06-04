@@ -52,6 +52,7 @@ class TTSProvider(TTSProviderBase):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
         }
+        self.audio_file_type = defult_audio_setting.get("format", "mp3")
 
     def generate_filename(self, extension=".mp3"):
         return os.path.join(
@@ -80,8 +81,12 @@ class TTSProvider(TTSProviderBase):
             # 检查返回请求数据的status_code是否为0
             if resp.json()["base_resp"]["status_code"] == 0:
                 data = resp.json()["data"]["audio"]
-                file_to_save = open(output_file, "wb")
-                file_to_save.write(bytes.fromhex(data))
+                audio_bytes = bytes.fromhex(data)
+                if output_file:
+                    with open(output_file, "wb") as file_to_save:
+                        file_to_save.write(audio_bytes)
+                else:
+                    return audio_bytes
             else:
                 raise Exception(
                     f"{__name__} status_code: {resp.status_code} response: {resp.content}"
