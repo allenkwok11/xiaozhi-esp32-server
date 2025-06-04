@@ -10,10 +10,6 @@ TAG = __name__
 
 
 async def handleAudioMessage(conn, audio):
-    if conn.vad is None:
-        return
-    if conn.asr is None or not hasattr(conn.asr, "conn") or conn.asr.conn is None:
-        return
     # 当前片段是否有人说话
     have_voice = conn.vad.is_vad(conn, audio)
     if have_voice:
@@ -22,7 +18,7 @@ async def handleAudioMessage(conn, audio):
     # 设备长时间空闲检测，用于say goodbye
     await no_voice_close_connect(conn, have_voice)
     # 接收音频
-    await conn.asr.receive_audio(audio, have_voice)
+    await conn.asr.receive_audio(conn, audio, have_voice)
 
 
 async def startToChat(conn, text):

@@ -190,7 +190,7 @@ class ASRProvider(ASRProviderBase):
                 self.is_reconnecting = False
                 self._session_close_event.set()
 
-    async def receive_audio(self, audio, _):
+    async def receive_audio(self, conn, audio, _):
         if not isinstance(audio, bytes):
             return
 
@@ -411,7 +411,7 @@ class ASRProvider(ASRProviderBase):
                 await asyncio.sleep(self.retry_delay)
                 await self._forward_asr_results()  # 递归重试
 
-    async def speech_to_text(self, opus_data, session_id):
+    async def speech_to_text(self, opus_data, session_id, audio_format):
         result = self.text
         self.text = ""  # 清空text
         return result, None
