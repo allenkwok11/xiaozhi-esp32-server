@@ -30,8 +30,8 @@ async def handleAudioMessage(conn, audio):
 
 
 async def resume_vad_detection(conn):
-    # 等待1秒后恢复VAD检测
-    await asyncio.sleep(1)
+    # 等待2秒后恢复VAD检测
+    await asyncio.sleep(2)
     conn.just_woken_up = False
 
 

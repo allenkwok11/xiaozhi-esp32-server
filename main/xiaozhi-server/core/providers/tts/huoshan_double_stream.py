@@ -195,7 +195,7 @@ class TTSProvider(TTSProviderBase):
             try:
                 logger.bind(tag=TAG).debug("等待TTS文本队列消息...")
                 message = self.tts_text_queue.get(timeout=1)
-                logger.bind(tag=TAG).info(
+                logger.bind(tag=TAG).debug(
                     f"收到TTS任务｜{message.sentence_type.name} ｜ {message.content_type.name} | 会话ID: {self.conn.sentence_id}"
                 )
                 if self.conn.client_abort:
@@ -221,7 +221,7 @@ class TTSProvider(TTSProviderBase):
                 elif ContentType.TEXT == message.content_type:
                     if message.content_detail:
                         try:
-                            logger.bind(tag=TAG).info(
+                            logger.bind(tag=TAG).debug(
                                 f"开始发送TTS文本: {message.content_detail}"
                             )
                             future = asyncio.run_coroutine_threadsafe(
@@ -229,7 +229,7 @@ class TTSProvider(TTSProviderBase):
                                 loop=self.conn.loop,
                             )
                             future.result()
-                            logger.bind(tag=TAG).info("TTS文本发送成功")
+                            logger.bind(tag=TAG).debug("TTS文本发送成功")
                         except Exception as e:
                             logger.bind(tag=TAG).error(f"发送TTS文本失败: {str(e)}")
                             continue
@@ -250,7 +250,6 @@ class TTSProvider(TTSProviderBase):
                             loop=self.conn.loop,
                         )
                         future.result()
-                        logger.bind(tag=TAG).info("TTS会话结束成功")
                     except Exception as e:
                         logger.bind(tag=TAG).error(f"结束TTS会话失败: {str(e)}")
                         continue
