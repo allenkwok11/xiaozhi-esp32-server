@@ -67,8 +67,28 @@
                     </el-form-item>
                   </div>
                   <div class="form-column">
-                    <el-form-item v-for="(model, index) in models" :key="`model-${index}`" :label="model.label"
-                                  class="model-item">
+                    <div class="model-row">
+                      <el-form-item label="语音活动检测(VAD)" class="model-item">
+                        <div class="model-select-wrapper">
+                          <el-select v-model="form.model.vadModelId" filterable placeholder="请选择" class="form-select"
+                            @change="handleModelChange('VAD', $event)">
+                            <el-option v-for="(item, optionIndex) in modelOptions['VAD']"
+                              :key="`option-vad-${optionIndex}`" :label="item.label" :value="item.value" />
+                          </el-select>
+                        </div>
+                      </el-form-item>
+                      <el-form-item label="语音识别(ASR)" class="model-item">
+                        <div class="model-select-wrapper">
+                          <el-select v-model="form.model.asrModelId" filterable placeholder="请选择" class="form-select"
+                            @change="handleModelChange('ASR', $event)">
+                            <el-option v-for="(item, optionIndex) in modelOptions['ASR']"
+                              :key="`option-asr-${optionIndex}`" :label="item.label" :value="item.value" />
+                          </el-select>
+                        </div>
+                      </el-form-item>
+                    </div>
+                    <el-form-item v-for="(model, index) in models.slice(2)" :key="`model-${index}`" :label="model.label"
+                      class="model-item">
                       <div class="model-select-wrapper">
                         <el-select v-model="form.model[model.key]" filterable placeholder="请选择" class="form-select"
                                    @change="handleModelChange(model.type, $event)">
@@ -157,17 +177,19 @@ export default {
           vadModelId: "",
           asrModelId: "",
           llmModelId: "",
+          vllmModelId: "",
           memModelId: "",
           intentModelId: "",
         }
       },
       models: [
-        {label: '语音活动检测(VAD)', key: 'vadModelId', type: 'VAD'},
-        {label: '语音识别(ASR)', key: 'asrModelId', type: 'ASR'},
-        {label: '大语言模型(LLM)', key: 'llmModelId', type: 'LLM'},
-        {label: '意图识别(Intent)', key: 'intentModelId', type: 'Intent'},
-        {label: '记忆(Memory)', key: 'memModelId', type: 'Memory'},
-        {label: '语音合成(TTS)', key: 'ttsModelId', type: 'TTS'},
+        { label: '语音活动检测(VAD)', key: 'vadModelId', type: 'VAD' },
+        { label: '语音识别(ASR)', key: 'asrModelId', type: 'ASR' },
+        { label: '大语言模型(LLM)', key: 'llmModelId', type: 'LLM' },
+        { label: '视觉大模型(VLLM)', key: 'vllmModelId', type: 'VLLM' },
+        { label: '意图识别(Intent)', key: 'intentModelId', type: 'Intent' },
+        { label: '记忆(Memory)', key: 'memModelId', type: 'Memory' },
+        { label: '语音合成(TTS)', key: 'ttsModelId', type: 'TTS' },
       ],
       modelOptions: {},
       templates: [],
@@ -194,6 +216,7 @@ export default {
         asrModelId: this.form.model.asrModelId,
         vadModelId: this.form.model.vadModelId,
         llmModelId: this.form.model.llmModelId,
+        vllmModelId: this.form.model.vllmModelId,
         ttsModelId: this.form.model.ttsModelId,
         ttsVoiceId: this.form.ttsVoiceId,
         chatHistoryConf: this.form.chatHistoryConf,
@@ -246,6 +269,7 @@ export default {
             vadModelId: "",
             asrModelId: "",
             llmModelId: "",
+            vllmModelId: "",
             memModelId: "",
             intentModelId: "",
           }
@@ -300,6 +324,7 @@ export default {
           vadModelId: templateData.vadModelId || this.form.model.vadModelId,
           asrModelId: templateData.asrModelId || this.form.model.asrModelId,
           llmModelId: templateData.llmModelId || this.form.model.llmModelId,
+          vllmModelId: templateData.vllmModelId || this.form.model.vllmModelId,
           memModelId: templateData.memModelId || this.form.model.memModelId,
           intentModelId: templateData.intentModelId || this.form.model.intentModelId
         }
@@ -316,6 +341,7 @@ export default {
               vadModelId: data.data.vadModelId,
               asrModelId: data.data.asrModelId,
               llmModelId: data.data.llmModelId,
+              vllmModelId: data.data.vllmModelId,
               memModelId: data.data.memModelId,
               intentModelId: data.data.intentModelId
             }
@@ -635,6 +661,25 @@ export default {
   display: flex;
   align-items: center;
   width: 100%;
+}
+
+.model-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 6px;
+}
+
+.model-row .model-item {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.model-row .el-form-item__label {
+  font-size: 12px !important;
+  color: #3d4566 !important;
+  font-weight: 400;
+  line-height: 22px;
+  padding-bottom: 2px;
 }
 
 .function-icons {

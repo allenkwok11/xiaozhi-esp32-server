@@ -52,6 +52,7 @@ class TTSProviderBase(ABC):
         )
         self.first_sentence_punctuations = (
             "，",
+            "～",
             "~",
             "、",
             ",",
@@ -178,6 +179,9 @@ class TTSProviderBase(ABC):
         while not self.conn.stop_event.is_set():
             try:
                 message = self.tts_text_queue.get(timeout=1)
+                if self.conn.client_abort:
+                    logger.bind(tag=TAG).info("收到打断信息，终止TTS文本处理线程")
+                    continue
                 if message.sentence_type == SentenceType.FIRST:
                     # 初始化参数
                     self.tts_stop_request = False
@@ -216,6 +220,7 @@ class TTSProviderBase(ABC):
                 logger.bind(tag=TAG).error(
                     f"处理TTS文本失败: {str(e)}, 类型: {type(e).__name__}, 堆栈: {traceback.format_exc()}"
                 )
+                continue
 
     def _audio_play_priority_thread(self):
         while not self.conn.stop_event.is_set():
