@@ -63,6 +63,8 @@ async def checkWakeupWords(conn, text):
     """检查是否是唤醒词"""
     _, filtered_text = remove_punctuation_and_length(text)
     if filtered_text in conn.config.get("wakeup_words"):
+        # 设置刚刚被唤醒的标志
+        conn.just_woken_up = True
         await send_stt_message(conn, text)
 
         file = getWakeupWordFile(WAKEUP_CONFIG["file_name"])
