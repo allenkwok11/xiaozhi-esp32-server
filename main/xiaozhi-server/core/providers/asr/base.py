@@ -84,8 +84,12 @@ class ASRProviderBase(ABC):
         text_len, _ = remove_punctuation_and_length(raw_text)
         if text_len > 0:
             # 使用自定义模块进行上报
+            self.stop_ws_connection()
             await startToChat(conn, raw_text)
             enqueue_asr_report(conn, raw_text, asr_audio_task)
+
+    def stop_ws_connection(self):
+        pass
 
     def save_audio_to_file(self, pcm_data: List[bytes], session_id: str) -> str:
         """PCM数据保存为WAV文件"""

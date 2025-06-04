@@ -3,6 +3,7 @@ from core.handle.intentHandler import handle_user_intent
 from core.utils.output_counter import check_device_output_limit
 from core.handle.abortHandle import handleAbortMessage
 import time
+import asyncio
 from core.handle.sendAudioHandle import SentenceType
 from core.utils.util import audio_to_data
 
@@ -12,6 +13,13 @@ TAG = __name__
 async def handleAudioMessage(conn, audio):
     # 当前片段是否有人说话
     have_voice = conn.vad.is_vad(conn, audio)
+
+    # 如果设备刚刚被唤醒，短暂忽略VAD检测
+    if hasattr(conn, "just_woken_up") and conn.just_woken_up:
+        have_voice = False
+        # 设置一个短暂延迟后恢复VAD检测
+        asyncio.create_task(resume_vad_detection(conn))
+
     if have_voice:
         if conn.client_is_speaking:
             await handleAbortMessage(conn)
@@ -19,6 +27,12 @@ async def handleAudioMessage(conn, audio):
     await no_voice_close_connect(conn, have_voice)
     # 接收音频
     await conn.asr.receive_audio(conn, audio, have_voice)
+
+
+async def resume_vad_detection(conn):
+    # 等待1秒后恢复VAD检测
+    await asyncio.sleep(1)
+    conn.just_woken_up = False
 
 
 async def startToChat(conn, text):

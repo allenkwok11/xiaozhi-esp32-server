@@ -278,6 +278,7 @@ ASR:
     # 可以在这里申请相关Key等信息
     # https://console.volcengine.com/speech/app
     # DoubaoASR和DoubaoStreamASR的区别是：DoubaoASR是按次收费，DoubaoStreamASR是按时收费
+    # 开通地址https://console.volcengine.com/speech/service/10011
     # 一般来说按次收费的更便宜，但是DoubaoStreamASR使用了大模型技术，效果更好
     type: doubao_stream
     appid: 你的火山引擎语音合成服务appid
