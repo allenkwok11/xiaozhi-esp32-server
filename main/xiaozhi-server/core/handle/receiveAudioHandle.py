@@ -18,6 +18,7 @@ async def handleAudioMessage(conn, audio):
     if hasattr(conn, "just_woken_up") and conn.just_woken_up:
         have_voice = False
         # 设置一个短暂延迟后恢复VAD检测
+        conn.asr_audio.clear()
         asyncio.create_task(resume_vad_detection(conn))
 
     if have_voice:
