@@ -7,6 +7,11 @@ import asyncio
 from core.handle.sendAudioHandle import send_stt_message
 from core.utils.util import remove_punctuation_and_length
 from core.providers.tts.dto.dto import ContentType, InterfaceType
+from core.handle.mcpHandle import (
+    MCPClient,
+    send_mcp_initialize_message,
+    send_mcp_tools_list_request,
+)
 
 
 TAG = __name__
@@ -28,9 +33,18 @@ async def handleHelloMessage(conn, msg_json):
         format = audio_params.get("format")
         conn.logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
         conn.audio_format = format
-        if conn.asr is not None:
-            conn.asr.set_audio_format(format)
         conn.welcome_msg["audio_params"] = audio_params
+    features = msg_json.get("features")
+    if features:
+        conn.logger.bind(tag=TAG).info(f"客户端特性: {features}")
+        conn.features = features
+        if features.get("mcp"):
+            conn.logger.bind(tag=TAG).info("客户端支持MCP")
+            conn.mcp_client = MCPClient()
+            # 发送初始化
+            asyncio.create_task(send_mcp_initialize_message(conn))
+            # 发送mcp消息，获取tools列表
+            asyncio.create_task(send_mcp_tools_list_request(conn))
 
     await conn.websocket.send(json.dumps(conn.welcome_msg))
 
@@ -49,6 +63,8 @@ async def checkWakeupWords(conn, text):
     """检查是否是唤醒词"""
     _, filtered_text = remove_punctuation_and_length(text)
     if filtered_text in conn.config.get("wakeup_words"):
+        # 设置刚刚被唤醒的标志
+        conn.just_woken_up = True
         await send_stt_message(conn, text)
 
         file = getWakeupWordFile(WAKEUP_CONFIG["file_name"])
@@ -58,6 +74,8 @@ async def checkWakeupWords(conn, text):
         text_hello = WAKEUP_CONFIG["text"]
         if not text_hello:
             text_hello = text
+        if conn.tts is None:
+            return False
         conn.tts.tts_one_sentence(
             conn, ContentType.FILE, content_file=file, content_detail=text_hello
         )
@@ -92,7 +110,13 @@ async def wakeupWordsResponse(conn):
 
     """唤醒词响应"""
     wakeup_word = random.choice(WAKEUP_CONFIG["words"])
-    result = conn.llm.response_no_stream(conn.config["prompt"], wakeup_word)
+    question = (
+        "此刻用户正在和你说```"
+        + wakeup_word
+        + "```。\n请你根据以上用户的内容，进行简短回复，文字内容控制在15个字以内。\n"
+        + "请勿对这条内容本身进行任何解释和回应，仅返回对用户的内容的回复。"
+    )
+    result = conn.llm.response_no_stream(conn.config["prompt"], question)
     if result is None or result == "":
         return
     tts_file = await asyncio.to_thread(conn.tts.to_tts, result)
