@@ -1,8 +1,5 @@
-import os
-import time
 import queue
 import asyncio
-import requests
 import traceback
 import aiohttp
 from config.logger import setup_logging
@@ -24,6 +21,7 @@ class TTSProvider(TTSProviderBase):
         self.api_url = config.get("api_url")
         self.audio_format = "pcm"
         self.before_stop_play_files = []
+        self.segment_count = 0  # 添加片段计数器
 
         # 创建Opus编码器
         self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
@@ -50,7 +48,7 @@ class TTSProvider(TTSProviderBase):
                     self.tts_stop_request = False
                     self.processed_chars = 0
                     self.tts_text_buff = []
-                    self.is_first_sentence = True
+                    self.segment_count = 0
                     self.tts_audio_first_sentence = True
                     self.before_stop_play_files.clear()
                 elif ContentType.TEXT == message.content_type:
@@ -60,7 +58,6 @@ class TTSProvider(TTSProviderBase):
                         self.to_tts(segment_text)
 
                 elif ContentType.FILE == message.content_type:
-                    self._process_remaining_text()
                     logger.bind(tag=TAG).info(
                         f"添加音频文件到待播放列表: {message.content_file}"
                     )
@@ -69,7 +66,8 @@ class TTSProvider(TTSProviderBase):
                     )
 
                 if message.sentence_type == SentenceType.LAST:
-                    self._process_remaining_text()
+                    # 处理剩余的文本
+                    self._process_remaining_text(True)
 
             except queue.Empty:
                 continue
@@ -78,7 +76,7 @@ class TTSProvider(TTSProviderBase):
                     f"处理TTS文本失败: {str(e)}, 类型: {type(e).__name__}, 堆栈: {traceback.format_exc()}"
                 )
 
-    def _process_remaining_text(self):
+    def _process_remaining_text(self, is_last=False):
         """处理剩余的文本并生成语音
 
         Returns:
@@ -89,15 +87,17 @@ class TTSProvider(TTSProviderBase):
         if remaining_text:
             segment_text = textUtils.get_string_no_punctuation_or_emoji(remaining_text)
             if segment_text:
-                self.to_tts(segment_text)
+                self.to_tts(segment_text, is_last)
                 self.processed_chars += len(full_text)
+            else:
+                self._process_before_stop_play_files()
 
-    def to_tts(self, text):
+    def to_tts(self, text, is_last=False):
         try:
             max_repeat_time = 5
             text = MarkdownCleaner.clean_markdown(text)
             try:
-                asyncio.run(self.text_to_speak(text, None))
+                asyncio.run(self.text_to_speak(text, is_last))
             except Exception as e:
                 logger.bind(tag=TAG).warning(
                     f"语音生成失败{5 - max_repeat_time + 1}次: {text}，错误: {e}"
@@ -121,9 +121,9 @@ class TTSProvider(TTSProviderBase):
     # linkerai单流式TTS重写父类的方法--结束
     ###################################################################################
 
-    async def text_to_speak(self, text, _):
+    async def text_to_speak(self, text, is_last):
         """流式处理TTS音频，每句只推送一次音频列表"""
-        await self._tts_request(text)
+        await self._tts_request(text, is_last)
 
     async def close(self):
         """资源清理"""
@@ -131,9 +131,7 @@ class TTSProvider(TTSProviderBase):
         if hasattr(self, "opus_encoder"):
             self.opus_encoder.close()
 
-    async def _tts_request(self, text: str) -> None:
-        """发送TTS请求"""
-        start_time = time.time()
+    async def _tts_request(self, text: str, is_last: bool) -> None:
         params = {
             "tts_text": text,
             "spk_id": self.voice,
@@ -141,41 +139,89 @@ class TTSProvider(TTSProviderBase):
             "stream": "true",
             "target_sr": 16000,
             "audio_format": "pcm",
-            "instruct_text": "",
+            "instruct_text": "请生成一段自然流畅的语音",
         }
         headers = {
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
         }
 
+        # 一帧 PCM 所需字节数：60 ms &times; 16 kHz &times; 1 ch &times; 2 B = 1 920
+        frame_bytes = int(
+            self.opus_encoder.sample_rate
+            * self.opus_encoder.channels  # 1
+            * self.opus_encoder.frame_size_ms
+            / 1000
+            * 2
+        )  # 16-bit = 2 bytes
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     self.api_url, params=params, headers=headers, timeout=10
-                ) as response:
-                    if response.status != 200:
-                        logger.error(
-                            f"TTS请求失败: {response.status}, {await response.text()}"
-                        )
-                        # 推送空LAST，防止播放端卡死
+                ) as resp:
+
+                    if resp.status != 200:
+                        logger.error(f"TTS请求失败: {resp.status}, {await resp.text()}")
                         self.tts_audio_queue.put((SentenceType.LAST, [], None))
                         return
 
-                    logger.info(
-                        f"TTS请求成功: {text}, 耗时: {time.time() - start_time}秒"
-                    )
+                    self.pcm_buffer.clear()
+                    opus_datas_cache = []
 
-                    # 流式处理音频数据
-                    async for chunk in response.content.iter_chunks():
-                        if chunk[0]:  # 确保数据不为空
-                            opus_data = self.opus_encoder.encode_pcm_to_opus(
-                                chunk[0], end_of_stream=True
+                    # 兼容 iter_chunked / iter_chunks / iter_any
+                    async for chunk in resp.content.iter_any():
+                        data = chunk[0] if isinstance(chunk, (list, tuple)) else chunk
+                        if not data:
+                            continue
+
+                        # 拼到 buffer
+                        self.pcm_buffer.extend(data)
+
+                        # 够一帧就编码
+                        while len(self.pcm_buffer) >= frame_bytes:
+                            frame = bytes(self.pcm_buffer[:frame_bytes])
+                            del self.pcm_buffer[:frame_bytes]
+
+                            opus = self.opus_encoder.encode_pcm_to_opus(
+                                frame, end_of_stream=False
                             )
-                            if opus_data:
+                            if opus:
+                                if self.segment_count < 10:  # 前10个片段直接发送
+                                    self.tts_audio_queue.put(
+                                        (SentenceType.MIDDLE, opus, text)
+                                    )
+                                    self.segment_count += 1
+                                else:
+                                    opus_datas_cache.extend(opus)
+
+                    # flush 剩余不足一帧的数据
+                    if self.pcm_buffer:
+                        opus = self.opus_encoder.encode_pcm_to_opus(
+                            bytes(self.pcm_buffer), end_of_stream=True
+                        )
+                        if opus:
+                            if self.segment_count < 10:  # 前10个片段直接发送
+                                # 直接发送
                                 self.tts_audio_queue.put(
-                                    (SentenceType.MIDDLE, opus_data, text)
+                                    (SentenceType.MIDDLE, opus, text)
                                 )
+                                self.segment_count += 1
+                            else:
+                                # 后续片段缓存
+                                opus_datas_cache.extend(opus)
+                        self.pcm_buffer.clear()
+
+                    # 如果不是前10个片段，发送缓存的数据
+                    if self.segment_count >= 10 and opus_datas_cache:
+                        self.tts_audio_queue.put(
+                            (SentenceType.MIDDLE, opus_datas_cache, text)
+                        )
+
+                    # 如果是最后一段，输出音频获取完毕
+                    if is_last:
+                        self._process_before_stop_play_files()
 
         except Exception as e:
-            logger.error(f"TTS请求异常: {str(e)}")
+            logger.error(f"TTS请求异常: {e}")
             self.tts_audio_queue.put((SentenceType.LAST, [], None))

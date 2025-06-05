@@ -154,7 +154,6 @@ class TTSProvider(TTSProviderBase):
         self.header = {"Authorization": f"{self.authorization}{self.access_token}"}
         self.enable_two_way = True
         self.tts_text = ""
-        self.before_stop_play_files = []
         self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
             sample_rate=16000, channels=1, frame_size_ms=60
         )
@@ -432,14 +431,7 @@ class TTSProvider(TTSProviderBase):
                         is_first_sentence = False
                     elif res.optional.event == EVENT_SessionFinished:
                         logger.bind(tag=TAG).debug(f"会话结束～～")
-                        for tts_file, text in self.before_stop_play_files:
-                            if tts_file and os.path.exists(tts_file):
-                                audio_datas = self._process_audio_file(tts_file)
-                                self.tts_audio_queue.put(
-                                    (SentenceType.MIDDLE, audio_datas, text)
-                                )
-                        self.before_stop_play_files.clear()
-                        self.tts_audio_queue.put((SentenceType.LAST, [], None))
+                        self._process_before_stop_play_files()
                         break
                 except websockets.ConnectionClosed:
                     logger.bind(tag=TAG).warning("WebSocket连接已关闭")
