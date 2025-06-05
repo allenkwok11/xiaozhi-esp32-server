@@ -4,6 +4,7 @@ import queue
 import asyncio
 import requests
 import traceback
+import aiohttp
 from config.logger import setup_logging
 from core.utils.tts import MarkdownCleaner
 from core.providers.tts.base import TTSProviderBase
@@ -122,46 +123,59 @@ class TTSProvider(TTSProviderBase):
 
     async def text_to_speak(self, text, _):
         """流式处理TTS音频，每句只推送一次音频列表"""
-        start_time = time.time()
-        logger.info(f"TTS请求: {text}")
-        try:
-            params = {
-                "tts_text": text,
-                "spk_id": self.voice,
-                "frame_duration": 60,
-                "stream": True,
-                "target_sr": 16000,
-                "audio_format": self.audio_format,
-            }
-            headers = {"Authorization": f"Bearer {self.access_token}"}
-
-            with requests.get(
-                self.api_url, params=params, headers=headers, timeout=5
-            ) as response:
-                if response.status_code != 200:
-                    logger.error(
-                        f"TTS请求失败: {response.status_code}, {response.text}"
-                    )
-                    # 推送空LAST，防止播放端卡死
-                    self.tts_audio_queue.put((SentenceType.LAST, [], None))
-                    return
-                logger.info(f"TTS请求成功: {text}, 耗时: {time.time() - start_time}秒")
-                opus_datas = self.wav_to_opus_data_audio_raw(response.content)
-                self.tts_audio_queue.put((SentenceType.MIDDLE, opus_datas, text))
-        except Exception as e:
-            logger.error(f"TTS流式处理异常：{str(e)}")
-            # 推送空LAST，防止播放端卡死
-            self.tts_audio_queue.put((SentenceType.LAST, [], None))
-
-    # 保持原有方法
-    def wav_to_opus_data_audio_raw(self, raw_data_var):
-        opus_datas = self.opus_encoder.encode_pcm_to_opus(
-            raw_data_var, end_of_stream=True
-        )
-        return opus_datas
+        await self._tts_request(text)
 
     async def close(self):
         """资源清理"""
         await super().close()
         if hasattr(self, "opus_encoder"):
             self.opus_encoder.close()
+
+    async def _tts_request(self, text: str) -> None:
+        """发送TTS请求"""
+        start_time = time.time()
+        params = {
+            "tts_text": text,
+            "spk_id": self.voice,
+            "frame_durition": 60,
+            "stream": "true",
+            "target_sr": 16000,
+            "audio_format": "pcm",
+            "instruct_text": "",
+        }
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json",
+        }
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    self.api_url, params=params, headers=headers, timeout=10
+                ) as response:
+                    if response.status != 200:
+                        logger.error(
+                            f"TTS请求失败: {response.status}, {await response.text()}"
+                        )
+                        # 推送空LAST，防止播放端卡死
+                        self.tts_audio_queue.put((SentenceType.LAST, [], None))
+                        return
+
+                    logger.info(
+                        f"TTS请求成功: {text}, 耗时: {time.time() - start_time}秒"
+                    )
+
+                    # 流式处理音频数据
+                    async for chunk in response.content.iter_chunks():
+                        if chunk[0]:  # 确保数据不为空
+                            opus_data = self.opus_encoder.encode_pcm_to_opus(
+                                chunk[0], end_of_stream=True
+                            )
+                            if opus_data:
+                                self.tts_audio_queue.put(
+                                    (SentenceType.MIDDLE, opus_data, text)
+                                )
+
+        except Exception as e:
+            logger.error(f"TTS请求异常: {str(e)}")
+            self.tts_audio_queue.put((SentenceType.LAST, [], None))
