@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 import json
 import random
@@ -119,17 +120,31 @@ async def wakeupWordsResponse(conn):
     if result is None or result == "":
         return
 
-    opus_datas = await asyncio.to_thread(conn.tts.to_tts, result)
-    if not opus_datas:
-        return
+    tts_result = await asyncio.to_thread(conn.tts.to_tts, result)
+    if conn.tts.delete_audio_file:
+        # 返回的是opus数据流
+        if not tts_result:
+            return
+        wav_bytes = opus_datas_to_wav_bytes(tts_result, sample_rate=16000)
+        file_path = os.path.join(
+            WAKEUP_CONFIG["dir"], "my_" + WAKEUP_CONFIG["file_name"] + ".wav"
+        )
+        with open(file_path, "wb") as f:
+            f.write(wav_bytes)
 
-    wav_bytes = opus_datas_to_wav_bytes(opus_datas, sample_rate=16000)
-    file_path = os.path.join(
-        WAKEUP_CONFIG["dir"], "my_" + WAKEUP_CONFIG["file_name"] + ".wav"
-    )
-    # 写入wav数据
-    with open(file_path, "wb") as f:
-        f.write(wav_bytes)
-
+    else:
+        # 返回为文件
+        if tts_result is not None and os.path.exists(tts_result):
+            file_type = os.path.splitext(tts_result)[1]
+            if file_type:
+                file_type = file_type.lstrip(".")
+            old_file = getWakeupWordFile("my_" + WAKEUP_CONFIG["file_name"])
+            if old_file is not None:
+                os.remove(old_file)
+            """将文件挪到wakeup_words目录下"""
+            shutil.move(
+                tts_result,
+                WAKEUP_CONFIG["dir"] + "my_" + WAKEUP_CONFIG["file_name"] + '.' + file_type,
+            )
     WAKEUP_CONFIG["create_time"] = time.time()
     WAKEUP_CONFIG["text"] = result
