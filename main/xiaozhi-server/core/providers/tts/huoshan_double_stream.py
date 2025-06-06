@@ -381,6 +381,7 @@ class TTSProvider(TTSProviderBase):
         """监听TTS响应"""
         opus_datas_cache = []
         is_first_sentence = True
+        first_sentence_segment_count = 0  # 添加计数器
         try:
             while not self.conn.stop_event.is_set():
                 try:
@@ -402,6 +403,7 @@ class TTSProvider(TTSProviderBase):
                             (SentenceType.FIRST, [], self.tts_text)
                         )
                         opus_datas_cache = []
+                        first_sentence_segment_count = 0  # 重置计数器
                     elif (
                         res.optional.event == EVENT_TTSResponse
                         and res.header.message_type == AUDIO_ONLY_RESPONSE
@@ -412,19 +414,22 @@ class TTSProvider(TTSProviderBase):
                             f"推送数据到队列里面帧数～～{len(opus_datas)}"
                         )
                         if is_first_sentence:
-                            # 第一句话直接发送
-                            self.tts_audio_queue.put(
-                                (SentenceType.MIDDLE, opus_datas, self.tts_text)
-                            )
+                            first_sentence_segment_count += 1
+                            if first_sentence_segment_count <= 6:
+                                self.tts_audio_queue.put(
+                                    (SentenceType.MIDDLE, opus_datas, None)
+                                )
+                            else:
+                                opus_datas_cache = opus_datas_cache + opus_datas
                         else:
                             # 后续句子缓存
                             opus_datas_cache = opus_datas_cache + opus_datas
                     elif res.optional.event == EVENT_TTSSentenceEnd:
                         logger.bind(tag=TAG).info(f"句子语音生成成功：{self.tts_text}")
-                        if not is_first_sentence:
-                            # 只有非第一句话才发送缓存的数据
+                        if not is_first_sentence or first_sentence_segment_count > 10:
+                            # 发送缓存的数据
                             self.tts_audio_queue.put(
-                                (SentenceType.MIDDLE, opus_datas_cache, self.tts_text)
+                                (SentenceType.MIDDLE, opus_datas_cache, None)
                             )
                         # 第一句话结束后，将标志设置为False
                         is_first_sentence = False
