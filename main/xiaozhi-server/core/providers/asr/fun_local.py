@@ -43,7 +43,7 @@ class ASRProvider(ASRProviderBase):
         min_mem_bytes = 2 * 1024 * 1024 * 1024
         total_mem = psutil.virtual_memory().total
         if total_mem < min_mem_bytes:
-            logger.bind(tag=TAG).error(f"可用内存不足2G，当前仅有 {total_mem / (1024*1024):.2f} MB")
+            logger.bind(tag=TAG).error(f"可用内存不足2G，当前仅有 {total_mem / (1024*1024):.2f} MB，可能无法启动FunASR")
         
         self.interface_type = InterfaceType.LOCAL
         self.model_dir = config.get("model_dir")
