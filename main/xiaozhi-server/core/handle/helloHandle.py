@@ -1,12 +1,11 @@
-import os
-import shutil
 import time
 import json
 import random
 import asyncio
+from core.utils.util import audio_to_data
 from core.handle.sendAudioHandle import send_stt_message
 from core.utils.util import remove_punctuation_and_length, opus_datas_to_wav_bytes
-from core.providers.tts.dto.dto import ContentType, InterfaceType
+from core.providers.tts.dto.dto import ContentType, SentenceType
 from core.handle.mcpHandle import (
     MCPClient,
     send_mcp_initialize_message,
@@ -59,9 +58,6 @@ async def checkWakeupWords(conn, text):
     if not enable_wakeup_words_response_cache or not conn.tts:
         return False
 
-    if conn.tts.interface_type != InterfaceType.NON_STREAM:
-        return False
-
     _, filtered_text = remove_punctuation_and_length(text)
     if filtered_text not in conn.config.get("wakeup_words"):
         return False
@@ -77,12 +73,9 @@ async def checkWakeupWords(conn, text):
 
     # 播放唤醒词回复
     conn.client_abort = False
-    conn.tts.tts_one_sentence(
-        conn,
-        ContentType.FILE,
-        content_file=response["file_path"],
-        content_detail=response["text"],
-    )
+    opus_packets, _ = audio_to_data(response["file_path"])
+    conn.tts.tts_audio_queue.put((SentenceType.FIRST, opus_packets, response["text"]))
+    conn.tts.tts_audio_queue.put((SentenceType.LAST, [], None))
 
     # 检查是否需要更新唤醒词回复
     if time.time() - response["time"] > WAKEUP_CONFIG["refresh_time"]:

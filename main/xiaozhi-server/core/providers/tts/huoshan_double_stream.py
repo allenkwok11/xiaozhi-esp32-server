@@ -301,7 +301,7 @@ class TTSProvider(TTSProviderBase):
             payload = self.get_payload_bytes(
                 event=EVENT_StartSession, speaker=self.voice
             )
-            await self.send_event(header, optional, payload)
+            await self.send_event(self.ws, header, optional, payload)
             logger.bind(tag=TAG).info("会话启动请求已发送")
         except Exception as e:
             logger.bind(tag=TAG).error(f"启动会话失败: {str(e)}")
@@ -334,7 +334,7 @@ class TTSProvider(TTSProviderBase):
                     event=EVENT_FinishSession, sessionId=session_id
                 ).as_bytes()
                 payload = str.encode("{}")
-                await self.send_event(header, optional, payload)
+                await self.send_event(self.ws, header, optional, payload)
                 logger.bind(tag=TAG).info("会话结束请求已发送")
 
                 # 等待监听任务完成
@@ -451,7 +451,11 @@ class TTSProvider(TTSProviderBase):
                 self.ws = None
 
     async def send_event(
-        self, header: bytes, optional: bytes | None = None, payload: bytes = None
+        self,
+        ws: websockets.WebSocketClientProtocol,
+        header: bytes,
+        optional: bytes | None = None,
+        payload: bytes = None,
     ):
         try:
             full_client_request = bytearray(header)
@@ -461,7 +465,7 @@ class TTSProvider(TTSProviderBase):
                 payload_size = len(payload).to_bytes(4, "big", signed=True)
                 full_client_request.extend(payload_size)
                 full_client_request.extend(payload)
-            await self.ws.send(full_client_request)
+            await ws.send(full_client_request)
         except websockets.ConnectionClosed:
             logger.bind(tag=TAG).error(f"ConnectionClosed")
             raise
@@ -476,7 +480,7 @@ class TTSProvider(TTSProviderBase):
         payload = self.get_payload_bytes(
             event=EVENT_TaskRequest, text=text, speaker=speaker
         )
-        return await self.send_event(header, optional, payload)
+        return await self.send_event(self.ws, header, optional, payload)
 
     # 读取 res 数组某段 字符串内容
     def read_res_content(self, res: bytes, offset: int):
@@ -554,7 +558,7 @@ class TTSProvider(TTSProviderBase):
         ).as_bytes()
         optional = Optional(event=EVENT_Start_Connection).as_bytes()
         payload = str.encode("{}")
-        return await self.send_event(header, optional, payload)
+        return await self.send_event(self.ws, header, optional, payload)
 
     def print_response(self, res, tag_msg: str):
         logger.bind(tag=TAG).debug(f"===>{tag_msg} header:{res.header.__dict__}")
@@ -590,3 +594,107 @@ class TTSProvider(TTSProviderBase):
     def wav_to_opus_data_audio_raw(self, raw_data_var, is_end=False):
         opus_datas = self.opus_encoder.encode_pcm_to_opus(raw_data_var, is_end)
         return opus_datas
+
+    def to_tts(self, text: str) -> list:
+        """非流式生成音频数据，用于生成音频及测试场景
+
+        Args:
+            text: 要转换的文本
+
+        Returns:
+            list: 音频数据列表
+        """
+        try:
+            # 创建事件循环
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            # 生成会话ID
+            session_id = uuid.uuid4().__str__().replace("-", "")
+
+            # 存储音频数据
+            audio_data = []
+
+            async def _generate_audio():
+                # 创建新的WebSocket连接
+                ws_header = {
+                    "X-Api-App-Key": self.appId,
+                    "X-Api-Access-Key": self.access_token,
+                    "X-Api-Resource-Id": self.resource_id,
+                    "X-Api-Connect-Id": uuid.uuid4(),
+                }
+                ws = await websockets.connect(
+                    self.ws_url, additional_headers=ws_header, max_size=1000000000
+                )
+
+                try:
+                    # 启动会话
+                    header = Header(
+                        message_type=FULL_CLIENT_REQUEST,
+                        message_type_specific_flags=MsgTypeFlagWithEvent,
+                        serial_method=JSON,
+                    ).as_bytes()
+                    optional = Optional(
+                        event=EVENT_StartSession, sessionId=session_id
+                    ).as_bytes()
+                    payload = self.get_payload_bytes(
+                        event=EVENT_StartSession, speaker=self.voice
+                    )
+                    await self.send_event(ws, header, optional, payload)
+
+                    # 发送文本
+                    header = Header(
+                        message_type=FULL_CLIENT_REQUEST,
+                        message_type_specific_flags=MsgTypeFlagWithEvent,
+                        serial_method=JSON,
+                    ).as_bytes()
+                    optional = Optional(
+                        event=EVENT_TaskRequest, sessionId=session_id
+                    ).as_bytes()
+                    payload = self.get_payload_bytes(
+                        event=EVENT_TaskRequest, text=text, speaker=self.voice
+                    )
+                    await self.send_event(ws, header, optional, payload)
+
+                    # 发送结束会话请求
+                    header = Header(
+                        message_type=FULL_CLIENT_REQUEST,
+                        message_type_specific_flags=MsgTypeFlagWithEvent,
+                        serial_method=JSON,
+                    ).as_bytes()
+                    optional = Optional(
+                        event=EVENT_FinishSession, sessionId=session_id
+                    ).as_bytes()
+                    payload = str.encode("{}")
+                    await self.send_event(ws, header, optional, payload)
+
+                    # 接收音频数据
+                    while True:
+                        msg = await ws.recv()
+                        res = self.parser_response(msg)
+
+                        if (
+                            res.optional.event == EVENT_TTSResponse
+                            and res.header.message_type == AUDIO_ONLY_RESPONSE
+                        ):
+                            opus_datas = self.wav_to_opus_data_audio_raw(res.payload)
+                            audio_data.extend(opus_datas)
+                        elif res.optional.event == EVENT_SessionFinished:
+                            break
+
+                finally:
+                    # 清理资源
+                    try:
+                        await ws.close()
+                    except:
+                        pass
+
+            # 运行异步任务
+            loop.run_until_complete(_generate_audio())
+            loop.close()
+
+            return audio_data
+
+        except Exception as e:
+            logger.bind(tag=TAG).error(f"生成音频数据失败: {str(e)}")
+            return []
