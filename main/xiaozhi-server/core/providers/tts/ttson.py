@@ -19,9 +19,9 @@ class TTSProvider(TTSProviderBase):
             "https://u95167-bd74-2aef8085.westx.seetacloud.com:8443/flashsummary/tts?token=",
         )
         if config.get("private_voice"):
-            self.voice_id = int(config.get("private_voice"))
+            self.voice = int(config.get("private_voice"))
         else:
-            self.voice_id = int(config.get("voice_id", 1695))
+            self.voice = int(config.get("voice_id", 1695))
         self.token = config.get("token")
         self.to_lang = config.get("to_lang")
         self.volume_change_dB = int(config.get("volume_change_dB", 0))
@@ -50,7 +50,7 @@ class TTSProvider(TTSProviderBase):
                 "emotion": self.emotion,
                 "format": self.format,
                 "volume_change_dB": self.volume_change_dB,
-                "voice_id": self.voice_id,
+                "voice_id": self.voice,
                 "pitch_factor": self.pitch_factor,
                 "speed_factor": self.speed_factor,
                 "token": self.token,

@@ -145,10 +145,9 @@ class TTSProvider(TTSProviderBase):
         self.cluster = config.get("cluster")
         self.resource_id = config.get("resource_id")
         if config.get("private_voice"):
-            self.speaker = config.get("private_voice")
+            self.voice = config.get("private_voice")
         else:
-            self.speaker = config.get("speaker")
-        self.voice = config.get("voice")
+            self.voice = config.get("speaker")
         self.ws_url = config.get("ws_url")
         self.authorization = config.get("authorization")
         self.header = {"Authorization": f"{self.authorization}{self.access_token}"}
@@ -272,7 +271,7 @@ class TTSProvider(TTSProviderBase):
                 logger.bind(tag=TAG).error(f"WebSocket连接不存在，终止发送文本")
                 return
             # 发送文本
-            await self.send_text(self.speaker, text, self.conn.sentence_id)
+            await self.send_text(self.voice, text, self.conn.sentence_id)
             return
         except Exception as e:
             logger.bind(tag=TAG).error(f"发送TTS文本失败: {str(e)}")
@@ -302,7 +301,7 @@ class TTSProvider(TTSProviderBase):
                 event=EVENT_StartSession, sessionId=session_id
             ).as_bytes()
             payload = self.get_payload_bytes(
-                event=EVENT_StartSession, speaker=self.speaker
+                event=EVENT_StartSession, speaker=self.voice
             )
             await self.send_event(header, optional, payload)
             logger.bind(tag=TAG).info("会话启动请求已发送")

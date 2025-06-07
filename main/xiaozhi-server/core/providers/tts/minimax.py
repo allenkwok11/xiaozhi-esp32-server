@@ -14,9 +14,9 @@ class TTSProvider(TTSProviderBase):
         self.api_key = config.get("api_key")
         self.model = config.get("model")
         if config.get("private_voice"):
-            self.voice_id = config.get("private_voice")
+            self.voice = config.get("private_voice")
         else:
-            self.voice_id = config.get("voice_id")
+            self.voice = config.get("voice_id")
 
         default_voice_setting = {
             "voice_id": "female-shaonv",
@@ -43,8 +43,8 @@ class TTSProvider(TTSProviderBase):
         self.audio_setting = {**defult_audio_setting, **config.get("audio_setting", {})}
         self.timber_weights = parse_string_to_list(config.get("timber_weights"))
 
-        if self.voice_id:
-            self.voice_setting["voice_id"] = self.voice_id
+        if self.voice:
+            self.voice_setting["voice_id"] = self.voice
 
         self.host = "api.minimax.chat"
         self.api_url = f"https://{self.host}/v1/t2a_v2?GroupId={self.group_id}"
