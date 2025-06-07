@@ -35,8 +35,6 @@ async def handleHelloMessage(conn, msg_json):
         format = audio_params.get("format")
         conn.logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
         conn.audio_format = format
-        if conn.asr is not None:
-            conn.asr.set_audio_format(format)
         conn.welcome_msg["audio_params"] = audio_params
     features = msg_json.get("features")
     if features:
@@ -68,6 +66,7 @@ async def checkWakeupWords(conn, text):
     if filtered_text not in conn.config.get("wakeup_words"):
         return False
 
+    conn.just_woken_up = True
     await send_stt_message(conn, text)
 
     # 获取当前音色

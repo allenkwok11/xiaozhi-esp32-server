@@ -171,6 +171,9 @@ public class AgentController {
         if (dto.getLlmModelId() != null) {
             existingEntity.setLlmModelId(dto.getLlmModelId());
         }
+        if (dto.getVllmModelId() != null) {
+            existingEntity.setVllmModelId(dto.getVllmModelId());
+        }
         if (dto.getTtsModelId() != null) {
             existingEntity.setTtsModelId(dto.getTtsModelId());
         }

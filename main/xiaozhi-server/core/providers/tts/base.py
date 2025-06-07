@@ -37,6 +37,7 @@ class TTSProviderBase(ABC):
         self.tts_text_queue = queue.Queue()
         self.tts_audio_queue = queue.Queue()
         self.tts_audio_first_sentence = True
+        self.before_stop_play_files = []
 
         self.tts_text_buff = []
         self.punctuations = (
@@ -52,6 +53,7 @@ class TTSProviderBase(ABC):
         )
         self.first_sentence_punctuations = (
             "，",
+            "～",
             "~",
             "、",
             ",",
@@ -84,7 +86,9 @@ class TTSProviderBase(ABC):
                 try:
                     audio_bytes = asyncio.run(self.text_to_speak(text, None))
                     if audio_bytes:
-                        audio_datas, _ = audio_bytes_to_data(audio_bytes, file_type=self.audio_file_type, is_opus=True)
+                        audio_datas, _ = audio_bytes_to_data(
+                            audio_bytes, file_type=self.audio_file_type, is_opus=True
+                        )
                         return audio_datas
                     else:
                         max_repeat_time -= 1
@@ -354,6 +358,14 @@ class TTSProviderBase(ABC):
         ):
             os.remove(tts_file)
         return audio_datas
+
+    def _process_before_stop_play_files(self):
+        for tts_file, text in self.before_stop_play_files:
+            if tts_file and os.path.exists(tts_file):
+                audio_datas = self._process_audio_file(tts_file)
+                self.tts_audio_queue.put((SentenceType.MIDDLE, audio_datas, text))
+        self.before_stop_play_files.clear()
+        self.tts_audio_queue.put((SentenceType.LAST, [], None))
 
     def _process_remaining_text(self):
         """处理剩余的文本并生成语音
