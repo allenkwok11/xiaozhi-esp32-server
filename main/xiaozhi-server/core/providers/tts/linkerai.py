@@ -93,6 +93,8 @@ class TTSProvider(TTSProviderBase):
                 self.processed_chars += len(full_text)
             else:
                 self._process_before_stop_play_files()
+        else:
+            self._process_before_stop_play_files()
 
     def to_tts_single_stream(self, text, is_last=False):
         try:
@@ -171,6 +173,8 @@ class TTSProvider(TTSProviderBase):
                     self.pcm_buffer.clear()
                     opus_datas_cache = []
 
+                    self.tts_audio_queue.put((SentenceType.FIRST, [], text))
+
                     # 兼容 iter_chunked / iter_chunks / iter_any
                     async for chunk in resp.content.iter_any():
                         data = chunk[0] if isinstance(chunk, (list, tuple)) else chunk
@@ -191,7 +195,7 @@ class TTSProvider(TTSProviderBase):
                             if opus:
                                 if self.segment_count < 10:  # 前10个片段直接发送
                                     self.tts_audio_queue.put(
-                                        (SentenceType.MIDDLE, opus, text)
+                                        (SentenceType.MIDDLE, opus, None)
                                     )
                                     self.segment_count += 1
                                 else:
@@ -206,7 +210,7 @@ class TTSProvider(TTSProviderBase):
                             if self.segment_count < 10:  # 前10个片段直接发送
                                 # 直接发送
                                 self.tts_audio_queue.put(
-                                    (SentenceType.MIDDLE, opus, text)
+                                    (SentenceType.MIDDLE, opus, None)
                                 )
                                 self.segment_count += 1
                             else:
@@ -217,7 +221,7 @@ class TTSProvider(TTSProviderBase):
                     # 如果不是前10个片段，发送缓存的数据
                     if self.segment_count >= 10 and opus_datas_cache:
                         self.tts_audio_queue.put(
-                            (SentenceType.MIDDLE, opus_datas_cache, text)
+                            (SentenceType.MIDDLE, opus_datas_cache, None)
                         )
 
                     # 如果是最后一段，输出音频获取完毕

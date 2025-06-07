@@ -188,10 +188,8 @@ class TTSProvider(TTSProviderBase):
 
     def tts_text_priority_thread(self):
         """火山引擎双流式TTS的文本处理线程"""
-        logger.bind(tag=TAG).info("TTS文本处理线程启动")
         while not self.conn.stop_event.is_set():
             try:
-                logger.bind(tag=TAG).debug("等待TTS文本队列消息...")
                 message = self.tts_text_queue.get(timeout=1)
                 logger.bind(tag=TAG).debug(
                     f"收到TTS任务｜{message.sentence_type.name} ｜ {message.content_type.name} | 会话ID: {self.conn.sentence_id}"
