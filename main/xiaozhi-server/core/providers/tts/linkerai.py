@@ -93,6 +93,8 @@ class TTSProvider(TTSProviderBase):
                 self.processed_chars += len(full_text)
             else:
                 self._process_before_stop_play_files()
+        else:
+            self._process_before_stop_play_files()
 
     def to_tts_single_stream(self, text, is_last=False):
         try:
