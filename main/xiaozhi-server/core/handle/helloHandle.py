@@ -2,6 +2,7 @@ import time
 import json
 import random
 import asyncio
+from core.utils.dialogue import Message
 from core.utils.util import audio_to_data
 from core.handle.sendAudioHandle import sendAudioMessage, send_stt_message
 from core.utils.util import remove_punctuation_and_length, opus_datas_to_wav_bytes
@@ -78,6 +79,9 @@ async def checkWakeupWords(conn, text):
     conn.logger.bind(tag=TAG).info(f"播放唤醒词回复: {response['text']}")
     await sendAudioMessage(conn, SentenceType.FIRST, opus_packets, response["text"])
     await sendAudioMessage(conn, SentenceType.LAST, [], None)
+
+    # 补充对话
+    conn.dialogue.put(Message(role="assistant", content=response["text"]))
 
     # 检查是否需要更新唤醒词回复
     if time.time() - response["time"] > WAKEUP_CONFIG["refresh_time"]:
