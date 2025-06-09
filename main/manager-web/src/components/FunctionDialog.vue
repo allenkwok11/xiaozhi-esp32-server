@@ -1,5 +1,5 @@
 <template>
-  <el-drawer :visible.sync="dialogVisible" direction="rtl" size="50%" :wrapperClosable="false" :withHeader="false">
+  <el-drawer :visible.sync="dialogVisible" direction="rtl" size="70%" :wrapperClosable="false" :withHeader="false">
     <!-- 自定义标题区域 -->
     <div class="custom-header">
       <div class="header-left">
@@ -19,9 +19,9 @@
           <div v-if="unselected.length">
             <div v-for="func in unselected" :key="func.name" class="function-item">
               <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)"
-                           @click.native.stop></el-checkbox>
+                @click.native.stop></el-checkbox>
               <div class="func-tag" @click="handleFunctionClick(func)">
-                <div class="color-dot" :style="{backgroundColor: getFunctionColor(func.name)}"></div>
+                <div class="color-dot" :style="{ backgroundColor: getFunctionColor(func.name) }"></div>
                 <span>{{ func.name }}</span>
               </div>
               <el-tooltip class="item" effect="dark" :content="func.description || '暂无功能描述'" placement="top">
@@ -30,7 +30,7 @@
             </div>
           </div>
           <div v-else style="display: flex; justify-content: center; align-items: center;">
-            <el-empty description="没有更多的插件了"/>
+            <el-empty description="没有更多的插件了" />
           </div>
         </div>
       </div>
@@ -45,15 +45,15 @@
           <div v-if="selectedList.length > 0">
             <div v-for="func in selectedList" :key="func.name" class="function-item">
               <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)"
-                           @click.native.stop></el-checkbox>
+                @click.native.stop></el-checkbox>
               <div class="func-tag" @click="handleFunctionClick(func)">
-                <div class="color-dot" :style="{backgroundColor: getFunctionColor(func.name)}"></div>
+                <div class="color-dot" :style="{ backgroundColor: getFunctionColor(func.name) }"></div>
                 <span>{{ func.name }}</span>
               </div>
             </div>
           </div>
           <div v-else style="display: flex; justify-content: center; align-items: center;">
-            <el-empty description="请选择插件功能"/>
+            <el-empty description="请选择插件功能" />
           </div>
         </div>
       </div>
@@ -64,12 +64,8 @@
         <div v-if="currentFunction" class="params-container">
           <el-form :model="currentFunction" size="mini" class="param-form">
             <!-- 遍历 fieldsMeta，而不是 params 的 keys -->
-            <el-form-item
-                v-for="field in currentFunction.fieldsMeta"
-                :key="field.key"
-                :label="field.label"
-                class="param-item"
-            >
+            <el-form-item v-for="field in currentFunction.fieldsMeta" :key="field.key" :label="field.label"
+              class="param-item">
               <template #label>
                 <span style="font-size: 16px; margin-right: 6px;">{{ field.key }}</span>
                 <el-tooltip effect="dark" :content="fieldRemark(field)" placement="top">
@@ -77,45 +73,25 @@
                 </el-tooltip>
               </template>
               <!-- ARRAY -->
-              <el-input
-                  v-if="field.type === 'array'"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="每行一个，回车分隔"
-                  v-model="textCache[field.key]"
-                  @blur="flushArray(field.key)"
-              />
+              <el-input v-if="field.type === 'array'" type="textarea" :rows="4" placeholder="每行一个，回车分隔"
+                v-model="textCache[field.key]" @blur="flushArray(field.key)" />
 
               <!-- JSON -->
-              <el-input
-                  v-else-if="field.type === 'json'"
-                  type="textarea"
-                  :rows="6"
-                  placeholder="请输入合法的 JSON"
-                  v-model="textCache[field.key]"
-                  @blur="flushJson(field)"
-              />
+              <el-input v-else-if="field.type === 'json'" type="textarea" :rows="6" placeholder="请输入合法的 JSON"
+                v-model="textCache[field.key]" @blur="flushJson(field)" />
 
               <!-- number -->
-              <el-input-number
-                  v-else-if="field.type === 'number'"
-                  :value="currentFunction.params[field.key]"
-                  @change="val => handleParamChange(currentFunction, field.key, val)"
-              />
+              <el-input-number v-else-if="field.type === 'number'" :value="currentFunction.params[field.key]"
+                @change="val => handleParamChange(currentFunction, field.key, val)" />
 
               <!-- boolean -->
-              <el-switch
-                  v-else-if="field.type === 'boolean' || field.type === 'bool'"
-                  :value="currentFunction.params[field.key]"
-                  @change="val => handleParamChange(currentFunction, field.key, val)"
-              />
+              <el-switch v-else-if="field.type === 'boolean' || field.type === 'bool'"
+                :value="currentFunction.params[field.key]"
+                @change="val => handleParamChange(currentFunction, field.key, val)" />
 
               <!-- string or fallback -->
-              <el-input
-                  v-else
-                  v-model="currentFunction.params[field.key]"
-                  @change="val => handleParamChange(currentFunction, field.key, val)"
-              />
+              <el-input v-else v-model="currentFunction.params[field.key]"
+                @change="val => handleParamChange(currentFunction, field.key, val)" />
             </el-form-item>
           </el-form>
         </div>
@@ -196,7 +172,7 @@ export default {
           const idx = this.allFunctions.findIndex(f => f.name === saved.name);
           if (idx >= 0) {
             // 保留用户之前在 saved.params 上的改动
-            this.allFunctions[idx].params = {...saved.params};
+            this.allFunctions[idx].params = { ...saved.params };
           }
         });
         // 右侧默认指向第一个
@@ -211,9 +187,9 @@ export default {
     flushArray(key) {
       const text = this.textCache[key] || '';
       const arr = text
-          .split('\n')
-          .map(s => s.trim())
-          .filter(Boolean);
+        .split('\n')
+        .map(s => s.trim())
+        .filter(Boolean);
       this.handleParamChange(this.currentFunction, key, arr);
     },
 
@@ -292,8 +268,8 @@ export default {
           id: f.id,
           name: f.name,
           params: modified
-              ? {...modified.params}
-              : {...f.params}
+            ? { ...modified.params }
+            : { ...f.params }
         }
       });
 

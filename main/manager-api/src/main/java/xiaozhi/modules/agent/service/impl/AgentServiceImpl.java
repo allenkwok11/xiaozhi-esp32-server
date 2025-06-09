@@ -1,20 +1,21 @@
 package xiaozhi.modules.agent.service.impl;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import lombok.AllArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.PageData;
@@ -23,7 +24,6 @@ import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.JsonUtils;
-import xiaozhi.common.utils.Result;
 import xiaozhi.modules.agent.dao.AgentDao;
 import xiaozhi.modules.agent.dto.AgentDTO;
 import xiaozhi.modules.agent.dto.AgentUpdateDTO;
@@ -34,7 +34,6 @@ import xiaozhi.modules.agent.service.AgentPluginMappingService;
 import xiaozhi.modules.agent.service.AgentService;
 import xiaozhi.modules.agent.vo.AgentInfoVO;
 import xiaozhi.modules.device.service.DeviceService;
-import xiaozhi.modules.model.dto.ModelProviderDTO;
 import xiaozhi.modules.model.service.ModelConfigService;
 import xiaozhi.modules.model.service.ModelProviderService;
 import xiaozhi.modules.security.user.SecurityUser;
@@ -52,7 +51,6 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
     private final AgentPluginMappingService agentPluginMappingService;
     private final ModelProviderService modelProviderService;
     private final AgentChatHistoryService agentChatHistoryService;
-
 
     @Override
     public PageData<AgentEntity> adminAgentList(Map<String, Object> params) {
@@ -262,8 +260,7 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
             // 2. 查询当前agent现有的所有映射
             List<AgentPluginMapping> existing = agentPluginMappingService.list(
                     new QueryWrapper<AgentPluginMapping>()
-                            .eq("agent_id", agentId)
-            );
+                            .eq("agent_id", agentId));
             Map<String, AgentPluginMapping> existMap = existing.stream()
                     .collect(Collectors.toMap(AgentPluginMapping::getPluginId, Function.identity()));
 

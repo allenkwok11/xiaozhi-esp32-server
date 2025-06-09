@@ -97,10 +97,10 @@
             <el-table-column label="默认值">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
-                  <el-input v-model="scope.row.default_value" placeholder="请输入默认值"></el-input>
+                  <el-input v-model="scope.row.default" placeholder="请输入默认值"></el-input>
                 </template>
                 <template v-else>
-                  {{ scope.row.default_value }}
+                  {{ scope.row.default }}
                 </template>
               </template>
             </el-table-column>
@@ -220,7 +220,7 @@ export default {
         key: '',
         label: '',
         type: 'string',
-        default_value: '',
+        default: '',
         selected: false,
         editing: true
       });
