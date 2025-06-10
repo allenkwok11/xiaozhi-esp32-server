@@ -109,8 +109,8 @@ class WakeupWordsConfig:
     def update_wakeup_response(self, voice: str, file_path: str, text: str):
         """更新唤醒词回复配置"""
         try:
-            # 过滤表情字符
-            filtered_text = re.sub(r'[\U0001F600-\U0001F64F]', '', text)
+            # 过滤表情符号
+            filtered_text = re.sub(r'[\U0001F600-\U0001F64F\U0001F900-\U0001F9FF]', '', text)
             
             config = self._load_config()
             voice_hash = hashlib.md5(voice.encode()).hexdigest()
