@@ -1,4 +1,5 @@
 import os
+import re
 import yaml
 import time
 import hashlib
@@ -108,13 +109,16 @@ class WakeupWordsConfig:
     def update_wakeup_response(self, voice: str, file_path: str, text: str):
         """更新唤醒词回复配置"""
         try:
+            # 过滤表情字符
+            filtered_text = re.sub(r'[\U0001F600-\U0001F64F]', '', text)
+            
             config = self._load_config()
             voice_hash = hashlib.md5(voice.encode()).hexdigest()
             config[voice_hash] = {
                 "voice": voice,
                 "file_path": file_path,
                 "time": time.time(),
-                "text": text,
+                "text": filtered_text,
             }
             self._save_config(config)
         except Exception as e:
