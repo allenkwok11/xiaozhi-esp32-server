@@ -89,20 +89,14 @@ class WakeupWordsConfig:
         voice = hashlib.md5(voice.encode()).hexdigest()
         """获取唤醒词回复配置"""
         config = self._load_config()
-        default_response = {
-            "voice": "default",
-            "file_path": "config/assets/wakeup_words.wav",
-            "time": 0,
-            "text": "哈啰啊，我是小智啦，声音好听的台湾女孩一枚，超开心认识你耶，最近在忙啥，别忘了给我来点有趣的料哦，我超爱听八卦的啦",
-        }
 
         if not config or voice not in config:
-            return default_response
+            return None
 
         # 检查文件大小
         file_path = config[voice]["file_path"]
         if not os.path.exists(file_path) or os.stat(file_path).st_size < (15 * 1024):
-            return default_response
+            return None
 
         return config[voice]
 
