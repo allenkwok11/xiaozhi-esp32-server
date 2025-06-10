@@ -34,6 +34,7 @@ emoji_map = {
 
 async def sendAudioMessage(conn, sentenceType, audios, text):
     # 发送句子开始消息
+    conn.logger.bind(tag=TAG).info(f"发送音频消息: {sentenceType}, {text}")
     if text is not None:
         emotion = analyze_emotion(text)
         emoji = emoji_map.get(emotion, "🙂")  # 默认使用笑脸
@@ -89,8 +90,7 @@ async def sendAudio(conn, audios, pre_buffer=True):
     # 播放剩余音频帧
     for opus_packet in remaining_audios:
         if conn.client_abort:
-            conn.client_abort = False
-            return
+            break
 
         # 每分钟重置一次计时器
         if time.perf_counter() - last_reset_time > 60:

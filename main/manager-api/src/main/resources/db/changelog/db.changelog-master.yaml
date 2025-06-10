@@ -191,3 +191,17 @@ databaseChangeLog:
         - sqlFile:
             encoding: utf8
             path: classpath:db/changelog/202506032232.sql
+  - changeSet:
+      id: 202506051538
+      author: hrz
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/changelog/202506051538.sql
+  - changeSet:
+      id: 202506080955
+      author: hrz
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/changelog/202506080955.sql
