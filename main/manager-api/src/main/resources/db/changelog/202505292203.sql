@@ -8,7 +8,7 @@ START TRANSACTION;
 update `ai_model_provider` set fields =  '[{"key":"llm","label":"LLM模型","type":"string"}]' where  id = 'SYSTEM_Intent_intent_llm';
 update `ai_model_provider` set fields =  '[]' where  id = 'SYSTEM_Intent_function_call';
 update `ai_model_config` set config_json =  '{\"type\": \"intent_llm\", \"llm\": \"LLM_ChatGLMLLM\"}' where  id = 'Intent_intent_llm';
-UPDATE `ai_model_config` SET config_json = '{}' WHERE id = 'Intent_function_call';
+UPDATE `ai_model_config` SET config_json = '{\"type\": \"function_call\"}' WHERE id = 'Intent_function_call';
 
 
 delete from ai_model_provider where model_type = 'Plugin';

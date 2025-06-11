@@ -64,10 +64,13 @@
         <div v-if="currentFunction" class="params-container">
           <el-form :model="currentFunction" size="mini" class="param-form">
             <!-- 遍历 fieldsMeta，而不是 params 的 keys -->
+            <div v-if="currentFunction.fieldsMeta.length == 0">
+              <el-empty :description="currentFunction.name + ' 无需配置参数'" />
+            </div>
             <el-form-item v-for="field in currentFunction.fieldsMeta" :key="field.key" :label="field.label"
               class="param-item">
               <template #label>
-                <span style="font-size: 16px; margin-right: 6px;">{{ field.key }}</span>
+                <span style="font-size: 16px; margin-right: 6px;">{{ field.label }}</span>
                 <el-tooltip effect="dark" :content="fieldRemark(field)" placement="top">
                   <img src="@/assets/home/info.png" alt="" class="info-icon">
                 </el-tooltip>
