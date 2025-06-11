@@ -1,6 +1,6 @@
 <template>
   <div class="welcome">
-    <HeaderBar/>
+    <HeaderBar />
 
     <div class="operation-bar">
       <h2 class="page-title">角色配置</h2>
@@ -34,36 +34,33 @@
                 <div class="form-grid">
                   <div class="form-column">
                     <el-form-item label="助手昵称：">
-                      <el-input v-model="form.agentName" class="form-input" maxlength="10"/>
+                      <el-input v-model="form.agentName" class="form-input" maxlength="10" />
                     </el-form-item>
                     <el-form-item label="角色模版：">
                       <div class="template-container">
                         <div v-for="(template, index) in templates" :key="`template-${index}`" class="template-item"
-                             :class="{ 'template-loading': loadingTemplate }" @click="selectTemplate(template)">
+                          :class="{ 'template-loading': loadingTemplate }" @click="selectTemplate(template)">
                           {{ template.agentName }}
                         </div>
                       </div>
                     </el-form-item>
                     <el-form-item label="角色介绍：">
-                      <el-input type="textarea" rows="9" resize="none" placeholder="请输入内容"
-                                v-model="form.systemPrompt"
-                                maxlength="2000" show-word-limit class="form-textarea"/>
+                      <el-input type="textarea" rows="9" resize="none" placeholder="请输入内容" v-model="form.systemPrompt"
+                        maxlength="2000" show-word-limit class="form-textarea" />
                     </el-form-item>
 
                     <el-form-item label="记忆：">
                       <el-input type="textarea" rows="6" resize="none" v-model="form.summaryMemory" maxlength="2000"
-                                show-word-limit class="form-textarea"
-                                :disabled="form.model.memModelId !== 'Memory_mem_local_short'"/>
+                        show-word-limit class="form-textarea"
+                        :disabled="form.model.memModelId !== 'Memory_mem_local_short'" />
                     </el-form-item>
                     <el-form-item label="语言编码：" style="display: none;">
-                      <el-input v-model="form.langCode" placeholder="请输入语言编码，如：zh_CN" maxlength="10"
-                                show-word-limit
-                                class="form-input"/>
+                      <el-input v-model="form.langCode" placeholder="请输入语言编码，如：zh_CN" maxlength="10" show-word-limit
+                        class="form-input" />
                     </el-form-item>
                     <el-form-item label="交互语种：" style="display: none;">
-                      <el-input v-model="form.language" placeholder="请输入交互语种，如：中文" maxlength="10"
-                                show-word-limit
-                                class="form-input"/>
+                      <el-input v-model="form.language" placeholder="请输入交互语种，如：中文" maxlength="10" show-word-limit
+                        class="form-input" />
                     </el-form-item>
                   </div>
                   <div class="form-column">
@@ -91,13 +88,13 @@
                       class="model-item">
                       <div class="model-select-wrapper">
                         <el-select v-model="form.model[model.key]" filterable placeholder="请选择" class="form-select"
-                                   @change="handleModelChange(model.type, $event)">
+                          @change="handleModelChange(model.type, $event)">
                           <el-option v-for="(item, optionIndex) in modelOptions[model.type]"
-                                     :key="`option-${index}-${optionIndex}`" :label="item.label" :value="item.value"/>
+                            :key="`option-${index}-${optionIndex}`" :label="item.label" :value="item.value" />
                         </el-select>
                         <div v-if="showFunctionIcons(model.type)" class="function-icons">
                           <el-tooltip v-for="func in currentFunctions" :key="func.name" effect="dark" placement="top"
-                                      popper-class="custom-tooltip">
+                            popper-class="custom-tooltip">
                             <div slot="content">
                               <div><strong>功能名称:</strong> {{ func.name }}</div>
                               <div v-if="Object.keys(func.params).length > 0">
@@ -112,15 +109,13 @@
                               {{ func.name.charAt(0) }}
                             </div>
                           </el-tooltip>
-                          <el-button
-                              class="edit-function-btn"
-                              @click="openFunctionDialog"
-                              :class="{ 'active-btn': showFunctionDialog }">
+                          <el-button class="edit-function-btn" @click="openFunctionDialog"
+                            :class="{ 'active-btn': showFunctionDialog }">
                             编辑功能
                           </el-button>
                         </div>
                         <div v-if="model.type === 'Memory' && form.model.memModelId !== 'Memory_nomem'"
-                             class="chat-history-options">
+                          class="chat-history-options">
                           <el-radio-group v-model="form.chatHistoryConf" @change="updateChatHistoryConf">
                             <el-radio-button :label="1">上报文字</el-radio-button>
                             <el-radio-button :label="2">上报文字+语音</el-radio-button>
@@ -131,7 +126,7 @@
                     <el-form-item label="角色音色">
                       <el-select v-model="form.ttsVoiceId" placeholder="请选择" class="form-select">
                         <el-option v-for="(item, index) in voiceOptions" :key="`voice-${index}`" :label="item.label"
-                                   :value="item.value"/>
+                          :value="item.value" />
                       </el-select>
                     </el-form-item>
                   </div>
@@ -143,12 +138,8 @@
       </div>
     </div>
 
-    <function-dialog
-        v-model="showFunctionDialog"
-        :functions="currentFunctions"
-        :all-functions="allFunctions"
-        @update-functions="handleUpdateFunctions"
-        @dialog-closed="handleDialogClosed"/>
+    <function-dialog v-model="showFunctionDialog" :functions="currentFunctions" :all-functions="allFunctions"
+      @update-functions="handleUpdateFunctions" @dialog-closed="handleDialogClosed" />
   </div>
 </template>
 
@@ -159,7 +150,7 @@ import HeaderBar from "@/components/HeaderBar.vue";
 
 export default {
   name: 'RoleConfigPage',
-  components: {HeaderBar, FunctionDialog},
+  components: { HeaderBar, FunctionDialog },
   data() {
     return {
       form: {
@@ -234,7 +225,7 @@ export default {
           })
         })
       };
-      Api.agent.updateAgentConfig(this.$route.query.agentId, configData, ({data}) => {
+      Api.agent.updateAgentConfig(this.$route.query.agentId, configData, ({ data }) => {
         if (data.code === 0) {
           this.$message.success({
             message: '配置保存成功',
@@ -283,7 +274,7 @@ export default {
       });
     },
     fetchTemplates() {
-      Api.agent.getAgentTemplate(({data}) => {
+      Api.agent.getAgentTemplate(({ data }) => {
         if (data.code === 0) {
           this.templates = data.data;
         } else {
@@ -331,7 +322,7 @@ export default {
       };
     },
     fetchAgentConfig(agentId) {
-      Api.agent.getDeviceConfig(agentId, ({data}) => {
+      Api.agent.getDeviceConfig(agentId, ({ data }) => {
         if (data.code === 0) {
           this.form = {
             ...this.form,
@@ -351,8 +342,8 @@ export default {
 
           // 先保证 allFunctions 已经加载（如果没有，则先 fetchAllFunctions）
           const ensureFuncs = this.allFunctions.length
-              ? Promise.resolve()
-              : this.fetchAllFunctions();
+            ? Promise.resolve()
+            : this.fetchAllFunctions();
 
           ensureFuncs.then(() => {
             // 合并：按照 pluginId（id 字段）把全量元数据信息补齐
@@ -380,7 +371,7 @@ export default {
     },
     fetchModelOptions() {
       this.models.forEach(model => {
-        Api.model.getModelNames(model.type, '', ({data}) => {
+        Api.model.getModelNames(model.type, '', ({ data }) => {
           if (data.code === 0) {
             this.$set(this.modelOptions, model.type, data.data.map(item => ({
               value: item.id,
@@ -397,7 +388,7 @@ export default {
         this.voiceOptions = [];
         return;
       }
-      Api.model.getModelVoices(modelId, '', ({data}) => {
+      Api.model.getModelVoices(modelId, '', ({ data }) => {
         if (data.code === 0 && data.data) {
           this.voiceOptions = data.data.map(voice => ({
             value: voice.id,
@@ -414,7 +405,7 @@ export default {
     },
     showFunctionIcons(type) {
       return type === 'Intent' &&
-          this.form.model.intentModelId !== 'Intent_nointent';
+        this.form.model.intentModelId !== 'Intent_nointent';
     },
     handleModelChange(type, value) {
       if (type === 'Intent' && value !== 'Intent_nointent') {
@@ -450,14 +441,13 @@ export default {
     openFunctionDialog() {
       // 显示编辑对话框时，确保 allFunctions 已经加载
       if (this.allFunctions.length === 0) {
-        this.fetchAllFunctions().then(() => this.showFunctionDialog=true);
+        this.fetchAllFunctions().then(() => this.showFunctionDialog = true);
       } else {
         this.showFunctionDialog = true;
       }
     },
     handleUpdateFunctions(selected) {
       this.currentFunctions = selected;
-      this.$message.success('功能配置已保存');
     },
     handleDialogClosed(saved) {
       if (!saved) {

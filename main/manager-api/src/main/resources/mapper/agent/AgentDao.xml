@@ -42,6 +42,7 @@
                a.asr_model_id      AS asrModelId,
                a.vad_model_id      AS vadModelId,
                a.llm_model_id      AS llmModelId,
+               a.vllm_model_id     AS vllmModelId,
                a.tts_model_id      AS ttsModelId,
                a.tts_voice_id      AS ttsVoiceId,
                a.mem_model_id      AS memModelId,

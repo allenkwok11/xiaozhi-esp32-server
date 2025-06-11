@@ -3,6 +3,15 @@
 -- ===============================
 START TRANSACTION;
 
+
+-- intent_llm和function_call不设置函数列表
+update `ai_model_provider` set fields =  '[{"key":"llm","label":"LLM模型","type":"string"}]' where  id = 'SYSTEM_Intent_intent_llm';
+update `ai_model_provider` set fields =  '[]' where  id = 'SYSTEM_Intent_function_call';
+update `ai_model_config` set config_json =  '{\"type\": \"intent_llm\", \"llm\": \"LLM_ChatGLMLLM\"}' where  id = 'Intent_intent_llm';
+UPDATE `ai_model_config` SET config_json = '{}' WHERE id = 'Intent_function_call';
+
+
+delete from ai_model_provider where model_type = 'Plugin';
 -- 1. 天气查询
 INSERT INTO ai_model_provider (id, model_type, provider_code, name, fields,
                                sort, creator, create_date, updater, update_date)
@@ -37,10 +46,10 @@ VALUES ('SYSTEM_PLUGIN_WEATHER',
 -- 2. 新闻订阅
 INSERT INTO ai_model_provider (id, model_type, provider_code, name, fields,
                                sort, creator, create_date, updater, update_date)
-VALUES ('SYSTEM_PLUGIN_NEWS',
+VALUES ('SYSTEM_PLUGIN_NEWS_CHINANEWS',
         'Plugin',
-        'get_news_from_newsnow',
-        '新闻订阅',
+        'get_news_from_chinanews',
+        '中新网新闻',
         JSON_ARRAY(
                 JSON_OBJECT(
                         'key', 'default_rss_url',
@@ -50,16 +59,48 @@ VALUES ('SYSTEM_PLUGIN_NEWS',
                         (SELECT param_value FROM sys_params WHERE param_code = 'plugins.get_news.default_rss_url')
                 ),
                 JSON_OBJECT(
-                        'key', 'category_urls',
-                        'type', 'json',
-                        'label', '分类 RSS 地址映射',
+                        'key', 'society_rss_url',
+                        'type', 'string',
+                        'label', '社会新闻 RSS 地址',
                         'default',
-                        (SELECT param_value FROM sys_params WHERE param_code = 'plugins.get_news.category_urls')
+                        'https://www.chinanews.com.cn/rss/society.xml'
+                ),
+                JSON_OBJECT(
+                        'key', 'world_rss_url',
+                        'type', 'string',
+                        'label', '国际新闻 RSS 地址',
+                        'default',
+                        'https://www.chinanews.com.cn/rss/world.xml'
+                ),
+                JSON_OBJECT(
+                        'key', 'finance_rss_url',
+                        'type', 'string',
+                        'label', '财经新闻 RSS 地址',
+                        'default',
+                        'https://www.chinanews.com.cn/rss/finance.xml'
                 )
         ),
         20, 0, NOW(), 0, NOW());
 
--- 3. HomeAssistant 状态查询
+-- 3. 新闻订阅
+INSERT INTO ai_model_provider (id, model_type, provider_code, name, fields,
+                               sort, creator, create_date, updater, update_date)
+VALUES ('SYSTEM_PLUGIN_NEWS_NEWSNOW',
+        'Plugin',
+        'get_news_from_newsnow',
+        'newsnow新闻聚合',
+        JSON_ARRAY(
+                JSON_OBJECT(
+                        'key', 'url',
+                        'type', 'string',
+                        'label', '接口地址',
+                        'default',
+                        'https://newsnow.busiyi.world/api/s?id='
+                )
+        ),
+        20, 0, NOW(), 0, NOW());
+
+-- 4. HomeAssistant 状态查询
 INSERT INTO ai_model_provider (id, model_type, provider_code, name, fields,
                                sort, creator, create_date, updater, update_date)
 VALUES ('SYSTEM_PLUGIN_HA_GET_STATE',
@@ -91,7 +132,7 @@ VALUES ('SYSTEM_PLUGIN_HA_GET_STATE',
         ),
         30, 0, NOW(), 0, NOW());
 
--- 4. HomeAssistant 状态写入
+-- 5. HomeAssistant 状态写入
 INSERT INTO ai_model_provider (id, model_type, provider_code, name, fields,
                                sort, creator, create_date, updater, update_date)
 VALUES ('SYSTEM_PLUGIN_HA_SET_STATE',
@@ -123,36 +164,14 @@ VALUES ('SYSTEM_PLUGIN_HA_SET_STATE',
         ),
         40, 0, NOW(), 0, NOW());
 
--- 5. 本地播放
+-- 6. 本地播放音乐
 INSERT INTO ai_model_provider (id, model_type, provider_code, name, fields,
                                sort, creator, create_date, updater, update_date)
 VALUES ('SYSTEM_PLUGIN_MUSIC',
         'Plugin',
         'play_music',
-        '本地播放',
-        JSON_ARRAY(
-                JSON_OBJECT(
-                        'key', 'music_dir',
-                        'type', 'string',
-                        'label', '音乐文件根目录',
-                        'default',
-                        (SELECT param_value FROM sys_params WHERE param_code = 'plugins.play_music.music_dir')
-                ),
-                JSON_OBJECT(
-                        'key', 'music_ext',
-                        'type', 'array',
-                        'label', '支持的文件后缀',
-                        'default',
-                        (SELECT param_value FROM sys_params WHERE param_code = 'plugins.play_music.music_ext')
-                ),
-                JSON_OBJECT(
-                        'key', 'refresh_time',
-                        'type', 'number',
-                        'label', '列表刷新间隔（秒）',
-                        'default',
-                        (SELECT param_value FROM sys_params WHERE param_code = 'plugins.play_music.refresh_time')
-                )
-        ),
+        '本地音乐播放',
+        JSON_ARRAY(),
         50, 0, NOW(), 0, NOW());
 
 

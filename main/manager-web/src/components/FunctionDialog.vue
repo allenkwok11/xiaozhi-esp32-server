@@ -275,7 +275,6 @@ export default {
 
       this.$emit('update-functions', selected);
       this.dialogVisible = false;
-      this.$message.success('配置保存成功');
       // 通知父组件对话框已关闭且已保存
       this.$emit('dialog-closed', true);
     },

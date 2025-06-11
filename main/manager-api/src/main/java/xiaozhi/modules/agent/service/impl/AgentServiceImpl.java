@@ -35,7 +35,6 @@ import xiaozhi.modules.agent.service.AgentService;
 import xiaozhi.modules.agent.vo.AgentInfoVO;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.model.service.ModelConfigService;
-import xiaozhi.modules.model.service.ModelProviderService;
 import xiaozhi.modules.security.user.SecurityUser;
 import xiaozhi.modules.sys.enums.SuperAdminEnum;
 import xiaozhi.modules.timbre.service.TimbreService;
@@ -49,7 +48,6 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
     private final RedisUtils redisUtils;
     private final DeviceService deviceService;
     private final AgentPluginMappingService agentPluginMappingService;
-    private final ModelProviderService modelProviderService;
     private final AgentChatHistoryService agentChatHistoryService;
 
     @Override
