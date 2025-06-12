@@ -97,13 +97,6 @@
                             popper-class="custom-tooltip">
                             <div slot="content">
                               <div><strong>功能名称:</strong> {{ func.name }}</div>
-                              <div v-if="Object.keys(func.params).length > 0">
-                                <strong>参数配置:</strong>
-                                <div v-for="(value, key) in func.params" :key="key">
-                                  {{ key }}: {{ value }}
-                                </div>
-                              </div>
-                              <div v-else>无参数配置</div>
                             </div>
                             <div class="icon-dot" :style="{ backgroundColor: getFunctionColor(func.name) }">
                               {{ func.name.charAt(0) }}
