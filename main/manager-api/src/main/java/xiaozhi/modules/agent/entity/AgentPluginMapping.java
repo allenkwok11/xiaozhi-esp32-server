@@ -1,20 +1,22 @@
 package xiaozhi.modules.agent.entity;
 
+import java.io.Serializable;
+
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
  * Agent与插件的唯一映射表
+ * 
  * @TableName ai_agent_plugin_mapping
  */
 @Data
-@TableName(value ="ai_agent_plugin_mapping")
+@TableName(value = "ai_agent_plugin_mapping")
 @Schema(description = "Agent与插件的唯一映射表")
 public class AgentPluginMapping implements Serializable {
     /**
@@ -37,11 +39,10 @@ public class AgentPluginMapping implements Serializable {
     private String pluginId;
 
     /**
-    * 插件参数(Json)格式
-    */
+     * 插件参数(Json)格式
+     */
     @Schema(description = "插件参数(Json)格式")
     private String paramInfo;
-
 
     // 冗余字段，用于方便在根据id查询插件时，对照查出插件的Provider_code,详见dao层xml文件
     @TableField(exist = false)

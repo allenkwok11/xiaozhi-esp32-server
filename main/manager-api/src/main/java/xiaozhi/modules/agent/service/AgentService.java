@@ -5,6 +5,7 @@ import java.util.Map;
 
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.BaseService;
+import xiaozhi.modules.agent.dto.AgentCreateDTO;
 import xiaozhi.modules.agent.dto.AgentDTO;
 import xiaozhi.modules.agent.dto.AgentUpdateDTO;
 import xiaozhi.modules.agent.entity.AgentEntity;
@@ -82,5 +83,19 @@ public interface AgentService extends BaseService<AgentEntity> {
      */
     boolean checkAgentPermission(String agentId, Long userId);
 
+    /**
+     * 更新智能体
+     *
+     * @param agentId 智能体ID
+     * @param dto     更新智能体所需的信息
+     */
     void updateAgentById(String agentId, AgentUpdateDTO dto);
+
+    /**
+     * 创建智能体
+     *
+     * @param dto 创建智能体所需的信息
+     * @return 创建的智能体ID
+     */
+    String createAgent(AgentCreateDTO dto);
 }

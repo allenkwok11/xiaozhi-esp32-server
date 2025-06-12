@@ -1,6 +1,8 @@
 package xiaozhi.modules.agent.service.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,18 +25,24 @@ import xiaozhi.common.redis.RedisKeys;
 import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.user.UserDetail;
+import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.common.utils.JsonUtils;
 import xiaozhi.modules.agent.dao.AgentDao;
+import xiaozhi.modules.agent.dto.AgentCreateDTO;
 import xiaozhi.modules.agent.dto.AgentDTO;
 import xiaozhi.modules.agent.dto.AgentUpdateDTO;
 import xiaozhi.modules.agent.entity.AgentEntity;
 import xiaozhi.modules.agent.entity.AgentPluginMapping;
+import xiaozhi.modules.agent.entity.AgentTemplateEntity;
 import xiaozhi.modules.agent.service.AgentChatHistoryService;
 import xiaozhi.modules.agent.service.AgentPluginMappingService;
 import xiaozhi.modules.agent.service.AgentService;
+import xiaozhi.modules.agent.service.AgentTemplateService;
 import xiaozhi.modules.agent.vo.AgentInfoVO;
 import xiaozhi.modules.device.service.DeviceService;
+import xiaozhi.modules.model.dto.ModelProviderDTO;
 import xiaozhi.modules.model.service.ModelConfigService;
+import xiaozhi.modules.model.service.ModelProviderService;
 import xiaozhi.modules.security.user.SecurityUser;
 import xiaozhi.modules.sys.enums.SuperAdminEnum;
 import xiaozhi.modules.timbre.service.TimbreService;
@@ -49,6 +57,8 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
     private final DeviceService deviceService;
     private final AgentPluginMappingService agentPluginMappingService;
     private final AgentChatHistoryService agentChatHistoryService;
+    private final AgentTemplateService agentTemplateService;
+    private final ModelProviderService modelProviderService;
 
     @Override
     public PageData<AgentEntity> adminAgentList(Map<String, Object> params) {
@@ -250,7 +260,6 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
         List<AgentUpdateDTO.FunctionInfo> functions = dto.getFunctions();
         if (functions != null) {
             // 1. 收集本次提交的 pluginId
-            // TODO: 提交的参数信息里，这里是允许为空，后续可以扩展required字段限制避免为空
             List<String> newPluginIds = functions.stream()
                     .map(AgentUpdateDTO.FunctionInfo::getPluginId)
                     .toList();
@@ -316,5 +325,68 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
             agentChatHistoryService.deleteByAgentId(existingEntity.getId(), true, false);
         }
         this.updateById(existingEntity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createAgent(AgentCreateDTO dto) {
+        // 转换为实体
+        AgentEntity entity = ConvertUtils.sourceToTarget(dto, AgentEntity.class);
+
+        // 获取默认模板
+        AgentTemplateEntity template = agentTemplateService.getDefaultTemplate();
+        if (template != null) {
+            // 设置模板中的默认值
+            entity.setAsrModelId(template.getAsrModelId());
+            entity.setVadModelId(template.getVadModelId());
+            entity.setLlmModelId(template.getLlmModelId());
+            entity.setVllmModelId(template.getVllmModelId());
+            entity.setTtsModelId(template.getTtsModelId());
+            entity.setTtsVoiceId(template.getTtsVoiceId());
+            entity.setMemModelId(template.getMemModelId());
+            entity.setIntentModelId(template.getIntentModelId());
+            entity.setSystemPrompt(template.getSystemPrompt());
+            entity.setSummaryMemory(template.getSummaryMemory());
+            entity.setChatHistoryConf(template.getChatHistoryConf());
+            entity.setLangCode(template.getLangCode());
+            entity.setLanguage(template.getLanguage());
+        }
+
+        // 设置用户ID和创建者信息
+        UserDetail user = SecurityUser.getUser();
+        entity.setUserId(user.getId());
+        entity.setCreator(user.getId());
+        entity.setCreatedAt(new Date());
+
+        // 保存智能体
+        insert(entity);
+
+        // 设置默认插件
+        List<AgentPluginMapping> toInsert = new ArrayList<>();
+        // 播放音乐、查天气、查新闻
+        String[] pluginIds = new String[] { "SYSTEM_PLUGIN_MUSIC", "SYSTEM_PLUGIN_WEATHER",
+                "SYSTEM_PLUGIN_NEWS_NEWSNOW" };
+        for (String pluginId : pluginIds) {
+            ModelProviderDTO provider = modelProviderService.getById(pluginId);
+            if (provider == null) {
+                continue;
+            }
+            AgentPluginMapping mapping = new AgentPluginMapping();
+            mapping.setPluginId(pluginId);
+
+            Map<String, Object> paramInfo = new HashMap<>();
+            List<Map<String, Object>> fields = JsonUtils.parseObject(provider.getFields(), List.class);
+            if (fields != null) {
+                for (Map<String, Object> field : fields) {
+                    paramInfo.put((String) field.get("key"), field.get("default"));
+                }
+            }
+            mapping.setParamInfo(JsonUtils.toJsonString(paramInfo));
+            mapping.setAgentId(entity.getId());
+            toInsert.add(mapping);
+        }
+        // 保存默认插件
+        agentPluginMappingService.saveBatch(toInsert);
+        return entity.getId();
     }
 }

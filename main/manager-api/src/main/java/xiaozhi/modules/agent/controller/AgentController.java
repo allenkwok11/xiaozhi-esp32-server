@@ -1,6 +1,5 @@
 package xiaozhi.modules.agent.controller;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +32,6 @@ import xiaozhi.common.page.PageData;
 import xiaozhi.common.redis.RedisKeys;
 import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.user.UserDetail;
-import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.utils.ResultUtils;
 import xiaozhi.modules.agent.dto.AgentChatHistoryDTO;
@@ -46,6 +44,7 @@ import xiaozhi.modules.agent.entity.AgentEntity;
 import xiaozhi.modules.agent.entity.AgentTemplateEntity;
 import xiaozhi.modules.agent.service.AgentChatAudioService;
 import xiaozhi.modules.agent.service.AgentChatHistoryService;
+import xiaozhi.modules.agent.service.AgentPluginMappingService;
 import xiaozhi.modules.agent.service.AgentService;
 import xiaozhi.modules.agent.service.AgentTemplateService;
 import xiaozhi.modules.agent.vo.AgentInfoVO;
@@ -63,6 +62,7 @@ public class AgentController {
     private final DeviceService deviceService;
     private final AgentChatHistoryService agentChatHistoryService;
     private final AgentChatAudioService agentChatAudioService;
+    private final AgentPluginMappingService agentPluginMappingService;
     private final RedisUtils redisUtils;
 
     @GetMapping("/list")
@@ -99,37 +99,8 @@ public class AgentController {
     @Operation(summary = "创建智能体")
     @RequiresPermissions("sys:role:normal")
     public Result<String> save(@RequestBody @Valid AgentCreateDTO dto) {
-        AgentEntity entity = ConvertUtils.sourceToTarget(dto, AgentEntity.class);
-
-        // 获取默认模板
-        AgentTemplateEntity template = agentTemplateService.getDefaultTemplate();
-        if (template != null) {
-            // 设置模板中的默认值
-            entity.setAsrModelId(template.getAsrModelId());
-            entity.setVadModelId(template.getVadModelId());
-            entity.setLlmModelId(template.getLlmModelId());
-            entity.setVllmModelId(template.getVllmModelId());
-            entity.setTtsModelId(template.getTtsModelId());
-            entity.setTtsVoiceId(template.getTtsVoiceId());
-            entity.setMemModelId(template.getMemModelId());
-            entity.setIntentModelId(template.getIntentModelId());
-            entity.setSystemPrompt(template.getSystemPrompt());
-            entity.setSummaryMemory(template.getSummaryMemory());
-            entity.setChatHistoryConf(template.getChatHistoryConf());
-            entity.setLangCode(template.getLangCode());
-            entity.setLanguage(template.getLanguage());
-        }
-
-        // 设置用户ID和创建者信息
-        UserDetail user = SecurityUser.getUser();
-        entity.setUserId(user.getId());
-        entity.setCreator(user.getId());
-        entity.setCreatedAt(new Date());
-
-        // ID、智能体编码和排序会在Service层自动生成
-        agentService.insert(entity);
-
-        return new Result<String>().ok(entity.getId());
+        String agentId = agentService.createAgent(dto);
+        return new Result<String>().ok(agentId);
     }
 
     @PutMapping("/saveMemory/{macAddress}")
@@ -161,6 +132,8 @@ public class AgentController {
         deviceService.deleteByAgentId(id);
         // 删除关联的聊天记录
         agentChatHistoryService.deleteByAgentId(id, true, true);
+        // 删除关联的插件
+        agentPluginMappingService.deleteByAgentId(id);
         // 再删除智能体
         agentService.deleteById(id);
         return new Result<>();

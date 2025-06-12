@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,13 @@ public class AgentPluginMappingServiceImpl extends ServiceImpl<AgentPluginMappin
     @Override
     public List<AgentPluginMapping> agentPluginParamsByAgentId(String agentId) {
         return agentPluginMappingMapper.selectPluginsByAgentId(agentId);
+    }
+
+    @Override
+    public void deleteByAgentId(String agentId) {
+        UpdateWrapper<AgentPluginMapping> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("agent_id", agentId);
+        agentPluginMappingMapper.delete(updateWrapper);
     }
 
 }
