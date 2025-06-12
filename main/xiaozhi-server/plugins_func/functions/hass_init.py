@@ -4,8 +4,6 @@ from core.utils.util import check_model_key
 TAG = __name__
 logger = setup_logging()
 
-HASS_CACHE = {}
-
 
 def append_devices_to_prompt(conn):
     if conn.intent_type == "function_call":
@@ -25,19 +23,22 @@ def append_devices_to_prompt(conn):
 
 
 def initialize_hass_handler(conn):
-    global HASS_CACHE
-    if HASS_CACHE == {}:
-        if conn.load_function_plugin:
-            funcs = conn.config["Intent"][conn.config["selected_module"]["Intent"]].get(
-                "functions", []
+    ha_config = {}
+    if conn.load_function_plugin:
+        if conn.config["plugins"].get("home_assistant"):
+            ha_config["base_url"] = conn.config["plugins"]["home_assistant"].get(
+                "base_url"
             )
-            if "hass_get_state" in funcs or "hass_set_state" in funcs:
-                HASS_CACHE["base_url"] = conn.config["plugins"]["home_assistant"].get(
-                    "base_url"
-                )
-                HASS_CACHE["api_key"] = conn.config["plugins"]["home_assistant"].get(
-                    "api_key"
-                )
-
-                check_model_key("home_assistant", HASS_CACHE["api_key"])
-    return HASS_CACHE
+            ha_config["api_key"] = conn.config["plugins"]["home_assistant"].get(
+                "api_key"
+            )
+            check_model_key("home_assistant", ha_config.get("api_key"))
+        elif conn.config["plugins"].get("hass_get_state"):
+            ha_config["base_url"] = conn.config["plugins"]["hass_get_state"].get(
+                "base_url"
+            )
+            ha_config["api_key"] = conn.config["plugins"]["hass_get_state"].get(
+                "api_key"
+            )
+            check_model_key("home_assistant", ha_config.get("api_key"))
+    return ha_config
