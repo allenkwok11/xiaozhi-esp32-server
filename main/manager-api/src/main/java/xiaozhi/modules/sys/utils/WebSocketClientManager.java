@@ -64,18 +64,10 @@ public class WebSocketClientManager implements Closeable {
     private volatile Consumer<byte[]> onBinary;
     private volatile Consumer<Throwable> onError;
 
-    private final String uri;
-    private final WebSocketHttpHeaders headers;
-    private final long connectTimeout;
-    private final TimeUnit connectUnit;
     private final int queueCapacity;
 
     // 私有构造，仅由 Builder 调用
     private WebSocketClientManager(Builder b) {
-        this.uri = b.uri;
-        this.headers = b.headers != null ? b.headers : new WebSocketHttpHeaders();
-        this.connectTimeout = b.connectTimeout;
-        this.connectUnit = b.connectUnit;
         this.maxSessionDuration = b.maxSessionDuration;
         this.maxSessionDurationUnit = b.maxSessionDurationUnit;
         this.queueCapacity = b.queueCapacity;
