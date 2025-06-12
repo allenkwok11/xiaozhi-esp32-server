@@ -1,5 +1,5 @@
 <template>
-  <el-drawer :visible.sync="dialogVisible" direction="rtl" size="70%" :wrapperClosable="false" :withHeader="false">
+  <el-drawer :visible.sync="dialogVisible" direction="rtl" size="80%" :wrapperClosable="false" :withHeader="false">
     <!-- 自定义标题区域 -->
     <div class="custom-header">
       <div class="header-left">
@@ -24,9 +24,6 @@
                 <div class="color-dot" :style="{ backgroundColor: getFunctionColor(func.name) }"></div>
                 <span>{{ func.name }}</span>
               </div>
-              <el-tooltip class="item" effect="dark" :content="func.description || '暂无功能描述'" placement="top">
-                <img src="@/assets/home/info.png" alt="" class="info-icon">
-              </el-tooltip>
             </div>
           </div>
           <div v-else style="display: flex; justify-content: center; align-items: center;">
@@ -62,13 +59,13 @@
       <div class="params-column">
         <h4 v-if="currentFunction" class="column-title">参数配置 - {{ currentFunction.name }}</h4>
         <div v-if="currentFunction" class="params-container">
-          <el-form :model="currentFunction" size="mini" class="param-form">
+          <el-form :model="currentFunction" class="param-form">
             <!-- 遍历 fieldsMeta，而不是 params 的 keys -->
             <div v-if="currentFunction.fieldsMeta.length == 0">
               <el-empty :description="currentFunction.name + ' 无需配置参数'" />
             </div>
             <el-form-item v-for="field in currentFunction.fieldsMeta" :key="field.key" :label="field.label"
-              class="param-item">
+              class="param-item" :class="{ 'textarea-field': field.type === 'array' || field.type === 'json' }">
               <template #label>
                 <span style="font-size: 16px; margin-right: 6px;">{{ field.label }}</span>
                 <el-tooltip effect="dark" :content="fieldRemark(field)" placement="top">
@@ -76,8 +73,8 @@
                 </el-tooltip>
               </template>
               <!-- ARRAY -->
-              <el-input v-if="field.type === 'array'" type="textarea" :rows="4" placeholder="每行一个，回车分隔"
-                v-model="textCache[field.key]" @blur="flushArray(field.key)" />
+              <el-input v-if="field.type === 'array'" type="textarea" v-model="currentFunction.params[field.key]"
+                @change="val => handleParamChange(currentFunction, field.key, val)" />
 
               <!-- JSON -->
               <el-input v-else-if="field.type === 'json'" type="textarea" :rows="6" placeholder="请输入合法的 JSON"
@@ -410,6 +407,20 @@ export default {
 .param-form {
   .param-item {
     font-size: 16px;
+
+    &.textarea-field {
+      ::v-deep .el-form-item__content {
+        margin-left: 0 !important;
+        display: block;
+        width: 100%;
+      }
+
+      ::v-deep .el-form-item__label {
+        display: block;
+        width: 100% !important;
+        margin-bottom: 8px;
+      }
+    }
   }
 
   .param-input {
@@ -418,7 +429,7 @@ export default {
 
   ::v-deep .el-form-item {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     margin-bottom: 12px;
 
     .el-form-item__label {
