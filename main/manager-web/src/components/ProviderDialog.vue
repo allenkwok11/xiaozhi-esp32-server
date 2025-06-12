@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :visible="visible" @update:visible="handleVisibleChange" width="57%" center custom-class="custom-dialog"
+  <el-dialog :visible="visible" :close-on-click-modal="false" @update:visible="handleVisibleChange" width="57%" center custom-class="custom-dialog"
     :show-close="false" class="center-dialog">
 
     <div style="margin: 0 18px; text-align: left; padding: 10px; border-radius: 10px;">
