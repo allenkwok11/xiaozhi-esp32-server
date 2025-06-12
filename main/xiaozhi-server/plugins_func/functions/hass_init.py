@@ -10,9 +10,17 @@ def append_devices_to_prompt(conn):
         funcs = conn.config["Intent"][conn.config["selected_module"]["Intent"]].get(
             "functions", []
         )
+
+        config_source = (
+            "home_assistant"
+            if conn.config["plugins"].get("home_assistant")
+            else "hass_get_state"
+        )
+
         if "hass_get_state" in funcs or "hass_set_state" in funcs:
             prompt = "\n下面是我家智能设备列表（位置，设备名，entity_id），可以通过homeassistant控制\n"
-            devices = conn.config["plugins"]["home_assistant"].get("devices", [])
+            # TODO 分割被控设备
+            devices = conn.config["plugins"].get(config_source, {}).get("devices", [])
             if len(devices) == 0:
                 return
             for device in devices:
@@ -24,21 +32,26 @@ def append_devices_to_prompt(conn):
 
 def initialize_hass_handler(conn):
     ha_config = {}
-    if conn.load_function_plugin:
-        if conn.config["plugins"].get("home_assistant"):
-            ha_config["base_url"] = conn.config["plugins"]["home_assistant"].get(
-                "base_url"
-            )
-            ha_config["api_key"] = conn.config["plugins"]["home_assistant"].get(
-                "api_key"
-            )
-            check_model_key("home_assistant", ha_config.get("api_key"))
-        elif conn.config["plugins"].get("hass_get_state"):
-            ha_config["base_url"] = conn.config["plugins"]["hass_get_state"].get(
-                "base_url"
-            )
-            ha_config["api_key"] = conn.config["plugins"]["hass_get_state"].get(
-                "api_key"
-            )
-            check_model_key("home_assistant", ha_config.get("api_key"))
+    if not conn.load_function_plugin:
+        return ha_config
+
+    # 确定配置来源
+    config_source = (
+        "home_assistant"
+        if conn.config["plugins"].get("home_assistant")
+        else "hass_get_state"
+    )
+    if not conn.config["plugins"].get(config_source):
+        return ha_config
+
+    # 统一获取配置
+    plugin_config = conn.config["plugins"][config_source]
+    ha_config["base_url"] = plugin_config.get("base_url")
+    ha_config["api_key"] = plugin_config.get("api_key")
+
+    # 统一检查API密钥
+    model_key_msg = check_model_key("home_assistant", ha_config.get("api_key"))
+    if model_key_msg:
+        logger.bind(tag=TAG).error(model_key_msg)
+
     return ha_config
