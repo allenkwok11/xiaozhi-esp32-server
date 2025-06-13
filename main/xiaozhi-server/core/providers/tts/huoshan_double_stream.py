@@ -157,7 +157,9 @@ class TTSProvider(TTSProviderBase):
         self.opus_encoder = opus_encoder_utils.OpusEncoderUtils(
             sample_rate=16000, channels=1, frame_size_ms=60
         )
-        check_model_key("TTS", self.access_token)
+        model_key_msg = check_model_key("TTS", self.access_token)
+        if model_key_msg:
+            logger.bind(tag=TAG).error(model_key_msg)
 
     async def open_audio_channels(self, conn):
         try:
@@ -267,7 +269,7 @@ class TTSProvider(TTSProviderBase):
                 await handleAbortMessage(self.conn)
                 logger.bind(tag=TAG).error(f"WebSocket连接不存在，终止发送文本")
                 return
-            
+
             #  过滤Markdown
             filtered_text = MarkdownCleaner.clean_markdown(text)
 
