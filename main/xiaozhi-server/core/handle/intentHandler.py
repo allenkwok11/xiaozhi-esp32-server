@@ -84,9 +84,11 @@ async def process_intent_result(conn, intent_result, original_text):
                 if not funcItem:
                     conn.func_handler.function_registry.register_function("play_music")
 
-            function_args = None
+            function_args = {}
             if "arguments" in intent_data["function_call"]:
                 function_args = intent_data["function_call"]["arguments"]
+                if function_args is None:
+                    function_args = {}
             # 确保参数是字符串格式的JSON
             if isinstance(function_args, dict):
                 function_args = json.dumps(function_args)

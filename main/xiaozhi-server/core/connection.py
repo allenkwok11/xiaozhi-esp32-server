@@ -425,10 +425,12 @@ class ConnectionHandler:
         init_asr = check_asr_update(self.common_config, private_config)
 
         if init_vad:
+            self.config["VAD"] = private_config["VAD"]
             self.config["selected_module"]["VAD"] = private_config["selected_module"][
                 "VAD"
             ]
         if init_asr:
+            self.config["ASR"] = private_config["ASR"]
             self.config["selected_module"]["ASR"] = private_config["selected_module"][
                 "ASR"
             ]
