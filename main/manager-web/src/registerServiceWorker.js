@@ -5,19 +5,19 @@ export const register = () => {
     window.addEventListener('load', () => {
       const swUrl = `${process.env.BASE_URL}service-worker.js`;
       
-      console.info(`[小智服务] 正在尝试注册Service Worker，URL: ${swUrl}`);
+      console.info(`[xiaozhi service] trying to register Service Worker now, URL: ${swUrl}`);
       
       // 先检查Service Worker是否已注册
       navigator.serviceWorker.getRegistrations().then(registrations => {
         if (registrations.length > 0) {
-          console.info('[小智服务] 发现已有Service Worker注册，正在检查更新');
+          console.info('[xiaozhi service] registered Service Worker found, checking for updating now');
         }
         
         // 继续注册Service Worker
         navigator.serviceWorker
           .register(swUrl)
           .then(registration => {
-            console.info('[小智服务] Service Worker注册成功');
+            console.info('[xiaozhi service]] Service Worker registered successfully');
             
             // 更新处理
             registration.onupdatefound = () => {
@@ -29,7 +29,7 @@ export const register = () => {
                 if (installingWorker.state === 'installed') {
                   if (navigator.serviceWorker.controller) {
                     // 内容已缓存更新，通知用户刷新
-                    console.log('[小智服务] 新内容可用，请刷新页面');
+                    console.log('[xiaozhi service] new content available, please refresh webpage');
                     // 可以在这里展示更新提示
                     const updateNotification = document.createElement('div');
                     updateNotification.style.cssText = `
@@ -45,8 +45,8 @@ export const register = () => {
                     `;
                     updateNotification.innerHTML = `
                       <div style="display: flex; align-items: center;">
-                        <span style="margin-right: 10px;">发现新版本，点击刷新应用</span>
-                        <button style="background: white; color: #409EFF; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">刷新</button>
+                        <span style="margin-right: 10px;">new version found, click to refresh webpage</span>
+                        <button style="background: white; color: #409EFF; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">refresh</button>
                       </div>
                     `;
                     document.body.appendChild(updateNotification);
@@ -55,7 +55,7 @@ export const register = () => {
                     });
                   } else {
                     // 一切正常，Service Worker已成功安装
-                    console.log('[小智服务] 内容已缓存供离线使用');
+                    console.log('[xiaozhi service] content is loaded for offline usage');
                     
                     // 可以在这里初始化缓存
                     setTimeout(() => {
@@ -71,10 +71,10 @@ export const register = () => {
                         'https://unpkg.com/opus-decoder@0.7.7/dist/opus-decoder.min.js'
                       ];
                       
-                      // 预热缓存
+                      // cache warming
                       cdnUrls.forEach(url => {
                         fetch(url, { mode: 'no-cors' }).catch(err => {
-                          console.log(`预热缓存 ${url} 失败`, err);
+                          console.log(`cache warming ${url} fail`, err);
                         });
                       });
                     }, 2000);
@@ -84,13 +84,13 @@ export const register = () => {
             };
           })
           .catch(error => {
-            console.error('Service Worker 注册失败:', error);
+            console.error('Service Worker registration failed:', error);
             
             if (error.name === 'TypeError' && error.message.includes('Failed to register a ServiceWorker')) {
-              console.warn('[小智服务] 注册Service Worker时出现网络错误，CDN资源可能无法缓存');
+              console.warn('[xiaozhi service]  network error occurs when register Service Worker, CDN resources could not be loaded');
               if (process.env.NODE_ENV === 'production') {
                 console.info(
-                  '可能原因：1. 服务器未配置正确的MIME类型 2. 服务器SSL证书问题 3. 服务器未返回service-worker.js文件'
+                  'possible reasons: 1. server did not config correct MIME type 2. SSL certificate issue of server 3. server did not return service-worker.js file'
                 );
               }
             }
