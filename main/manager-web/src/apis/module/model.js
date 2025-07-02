@@ -19,7 +19,7 @@ export default {
         callback(res)
       })
       .networkFail((err) => {
-        console.error('获取模型列表失败:', err)
+        console.error('failed to get model list:', err)
         RequestService.reAjaxFun(() => {
           this.getModelList(params, callback)
         })
@@ -35,8 +35,8 @@ export default {
         callback(res.data?.data || [])
       })
       .networkFail((err) => {
-        console.error('获取供应器列表失败:', err)
-        this.$message.error('获取供应器列表失败')
+        console.error('failed to get provider list:', err)
+        this.$message.error('failed to get provider list')
         RequestService.reAjaxFun(() => {
           this.getModelProviders(modelType, callback)
         })
@@ -66,8 +66,8 @@ export default {
         callback(res)
       })
       .networkFail((err) => {
-        console.error('新增模型失败:', err)
-        this.$message.error(err.msg || '新增模型失败')
+        console.error('failed to add model:', err)
+        this.$message.error(err.msg || 'failed to add model')
         RequestService.reAjaxFun(() => {
           this.addModel(params, callback)
         })
@@ -83,8 +83,8 @@ export default {
         callback(res)
       })
       .networkFail((err) => {
-        console.error('删除模型失败:', err)
-        this.$message.error(err.msg || '删除模型失败')
+        console.error('failed to delete model:', err)
+        this.$message.error(err.msg || 'failed to delete model')
         RequestService.reAjaxFun(() => {
           this.deleteModel(id, callback)
         })
@@ -134,8 +134,8 @@ export default {
         callback(res)
       })
       .networkFail((err) => {
-        console.error('获取模型配置失败:', err)
-        this.$message.error(err.msg || '获取模型配置失败')
+        console.error('failed to get model config:', err)
+        this.$message.error(err.msg || 'failed to get model config')
         RequestService.reAjaxFun(() => {
           this.getModelConfig(id, callback)
         })
@@ -151,8 +151,8 @@ export default {
         callback(res)
       })
       .networkFail((err) => {
-        console.error('更新模型状态失败:', err)
-        this.$message.error(err.msg || '更新模型状态失败')
+        console.error('failed to update model status:', err)
+        this.$message.error(err.msg || 'failed to update model status')
         RequestService.reAjaxFun(() => {
           this.updateModelStatus(id, status, callback)
         })
@@ -174,8 +174,8 @@ export default {
         callback(res);
       })
       .networkFail((err) => {
-        console.error('更新模型失败:', err);
-        this.$message.error(err.msg || '更新模型失败');
+        console.error('failed to update model:', err);
+        this.$message.error(err.msg || 'failed to update model');
         RequestService.reAjaxFun(() => {
           this.updateModel(params, callback);
         });
@@ -191,8 +191,8 @@ export default {
         callback(res)
       })
       .networkFail((err) => {
-        console.error('设置默认模型失败:', err)
-        this.$message.error(err.msg || '设置默认模型失败')
+        console.error('failed to set default model:', err)
+        this.$message.error(err.msg || 'failed to set default model')
         RequestService.reAjaxFun(() => {
           this.setDefaultModel(id, callback)
         })
@@ -220,7 +220,7 @@ export default {
         callback(res);
       })
       .networkFail((err) => {
-        this.$message.error(err.msg || '获取供应器列表失败');
+        this.$message.error(err.msg || 'failed to get provider list');
         RequestService.reAjaxFun(() => {
           this.getModelProviders(params, callback);
         });
@@ -250,8 +250,8 @@ export default {
         callback(res);
       })
       .networkFail((err) => {
-        console.error('新增模型供应器失败:', err)
-        this.$message.error(err.msg || '新增模型供应器失败')
+        console.error('failed to add model provider:', err)
+        this.$message.error(err.msg || 'failed to add model provider')
         RequestService.reAjaxFun(() => {
           this.addModelProvider(params, callback);
         });
@@ -282,7 +282,7 @@ export default {
         callback(res);
       })
       .networkFail((err) => {
-        this.$message.error(err.msg || '更新模型供应器失败')
+        this.$message.error(err.msg || 'failed to update model provider')
         RequestService.reAjaxFun(() => {
           this.updateModelProvider(params, callback);
         });
@@ -299,7 +299,7 @@ export default {
         callback(res);
       })
       .networkFail((err) => {
-        this.$message.error(err.msg || '删除模型供应器失败')
+        this.$message.error(err.msg || 'failed to delete model provider')
         RequestService.reAjaxFun(() => {
           this.deleteModelProviderByIds(ids, callback)
         })
@@ -315,7 +315,7 @@ export default {
         callback(res)
       })
       .networkFail((err) => {
-        this.$message.error(err.msg || '获取插件列表失败')
+        this.$message.error(err.msg || 'failed to get plugin list')
         RequestService.reAjaxFun(() => {
           this.getPluginFunctionList(params, callback)
         })

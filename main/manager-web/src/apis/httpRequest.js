@@ -127,7 +127,7 @@ function httpHandlerError(info, failCallback, networkFailCallback) {
     if (networkFailCallback) {
         networkFailCallback(info)
     } else {
-        showDanger(`网络请求出现了错误【${info.status}】`)
+        showDanger(`error occurs when request for network【${info.status}】`)
     }
     return true
 }
@@ -142,9 +142,9 @@ function reAjaxFun(fn) {
     }
     let ajaxIndex = parseInt((nowTimeSec - requestTime) / reAjaxSec)
     if (ajaxIndex > 10) {
-        showWarning('似乎无法连接服务器')
+        showWarning('seems cannot connect to server')
     } else {
-        showWarning('正在连接服务器(' + ajaxIndex + ')')
+        showWarning('Connecting to server(' + ajaxIndex + ')')
     }
     if (ajaxIndex < 10 && fn) {
         setTimeout(() => {

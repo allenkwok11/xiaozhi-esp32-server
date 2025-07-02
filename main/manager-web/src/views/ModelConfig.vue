@@ -6,10 +6,10 @@
       <h2 class="page-title">{{ modelTypeText }}</h2>
       <div class="action-group">
         <div class="search-group">
-          <el-input placeholder="请输入模型名称查询" v-model="search" class="search-input" clearable
+          <el-input placeholder="please enter model name to search" v-model="search" class="search-input" clearable
             @keyup.enter.native="handleSearch" style="width: 240px" />
           <el-button class="btn-search" @click="handleSearch">
-            搜索
+            Search
           </el-button>
         </div>
       </div>
@@ -22,70 +22,70 @@
         <el-menu :default-active="activeTab" class="nav-panel" @select="handleMenuSelect"
           style="background-size: cover; background-position: center;">
           <el-menu-item index="vad">
-            <span class="menu-text">语言活动检测</span>
+            <span class="menu-text">Voice Activity Detection</span>
           </el-menu-item>
           <el-menu-item index="asr">
-            <span class="menu-text">语音识别</span>
+            <span class="menu-text">Voice identification</span>
           </el-menu-item>
           <el-menu-item index="llm">
-            <span class="menu-text">大语言模型</span>
+            <span class="menu-text">Large Language Model</span>
           </el-menu-item>
           <el-menu-item index="vllm">
-            <span class="menu-text">视觉大模型</span>
+            <span class="menu-text">Visual Large Language Model</span>
           </el-menu-item>
           <el-menu-item index="intent">
-            <span class="menu-text">意图识别</span>
+            <span class="menu-text">Intent Recognition</span>
           </el-menu-item>
           <el-menu-item index="tts">
-            <span class="menu-text">语音合成</span>
+            <span class="menu-text">Text to Speech</span>
           </el-menu-item>
           <el-menu-item index="memory">
-            <span class="menu-text">记忆</span>
+            <span class="menu-text">Memory</span>
           </el-menu-item>
         </el-menu>
 
         <!-- 右侧内容 -->
         <div class="content-area">
           <el-card class="model-card" shadow="never">
-            <el-table ref="modelTable" style="width: 100%" v-loading="loading" element-loading-text="拼命加载中"
+            <el-table ref="modelTable" style="width: 100%" v-loading="loading" element-loading-text="Loading..."
               element-loading-spinner="el-icon-loading" element-loading-background="rgba(255, 255, 255, 0.7)"
               :header-cell-style="{ background: 'transparent' }" :data="modelList" class="data-table"
               header-row-class-name="table-header" :header-cell-class-name="headerCellClassName"
               @selection-change="handleSelectionChange">
               <el-table-column type="selection" width="55" align="center"></el-table-column>
-              <el-table-column label="模型ID" prop="id" align="center"></el-table-column>
-              <el-table-column label="模型名称" prop="modelName" align="center"></el-table-column>
-              <el-table-column label="提供商" align="center">
+              <el-table-column label="Model ID" prop="id" align="center"></el-table-column>
+              <el-table-column label="Model Name" prop="modelName" align="center"></el-table-column>
+              <el-table-column label="Provider" align="center">
                 <template slot-scope="scope">
-                  {{ scope.row.configJson.type || '未知' }}
+                  {{ scope.row.configJson.type || 'Unknown' }}
                 </template>
               </el-table-column>
-              <el-table-column label="是否启用" align="center">
+              <el-table-column label="Active Status" align="center">
                 <template slot-scope="scope">
                   <el-switch v-model="scope.row.isEnabled" class="custom-switch" :active-value="1" :inactive-value="0"
                     @change="handleStatusChange(scope.row)" />
                 </template>
               </el-table-column>
-              <el-table-column label="是否默认" align="center">
+              <el-table-column label="Default Status" align="center">
                 <template slot-scope="scope">
                   <el-switch v-model="scope.row.isDefault" class="custom-switch" :active-value="1" :inactive-value="0"
                     @change="handleDefaultChange(scope.row)" />
                 </template>
               </el-table-column>
-              <el-table-column v-if="activeTab === 'tts'" label="音色管理" align="center">
+              <el-table-column v-if="activeTab === 'tts'" label="Voice Management" align="center">
                 <template slot-scope="scope">
                   <el-button type="text" size="mini" @click="openTtsDialog(scope.row)" class="voice-management-btn">
-                    音色管理
+                    Voice Management
                   </el-button>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" align="center" width="150px">
+              <el-table-column label="Operation" align="center" width="150px">
                 <template slot-scope="scope">
                   <el-button type="text" size="mini" @click="editModel(scope.row)" class="edit-btn">
-                    修改
+                    Edit
                   </el-button>
                   <el-button type="text" size="mini" @click="deleteModel(scope.row)" class="delete-btn">
-                    删除
+                    Delete
                   </el-button>
                 </template>
               </el-table-column>
@@ -94,32 +94,32 @@
               <div class="batch-actions">
                 <el-button size="mini" type="primary" @click="selectAll">
                   {{ isAllSelected ?
-                    '取消全选' : '全选' }}
+                    'Unselect All' : 'Select All' }}
                 </el-button>
                 <el-button type="success" size="mini" @click="addModel" class="add-btn">
-                  新增
+                  Add
                 </el-button>
                 <el-button size="mini" type="danger" icon="el-icon-delete" @click="batchDelete">
-                  删除
+                  Delete
                 </el-button>
               </div>
               <div class="custom-pagination">
 
                 <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
-                  <el-option v-for="item in pageSizeOptions" :key="item" :label="`${item}条/页`" :value="item">
+                  <el-option v-for="item in pageSizeOptions" :key="item" :label="`${item}line/page`" :value="item">
                   </el-option>
                 </el-select>
 
-                <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">首页</button>
-                <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">上一页</button>
+                <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">First Page</button>
+                <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">Last Page</button>
 
                 <button v-for="page in visiblePages" :key="page" class="pagination-btn"
                   :class="{ active: page === currentPage }" @click="goToPage(page)">
                   {{ page }}
                 </button>
 
-                <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">下一页</button>
-                <span class="total-text">共{{ total }}条记录</span>
+                <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">Next Page</button>
+                <span class="total-text">{{ total }}records in total</span>
               </div>
             </div>
           </el-card>
@@ -173,15 +173,15 @@ export default {
   computed: {
     modelTypeText() {
       const map = {
-        vad: '语言活动检测模型(VAD)',
-        asr: '语音识别模型(ASR)',
-        llm: '大语言模型（LLM）',
-        vllm: '视觉大模型（VLLM）',
-        intent: '意图识别模型(Intent)',
-        tts: '语音合成模型(TTS)',
-        memory: '记忆模型(Memory)'
+        vad: 'VAD Model',
+        asr: 'ASR Model',
+        llm: 'LLM Model',
+        vllm: 'VLLM Model',
+        intent: 'Intent Recognition Model',
+        tts: 'TTS Model',
+        memory: 'Memory Model'
       }
-      return map[this.activeTab] || '模型配置'
+      return map[this.activeTab] || 'Model Configuration'
     },
     pageCount() {
       return Math.ceil(this.total / this.pageSize);
@@ -232,13 +232,13 @@ export default {
     // 批量删除
     batchDelete() {
       if (this.selectedModels.length === 0) {
-        this.$message.warning('请先选择要删除的模型')
+        this.$message.warning('Please select the model to be deleted')
         return
       }
 
-      this.$confirm('确定要删除选中的模型吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      this.$confirm('Confirm to delete selected model?', 'NOTE', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
         const deletePromises = this.selectedModels.map(model =>
@@ -253,19 +253,19 @@ export default {
         Promise.all(deletePromises).then(results => {
           if (results.every(Boolean)) {
             this.$message.success({
-              message: '批量删除成功',
+              message: 'Batch delete successfully',
               showClose: true
             })
             this.loadData()
           } else {
             this.$message.error({
-              message: '部分删除失败',
+              message: 'failed to delete partially',
               showClose: true
             })
           }
         })
       }).catch(() => {
-        this.$message.info('已取消删除')
+        this.$message.info('deletion cancelled')
       })
     },
     addModel() {
@@ -277,9 +277,9 @@ export default {
     },
     // 删除单个模型
     deleteModel(model) {
-      this.$confirm('确定要删除该模型吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      this.$confirm('Confirm to delete selected model?', 'NOTE', {
+        confirmButtonText: 'confirm',
+        cancelButtonText: 'cancel',
         type: 'warning'
       }).then(() => {
         Api.model.deleteModel(
@@ -287,20 +287,20 @@ export default {
           ({ data }) => {
             if (data.code === 0) {
               this.$message.success({
-                message: '删除成功',
+                message: 'Delete Successfully',
                 showClose: true
               })
               this.loadData()
             } else {
               this.$message.error({
-                message: data.msg || '删除失败',
+                message: data.msg || 'Failed to Delete',
                 showClose: true
               })
             }
           }
         )
       }).catch(() => {
-        this.$message.info('已取消删除')
+        this.$message.info('Deletion Cancelled')
       })
     },
     handleCurrentChange(page) {
@@ -315,11 +315,11 @@ export default {
         { modelType, provideCode, id, formData },
         ({ data }) => {
           if (data.code === 0) {
-            this.$message.success('保存成功');
+            this.$message.success('Save Successfully');
             this.loadData();
             this.editDialogVisible = false;
           } else {
-            this.$message.error(data.msg || '保存失败');
+            this.$message.error(data.msg || 'Failed to Save');
           }
           done && done(); // 调用done回调关闭加载状态
         }
@@ -356,13 +356,13 @@ export default {
       Api.model.addModel(params, ({ data }) => {
         if (data.code === 0) {
           this.$message.success({
-            message: '新增成功',
+            message: 'Add Successfully',
             showClose: true
           });
           this.loadData();
         } else {
           this.$message.error({
-            message: data.msg || '新增失败',
+            message: data.msg || 'Failed to Add',
             showClose: true
           });
         }
@@ -407,7 +407,7 @@ export default {
           this.modelList = data.data.list;
           this.total = data.data.total;
         } else {
-          this.$message.error(data.msg || '获取模型列表失败');
+          this.$message.error(data.msg || 'Failed to get model list');
         }
       });
     },
@@ -423,13 +423,13 @@ export default {
         newStatus,
         ({ data }) => {
           if (data.code === 0) {
-            this.$message.success(newStatus === 1 ? '启用成功' : '禁用成功')
+            this.$message.success(newStatus === 1 ? 'enabled successfully' : 'disabled successfully')
             // 保持新状态
             model.isEnabled = newStatus
           } else {
             // 操作失败时恢复原状态
             model.isEnabled = originalStatus
-            this.$message.error(data.msg || '操作失败')
+            this.$message.error(data.msg || 'Failed to operate')
           }
         }
       )
@@ -437,7 +437,7 @@ export default {
     handleDefaultChange(model) {
       Api.model.setDefaultModel(model.id, ({ data }) => {
         if (data.code === 0) {
-          this.$message.success('设置默认模型成功')
+          this.$message.success('Set default model successfully')
           this.loadData()
         }
       })
@@ -739,7 +739,7 @@ export default {
 }
 
 ::v-deep .el-table .custom-selection-header .cell::before {
-  content: '选择';
+  content: 'Select';
   display: block;
   text-align: center;
   line-height: 0;

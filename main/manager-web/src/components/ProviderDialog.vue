@@ -11,42 +11,42 @@
 
       <el-form :model="form" label-width="100px" :rules="rules" ref="form" class="custom-form">
         <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-          <el-form-item label="类别" prop="modelType" style="flex: 1;">
-            <el-select v-model="form.modelType" placeholder="请选择类别" class="custom-input-bg" style="width: 100%;">
+          <el-form-item label="Type" prop="modelType" style="flex: 1;">
+            <el-select v-model="form.modelType" placeholder="please select type" class="custom-input-bg" style="width: 100%;">
               <el-option v-for="item in modelTypes" :key="item.value" :label="item.label" :value="item.value">
               </el-option>
             </el-select>
           </el-form-item>
 
-          <el-form-item label="编码" prop="providerCode" style="flex: 1;">
-            <el-input v-model="form.providerCode" placeholder="请输入供应器编码" class="custom-input-bg"></el-input>
+          <el-form-item label="code" prop="providerCode" style="flex: 1;">
+            <el-input v-model="form.providerCode" placeholder="please enter provider code" class="custom-input-bg"></el-input>
           </el-form-item>
         </div>
 
         <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-          <el-form-item label="名称" prop="name" style="flex: 1;">
-            <el-input v-model="form.name" placeholder="请输入供应器名称" class="custom-input-bg"></el-input>
+          <el-form-item label="Name" prop="name" style="flex: 1;">
+            <el-input v-model="form.name" placeholder="please enter provider name" class="custom-input-bg"></el-input>
           </el-form-item>
-          <el-form-item label="排序" prop="sort" style="flex: 1;">
+          <el-form-item label="Sort" prop="sort" style="flex: 1;">
             <el-input-number v-model="form.sort" :min="0" controls-position="right" class="custom-input-bg"
               style="width: 100%;"></el-input-number>
           </el-form-item>
         </div>
 
         <div style="font-size: 20px; font-weight: bold; color: #3d4566; margin-bottom: 15px;">
-          字段配置
+          field configuration
           <div style="display: inline-block; float: right;">
             <el-button type="primary" @click="addField" size="small" style="background: #5bc98c; border: none;"
               :disabled="hasIncompleteFields">
-              添加
+              Add
             </el-button>
             <el-button type="primary" @click="toggleSelectAllFields" size="small"
               style="background: #5f70f3; border: none; margin-left: 10px;">
-              {{ isAllFieldsSelected ? '取消全选' : '全选' }}
+              {{ isAllFieldsSelected ? 'unselect all' : 'select all' }}
             </el-button>
             <el-button type="danger" @click="batchRemoveFields" size="small"
               style="background: red; border: none; margin-left: 10px;">
-              批量删除
+              Batch Delete
             </el-button>
           </div>
         </div>
@@ -54,40 +54,40 @@
 
         <div class="fields-container">
           <el-table :data="form.fields" style="width: 100%;" border size="medium" :key="tableKey">
-            <el-table-column label="选择" align="center" width="50">
+            <el-table-column label="select" align="center" width="50">
               <template slot-scope="scope">
                 <el-checkbox v-model="scope.row.selected" @change="handleFieldSelectChange"></el-checkbox>
               </template>
             </el-table-column>
-            <el-table-column label="字段key">
+            <el-table-column label="field key">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
-                  <el-input v-model="scope.row.key" placeholder="字段key"></el-input>
+                  <el-input v-model="scope.row.key" placeholder="Field Key"></el-input>
                 </template>
                 <template v-else>
                   {{ scope.row.key }}
                 </template>
               </template>
             </el-table-column>
-            <el-table-column label="字段标签">
+            <el-table-column label="Field Label">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
-                  <el-input v-model="scope.row.label" placeholder="字段标签"></el-input>
+                  <el-input v-model="scope.row.label" placeholder="Field Label"></el-input>
                 </template>
                 <template v-else>
                   {{ scope.row.label }}
                 </template>
               </template>
             </el-table-column>
-            <el-table-column label="字段类型">
+            <el-table-column label="Field Type">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
-                  <el-select v-model="scope.row.type" placeholder="类型">
-                    <el-option label="字符串" value="string"></el-option>
-                    <el-option label="数字" value="number"></el-option>
-                    <el-option label="布尔值" value="boolean"></el-option>
-                    <el-option label="字典" value="dict"></el-option>
-                    <el-option label="分号分割的列表" value="array"></el-option>
+                  <el-select v-model="scope.row.type" placeholder="type">
+                    <el-option label="string" value="string"></el-option>
+                    <el-option label="number" value="number"></el-option>
+                    <el-option label="boolean" value="boolean"></el-option>
+                    <el-option label="dictionary" value="dict"></el-option>
+                    <el-option label="Semicolon-separated list" value="array"></el-option>
                   </el-select>
                 </template>
                 <template v-else>
@@ -95,26 +95,26 @@
                 </template>
               </template>
             </el-table-column>
-            <el-table-column label="默认值">
+            <el-table-column label="Default Value">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
-                  <el-input v-model="scope.row.default" placeholder="请输入默认值"></el-input>
+                  <el-input v-model="scope.row.default" placeholder="please enter default value"></el-input>
                 </template>
                 <template v-else>
                   {{ scope.row.default }}
                 </template>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="150" align="center">
+            <el-table-column label="Operation" width="150" align="center">
               <template slot-scope="scope">
                 <el-button v-if="!scope.row.editing" type="primary" size="mini" @click="startEditing(scope.row)">
-                  编辑
+                  Edit
                 </el-button>
                 <el-button v-else type="success" size="mini" @click="stopEditing(scope.row)">
-                  完成
+                  Complete
                 </el-button>
                 <el-button type="danger" size="mini" @click="removeField(scope.$index)">
-                  删除
+                  Delete
                 </el-button>
               </template>
             </el-table-column>
@@ -124,7 +124,7 @@
     </div>
 
     <div style="display: flex; justify-content: center;">
-      <el-button type="primary" @click="submit" class="save-btn" :loading="saving">保存</el-button>
+      <el-button type="primary" @click="submit" class="save-btn" :loading="saving">save</el-button>
     </div>
   </el-dialog>
 </template>
@@ -141,9 +141,9 @@ export default {
     return {
       saving: false,
       rules: {
-        modelType: [{ required: true, message: '请选择类别', trigger: 'change' }],
-        providerCode: [{ required: true, message: '请输入供应器编码', trigger: 'blur' }],
-        name: [{ required: true, message: '请输入供应器名称', trigger: 'blur' }]
+        modelType: [{ required: true, message: 'please select type', trigger: 'change' }],
+        providerCode: [{ required: true, message: 'please select provider code', trigger: 'blur' }],
+        name: [{ required: true, message: 'please select provider name', trigger: 'blur' }]
       },
       isAllFieldsSelected: false,
       tableKey: 0 // 用于强制表格重新渲染
@@ -159,11 +159,11 @@ export default {
   methods: {
     getTypeLabel(type) {
       const typeMap = {
-        'string': '字符串',
-        'number': '数字',
-        'boolean': '布尔值',
-        'dict': '字典',
-        'array': '分号分割的列表'
+        'string': 'String',
+        'number': 'Number',
+        'boolean': 'Boolean',
+        'dict': 'Dictionary',
+        'array': 'Semicolon-separated list'
       };
       return typeMap[type];
     },
@@ -212,7 +212,7 @@ export default {
     addField() {
       if (this.hasIncompleteFields) {
         this.$message.warning({
-          message: '请先完成当前字段的编辑',
+          message: 'please complete the editing of current field first',
           showClose: true
         });
         return;
@@ -230,21 +230,21 @@ export default {
     },
 
     removeField(index) {
-      this.$confirm('确定要删除该字段吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      this.$confirm('confirm to delete this field?', 'note', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
         this.form.fields = this.form.fields.filter((_, i) => i !== index);
         this.updateSelectAllStatus();
         this.forceTableRerender();
         this.$message.success({
-          message: '删除成功',
+          message: 'delete successfully',
           showClose: true
         });
       }).catch(() => {
         this.$message.info({
-          message: '已取消删除',
+          message: 'deletion cancelled',
           showClose: true
         });
       });
@@ -254,26 +254,26 @@ export default {
       const selectedFields = this.form.fields.filter(field => field.selected);
       if (selectedFields.length === 0) {
         this.$message.warning({
-          message: '请先选择要删除的字段',
+          message: 'please select field to be deleted',
           showClose: true
         });
         return;
       }
-      this.$confirm(`确定要删除选中的 ${selectedFields.length} 个字段吗？`, '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      this.$confirm(`confirm to delete ${selectedFields.length} selected fields?`, 'note', {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
         type: 'warning'
       }).then(() => {
         this.form.fields = this.form.fields.filter(field => !field.selected);
         this.isAllFieldsSelected = false;
         this.forceTableRerender();
         this.$message.success({
-          message: `成功删除 ${selectedFields.length} 个字段`,
+          message: `delete ${selectedFields.length} field successfully`,
           showClose: true
         });
       }).catch(() => {
         this.$message.info({
-          message: '已取消删除',
+          message: 'deletion cancelled',
           showClose: true
         });
       });
@@ -294,7 +294,7 @@ export default {
           const editingField = this.form.fields.find(field => field.editing);
           if (editingField) {
             this.$message.warning({
-              message: '请先完成当前字段的编辑',
+              message: 'please complete the edit of  current field',
               showClose: true
             });
             return;

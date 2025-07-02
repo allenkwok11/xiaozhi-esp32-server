@@ -1,4 +1,4 @@
-const HAVE_NO_RESULT = '暂无'
+const HAVE_NO_RESULT = 'none'
 export default {
     HAVE_NO_RESULT, // 项目的配置信息
     PAGE: {

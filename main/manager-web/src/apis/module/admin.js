@@ -19,7 +19,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('请求失败:', err)
+                console.error('request failed:', err)
                 RequestService.reAjaxFun(() => {
                     this.getUserList(callback)
                 })
@@ -35,7 +35,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('删除失败:', err)
+                console.error('failed to delete:', err)
                 RequestService.reAjaxFun(() => {
                     this.deleteUser(id, callback)
                 })
@@ -51,7 +51,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('重置密码失败:', err)
+                console.error('password reset failed:', err)
                 RequestService.reAjaxFun(() => {
                     this.resetUserPassword(id, callback)
                 })
@@ -73,7 +73,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('获取参数列表失败:', err)
+                console.error('failed to get parameter list:', err)
                 RequestService.reAjaxFun(() => {
                     this.getParamsList(params, callback)
                 })
@@ -90,7 +90,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('添加参数失败:', err)
+                console.error('failed to add parameter:', err)
                 RequestService.reAjaxFun(() => {
                     this.addParam(data, callback)
                 })
@@ -107,7 +107,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('更新参数失败:', err)
+                console.error('failed to update parameter:', err)
                 RequestService.reAjaxFun(() => {
                     this.updateParam(data, callback)
                 })
@@ -124,7 +124,7 @@ export default {
                 callback(res);
             })
             .networkFail((err) => {
-                console.error('删除参数失败:', err)
+                console.error('failed to delete parameter:', err)
                 RequestService.reAjaxFun(() => {
                     this.deleteParam(ids, callback)
                 })
@@ -140,7 +140,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('获取ws服务端列表失败:', err)
+                console.error('failed to get ws server-side list:', err)
                 RequestService.reAjaxFun(() => {
                     this.getWsServerList(params, callback)
                 })

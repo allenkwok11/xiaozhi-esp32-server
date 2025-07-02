@@ -30,7 +30,7 @@ const isCDNEnabled = manifest.some(entry =>
   entry.url === 'cdn-mode' && entry.revision === 'enabled'
 );
 
-console.log(`Service Worker 已初始化, CDN模式: ${isCDNEnabled ? '启用' : '禁用'}`);
+console.log(`Service Worker initialized, CDN mode: ${isCDNEnabled ? 'enabled' : 'disabled'}`);
 
 // 注入workbox相关代码
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
@@ -49,9 +49,9 @@ workbox.precaching.precacheAndRoute([
 // 添加安装完成事件处理器，在控制台显示安装消息
 self.addEventListener('install', event => {
   if (isCDNEnabled) {
-    console.log('Service Worker 已安装，开始缓存CDN资源');
+    console.log('Service Worker installed, start loading CDN resource');
   } else {
-    console.log('Service Worker 已安装，CDN模式禁用，仅缓存本地资源');
+    console.log('Service Worker installed, CDN mode disabled, caching local resources only');
   }
   
   // 确保离线页面被缓存
@@ -64,7 +64,7 @@ self.addEventListener('install', event => {
 
 // 添加激活事件处理器
 self.addEventListener('activate', event => {
-  console.log('Service Worker 已激活，现在控制着页面');
+  console.log('Service Worker enabled, controlling webpage now');
   
   // 清理旧版本缓存
   event.waitUntil(
@@ -90,7 +90,7 @@ self.addEventListener('fetch', event => {
     // 针对CDN资源，输出是否命中缓存的信息
     if ([...CDN_CSS, ...CDN_JS].includes(url.href)) {
       // 不干扰正常的fetch流程，只添加日志
-      console.log(`请求CDN资源: ${url.href}`);
+      console.log(`request for CDN resources: ${url.href}`);
     }
   }
 });
