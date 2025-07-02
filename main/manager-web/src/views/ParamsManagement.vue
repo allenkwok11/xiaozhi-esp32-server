@@ -3,11 +3,11 @@
         <HeaderBar />
 
         <div class="operation-bar">
-            <h2 class="page-title">参数管理</h2>
+            <h2 class="page-title">Parameter Management</h2>
             <div class="right-operations">
-                <el-input placeholder="请输入参数编码或备注查询" v-model="searchCode" class="search-input"
+                <el-input placeholder="Please enter parameter code or remark to search" v-model="searchCode" class="search-input"
                     @keyup.enter.native="handleSearch" clearable />
-                <el-button class="btn-search" @click="handleSearch">搜索</el-button>
+                <el-button class="btn-search" @click="handleSearch">Search</el-button>
             </div>
         </div>
 
@@ -16,33 +16,33 @@
                 <div class="content-area">
                     <el-card class="params-card" shadow="never">
                         <el-table ref="paramsTable" :data="paramsList" class="transparent-table" v-loading="loading"
-                            element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
+                            element-loading-text="Loading..." element-loading-spinner="el-icon-loading"
                             element-loading-background="rgba(255, 255, 255, 0.7)"
                             :header-cell-class-name="headerCellClassName">
-                            <el-table-column label="选择" align="center" width="120">
+                            <el-table-column label="Select" align="center" width="120">
                                 <template slot-scope="scope">
                                     <el-checkbox v-model="scope.row.selected"></el-checkbox>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="参数编码" prop="paramCode" align="center"></el-table-column>
-                            <el-table-column label="参数值" prop="paramValue" align="center" show-overflow-tooltip>
+                            <el-table-column label="Param Code" prop="paramCode" align="center"></el-table-column>
+                            <el-table-column label="Param Value" prop="paramValue" align="center" show-overflow-tooltip>
                                 <template slot-scope="scope">
                                     <div v-if="isSensitiveParam(scope.row.paramCode)">
                                         <span v-if="!scope.row.showValue">{{ maskSensitiveValue(scope.row.paramValue)
                                         }}</span>
                                         <span v-else>{{ scope.row.paramValue }}</span>
                                         <el-button size="mini" type="text" @click="toggleSensitiveValue(scope.row)">
-                                            {{ scope.row.showValue ? '隐藏' : '查看' }}
+                                            {{ scope.row.showValue ? 'Hide' : 'View' }}
                                         </el-button>
                                     </div>
                                     <span v-else>{{ scope.row.paramValue }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="备注" prop="remark" align="center"></el-table-column>
-                            <el-table-column label="操作" align="center">
+                            <el-table-column label="Remark" prop="remark" align="center"></el-table-column>
+                            <el-table-column label="Operation" align="center">
                                 <template slot-scope="scope">
-                                    <el-button size="mini" type="text" @click="editParam(scope.row)">编辑</el-button>
-                                    <el-button size="mini" type="text" @click="deleteParam(scope.row)">删除</el-button>
+                                    <el-button size="mini" type="text" @click="editParam(scope.row)">Edit</el-button>
+                                    <el-button size="mini" type="text" @click="deleteParam(scope.row)">Delete</el-button>
                                 </template>
                             </el-table-column>
                         </el-table>
@@ -50,32 +50,32 @@
                         <div class="table_bottom">
                             <div class="ctrl_btn">
                                 <el-button size="mini" type="primary" class="select-all-btn" @click="handleSelectAll">
-                                    {{ isAllSelected ? '取消全选' : '全选' }}
+                                    {{ isAllSelected ? 'Unselect All' : 'Select All' }}
                                 </el-button>
-                                <el-button size="mini" type="success" @click="showAddDialog">新增</el-button>
+                                <el-button size="mini" type="success" @click="showAddDialog">Add</el-button>
                                 <el-button size="mini" type="danger" icon="el-icon-delete"
-                                    @click="deleteSelectedParams">删除</el-button>
+                                    @click="deleteSelectedParams">Delete</el-button>
                             </div>
                             <div class="custom-pagination">
                                 <el-select v-model="pageSize" @change="handlePageSizeChange" class="page-size-select">
-                                    <el-option v-for="item in pageSizeOptions" :key="item" :label="`${item}条/页`"
+                                    <el-option v-for="item in pageSizeOptions" :key="item" :label="`${item}line/page`"
                                         :value="item">
                                     </el-option>
                                 </el-select>
                                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goFirst">
-                                    首页
+                                    First Page
                                 </button>
                                 <button class="pagination-btn" :disabled="currentPage === 1" @click="goPrev">
-                                    上一页
+                                    Last page
                                 </button>
                                 <button v-for="page in visiblePages" :key="page" class="pagination-btn"
                                     :class="{ active: page === currentPage }" @click="goToPage(page)">
                                     {{ page }}
                                 </button>
                                 <button class="pagination-btn" :disabled="currentPage === pageCount" @click="goNext">
-                                    下一页
+                                    Next Page
                                 </button>
-                                <span class="total-text">共{{ total }}条记录</span>
+                                <span class="total-text">{{ total }}records in total</span>
                             </div>
                         </div>
                     </el-card>
@@ -170,7 +170,7 @@ export default {
                         this.total = data.data.total;
                     } else {
                         this.$message.error({
-                            message: data.msg || '获取参数列表失败',
+                            message: data.msg || 'Failed to get parameter list',
                             showClose: true
                         });
                     }
@@ -188,7 +188,7 @@ export default {
             });
         },
         showAddDialog() {
-            this.dialogTitle = "新增参数";
+            this.dialogTitle = "Add Parameter";
             this.paramForm = {
                 id: null,
                 paramCode: "",
@@ -198,7 +198,7 @@ export default {
             this.dialogVisible = true;
         },
         editParam(row) {
-            this.dialogTitle = "编辑参数";
+            this.dialogTitle = "Edit Parameter";
             this.paramForm = { ...row };
             this.dialogVisible = true;
         },
@@ -209,7 +209,7 @@ export default {
                 Api.admin.updateParam(form, ({ data }) => {
                     if (data.code === 0) {
                         this.$message.success({
-                            message: "修改成功",
+                            message: "Edit successfully",
                             showClose: true
                         });
                         this.dialogVisible = false;
@@ -222,7 +222,7 @@ export default {
                 Api.admin.addParam(form, ({ data }) => {
                     if (data.code === 0) {
                         this.$message.success({
-                            message: "新增成功",
+                            message: "Add successfully",
                             showClose: true
                         });
                         this.dialogVisible = false;
@@ -237,7 +237,7 @@ export default {
             const selectedRows = this.paramsList.filter(row => row.selected);
             if (selectedRows.length === 0) {
                 this.$message.warning({
-                    message: "请先选择需要删除的参数",
+                    message: "please select the parameters to be deleted",
                     showClose: true
                 });
                 return;
@@ -250,23 +250,23 @@ export default {
 
             if (Array.isArray(row) && row.length === 0) {
                 this.$message.warning({
-                    message: "请先选择需要删除的参数",
+                    message: "please select the parameter to be deleted",
                     showClose: true
                 });
                 return;
             }
 
             const paramCount = params.length;
-            this.$confirm(`确定要删除选中的${paramCount}个参数吗？`, '警告', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
+            this.$confirm(`confirm to delete ${paramCount} selected parameters?`, 'NOTE', {
+                confirmButtonText: 'Confirm',
+                cancelButtonText: 'Cancel',
                 type: 'warning',
                 distinguishCancelAndClose: true
             }).then(() => {
                 const ids = params.map(param => param.id);
                 if (ids.some(id => isNaN(id))) {
                     this.$message.error({
-                        message: '存在无效的参数ID',
+                        message: 'Invalid Parameter ID exists',
                         showClose: true
                     });
                     return;
@@ -275,13 +275,13 @@ export default {
                 Api.admin.deleteParam(ids, ({ data }) => {
                     if (data.code === 0) {
                         this.$message.success({
-                            message: `成功删除${paramCount}个参数`,
+                            message: `delete ${paramCount} parameters successfully`,
                             showClose: true
                         });
                         this.fetchParams();
                     } else {
                         this.$message.error({
-                            message: data.msg || '删除失败，请重试',
+                            message: data.msg || 'failed to delete, please try again',
                             showClose: true
                         });
                     }
@@ -290,13 +290,13 @@ export default {
                 if (action === 'cancel') {
                     this.$message({
                         type: 'info',
-                        message: '已取消删除操作',
+                        message: 'deletion cancelled',
                         duration: 1000
                     });
                 } else {
                     this.$message({
                         type: 'info',
-                        message: '操作已关闭',
+                        message: 'operation cancelled',
                         duration: 1000
                     });
                 }

@@ -3,7 +3,7 @@
     <!-- 自定义标题区域 -->
     <div class="custom-header">
       <div class="header-left">
-        <h3 class="bold-title">功能管理</h3>
+        <h3 class="bold-title">Function Management</h3>
       </div>
       <button class="custom-close-btn" @click="closeDialog">×</button>
     </div>
@@ -12,8 +12,8 @@
       <!-- 左侧：未选功能 -->
       <div class="function-column">
         <div class="column-header">
-          <h4 class="column-title">未选功能</h4>
-          <el-button type="text" @click="selectAll" class="select-all-btn">全选</el-button>
+          <h4 class="column-title">Unselected Function</h4>
+          <el-button type="text" @click="selectAll" class="select-all-btn">Select All</el-button>
         </div>
         <div class="function-list">
           <div v-if="unselected.length">
@@ -27,7 +27,7 @@
             </div>
           </div>
           <div v-else style="display: flex; justify-content: center; align-items: center;">
-            <el-empty description="没有更多的插件了" />
+            <el-empty description="no more plugins" />
           </div>
         </div>
       </div>
@@ -35,8 +35,8 @@
       <!-- 中间：已选功能 -->
       <div class="function-column">
         <div class="column-header">
-          <h4 class="column-title">已选功能</h4>
-          <el-button type="text" @click="deselectAll" class="select-all-btn">全选</el-button>
+          <h4 class="column-title">Selected Function</h4>
+          <el-button type="text" @click="deselectAll" class="select-all-btn">Select All</el-button>
         </div>
         <div class="function-list">
           <div v-if="selectedList.length > 0">
@@ -50,19 +50,19 @@
             </div>
           </div>
           <div v-else style="display: flex; justify-content: center; align-items: center;">
-            <el-empty description="请选择插件功能" />
+            <el-empty description="please select plugin function" />
           </div>
         </div>
       </div>
 
       <!-- 右侧：参数配置 -->
       <div class="params-column">
-        <h4 v-if="currentFunction" class="column-title">参数配置 - {{ currentFunction.name }}</h4>
+        <h4 v-if="currentFunction" class="column-title">Parameter Configuration - {{ currentFunction.name }}</h4>
         <div v-if="currentFunction" class="params-container">
           <el-form :model="currentFunction" class="param-form">
             <!-- 遍历 fieldsMeta，而不是 params 的 keys -->
             <div v-if="currentFunction.fieldsMeta.length == 0">
-              <el-empty :description="currentFunction.name + ' 无需配置参数'" />
+              <el-empty :description="currentFunction.name + ' does not need config parameter'" />
             </div>
             <el-form-item v-for="field in currentFunction.fieldsMeta" :key="field.key" :label="field.label"
               class="param-item" :class="{ 'textarea-field': field.type === 'array' || field.type === 'json' }">
@@ -77,7 +77,7 @@
                 @change="val => handleParamChange(currentFunction, field.key, val)" />
 
               <!-- JSON -->
-              <el-input v-else-if="field.type === 'json'" type="textarea" :rows="6" placeholder="请输入合法的 JSON"
+              <el-input v-else-if="field.type === 'json'" type="textarea" :rows="6" placeholder="please enter valid JSON"
                 v-model="textCache[field.key]" @blur="flushJson(field)" />
 
               <!-- number -->
@@ -95,13 +95,13 @@
             </el-form-item>
           </el-form>
         </div>
-        <div v-else class="empty-tip">请选择已配置的功能进行参数设置</div>
+        <div v-else class="empty-tip">Please select configured function to set parameter</div>
       </div>
     </div>
 
     <div class="drawer-footer">
-      <el-button @click="closeDialog">取消</el-button>
-      <el-button type="primary" @click="saveSelection">保存配置</el-button>
+      <el-button @click="closeDialog">Cancel</el-button>
+      <el-button type="primary" @click="saveSelection">Save Configuration</el-button>
     </div>
   </el-drawer>
 </template>
@@ -203,7 +203,7 @@ export default {
         const obj = JSON.parse(text);
         this.handleParamChange(this.currentFunction, key, obj);
       } catch {
-        this.$message.error(`${this.currentFunction.name}的${key}字段格式错误：JSON格式有误`);
+        this.$message.error(`${key} of ${this.currentFunction.name} field format error: wrong JSON format`);
       }
     },
     handleFunctionClick(func) {
@@ -285,7 +285,7 @@ export default {
     fieldRemark(field) {
       let description = (field && field.label) ? field.label : '';
       if (field.default) {
-        description += `（默认值：${field.default}）`;
+        description += `(Default Value：${field.default})`;
       }
       return description;
     },

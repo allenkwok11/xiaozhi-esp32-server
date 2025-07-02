@@ -19,7 +19,7 @@ export default {
                 callback(res.data || []);
             })
             .networkFail((err) => {
-                console.error('获取音色列表失败:', err);
+                console.error('failed to get voice list:', err);
                 RequestService.reAjaxFun(() => {
                     this.getVoiceList(params, callback);
                 });
@@ -43,7 +43,7 @@ export default {
                 callback(res.data);
             })
             .networkFail((err) => {
-                console.error('保存音色失败:', err);
+                console.error('failed to save voice:', err);
                 RequestService.reAjaxFun(() => {
                     this.saveVoice(params, callback);
                 });
@@ -60,7 +60,7 @@ export default {
                 callback(res);
             })
             .networkFail((err) => {
-                console.error('删除音色失败:', err);
+                console.error('failed to delete voice:', err);
                 RequestService.reAjaxFun(() => {
                     this.deleteVoice(ids, callback);
                 });
@@ -83,7 +83,7 @@ export default {
                 callback(res.data);
             })
             .networkFail((err) => {
-                console.error('修改音色失败:', err);
+                console.error('failed to update voice:', err);
                 RequestService.reAjaxFun(() => {
                     this.updateVoice(params, callback);
                 });

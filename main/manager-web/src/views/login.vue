@@ -14,7 +14,7 @@
         <div class="login-box" @keyup.enter="login">
           <div style="display: flex;align-items: center;gap: 20px;margin-bottom: 39px;padding: 0 30px;">
             <img loading="lazy" alt="" src="@/assets/login/hi.png" style="width: 34px;height: 34px;" />
-            <div class="login-text">登录</div>
+            <div class="login-text">login</div>
             <div class="login-welcome">
               WELCOME TO LOGIN
             </div>
@@ -24,7 +24,7 @@
             <template v-if="!isMobileLogin">
               <div class="input-box">
                 <img loading="lazy" alt="" class="input-icon" src="@/assets/login/username.png" />
-                <el-input v-model="form.username" placeholder="请输入用户名" />
+                <el-input v-model="form.username" placeholder="please enter User Name" />
               </div>
             </template>
 
@@ -36,48 +36,48 @@
                     <el-option v-for="item in mobileAreaList" :key="item.key" :label="`${item.name} (${item.key})`"
                       :value="item.key" />
                   </el-select>
-                  <el-input v-model="form.mobile" placeholder="请输入手机号码" />
+                  <el-input v-model="form.mobile" placeholder="please enter Phone Number" />
                 </div>
               </div>
             </template>
 
             <div class="input-box">
               <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
-              <el-input v-model="form.password" placeholder="请输入密码" type="password" />
+              <el-input v-model="form.password" placeholder="please enter Password" type="password" />
             </div>
             <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
               <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
                 <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png" />
-                <el-input v-model="form.captcha" placeholder="请输入验证码" style="flex: 1;" />
+                <el-input v-model="form.captcha" placeholder="please enter Verification Code" style="flex: 1;" />
               </div>
-              <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="验证码"
+              <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="Verification Code"
                 style="width: 150px; height: 40px; cursor: pointer;" @click="fetchCaptcha" />
             </div>
             <div
               style="font-weight: 400;font-size: 14px;text-align: left;color: #5778ff;display: flex;justify-content: space-between;margin-top: 20px;">
-              <div v-if="allowUserRegister" style="cursor: pointer;" @click="goToRegister">新用户注册</div>
-              <div style="cursor: pointer;" @click="goToForgetPassword" v-if="enableMobileRegister">忘记密码?</div>
+              <div v-if="allowUserRegister" style="cursor: pointer;" @click="goToRegister">new user register</div>
+              <div style="cursor: pointer;" @click="goToForgetPassword" v-if="enableMobileRegister">forget password?</div>
             </div>
           </div>
-          <div class="login-btn" @click="login">登录</div>
+          <div class="login-btn" @click="login">Login</div>
 
           <!-- 登录方式切换按钮 -->
           <div class="login-type-container" v-if="enableMobileRegister">
-            <el-tooltip content="手机号码登录" placement="bottom">
+            <el-tooltip content="phone number login" placement="bottom">
               <el-button :type="isMobileLogin ? 'primary' : 'default'" icon="el-icon-mobile" circle
                 @click="switchLoginType('mobile')"></el-button>
             </el-tooltip>
-            <el-tooltip content="用户名登录" placement="bottom">
+            <el-tooltip content="user name login" placement="bottom">
               <el-button :type="!isMobileLogin ? 'primary' : 'default'" icon="el-icon-user" circle
                 @click="switchLoginType('username')"></el-button>
             </el-tooltip>
           </div>
 
           <div style="font-size: 14px;color: #979db1;">
-            登录即同意
-            <div style="display: inline-block;color: #5778FF;cursor: pointer;">《用户协议》</div>
-            和
-            <div style="display: inline-block;color: #5778FF;cursor: pointer;">《隐私政策》</div>
+            By logging in, you agree
+            <div style="display: inline-block;color: #5778FF;cursor: pointer;">《User Protocol》</div>
+            and
+            <div style="display: inline-block;color: #5778FF;cursor: pointer;">《Privacy Policy》</div>
           </div>
         </div>
       </el-main>
@@ -143,7 +143,7 @@ export default {
             const blob = new Blob([res.data], { type: res.data.type });
             this.captchaUrl = URL.createObjectURL(blob);
           } else {
-            showDanger('验证码加载失败，点击刷新');
+            showDanger('failed to load verification code, click to refresh');
           }
         });
       }
@@ -173,35 +173,35 @@ export default {
       if (this.isMobileLogin) {
         // 手机号登录验证
         if (!validateMobile(this.form.mobile, this.form.areaCode)) {
-          showDanger('请输入正确的手机号码');
+          showDanger('please enter correct phone number');
           return;
         }
         // 拼接手机号作为用户名
         this.form.username = this.form.areaCode + this.form.mobile;
       } else {
         // 用户名登录验证
-        if (!this.validateInput(this.form.username, '用户名不能为空')) {
+        if (!this.validateInput(this.form.username, 'User Name cannot be empty')) {
           return;
         }
       }
 
       // 验证密码
-      if (!this.validateInput(this.form.password, '密码不能为空')) {
+      if (!this.validateInput(this.form.password, 'Password cannot be empty')) {
         return;
       }
       // 验证验证码
-      if (!this.validateInput(this.form.captcha, '验证码不能为空')) {
+      if (!this.validateInput(this.form.captcha, 'Verification Code cannot be empty')) {
         return;
       }
 
       this.form.captchaId = this.captchaUuid
       Api.user.login(this.form, ({ data }) => {
-        showSuccess('登录成功！');
+        showSuccess('login successfully！');
         this.$store.commit('setToken', JSON.stringify(data.data));
         goToPage('/home');
       }, (err) => {
-        showDanger(err.data.msg || '登录失败')
-        if (err.data != null && err.data.msg != null && err.data.msg.indexOf('图形验证码') > -1) {
+        showDanger(err.data.msg || 'login failed')
+        if (err.data != null && err.data.msg != null && err.data.msg.indexOf('Image Captcha') > -1) {
           this.fetchCaptcha()
         }
       })

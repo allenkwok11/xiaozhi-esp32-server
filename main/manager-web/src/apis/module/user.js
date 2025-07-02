@@ -93,7 +93,7 @@ export default {
                 callback(res);
             })
             .networkFail((err) => {
-                console.error('保存配置失败:', err);
+                console.error('failed to save config:', err);
                 RequestService.reAjaxFun(() => {
                     this.saveDeviceConfig(device_id, configData, callback);
                 });
@@ -109,7 +109,7 @@ export default {
                 callback(res)
             })
             .networkFail((err) => {
-                console.error('接口请求失败:', err)
+                console.error('interface request failed:', err)
                 RequestService.reAjaxFun(() => {
                     this.getUserInfo(callback)
                 })
@@ -147,7 +147,7 @@ export default {
                 successCallback(res);
             })
             .networkFail((err) => {
-                console.error('修改用户状态失败:', err)
+                console.error('failed to change user status:', err)
                 RequestService.reAjaxFun(() => {
                     this.changeUserStatus(status, userIds)
                 })
@@ -163,7 +163,7 @@ export default {
                 callback(res);
             })
             .networkFail((err) => {
-                console.error('获取公共配置失败:', err);
+                console.error('failed to get public config:', err);
                 RequestService.reAjaxFun(() => {
                     this.getPubConfig(callback);
                 });
@@ -180,7 +180,7 @@ export default {
                 password: passwordData.password
             })
             .success((res) => {
-                RequestService.clearRequestTime();
+                RequestService.clearRequestTim();
                 callback(res);
             })
             .fail((err) => {

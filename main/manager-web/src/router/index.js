@@ -77,7 +77,7 @@ const routes = [
     },
     meta: {
       requiresAuth: true,
-      title: '参数管理'
+      title: 'parameter management'
     }
   },
 
@@ -89,7 +89,7 @@ const routes = [
     },
     meta: {
       requiresAuth: true,
-      title: '服务端管理'
+      title: 'Server Side Management'
     }
   },
   {
@@ -100,7 +100,7 @@ const routes = [
     },
     meta: {
       requiresAuth: true,
-      title: 'OTA管理'
+      title: 'OTA Management'
     }
   },
   {

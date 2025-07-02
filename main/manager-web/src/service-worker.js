@@ -30,7 +30,7 @@ const isCDNEnabled = manifest.some(entry =>
   entry.url === 'cdn-mode' && entry.revision === 'enabled'
 );
 
-console.log(`Service Worker initialized, CDN mode: ${isCDNEnabled ? 'active' : 'block'}`);
+console.log(`Service Worker initialized, CDN mode: ${isCDNEnabled ? 'enabled' : 'disabled'}`);
 
 // 注入workbox相关代码
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
@@ -51,7 +51,7 @@ self.addEventListener('install', event => {
   if (isCDNEnabled) {
     console.log('Service Worker installed, start loading CDN resource');
   } else {
-    console.log('Service Worker installed, CDN mode blocked, loading local resources only');
+    console.log('Service Worker installed, CDN mode disabled, caching local resources only');
   }
   
   // 确保离线页面被缓存
@@ -64,7 +64,7 @@ self.addEventListener('install', event => {
 
 // 添加激活事件处理器
 self.addEventListener('activate', event => {
-  console.log('Service Worker activated, controlling webpage now');
+  console.log('Service Worker enabled, controlling webpage now');
   
   // 清理旧版本缓存
   event.waitUntil(

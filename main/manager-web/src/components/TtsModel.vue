@@ -21,39 +21,39 @@
               class="data-table"
               header-row-class-name="table-header"
               :fit="true"
-              element-loading-text="拼命加载中"
+              element-loading-text="Loading..."
               element-loading-spinner="el-icon-loading"
               element-loading-background="rgba(0, 0, 0, 0.8)">
-          <el-table-column label="选择" width="50" align="center">
+          <el-table-column label="Select" width="50" align="center">
             <template slot-scope="scope">
               <el-checkbox v-model="scope.row.selected"></el-checkbox>
             </template>
           </el-table-column>
-          <el-table-column label="音色编码" align="center" min-width="50">
+          <el-table-column label="Voice Code" align="center" min-width="50">
             <template slot-scope="scope">
               <el-input v-if="scope.row.editing" v-model="scope.row.voiceCode"></el-input>
               <span v-else>{{ scope.row.voiceCode }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="音色名称" align="center" min-width="50">
+          <el-table-column label="Voice Name" align="center" min-width="50">
             <template slot-scope="scope">
               <el-input v-if="scope.row.editing" v-model="scope.row.voiceName"></el-input>
               <span v-else>{{ scope.row.voiceName }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="语言类型" align="center" min-width="50">
+          <el-table-column label="Language Type" align="center" min-width="50">
             <template slot-scope="scope">
               <el-input v-if="scope.row.editing" v-model="scope.row.languageType"></el-input>
               <span v-else>{{ scope.row.languageType }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="试听" align="center" min-width="100px" class-name="audio-column">
+          <el-table-column label="Preview" align="center" min-width="100px" class-name="audio-column">
             <template slot-scope="scope">
               <div class="custom-audio-container">
                 <el-input
                     v-if="scope.row.editing"
                     v-model="scope.row.voiceDemo"
-                    placeholder="请输入MP3地址"
+                    placeholder="please enter MP3 address"
                     size="mini"
                     class="audio-input">
                 </el-input>
@@ -61,7 +61,7 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="备注" align="center">
+          <el-table-column label="Remark" align="center">
             <template slot-scope="scope">
               <el-input
                   v-if="scope.row.editing"
@@ -69,19 +69,19 @@
                   :rows="1"
                   autosize
                   v-model="scope.row.remark"
-                  placeholder="这里是备注"
+                  placeholder="Here is the remark"
                   class="remark-input"></el-input>
               <span v-else>{{ scope.row.remark }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作" align="center" width="150">
+          <el-table-column label="operation" align="center" width="150">
             <template slot-scope="scope">
               <template v-if="!scope.row.editing">
                 <el-button type="text" size="mini" @click="startEdit(scope.row)" class="edit-btn">
-                  编辑
+                  Edit
                 </el-button>
                 <el-button type="text" size="mini" @click="deleteRow(scope.row)" class="delete-btn">
-                  删除
+                  Delete
                 </el-button>
               </template>
               <el-button
@@ -89,7 +89,7 @@
                   type="success"
                   size="mini"
                   @click="saveEdit(scope.row)"
-                  class="save-Tts">保存
+                  class="save-Tts">Save
               </el-button>
             </template>
           </el-table-column>
@@ -105,15 +105,15 @@
     </div>
     <div class="action-buttons">
       <el-button type="primary" size="mini" @click="toggleSelectAll" style="background: #606ff3;border: None">
-        {{ selectAll ? '取消全选' : '全选' }}
+        {{ selectAll ? 'Unselect All' : 'Select All' }}
       </el-button>
       <el-button type="primary" size="mini" @click="addNew" style="background: #5bc98c;border: None;">
-        新增
+        Add
       </el-button>
       <el-button type="primary"
                  size="mini"
                  @click="deleteRow(filteredTtsModels.filter(row => row.selected))"
-                 style="background: red;border:None">删除
+                 style="background: red;border:None">Delete
       </el-button>
     </div>
   </el-dialog>
@@ -203,7 +203,7 @@ export default {
             .map(item => ({
               id: item.id || '',
               voiceCode: item.ttsVoice || '',
-              voiceName: item.name || '未命名音色',
+              voiceName: item.name || 'unnamed voice',
               languageType: item.languages || '',
               remark: item.remark || '',
               voiceDemo: item.voiceDemo || '',
@@ -215,15 +215,15 @@ export default {
           this.total = data.total;
         } else {
           this.$message.error({
-            message: data.msg || '获取音色列表失败',
+            message: data.msg || 'get voice list failed',
             showClose: true
           });
         }
         this.loading = false;
       }, (err) => {
-        console.error('加载失败:', err);
+        console.error('loading failed:', err);
         this.$message.error({
-          message: '加载音色数据失败',
+          message: 'loading voice data failed',
           showClose: true
         });
         this.loading = false;
@@ -338,7 +338,7 @@ export default {
     saveEdit(row) {
       if (!row.voiceCode || !row.voiceName || !row.languageType) {
         this.$message.error({
-          message: '音色编码、音色名称和语言类型不能为空',
+          message: 'voice code, voice name and language type cannot be empty',
           showClose: true
         });
         return;
@@ -371,7 +371,7 @@ export default {
           });
         }
       } catch (error) {
-        console.error('操作失败:', error);
+        console.error('operation failed:', error);
         // 异常情况下也恢复原始数据
         if (row.originalData) {
           Object.assign(row, row.originalData);
@@ -379,7 +379,7 @@ export default {
           delete row.originalData;
         }
         this.$message.error({
-          message: '操作失败，请重试',
+          message: 'operation failed, please try again',
           showClose: true
         });
       }
@@ -388,7 +388,7 @@ export default {
     handleResponse(res, row) {
       if (res.code === 0) {
         this.$message.success({
-          message: row.id ? '修改成功' : '保存成功',
+          message: row.id ? 'edit successfully' : 'save successfully',
           showClose: true
         });
         row.editing = false;
@@ -402,7 +402,7 @@ export default {
           delete row.originalData;
         }
         this.$message.error({
-          message: res.msg || (row.id ? '修改失败' : '保存失败'),
+          message: res.msg || (row.id ? 'edit failed' : 'save failed'),
           showClose: true
         });
       }
@@ -418,7 +418,7 @@ export default {
     addNew() {
       const hasEditing = this.ttsModels.some(row => row.editing);
       if (hasEditing) {
-        this.$message.warning('请先完成当前编辑再新增');
+        this.$message.warning('please finish editing before adding new');
         return;
       }
 
@@ -429,7 +429,7 @@ export default {
       const newRow = {
         voiceCode: '',
         voiceName: '',
-        languageType: '中文',
+        languageType: 'chinese',
         voiceDemo: '',
         remark: '',
         selected: false,
@@ -445,34 +445,34 @@ export default {
         const voices = Array.isArray(row) ? row : [row];
 
         if (Array.isArray(row) && row.length === 0) {
-            this.$message.warning("请先选择需要删除的音色");
+            this.$message.warning("please select voice to be deleted first");
             return;
         }
 
 
         const voiceCount = voices.length;
-        this.$confirm(`确定要删除选中的${voiceCount}个音色吗？`, "警告", {
-            confirmButtonText: "确定",
-            cancelButtonText: "取消",
+        this.$confirm(`confirm to delete${voiceCount}selected voice?`, "warning", {
+            confirmButtonText: "confirm",
+            cancelButtonText: "cancel",
             type: "warning",
             distinguishCancelAndClose: true
         }).then(() => {
             const ids = voices.map(voice => voice.id);
             if (ids.some(id => !id)) {
-                this.$message.error("存在无效的音色ID");
+                this.$message.error("invalid voice ID exists");
                 return;
             }
 
         Api.timbre.deleteVoice(ids, ({data}) => {
             if (data.code === 0) {
                 this.$message.success({
-                    message: `成功删除${voiceCount}个参数`,
+                    message: `delete${voiceCount}parameter(s) successfully`,
                     showClose: true
                 });
                 this.loadData(); // 刷新参数列表
             } else {
                 this.$message.error({
-                    message: data.msg || '删除失败，请重试',
+                    message: data.msg || 'deletion failed, please try again',
                     showClose: true
                 });
             }
@@ -481,13 +481,13 @@ export default {
           if (action === 'cancel') {
               this.$message({
                   type: 'info',
-                  message: '已取消删除操作',
+                  message: 'deletion cancelled',
                   duration: 1000
               });
           } else {
               this.$message({
                   type: 'info',
-                  message: '操作已关闭',
+                  message: 'operation cancelled',
                   duration: 1000
               });
           }
