@@ -38,14 +38,14 @@ public class ALiYunSmsService implements SmsService {
             RuntimeOptions runtime = new RuntimeOptions();
             // 复制代码运行请自行打印 API 的返回值
             SendSmsResponse sendSmsResponse = client.sendSmsWithOptions(sendSmsRequest, runtime);
-            log.info("发送短信响应的requestID: {}", sendSmsResponse.getBody().getRequestId());
+            log.info("requestID of the SMS sending response: {}", sendSmsResponse.getBody().getRequestId());
         } catch (Exception e) {
             // 如果发送失败了退还这次发送数
             String todayCountKey = RedisKeys.getSMSTodayCountKey(phone);
             redisUtils.delete(todayCountKey);
             // 错误 message
             log.error(e.getMessage());
-            throw new RenException("短信发送失败");
+            throw new RenException("Failed to send SMS");
         }
 
     }
@@ -70,7 +70,7 @@ public class ALiYunSmsService implements SmsService {
         }catch (Exception e){
             // 错误 message
             log.error(e.getMessage());
-            throw new RenException("短信连接建立失败");
+            throw new RenException("failed to build SMS connection");
         }
     }
 }

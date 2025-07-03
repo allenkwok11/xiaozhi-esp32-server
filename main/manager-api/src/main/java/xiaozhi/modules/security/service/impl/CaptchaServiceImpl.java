@@ -88,7 +88,7 @@ public class CaptchaServiceImpl implements CaptchaService {
             long currentTime = System.currentTimeMillis();
             long timeDiff = currentTime - lastSendTimeLong;
             if (timeDiff < 60000) {
-                throw new RenException("发送太频繁,请" + (60000 - timeDiff) / 1000 + "秒后再试");
+                throw new RenException("request too frequent, please try again " + (60000 - timeDiff) / 1000 + " secs later");
             }
         }
 
@@ -108,7 +108,7 @@ public class CaptchaServiceImpl implements CaptchaService {
         }
 
         if (todayCount >= maxSendCount) {
-            throw new RenException("今日发送次数已达上限");
+            throw new RenException("reached maximum request limit for today");
         }
 
         String key = RedisKeys.getSMSValidateCodeKey(phone);

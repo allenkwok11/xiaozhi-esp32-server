@@ -21,20 +21,20 @@ import xiaozhi.modules.config.service.ConfigService;
  */
 @RestController
 @RequestMapping("config")
-@Tag(name = "参数管理")
+@Tag(name = "Parameter Management")
 @AllArgsConstructor
 public class ConfigController {
     private final ConfigService configService;
 
     @PostMapping("server-base")
-    @Operation(summary = "服务端获取配置接口")
+    @Operation(summary = "Server-Side get Config Interface")
     public Result<Object> getConfig() {
         Object config = configService.getConfig(true);
         return new Result<Object>().ok(config);
     }
 
     @PostMapping("agent-models")
-    @Operation(summary = "获取智能体模型")
+    @Operation(summary = "Get Agent Model")
     public Result<Object> getAgentModels(@Valid @RequestBody AgentModelsDTO dto) {
         // 效验数据
         ValidatorUtils.validateEntity(dto);

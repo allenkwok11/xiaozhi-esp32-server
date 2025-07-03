@@ -13,28 +13,30 @@ import lombok.Data;
  */
 @Data
 public class TimbreDetailsVO implements Serializable {
-    @Schema(description = "音色id")
+
+    @Schema(description = "Timbre ID")
     private String id;
 
-    @Schema(description = "语言")
+    @Schema(description = "Language")
     private String languages;
 
-    @Schema(description = "音色名称")
+    @Schema(description = "Timbre name")
     private String name;
 
-    @Schema(description = "备注")
+    @Schema(description = "Remarks")
     private String remark;
 
-    @Schema(description = "排序")
+    @Schema(description = "Sort order")
     private long sort;
 
-    @Schema(description = "对应 TTS 模型主键")
+    @Schema(description = "Associated TTS model primary key")
     private String ttsModelId;
 
-    @Schema(description = "音色编码")
+    @Schema(description = "Timbre code")
     private String ttsVoice;
 
-    @Schema(description = "音频播放地址")
+    @Schema(description = "Audio playback URL")
     private String voiceDemo;
 
 }
+

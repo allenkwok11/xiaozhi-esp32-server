@@ -14,18 +14,18 @@ import lombok.Data;
 @Data
 public class AdminPageUserVO {
 
-    @Schema(description = "设备数量")
+    @Schema(description = "Device Counts")
     private String deviceCount;
 
-    @Schema(description = "手机号码")
+    @Schema(description = "Phone Number")
     private String mobile;
 
-    @Schema(description = "状态")
+    @Schema(description = "Status")
     private Integer status;
 
-    @Schema(description = "用户id")
+    @Schema(description = "User ID")
     private String userid;
 
-    @Schema(description = "注册时间")
+    @Schema(description = "Registered date")
     private Date createDate;
 }

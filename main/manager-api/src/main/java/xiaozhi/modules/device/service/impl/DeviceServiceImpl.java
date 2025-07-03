@@ -70,34 +70,34 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
                 redisUtils.set(RedisKeys.getAgentDeviceLastConnectedAtById(agentId), new Date());
             }
         } catch (Exception e) {
-            log.error("异步更新设备连接信息失败", e);
+            log.error("Asynchronous update of device connection info failed.", e);
         }
     }
 
     @Override
     public Boolean deviceActivation(String agentId, String activationCode) {
         if (StringUtils.isBlank(activationCode)) {
-            throw new RenException("激活码不能为空");
+            throw new RenException("activation code cannot be null");
         }
         String deviceKey = "ota:activation:code:" + activationCode;
         Object cacheDeviceId = redisUtils.get(deviceKey);
         if (cacheDeviceId == null) {
-            throw new RenException("激活码错误");
+            throw new RenException("wrong activation code");
         }
         String deviceId = (String) cacheDeviceId;
         String safeDeviceId = deviceId.replace(":", "_").toLowerCase();
         String cacheDeviceKey = String.format("ota:activation:data:%s", safeDeviceId);
         Map<String, Object> cacheMap = (Map<String, Object>) redisUtils.get(cacheDeviceKey);
         if (cacheMap == null) {
-            throw new RenException("激活码错误");
+            throw new RenException("wrong activation code");
         }
         String cachedCode = (String) cacheMap.get("activation_code");
         if (!activationCode.equals(cachedCode)) {
-            throw new RenException("激活码错误");
+            throw new RenException("wrong activation code");
         }
         // 检查设备有没有被激活
         if (selectById(deviceId) != null) {
-            throw new RenException("设备已激活");
+            throw new RenException("device activated");
         }
 
         String macAddress = (String) cacheMap.get("mac_address");
@@ -105,7 +105,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         String appVersion = (String) cacheMap.get("app_version");
         UserDetail user = SecurityUser.getUser();
         if (user.getId() == null) {
-            throw new RenException("用户未登录");
+            throw new RenException("user did not login");
         }
 
         Date currentTime = new Date();
@@ -159,7 +159,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
         // 从系统参数获取WebSocket URL，如果未配置则使用默认值
         String wsUrl = sysParamsService.getValue(Constant.SERVER_WEBSOCKET, true);
         if (StringUtils.isBlank(wsUrl) || wsUrl.equals("null")) {
-            log.error("WebSocket地址未配置，请登录智控台，在参数管理找到【server.websocket】配置");
+            log.error("WebSocket address not configured, please log into smart console, and configure【server.websocket】under parameter management");
             wsUrl = "ws://xiaozhi.server.com:8000/xiaozhi/v1/";
             websocket.setUrl(wsUrl);
         } else {
@@ -168,7 +168,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
                 // 随机选择一个WebSocket URL
                 websocket.setUrl(wsUrls[RandomUtil.randomInt(0, wsUrls.length)]);
             } else {
-                log.error("WebSocket地址未配置，请登录智控台，在参数管理找到【server.websocket】配置");
+                log.error("WebSocket address not configured, please log into smart console, and configure【server.websocket】under parameter management");
                 websocket.setUrl("ws://xiaozhi.server.com:8000/xiaozhi/v1/");
             }
         }
@@ -363,7 +363,7 @@ public class DeviceServiceImpl extends BaseServiceImpl<DeviceDao, DeviceEntity> 
             if (compareVersions(ota.getVersion(), currentVersion) > 0) {
                 String otaUrl = sysParamsService.getValue(Constant.SERVER_OTA, true);
                 if (StringUtils.isBlank(otaUrl) || otaUrl.equals("null")) {
-                    log.error("OTA地址未配置，请登录智控台，在参数管理找到【server.ota】配置");
+                    log.error("OTA address not configured, please log into smart console, and configure【server.OTA】under parameter management");
                     // 尝试从请求中获取
                     HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder
                             .getRequestAttributes())

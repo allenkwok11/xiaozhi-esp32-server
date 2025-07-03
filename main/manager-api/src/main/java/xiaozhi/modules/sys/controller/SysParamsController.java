@@ -45,7 +45,7 @@ import xiaozhi.modules.sys.utils.WebSocketValidator;
  */
 @RestController
 @RequestMapping("admin/params")
-@Tag(name = "参数管理")
+@Tag(name = "Parameter Management")
 @AllArgsConstructor
 public class SysParamsController {
     private final SysParamsService sysParamsService;
@@ -53,13 +53,13 @@ public class SysParamsController {
     private final RestTemplate restTemplate;
 
     @GetMapping("page")
-    @Operation(summary = "分页")
+    @Operation(summary = "paginated")
     @Parameters({
-            @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", in = ParameterIn.QUERY, required = true, ref = "int"),
-            @Parameter(name = Constant.LIMIT, description = "每页显示记录数", in = ParameterIn.QUERY, required = true, ref = "int"),
-            @Parameter(name = Constant.ORDER_FIELD, description = "排序字段", in = ParameterIn.QUERY, ref = "String"),
-            @Parameter(name = Constant.ORDER, description = "排序方式，可选值(asc、desc)", in = ParameterIn.QUERY, ref = "String"),
-            @Parameter(name = "paramCode", description = "参数编码或参数备注", in = ParameterIn.QUERY, ref = "String")
+            @Parameter(name = Constant.PAGE, description = "current page, start from 1", in = ParameterIn.QUERY, required = true, ref = "int"),
+            @Parameter(name = Constant.LIMIT, description = "records per page", in = ParameterIn.QUERY, required = true, ref = "int"),
+            @Parameter(name = Constant.ORDER_FIELD, description = "sort fields", in = ParameterIn.QUERY, ref = "String"),
+            @Parameter(name = Constant.ORDER, description = "Sorting method, optional values(asc、desc)", in = ParameterIn.QUERY, ref = "String"),
+            @Parameter(name = "paramCode", description = "parameter codes and remarks", in = ParameterIn.QUERY, ref = "String")
     })
     @RequiresPermissions("sys:role:superAdmin")
     public Result<PageData<SysParamsDTO>> page(@Parameter(hidden = true) @RequestParam Map<String, Object> params) {
@@ -69,7 +69,7 @@ public class SysParamsController {
     }
 
     @GetMapping("{id}")
-    @Operation(summary = "信息")
+    @Operation(summary = "message")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<SysParamsDTO> get(@PathVariable("id") Long id) {
         SysParamsDTO data = sysParamsService.get(id);
@@ -78,8 +78,8 @@ public class SysParamsController {
     }
 
     @PostMapping
-    @Operation(summary = "保存")
-    @LogOperation("保存")
+    @Operation(summary = "save")
+    @LogOperation("save")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> save(@RequestBody SysParamsDTO dto) {
         // 效验数据
@@ -91,8 +91,8 @@ public class SysParamsController {
     }
 
     @PutMapping
-    @Operation(summary = "修改")
-    @LogOperation("修改")
+    @Operation(summary = "edit")
+    @LogOperation("edit")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> update(@RequestBody SysParamsDTO dto) {
         // 效验数据
@@ -121,31 +121,31 @@ public class SysParamsController {
         }
         String[] wsUrls = urls.split("\\;");
         if (wsUrls.length == 0) {
-            throw new RenException("WebSocket地址列表不能为空");
+            throw new RenException("WebSocket address list cannot be empty");
         }
         for (String url : wsUrls) {
             if (StringUtils.isNotBlank(url)) {
                 // 检查是否包含localhost或127.0.0.1
                 if (url.contains("localhost") || url.contains("127.0.0.1")) {
-                    throw new RenException("WebSocket地址不能使用localhost或127.0.0.1");
+                    throw new RenException("WebSocket address cannot use localhost or 127.0.0.1");
                 }
 
                 // 验证WebSocket地址格式
                 if (!WebSocketValidator.validateUrlFormat(url)) {
-                    throw new RenException("WebSocket地址格式不正确: " + url);
+                    throw new RenException("WebSocket address format incorrect: " + url);
                 }
 
                 // 测试WebSocket连接
                 if (!WebSocketValidator.testConnection(url)) {
-                    throw new RenException("WebSocket连接测试失败: " + url);
+                    throw new RenException("WebSocket connection test failed: " + url);
                 }
             }
         }
     }
 
     @PostMapping("/delete")
-    @Operation(summary = "删除")
-    @LogOperation("删除")
+    @Operation(summary = "delete")
+    @LogOperation("delete")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@RequestBody String[] ids) {
         // 效验数据
@@ -164,35 +164,35 @@ public class SysParamsController {
             return;
         }
         if (StringUtils.isBlank(url) || url.equals("null")) {
-            throw new RenException("OTA地址不能为空");
+            throw new RenException("OTA address cannot be empty");
         }
 
         // 检查是否包含localhost或127.0.0.1
         if (url.contains("localhost") || url.contains("127.0.0.1")) {
-            throw new RenException("OTA地址不能使用localhost或127.0.0.1");
+            throw new RenException("OTA address cannto use localhost or 127.0.0.1");
         }
 
         // 验证URL格式
         if (!url.toLowerCase().startsWith("http")) {
-            throw new RenException("OTA地址必须以http或https开头");
+            throw new RenException("OTA address must starts with http or https");
         }
         if (!url.endsWith("/ota/")) {
-            throw new RenException("OTA地址必须以/ota/结尾");
+            throw new RenException("OTA address must ends with /ota/");
         }
 
         try {
             // 发送GET请求
             ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
             if (response.getStatusCode() != HttpStatus.OK) {
-                throw new RenException("OTA接口访问失败，状态码：" + response.getStatusCode());
+                throw new RenException("OTA interface access error, status code：" + response.getStatusCode());
             }
             // 检查响应内容是否包含OTA相关信息
             String body = response.getBody();
             if (body == null || !body.contains("OTA")) {
-                throw new RenException("OTA接口返回内容格式不正确，可能不是一个真实的OTA接口");
+                throw new RenException("The OTA interface returned an invalid content format. It may not be a valid OTA interface.");
             }
         } catch (Exception e) {
-            throw new RenException("OTA接口验证失败：" + e.getMessage());
+            throw new RenException("OTA interface verification failed:" + e.getMessage());
         }
     }
 }

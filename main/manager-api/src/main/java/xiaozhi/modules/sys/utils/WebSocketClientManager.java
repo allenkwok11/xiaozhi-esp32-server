@@ -84,7 +84,7 @@ public class WebSocketClientManager implements Closeable {
                 URI.create(b.uri));
         WebSocketSession sess = future.get(b.connectTimeout, b.connectUnit);
         if (sess == null || !sess.isOpen()) {
-            throw new IOException("握手失败或会话未打开");
+            throw new IOException("Handshake failed or session not opened");
         }
         ws.session = sess;
         return ws;
@@ -120,12 +120,12 @@ public class WebSocketClientManager implements Closeable {
 
             long remaining = deadline - System.currentTimeMillis();
             if (remaining <= 0) {
-                throw new TimeoutException("等待批量消息超时");
+                throw new TimeoutException("Timed out while waiting for batch messages.");
             }
 
             T msg = queue.poll(remaining, TimeUnit.MILLISECONDS);
             if (msg == null) {
-                throw new TimeoutException("等待批量消息超时");
+                throw new TimeoutException("Timed out while waiting for batch messages.");
             }
 
             collected.add(msg);
@@ -189,7 +189,7 @@ public class WebSocketClientManager implements Closeable {
         }
         textMessageQueue.clear();
         binaryMessageQueue.clear();
-        errorFuture.completeExceptionally(new IOException("WebSocket 已关闭"));
+        errorFuture.completeExceptionally(new IOException("WebSocket disabled"));
     }
 
     private class InternalHandler extends AbstractWebSocketHandler {
@@ -209,7 +209,7 @@ public class WebSocketClientManager implements Closeable {
             // 保存会话
             WebSocketClientManager.this.session = session;
             this.stopWatch.start();
-            log.info("ws连接成功, 目标URI: {}, 连接时间: {}", targetUri,
+            log.info("ws connected successfully, target URI: {}, connection time: {}", targetUri,
                     DateUtils.getDateTimeNow(DateUtils.DATE_TIME_MILLIS_PATTERN));
         }
 
@@ -266,7 +266,7 @@ public class WebSocketClientManager implements Closeable {
             if (stopWatch.isRunning()) {
                 stopWatch.stop();
             }
-            log.info("ws连接关闭, 目标URI: {}, 关闭时间: {}, 连接总时长: {}s",
+            log.info("ws connection disabled, target URI: {}, disabled time: {}, total connection period: {}s",
                     targetUri, DateUtils.getDateTimeNow(DateUtils.DATE_TIME_MILLIS_PATTERN),
                     DateUtils.millsToSecond(stopWatch.getTotalTimeMillis()));
         }

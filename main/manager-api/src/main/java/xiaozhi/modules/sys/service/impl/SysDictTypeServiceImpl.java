@@ -66,7 +66,7 @@ public class SysDictTypeServiceImpl extends BaseServiceImpl<SysDictTypeDao, SysD
     public SysDictTypeVO get(Long id) {
         SysDictTypeEntity entity = baseDao.selectById(id);
         if (entity == null) {
-            throw new RenException("字典类型不存在");
+            throw new RenException("Dictionary type does not exist");
         }
 
         return ConvertUtils.sourceToTarget(entity, SysDictTypeVO.class);
@@ -147,7 +147,7 @@ public class SysDictTypeServiceImpl extends BaseServiceImpl<SysDictTypeDao, SysD
         }
         boolean exists = baseDao.exists(queryWrapper);
         if (exists) {
-            throw new RenException("字典类型编码重复");
+            throw new RenException("Dictionary type code repeated");
         }
     }
 }

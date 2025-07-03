@@ -12,16 +12,16 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-@Schema(description = "设备连接头信息")
+@Schema(description = "Device connection header information")
 public class DeviceBindDTO {
 
-    @Schema(description = "mac地址")
+    @Schema(description = "mac address")
     private String macAddress;
 
-    @Schema(description = "所属用户id")
+    @Schema(description = "User id")
     private Long userId;
 
-    @Schema(description = "智能体id")
+    @Schema(description = "Agent id")
     private String agentId;
 
 }

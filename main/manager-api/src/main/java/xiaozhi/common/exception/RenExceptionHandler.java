@@ -62,7 +62,7 @@ public class RenExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public Result<Void> handleNoResourceFoundException(NoResourceFoundException ex) {
         log.warn("Resource not found: {}", ex.getMessage());
-        return new Result<Void>().error(404, "资源不存在");
+        return new Result<Void>().error(404, "resource does not exist");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -76,7 +76,7 @@ public class RenExceptionHandler {
                 })
                 .filter(Objects::nonNull)
                 .findFirst()
-                .orElse("请求参数错误！");
+                .orElse("parameter request error！");
 
         return new Result<Void>().error(ErrorCode.PARAM_VALUE_NULL, errorMsg);
     }

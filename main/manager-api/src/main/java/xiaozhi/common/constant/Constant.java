@@ -211,9 +211,9 @@ public interface Constant {
 
     @Getter
     enum ChatHistoryConfEnum {
-        IGNORE(0, "不记录"),
-        RECORD_TEXT(1, "记录文本"),
-        RECORD_TEXT_AUDIO(2, "文本音频都记录");
+        IGNORE(0, "not recorded"),
+        RECORD_TEXT(1, "record text"),
+        RECORD_TEXT_AUDIO(2, "record text and audio");
 
         private final int code;
         private final String name;

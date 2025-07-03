@@ -9,20 +9,20 @@ import lombok.Data;
  * 智能体聊天记录DTO
  */
 @Data
-@Schema(description = "智能体聊天记录")
+@Schema(description = "智能体聊天记录 Agent Chat History")
 public class AgentChatHistoryDTO {
-    @Schema(description = "创建时间")
+    @Schema(description = "Created Date")
     private Date createdAt;
 
-    @Schema(description = "消息类型: 1-用户, 2-智能体")
+    @Schema(description = "Message Type: 1-user, 2-Agent")
     private Byte chatType;
 
-    @Schema(description = "聊天内容")
+    @Schema(description = "Chat Content")
     private String content;
 
-    @Schema(description = "音频ID")
+    @Schema(description = "Audio ID")
     private String audioId;
 
-    @Schema(description = "MAC地址")
+    @Schema(description = "MAC Address")
     private String macAddress;
 }

@@ -12,23 +12,23 @@ import xiaozhi.common.exception.ErrorCode;
  * Website: https://www.renren.io
  */
 @Data
-@Schema(description = "响应")
+@Schema(description = "Response")
 public class Result<T> implements Serializable {
 
     /**
      * 编码：0表示成功，其他值表示失败
      */
-    @Schema(description = "编码：0表示成功，其他值表示失败")
+    @Schema(description = "Code: 0 means success, other values mean failure")
     private int code = 0;
     /**
      * 消息内容
      */
-    @Schema(description = "消息内容")
+    @Schema(description = "Messaget content")
     private String msg = "success";
     /**
      * 响应数据
      */
-    @Schema(description = "响应数据")
+    @Schema(description = "Response Data")
     private T data;
 
     public Result<T> ok(T data) {

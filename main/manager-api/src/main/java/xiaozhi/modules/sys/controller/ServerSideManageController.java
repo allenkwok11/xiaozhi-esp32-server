@@ -36,7 +36,7 @@ import xiaozhi.modules.sys.utils.WebSocketClientManager;
  */
 @RestController
 @RequestMapping("/admin/server")
-@Tag(name = "服务端管理")
+@Tag(name = "Server-side Management")
 @AllArgsConstructor
 public class ServerSideManageController {
     private final SysParamsService sysParamsService;
@@ -47,7 +47,7 @@ public class ServerSideManageController {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    @Operation(summary = "获取Ws服务端列表")
+    @Operation(summary = "get ws server-side list")
     @GetMapping("/server-list")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<List<String>> getWsServerList() {
@@ -58,23 +58,23 @@ public class ServerSideManageController {
         return new Result<List<String>>().ok(Arrays.asList(wsText.split(";")));
     }
 
-    @Operation(summary = "通知python服务端更新配置")
+    @Operation(summary = "inform python server-side to update config")
     @PostMapping("/emit-action")
-    @LogOperation("通知python服务端更新配置")
+    @LogOperation("inform python server-side to update config")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Boolean> emitServerAction(@RequestBody @Valid EmitSeverActionDTO emitSeverActionDTO) {
         if (emitSeverActionDTO.getAction() == null) {
-            throw new RenException("无效服务端操作");
+            throw new RenException("invalid server-side operation");
         }
         String wsText = sysParamsService.getValue(Constant.SERVER_WEBSOCKET, true);
         if (StringUtils.isBlank(wsText)) {
-            throw new RenException("未配置服务端WebSocket地址");
+            throw new RenException("did not config server-side WebSocket address");
         }
         String targetWs = emitSeverActionDTO.getTargetWs();
         String[] wsList = wsText.split(";");
         // 找到需要发起的
         if (StringUtils.isBlank(targetWs) || !Arrays.asList(wsList).contains(targetWs)) {
-            throw new RenException("目标WebSocket地址不存在");
+            throw new RenException("target WebSocket address does not exist");
         }
         return new Result<Boolean>().ok(emitServerActionByWs(targetWs, emitSeverActionDTO.getAction()));
     }
@@ -114,7 +114,7 @@ public class ServerSideManageController {
             });
         } catch (Exception e) {
             // 捕获全部错误，由全局异常处理器返回
-            throw new RenException("WebSocket连接失败或连接超时");
+            throw new RenException("WebSocket connection failed or timed out");
         }
         return true;
     }
