@@ -11,17 +11,17 @@ import lombok.Data;
  * @since 2025-3-21
  */
 @Data
-@Schema(description = "管理员分页用户的参数DTO")
+@Schema(description = "DTO for admin paginated user parameters")
 public class AdminPageUserDTO {
 
-    @Schema(description = "手机号码")
+    @Schema(description = "Phone Number")
     private String mobile;
 
-    @Schema(description = "页数")
+    @Schema(description = "Page")
     @Min(value = 0, message = "{sort.number}")
     private String page;
 
-    @Schema(description = "显示列数")
+    @Schema(description = "Display columns")
     @Min(value = 0, message = "{sort.number}")
     private String limit;
 }

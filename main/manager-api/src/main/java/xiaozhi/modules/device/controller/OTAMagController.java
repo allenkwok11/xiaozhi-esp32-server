@@ -44,7 +44,7 @@ import xiaozhi.common.validator.ValidatorUtils;
 import xiaozhi.modules.device.entity.OtaEntity;
 import xiaozhi.modules.device.service.OtaService;
 
-@Tag(name = "设备管理", description = "OTA 相关接口")
+@Tag(name = "Device Management", description = "OTA relevant interface")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -55,10 +55,10 @@ public class OTAMagController {
     private final RedisUtils redisUtils;
 
     @GetMapping
-    @Operation(summary = "分页查询 OTA 固件信息")
+    @Operation(summary = "pagenated search for OTA firmware info")
     @Parameters({
-            @Parameter(name = Constant.PAGE, description = "当前页码，从1开始", required = true),
-            @Parameter(name = Constant.LIMIT, description = "每页显示记录数", required = true)
+            @Parameter(name = Constant.PAGE, description = "current page, start from 1", required = true),
+            @Parameter(name = Constant.LIMIT, description = "records per page", required = true)
     })
     @RequiresPermissions("sys:role:superAdmin")
     public Result<PageData<OtaEntity>> page(@Parameter(hidden = true) @RequestParam Map<String, Object> params) {
@@ -68,7 +68,7 @@ public class OTAMagController {
     }
 
     @GetMapping("{id}")
-    @Operation(summary = "信息 OTA 固件信息")
+    @Operation(summary = "OTA firmware info")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<OtaEntity> get(@PathVariable("id") String id) {
         OtaEntity data = otaService.selectById(id);
@@ -76,20 +76,20 @@ public class OTAMagController {
     }
 
     @PostMapping
-    @Operation(summary = "保存 OTA 固件信息")
+    @Operation(summary = "save OTA firmware info")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> save(@RequestBody OtaEntity entity) {
         if (entity == null) {
-            return new Result<Void>().error("固件信息不能为空");
+            return new Result<Void>().error("firmware info cannot be null");
         }
         if (StringUtils.isBlank(entity.getFirmwareName())) {
-            return new Result<Void>().error("固件名称不能为空");
+            return new Result<Void>().error("firmware name cannot be null");
         }
         if (StringUtils.isBlank(entity.getType())) {
-            return new Result<Void>().error("固件类型不能为空");
+            return new Result<Void>().error("firmware type cannot be null");
         }
         if (StringUtils.isBlank(entity.getVersion())) {
-            return new Result<Void>().error("版本号不能为空");
+            return new Result<Void>().error("version cannot be null");
         }
         try {
             otaService.save(entity);
@@ -100,22 +100,22 @@ public class OTAMagController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "OTA 删除")
+    @Operation(summary = "OTA delete")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> delete(@PathVariable("id") String[] ids) {
         if (ids == null || ids.length == 0) {
-            return new Result<Void>().error("删除的固件ID不能为空");
+            return new Result<Void>().error("delete firmware ID cannot be null");
         }
         otaService.delete(ids);
         return new Result<Void>();
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "修改 OTA 固件信息")
+    @Operation(summary = "edit OTA firmware info")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<?> update(@PathVariable("id") String id, @RequestBody OtaEntity entity) {
         if (entity == null) {
-            return new Result<>().error("固件信息不能为空");
+            return new Result<>().error("Firmware info cannot be null");
         }
         entity.setId(id);
         try {
@@ -127,7 +127,7 @@ public class OTAMagController {
     }
 
     @GetMapping("/getDownloadUrl/{id}")
-    @Operation(summary = "获取 OTA 固件下载链接")
+    @Operation(summary = "get OTA firmware download url")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<String> getDownloadUrl(@PathVariable("id") String id) {
         String uuid = UUID.randomUUID().toString();
@@ -136,7 +136,7 @@ public class OTAMagController {
     }
 
     @GetMapping("/download/{uuid}")
-    @Operation(summary = "下载固件文件")
+    @Operation(summary = "download firmware file")
     public ResponseEntity<byte[]> downloadFirmware(@PathVariable("uuid") String uuid) {
         String id = (String) redisUtils.get(RedisKeys.getOtaIdKey(uuid));
         if (StringUtils.isBlank(id)) {
@@ -229,22 +229,22 @@ public class OTAMagController {
     }
 
     @PostMapping("/upload")
-    @Operation(summary = "上传固件文件")
+    @Operation(summary = "upload firmware file")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<String> uploadFirmware(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return new Result<String>().error("上传文件不能为空");
+            return new Result<String>().error("upload file cannot be null");
         }
 
         // 检查文件扩展名
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            return new Result<String>().error("文件名不能为空");
+            return new Result<String>().error("file name cannot be null");
         }
 
         String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
         if (!extension.equals(".bin") && !extension.equals(".apk")) {
-            return new Result<String>().error("只允许上传.bin和.apk格式的文件");
+            return new Result<String>().error("only file in .bin and .apk format can be uploaded");
         }
 
         try {
@@ -275,7 +275,7 @@ public class OTAMagController {
             // 返回文件路径
             return new Result<String>().ok(filePath.toString());
         } catch (IOException | NoSuchAlgorithmException e) {
-            return new Result<String>().error("文件上传失败：" + e.getMessage());
+            return new Result<String>().error("failed to upload file:" + e.getMessage());
         }
     }
 

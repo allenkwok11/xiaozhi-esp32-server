@@ -9,12 +9,12 @@ import lombok.Data;
  * 字典数据VO
  */
 @Data
-@Schema(description = "字典数据项")
+@Schema(description = "Dictionary data items")
 public class SysDictDataItem implements Serializable {
 
-    @Schema(description = "字典标签")
+    @Schema(description = "Dictionary label")
     private String name;
 
-    @Schema(description = "字典值")
+    @Schema(description = "Dictionary value")
     private String key;
 }

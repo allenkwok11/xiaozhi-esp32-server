@@ -57,7 +57,7 @@ public class ConfigServiceImpl implements ConfigService {
         // 查询默认智能体
         AgentTemplateEntity agent = agentTemplateService.getDefaultTemplate();
         if (agent == null) {
-            throw new RenException("默认智能体未找到");
+            throw new RenException("Default Agent not founded");
         }
 
         // 构建模块配置
@@ -98,7 +98,7 @@ public class ConfigServiceImpl implements ConfigService {
         // 获取智能体信息
         AgentEntity agent = agentService.getAgentById(device.getAgentId());
         if (agent == null) {
-            throw new RenException("智能体未找到");
+            throw new RenException("Agent not founded");
         }
         // 获取音色信息
         String voice = null;
@@ -333,7 +333,7 @@ public class ConfigServiceImpl implements ConfigService {
 
         result.put("selected_module", selectedModule);
         if (StringUtils.isNotBlank(prompt)) {
-            prompt = prompt.replace("{{assistant_name}}", StringUtils.isBlank(assistantName) ? "小智" : assistantName);
+            prompt = prompt.replace("{{assistant_name}}", StringUtils.isBlank(assistantName) ? "Xiaozhi" : assistantName);
         }
         result.put("prompt", prompt);
         result.put("summaryMemory", summaryMemory);

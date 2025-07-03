@@ -48,7 +48,7 @@ public class AgentChatHistoryBizServiceImpl implements AgentChatHistoryBizServic
         String macAddress = report.getMacAddress();
         Byte chatType = report.getChatType();
         Long reportTimeMillis = null != report.getReportTime() ? report.getReportTime() * 1000 : System.currentTimeMillis();
-        log.info("小智设备聊天上报请求: macAddress={}, type={} reportTime={}", macAddress, chatType, reportTimeMillis);
+        log.info("Xiaozhi Decice Chat Report Request: macAddress={}, type={} reportTime={}", macAddress, chatType, reportTimeMillis);
 
         // 根据设备MAC地址查询对应的默认智能体，判断是否需要上报
         AgentEntity agentEntity = agentService.getDefaultAgentByMacAddress(macAddress);
@@ -81,9 +81,9 @@ public class AgentChatHistoryBizServiceImpl implements AgentChatHistoryBizServic
             try {
                 byte[] audioData = Base64.getDecoder().decode(report.getAudioBase64());
                 audioId = agentChatAudioService.saveAudio(audioData);
-                log.info("音频数据保存成功，audioId={}", audioId);
+                log.info("Audio Data Saved Successfully, audioId={}", audioId);
             } catch (Exception e) {
-                log.error("音频数据保存失败", e);
+                log.error("Failed to save Audio Data ", e);
                 return null;
             }
         }
@@ -109,6 +109,6 @@ public class AgentChatHistoryBizServiceImpl implements AgentChatHistoryBizServic
         // 保存数据
         agentChatHistoryService.save(entity);
 
-        log.info("设备 {} 对应智能体 {} 上报成功", macAddress, agentId);
+        log.info("Device {} mapping agent {} report successfully", macAddress, agentId);
     }
 }

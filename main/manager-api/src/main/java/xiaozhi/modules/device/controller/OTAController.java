@@ -30,7 +30,7 @@ import xiaozhi.modules.device.entity.DeviceEntity;
 import xiaozhi.modules.device.service.DeviceService;
 import xiaozhi.modules.sys.service.SysParamsService;
 
-@Tag(name = "设备管理", description = "OTA 相关接口")
+@Tag(name = "Device Management", description = "OTA relevant Interface")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -39,12 +39,12 @@ public class OTAController {
     private final DeviceService deviceService;
     private final SysParamsService sysParamsService;
 
-    @Operation(summary = "OTA版本和设备激活状态检查")
+    @Operation(summary = "OTA version and device activate status check")
     @PostMapping
     public ResponseEntity<String> checkOTAVersion(
             @RequestBody DeviceReportReqDTO deviceReportReqDTO,
-            @Parameter(name = "Device-Id", description = "设备唯一标识", required = true, in = ParameterIn.HEADER) @RequestHeader("Device-Id") String deviceId,
-            @Parameter(name = "Client-Id", description = "客户端标识", required = false, in = ParameterIn.HEADER) @RequestHeader(value = "Client-Id", required = false) String clientId) {
+            @Parameter(name = "Device-Id", description = "Device unique ID", required = true, in = ParameterIn.HEADER) @RequestHeader("Device-Id") String deviceId,
+            @Parameter(name = "Client-Id", description = "Client-side ID", required = false, in = ParameterIn.HEADER) @RequestHeader(value = "Client-Id", required = false) String clientId) {
         if (StringUtils.isBlank(deviceId)) {
             return createResponse(DeviceReportRespDTO.createError("Device ID is required"));
         }
@@ -60,11 +60,11 @@ public class OTAController {
         return createResponse(deviceService.checkDeviceActive(macAddress, clientId, deviceReportReqDTO));
     }
 
-    @Operation(summary = "设备快速检查激活状态")
+    @Operation(summary = "Quick check of device activation status")
     @PostMapping("activate")
     public ResponseEntity<String> activateDevice(
-            @Parameter(name = "Device-Id", description = "设备唯一标识", required = true, in = ParameterIn.HEADER) @RequestHeader("Device-Id") String deviceId,
-            @Parameter(name = "Client-Id", description = "客户端标识", required = false, in = ParameterIn.HEADER) @RequestHeader(value = "Client-Id", required = false) String clientId) {
+            @Parameter(name = "Device-Id", description = "Device unique ID", required = true, in = ParameterIn.HEADER) @RequestHeader("Device-Id") String deviceId,
+            @Parameter(name = "Client-Id", description = "Client-side ID", required = false, in = ParameterIn.HEADER) @RequestHeader(value = "Client-Id", required = false) String clientId) {
         if (StringUtils.isBlank(deviceId)) {
             return ResponseEntity.status(202).build();
         }
@@ -80,13 +80,13 @@ public class OTAController {
     public ResponseEntity<String> getOTA() {
         String wsUrl = sysParamsService.getValue(Constant.SERVER_WEBSOCKET, true);
         if (StringUtils.isBlank(wsUrl) || wsUrl.equals("null")) {
-            return ResponseEntity.ok("OTA接口不正常，缺少websocket地址，请登录智控台，在参数管理找到【server.websocket】配置");
+            return ResponseEntity.ok("OTA interface abnormal, websocket address is missing. Please log in to the Smart Console and find the [server.websocket] configuration under Parameter Management");
         }
         String otaUrl = sysParamsService.getValue(Constant.SERVER_OTA, true);
         if (StringUtils.isBlank(otaUrl) || otaUrl.equals("null")) {
-            return ResponseEntity.ok("OTA接口不正常，缺少ota地址，请登录智控台，在参数管理找到【server.ota】配置");
+            return ResponseEntity.ok("OTA interface abnormal, OTA address is missing. Please log in to the Smart Console and find the [server.websocket] configuration under Parameter Management");
         }
-        return ResponseEntity.ok("OTA接口运行正常，websocket集群数量：" + wsUrl.split(";").length);
+        return ResponseEntity.ok("OTA interface works proerly, WebSocket clusters count" + wsUrl.split(";").length);
     }
 
     @SneakyThrows

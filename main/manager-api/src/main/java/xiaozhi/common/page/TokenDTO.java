@@ -11,15 +11,15 @@ import lombok.Data;
  * @author Jack
  */
 @Data
-@Schema(description = "令牌信息")
+@Schema(description = "Token Info")
 public class TokenDTO implements Serializable {
 
-    @Schema(description = "密码")
+    @Schema(description = "Password")
     private String token;
 
-    @Schema(description = "过期时间")
+    @Schema(description = "Expired Date")
     private int expire;
 
-    @Schema(description = "客户端指纹")
+    @Schema(description = "Client Fingerprint")
     private String clientHash;
 }

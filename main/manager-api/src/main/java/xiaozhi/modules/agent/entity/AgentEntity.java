@@ -11,74 +11,74 @@ import lombok.Data;
 
 @Data
 @TableName("ai_agent")
-@Schema(description = "智能体信息")
+@Schema(description = "Agent information")
 public class AgentEntity {
 
     @TableId(type = IdType.ASSIGN_UUID)
-    @Schema(description = "智能体唯一标识")
+    @Schema(description = "Unique agent identifier")
     private String id;
 
-    @Schema(description = "所属用户ID")
+    @Schema(description = "Associated user ID")
     private Long userId;
 
-    @Schema(description = "智能体编码")
+    @Schema(description = "Agent code")
     private String agentCode;
 
-    @Schema(description = "智能体名称")
+    @Schema(description = "Agent name")
     private String agentName;
 
-    @Schema(description = "语音识别模型标识")
+    @Schema(description = "ASR (Automatic Speech Recognition) model ID")
     private String asrModelId;
 
-    @Schema(description = "语音活动检测标识")
+    @Schema(description = "VAD (Voice Activity Detection) model ID")
     private String vadModelId;
 
-    @Schema(description = "大语言模型标识")
+    @Schema(description = "LLM (Large Language Model) ID")
     private String llmModelId;
 
-    @Schema(description = "VLLM模型标识")
+    @Schema(description = "VLLM model ID")
     private String vllmModelId;
 
-    @Schema(description = "语音合成模型标识")
+    @Schema(description = "TTS (Text-to-Speech) model ID")
     private String ttsModelId;
 
-    @Schema(description = "音色标识")
+    @Schema(description = "Timbre ID")
     private String ttsVoiceId;
 
-    @Schema(description = "记忆模型标识")
+    @Schema(description = "Memory model ID")
     private String memModelId;
 
-    @Schema(description = "意图模型标识")
+    @Schema(description = "Intent model ID")
     private String intentModelId;
 
-    @Schema(description = "聊天记录配置（0不记录 1仅记录文本 2记录文本和语音）")
+    @Schema(description = "Chat history configuration (0: do not record, 1: record text only, 2: record text and audio)")
     private Integer chatHistoryConf;
 
-    @Schema(description = "角色设定参数")
+    @Schema(description = "Role setting parameters")
     private String systemPrompt;
 
-    @Schema(description = "总结记忆", example = "构建可生长的动态记忆网络，在有限空间内保留关键信息的同时，智能维护信息演变轨迹\n" +
-            "根据对话记录，总结user的重要信息，以便在未来的对话中提供更个性化的服务", required = false)
+    @Schema(description = "Summary memory", example = "Build a scalable dynamic memory network that retains key information within limited space while intelligently maintaining the evolution of information.\n" +
+            "Summarize important user information based on conversation history to provide more personalized services in future interactions.", required = false)
     private String summaryMemory;
 
-    @Schema(description = "语言编码")
+    @Schema(description = "Language code")
     private String langCode;
 
-    @Schema(description = "交互语种")
+    @Schema(description = "Interaction language")
     private String language;
 
-    @Schema(description = "排序")
+    @Schema(description = "Sort order")
     private Integer sort;
 
-    @Schema(description = "创建者")
+    @Schema(description = "Creator")
     private Long creator;
 
-    @Schema(description = "创建时间")
+    @Schema(description = "Created at")
     private Date createdAt;
 
-    @Schema(description = "更新者")
+    @Schema(description = "Updater")
     private Long updater;
 
-    @Schema(description = "更新时间")
+    @Schema(description = "Updated at")
     private Date updatedAt;
 }

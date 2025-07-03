@@ -16,11 +16,11 @@ import xiaozhi.modules.sys.enums.ServerActionEnum;
 @AllArgsConstructor
 public class EmitSeverActionDTO
 {
-    @Schema(description = "目标ws地址")
-    @NotEmpty(message = "目标ws地址不能为空")
+    @Schema(description = "target ws address")
+    @NotEmpty(message = "target ws address cannot be empty")
     private String targetWs;
 
-    @Schema(description = "指定操作")
-    @NotNull(message = "操作不能为空")
+    @Schema(description = "designated operation")
+    @NotNull(message = "operation cannot be empty")
     private ServerActionEnum action;
 }

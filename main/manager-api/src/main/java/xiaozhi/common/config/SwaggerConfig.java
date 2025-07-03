@@ -83,7 +83,7 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI().info(new Info()
                 .title("xiaozhi-esp32-manager-api")
-                .description("xiaozhi-esp32-manager-api文档")
+                .description("xiaozhi-esp32-manager-api docs")
                 .version("3.0")
                 .termsOfService("https://127.0.0.1"));
     }

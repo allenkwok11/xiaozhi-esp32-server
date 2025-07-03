@@ -11,11 +11,11 @@ import lombok.Data;
  * 专用于新增智能体，不包含id、agentCode和sort字段，这些字段由系统自动生成/设置默认值
  */
 @Data
-@Schema(description = "智能体创建对象")
+@Schema(description = "Agent create Object")
 public class AgentCreateDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Schema(description = "智能体名称", example = "客服助手")
-    @NotBlank(message = "智能体名称不能为空")
+    @Schema(description = "Agent Name", example = "Customer Service Asssistant")
+    @NotBlank(message = "Agent name cannot be empty")
     private String agentName;
 }

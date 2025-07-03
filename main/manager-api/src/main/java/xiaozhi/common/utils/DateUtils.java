@@ -99,15 +99,15 @@ public class DateUtils {
         long secondsBetween = ChronoUnit.SECONDS.between(localDateTime, now);
 
         if (secondsBetween <= 10) {
-            return "刚刚";
+            return "just then";
         } else if (secondsBetween < 60) {
-            return secondsBetween + "秒前";
+            return secondsBetween + "secs ago";
         } else if (secondsBetween < 60 * 60) {
-            return secondsBetween / 60 + "分钟前";
+            return secondsBetween / 60 + "mins ago";
         } else if (secondsBetween < 86400) {
-            return secondsBetween / 3600 + "小时前";
+            return secondsBetween / 3600 + "hours ago";
         } else if (secondsBetween < 604800) {
-            return secondsBetween / 86400 + "天前";
+            return secondsBetween / 86400 + "days ago";
         } else {
             // 超过一周，显示完整日期时间
             return format(date,DATE_TIME_PATTERN);

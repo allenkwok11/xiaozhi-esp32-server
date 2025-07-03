@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "音色信息")
+@Schema(description = "Voice Info")
 public class VoiceDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @Schema(description = "音色ID")
+    @Schema(description = "Voice ID")
     private String id;
 
-    @Schema(description = "音色名称")
+    @Schema(description = "Voice Name")
     private String name;
 }

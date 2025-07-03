@@ -11,17 +11,17 @@ import lombok.Data;
  * @since 2025-3-21
  */
 @Data
-@Schema(description = "查询所有设备的DTO")
+@Schema(description = "searc for DTO of all device")
 public class DevicePageUserDTO {
 
-    @Schema(description = "设备关键词")
+    @Schema(description = "device keywords")
     private String keywords;
 
-    @Schema(description = "页数")
+    @Schema(description = "page")
     @Min(value = 0, message = "{page.number}")
     private String page;
 
-    @Schema(description = "显示列数")
+    @Schema(description = "Display column counts")
     @Min(value = 0, message = "{limit.number}")
     private String limit;
 }

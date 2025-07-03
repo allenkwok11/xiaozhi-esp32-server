@@ -11,19 +11,19 @@ import lombok.Data;
  * @since 2025-3-21
  */
 @Data
-@Schema(description = "音色分页参数")
+@Schema(description = "Timbre paginated parameters")
 public class TimbrePageDTO {
 
-    @Schema(description = "对应 TTS 模型主键")
+    @Schema(description = "Associated TTS model primary key")
     @NotBlank(message = "{timbre.ttsModelId.require}")
     private String ttsModelId;
 
-    @Schema(description = "音色名称")
+    @Schema(description = "Timbre name")
     private String name;
 
-    @Schema(description = "页数")
+    @Schema(description = "page")
     private String page;
 
-    @Schema(description = "显示列数")
+    @Schema(description = "display columns")
     private String limit;
 }

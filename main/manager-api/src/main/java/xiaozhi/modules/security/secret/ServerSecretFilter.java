@@ -55,7 +55,7 @@ public class ServerSecretFilter extends AuthenticatingFilter {
         String token = getRequestToken((HttpServletRequest) servletRequest);
         if (StringUtils.isBlank(token)) {
             // token为空，返回401
-            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "服务器密钥不能为空");
+            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "Server key cannot be null");
             return false;
         }
 
@@ -63,7 +63,7 @@ public class ServerSecretFilter extends AuthenticatingFilter {
         String serverSecret = getServerSecret();
         if (StringUtils.isBlank(serverSecret) || !serverSecret.equals(token)) {
             // token无效，返回401
-            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "无效的服务器密钥");
+            this.sendUnauthorizedResponse((HttpServletResponse) servletResponse, "invalid server key");
             return false;
         }
 
@@ -82,7 +82,7 @@ public class ServerSecretFilter extends AuthenticatingFilter {
             String json = JsonUtils.toJsonString(new Result<Void>().error(ErrorCode.UNAUTHORIZED, message));
             response.getWriter().print(json);
         } catch (IOException e) {
-            log.error("响应输出失败", e);
+            log.error("response output error", e);
         }
     }
 

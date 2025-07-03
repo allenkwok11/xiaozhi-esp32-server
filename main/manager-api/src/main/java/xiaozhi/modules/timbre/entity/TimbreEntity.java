@@ -19,46 +19,46 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("ai_tts_voice")
-@Schema(description = "音色信息")
+@Schema(description = "Timbre information")
 public class TimbreEntity {
 
-    @Schema(description = "id")
+    @Schema(description = "ID")
     private String id;
 
-    @Schema(description = "语言")
+    @Schema(description = "Language")
     private String languages;
 
-    @Schema(description = "音色名称")
+    @Schema(description = "Timbre name")
     private String name;
 
-    @Schema(description = "备注")
+    @Schema(description = "Remarks")
     private String remark;
 
-    @Schema(description = "排序")
+    @Schema(description = "Sort order")
     private long sort;
 
-    @Schema(description = "对应 TTS 模型主键")
+    @Schema(description = "Associated TTS model primary key")
     private String ttsModelId;
 
-    @Schema(description = "音色编码")
+    @Schema(description = "Timbre code")
     private String ttsVoice;
 
-    @Schema(description = "音频播放地址")
+    @Schema(description = "Audio playback URL")
     private String voiceDemo;
 
-    @Schema(description = "更新者")
+    @Schema(description = "Updater")
     @TableField(fill = FieldFill.UPDATE)
     private Long updater;
 
-    @Schema(description = "更新时间")
+    @Schema(description = "Update time")
     @TableField(fill = FieldFill.UPDATE)
     private Date updateDate;
 
-    @Schema(description = "创建者")
+    @Schema(description = "Creator")
     @TableField(fill = FieldFill.INSERT)
     private Long creator;
 
-    @Schema(description = "创建时间")
+    @Schema(description = "Creation time")
     @TableField(fill = FieldFill.INSERT)
     private Date createDate;
 

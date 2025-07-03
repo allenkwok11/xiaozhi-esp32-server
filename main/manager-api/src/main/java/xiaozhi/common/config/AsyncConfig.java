@@ -30,7 +30,7 @@ public class AsyncConfig {
                     // 如果线程池已满，则由调用线程执行
                     r.run();
                 } catch (Exception e) {
-                    throw new RuntimeException("执行异步任务失败", e);
+                    throw new RuntimeException("Asynchronous task execution failed", e);
                 }
             }
         });
