@@ -17,21 +17,21 @@ async def handleTextMessage(conn, message):
     try:
         msg_json = json.loads(message)
         if isinstance(msg_json, int):
-            conn.logger.bind(tag=TAG).info(f"收到文本消息：{message}")
+            conn.logger.bind(tag=TAG).info(f"text message received：{message}")
             await conn.websocket.send(message)
             return
         if msg_json["type"] == "hello":
-            conn.logger.bind(tag=TAG).info(f"收到hello消息：{message}")
+            conn.logger.bind(tag=TAG).info(f"hello message received：{message}")
             await handleHelloMessage(conn, msg_json)
         elif msg_json["type"] == "abort":
-            conn.logger.bind(tag=TAG).info(f"收到abort消息：{message}")
+            conn.logger.bind(tag=TAG).info(f"abort message received：{message}")
             await handleAbortMessage(conn)
         elif msg_json["type"] == "listen":
-            conn.logger.bind(tag=TAG).info(f"收到listen消息：{message}")
+            conn.logger.bind(tag=TAG).info(f"listen message received：{message}")
             if "mode" in msg_json:
                 conn.client_listen_mode = msg_json["mode"]
                 conn.logger.bind(tag=TAG).debug(
-                    f"客户端拾音模式：{conn.client_listen_mode}"
+                    f"Client pickup mode: {conn.client_listen_mode}"
                 )
             if msg_json["state"] == "start":
                 conn.client_have_voice = True
@@ -71,13 +71,13 @@ async def handleTextMessage(conn, message):
                         # 否则需要LLM对文字内容进行答复
                         await startToChat(conn, original_text)
         elif msg_json["type"] == "iot":
-            conn.logger.bind(tag=TAG).info(f"收到iot消息：{message}")
+            conn.logger.bind(tag=TAG).info(f"iot message received：{message}")
             if "descriptors" in msg_json:
                 asyncio.create_task(handleIotDescriptors(conn, msg_json["descriptors"]))
             if "states" in msg_json:
                 asyncio.create_task(handleIotStatus(conn, msg_json["states"]))
         elif msg_json["type"] == "mcp":
-            conn.logger.bind(tag=TAG).info(f"收到mcp消息：{message}")
+            conn.logger.bind(tag=TAG).info(f"mcp message received：{message}")
             if "payload" in msg_json:
                 asyncio.create_task(
                     handle_mcp_message(conn, conn.mcp_client, msg_json["payload"])
@@ -85,7 +85,7 @@ async def handleTextMessage(conn, message):
         elif msg_json["type"] == "server":
             # 记录日志时过滤敏感信息
             conn.logger.bind(tag=TAG).info(
-                f"收到服务器消息：{filter_sensitive_info(msg_json)}"
+                f"Server message received：{filter_sensitive_info(msg_json)}"
             )
             # 如果配置是从API读取的，则需要验证secret
             if not conn.read_config_from_api:
@@ -100,7 +100,7 @@ async def handleTextMessage(conn, message):
                         {
                             "type": "server",
                             "status": "error",
-                            "message": "服务器密钥验证失败",
+                            "message": "server token verification failed",
                         }
                     )
                 )
@@ -115,7 +115,7 @@ async def handleTextMessage(conn, message):
                                 {
                                     "type": "server",
                                     "status": "error",
-                                    "message": "无法获取服务器实例",
+                                    "message": "cannot get server instance",
                                     "content": {"action": "update_config"},
                                 }
                             )
@@ -128,7 +128,7 @@ async def handleTextMessage(conn, message):
                                 {
                                     "type": "server",
                                     "status": "error",
-                                    "message": "更新服务器配置失败",
+                                    "message": "failed to update server config",
                                     "content": {"action": "update_config"},
                                 }
                             )
@@ -141,19 +141,19 @@ async def handleTextMessage(conn, message):
                             {
                                 "type": "server",
                                 "status": "success",
-                                "message": "配置更新成功",
+                                "message": "config updated successfully",
                                 "content": {"action": "update_config"},
                             }
                         )
                     )
                 except Exception as e:
-                    conn.logger.bind(tag=TAG).error(f"更新配置失败: {str(e)}")
+                    conn.logger.bind(tag=TAG).error(f"failed to update config: {str(e)}")
                     await conn.websocket.send(
                         json.dumps(
                             {
                                 "type": "server",
                                 "status": "error",
-                                "message": f"更新配置失败: {str(e)}",
+                                "message": f"failed to update config: {str(e)}",
                                 "content": {"action": "update_config"},
                             }
                         )
@@ -162,6 +162,6 @@ async def handleTextMessage(conn, message):
             elif msg_json["action"] == "restart":
                 await conn.handle_restart(msg_json)
         else:
-            conn.logger.bind(tag=TAG).error(f"收到未知类型消息：{message}")
+            conn.logger.bind(tag=TAG).error(f"unknown type message received：{message}")
     except json.JSONDecodeError:
         await conn.websocket.send(message)

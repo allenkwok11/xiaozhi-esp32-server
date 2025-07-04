@@ -34,7 +34,7 @@ emoji_map = {
 
 async def sendAudioMessage(conn, sentenceType, audios, text):
     # 发送句子开始消息
-    conn.logger.bind(tag=TAG).info(f"发送音频消息: {sentenceType}, {text}")
+    conn.logger.bind(tag=TAG).info(f"sending audio message: {sentenceType}, {text}")
     if text is not None:
         emotion = analyze_emotion(text)
         emoji = emoji_map.get(emotion, "🙂")  # 默认使用笑脸
@@ -50,7 +50,7 @@ async def sendAudioMessage(conn, sentenceType, audios, text):
         )
     pre_buffer = False
     if conn.tts.tts_audio_first_sentence and text is not None:
-        conn.logger.bind(tag=TAG).info(f"发送第一段语音: {text}")
+        conn.logger.bind(tag=TAG).info(f"sending first audio: {text}")
         conn.tts.tts_audio_first_sentence = False
         pre_buffer = True
 

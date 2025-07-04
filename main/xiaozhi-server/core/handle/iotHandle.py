@@ -19,11 +19,11 @@ def wrap_async_function(async_func):
             # 获取连接对象（第一个参数）
             conn = args[0]
             if not hasattr(conn, "loop"):
-                conn.logger.bind(tag=TAG).error("Connection对象没有loop属性")
+                conn.logger.bind(tag=TAG).error("Connection object does not have loop attribute")
                 return ActionResponse(
                     Action.ERROR,
-                    "Connection对象没有loop属性",
-                    "执行操作时出错: Connection对象没有loop属性",
+                    "Connection object does not have loop attribute",
+                    "Error when performing operation: Connection object does not have loop attribute",
                 )
 
             # 使用conn对象中的事件循环
@@ -33,8 +33,8 @@ def wrap_async_function(async_func):
             # 等待结果返回
             return future.result()
         except Exception as e:
-            conn.logger.bind(tag=TAG).error(f"运行异步函数时出错: {e}")
-            return ActionResponse(Action.ERROR, str(e), f"执行操作时出错: {e}")
+            conn.logger.bind(tag=TAG).error(f"Error occurred while running asynchronous func: {e}")
+            return ActionResponse(Action.ERROR, str(e), f"error occurs when executing operation: {e}")
 
     return wrapper
 
@@ -50,13 +50,13 @@ def create_iot_function(device_name, method_name, method_info):
         try:
             # 设置默认响应消息
             if not response_success:
-                response_success = "操作成功"
+                response_success = "operation successed"
             if not response_failure:
-                response_failure = "操作失败"
+                response_failure = "operation failed"
 
             # 打印响应参数
             conn.logger.bind(tag=TAG).debug(
-                f"控制函数接收到的响应参数: success='{response_success}', failure='{response_failure}'"
+                f"response parameter received by control function: success='{response_success}', failure='{response_failure}'"
             )
 
             # 发送控制命令
@@ -65,7 +65,7 @@ def create_iot_function(device_name, method_name, method_info):
             await asyncio.sleep(0.1)
 
             # 生成结果信息
-            result = f"{device_name}的{method_name}操作执行成功"
+            result = f"{method_name} of {device_name} operated successfully"
 
             # 处理响应中可能的占位符
             response = response_success
@@ -85,7 +85,7 @@ def create_iot_function(device_name, method_name, method_info):
             return ActionResponse(Action.RESPONSE, result, response)
         except Exception as e:
             conn.logger.bind(tag=TAG).error(
-                f"执行{device_name}的{method_name}操作失败: {e}"
+                f"failed to operate {method_name} of {device_name} : {e}"
             )
 
             # 操作失败时使用大模型提供的失败响应
@@ -105,7 +105,7 @@ def create_iot_query_function(device_name, prop_name, prop_info):
         try:
             # 打印响应参数
             conn.logger.bind(tag=TAG).info(
-                f"查询函数接收到的响应参数: success='{response_success}', failure='{response_failure}'"
+                f"Response parameter received by query function: success='{response_success}', failure='{response_failure}'"
             )
 
             value = await get_iot_status(conn, device_name, prop_name)
@@ -120,10 +120,10 @@ def create_iot_query_function(device_name, prop_name, prop_info):
                 # 查询失败，使用大模型提供的失败响应
                 response = response_failure
 
-                return ActionResponse(Action.ERROR, f"属性{prop_name}不存在", response)
+                return ActionResponse(Action.ERROR, f"Property {prop_name} does not exist", response)
         except Exception as e:
             conn.logger.bind(tag=TAG).error(
-                f"查询{device_name}的{prop_name}时出错: {e}"
+                f"Error occurs when search for {prop_name} of {device_name}: {e}"
             )
 
             # 查询出错时使用大模型提供的失败响应
@@ -194,17 +194,17 @@ def register_device_type(descriptor, device_type_registry):
             "type": "function",
             "function": {
                 "name": func_name,
-                "description": f"查询{descriptor['description']}的{prop_info['description']}",
+                "description": f"Search for {prop_info['description']} of {descriptor['description']}",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "response_success": {
                             "type": "string",
-                            "description": f"查询成功时的友好回复，必须使用{{value}}作为占位符表示查询到的值",
+                            "description": f"Friendly reply when the query success, must use {{value}} as a placeholder to represent the retrieved value",
                         },
                         "response_failure": {
                             "type": "string",
-                            "description": f"查询失败时的友好回复，例如：'无法获取{device_name}的{prop_info['description']}'",
+                            "description": f"Friendly reply when the query success failed, e.g., 'cannot get {prop_info['description']} of {device_name}'",
                         },
                     },
                     "required": ["response_success", "response_failure"],
@@ -243,11 +243,11 @@ def register_device_type(descriptor, device_type_registry):
             {
                 "response_success": {
                     "type": "string",
-                    "description": "操作成功时的友好回复,关于该设备的操作结果，设备名称尽量使用description中的名称",
+                    "description": "Friendly reply when the operation successed. For the device name in the operation result, use the name from the description whenever possible",
                 },
                 "response_failure": {
                     "type": "string",
-                    "description": "操作失败时的友好回复,关于该设备的操作结果，设备名称尽量使用description中的名称",
+                    "description": "Friendly reply when the operation fails. For the device name in the operation result, use the name from the description whenever possible",
                 },
             }
         )
@@ -286,7 +286,7 @@ async def handleIotDescriptors(conn, descriptors):
         await asyncio.sleep(1)
         wait_max_time -= 1
         if wait_max_time <= 0:
-            conn.logger.bind(tag=TAG).debug("连接对象没有func_handler")
+            conn.logger.bind(tag=TAG).debug("connected object does not have func_handler")
             return
     """处理物联网描述"""
     functions_changed = False
@@ -332,16 +332,16 @@ async def handleIotDescriptors(conn, descriptors):
                         func_name, func_item
                     )
                     conn.logger.bind(tag=TAG).info(
-                        f"注册IOT函数到function handler: {func_name}"
+                        f"register IOT function to function handler: {func_name}"
                     )
                     functions_changed = True
 
     # 如果注册了新函数，更新function描述列表
     if functions_changed and hasattr(conn, "func_handler"):
         func_names = conn.func_handler.current_support_functions()
-        conn.logger.bind(tag=TAG).info(f"设备类型: {type_id}")
+        conn.logger.bind(tag=TAG).info(f"device type: {type_id}")
         conn.logger.bind(tag=TAG).info(
-            f"更新function描述列表完成，当前支持的函数: {func_names}"
+            f"Function description list updated. Currently supported functions: {func_names}"
         )
 
 
@@ -355,13 +355,13 @@ async def handleIotStatus(conn, states):
                         if property_item["name"] == k:
                             if type(v) != type(property_item["value"]):
                                 conn.logger.bind(tag=TAG).error(
-                                    f"属性{property_item['name']}的值类型不匹配"
+                                    f"attribute {property_item['name']}value type unmatch"
                                 )
                                 break
                             else:
                                 property_item["value"] = v
                                 conn.logger.bind(tag=TAG).info(
-                                    f"物联网状态更新: {key} , {property_item['name']} = {v}"
+                                    f"IOT status updated: {key} , {property_item['name']} = {v}"
                                 )
                             break
                 break
@@ -374,7 +374,7 @@ async def get_iot_status(conn, name, property_name):
             for property_item in value.properties:
                 if property_item["name"] == property_name:
                     return property_item["value"]
-    conn.logger.bind(tag=TAG).warning(f"未找到设备 {name} 的属性 {property_name}")
+    conn.logger.bind(tag=TAG).warning(f"did not find property {property_name} of device {name}")
     return None
 
 
@@ -386,15 +386,15 @@ async def set_iot_status(conn, name, property_name, value):
                 if property_item["name"] == property_name:
                     if type(value) != type(property_item["value"]):
                         conn.logger.bind(tag=TAG).error(
-                            f"属性{property_item['name']}的值类型不匹配"
+                            f"property {property_item['name']} value type unmatch"
                         )
                         return
                     property_item["value"] = value
                     conn.logger.bind(tag=TAG).info(
-                        f"物联网状态更新: {name} , {property_name} = {value}"
+                        f"IOT status updated: {name} , {property_name} = {value}"
                     )
                     return
-    conn.logger.bind(tag=TAG).warning(f"未找到设备 {name} 的属性 {property_name}")
+    conn.logger.bind(tag=TAG).warning(f"did not find property {property_name} of device {name} ")
 
 
 async def send_iot_conn(conn, name, method_name, parameters):
@@ -416,6 +416,6 @@ async def send_iot_conn(conn, name, method_name, parameters):
                         command["parameters"] = parameters
                     send_message = json.dumps({"type": "iot", "commands": [command]})
                     await conn.websocket.send(send_message)
-                    conn.logger.bind(tag=TAG).info(f"发送物联网指令: {send_message}")
+                    conn.logger.bind(tag=TAG).info(f"send IOT command: {send_message}")
                     return
-    conn.logger.bind(tag=TAG).error(f"未找到方法{method_name}")
+    conn.logger.bind(tag=TAG).error(f"did not find method {method_name}")

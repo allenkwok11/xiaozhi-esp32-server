@@ -80,14 +80,14 @@ class WebSocketServer:
                 # 重新获取配置
                 new_config = get_config_from_api(self.config)
                 if new_config is None:
-                    self.logger.bind(tag=TAG).error("获取新配置失败")
+                    self.logger.bind(tag=TAG).error("failed to get new config")
                     return False
-                self.logger.bind(tag=TAG).info(f"获取新配置成功")
+                self.logger.bind(tag=TAG).info(f"get new config successfully")
                 # 检查 VAD 和 ASR 类型是否需要更新
                 update_vad = check_vad_update(self.config, new_config)
                 update_asr = check_asr_update(self.config, new_config)
                 self.logger.bind(tag=TAG).info(
-                    f"检查VAD和ASR类型是否需要更新: {update_vad} {update_asr}"
+                    f"check if VAD and ASR types need update: {update_vad} {update_asr}"
                 )
                 # 更新配置
                 self.config = new_config
@@ -114,8 +114,8 @@ class WebSocketServer:
                     self._intent = modules["intent"]
                 if "memory" in modules:
                     self._memory = modules["memory"]
-                self.logger.bind(tag=TAG).info(f"更新配置任务执行完毕")
+                self.logger.bind(tag=TAG).info(f"updating config task completed")
                 return True
         except Exception as e:
-            self.logger.bind(tag=TAG).error(f"更新服务器配置失败: {str(e)}")
+            self.logger.bind(tag=TAG).error(f"failed to update server config: {str(e)}")
             return False

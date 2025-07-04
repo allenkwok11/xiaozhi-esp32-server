@@ -15,7 +15,7 @@ def create_instance(class_name, *args, **kwargs):
             sys.modules[lib_name] = importlib.import_module(f'{lib_name}')
         return sys.modules[lib_name].TTSProvider(*args, **kwargs)
 
-    raise ValueError(f"不支持的TTS类型: {class_name}，请检查该配置的type是否设置正确")
+    raise ValueError(f"unspported TTS type: {class_name}, check if the type in the config is set correctly")
 
 
 class MarkdownCleaner:
@@ -65,9 +65,9 @@ class MarkdownCleaner:
         if len(parsed_table) == 1:
             # 只有一行
             only_line_str = ", ".join(parsed_table[0])
-            lines_for_tts.append(f"单行表格：{only_line_str}")
+            lines_for_tts.append(f"single-row table：{only_line_str}")
         else:
-            lines_for_tts.append(f"表头是：{', '.join(headers)}")
+            lines_for_tts.append(f"header is：{', '.join(headers)}")
             for i, row in enumerate(data_rows, start=1):
                 row_str_list = []
                 for col_index, cell_val in enumerate(row):
@@ -75,7 +75,7 @@ class MarkdownCleaner:
                         row_str_list.append(f"{headers[col_index]} = {cell_val}")
                     else:
                         row_str_list.append(cell_val)
-                lines_for_tts.append(f"第 {i} 行：{', '.join(row_str_list)}")
+                lines_for_tts.append(f" {i} row：{', '.join(row_str_list)}")
 
         return "\n".join(lines_for_tts) + "\n"
 

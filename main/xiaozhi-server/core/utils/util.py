@@ -186,7 +186,7 @@ def remove_punctuation_and_length(text):
 
 def check_model_key(modelType, modelKey):
     if "你" in modelKey:
-        return f"配置错误: {modelType} 的 API key 未设置,当前值为: {modelKey}"
+        return f"config error: AKI key of {modelType} not configured, current value is: {modelKey}"
     return None
 
 
@@ -228,10 +228,10 @@ def check_ffmpeg_installed():
         # 命令执行失败或未找到
         ffmpeg_installed = False
     if not ffmpeg_installed:
-        error_msg = "您的电脑还没正确安装ffmpeg\n"
-        error_msg += "\n建议您：\n"
-        error_msg += "1、按照项目的安装文档，正确进入conda环境\n"
-        error_msg += "2、查阅安装文档，如何在conda环境中安装ffmpeg\n"
+        error_msg = "FFmpeg is not properly installed on your computer.\n"
+        error_msg += "\nRecommended actions:\n"
+        error_msg += "1. Follow the project installation guide to correctly activate your conda environment.\n"
+        error_msg += "2. Refer to the installation guide for instructions on how to install FFmpeg within the conda environment.\n"
         raise ValueError(error_msg)
 
 

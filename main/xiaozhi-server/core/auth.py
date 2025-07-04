@@ -5,7 +5,7 @@ logger = setup_logging()
 
 
 class AuthenticationError(Exception):
-    """认证异常"""
+    """Authentication Error"""
     pass
 
 
@@ -24,7 +24,7 @@ class AuthMiddleware:
         )
 
     async def authenticate(self, headers):
-        """验证连接请求"""
+        """Auth connection request"""
         # 检查是否启用认证
         if not self.auth_config.get("enabled", False):
             return True
@@ -50,5 +50,5 @@ class AuthMiddleware:
         return True
 
     def get_token_name(self, token):
-        """获取token对应的设备名称"""
+        """Get the device name associated with the token"""
         return self.tokens.get(token)

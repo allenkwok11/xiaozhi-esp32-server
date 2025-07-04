@@ -21,4 +21,4 @@ def create_instance(class_name: str, *args, **kwargs) -> ASRProviderBase:
             sys.modules[lib_name] = importlib.import_module(f'{lib_name}')
         return sys.modules[lib_name].ASRProvider(*args, **kwargs)
 
-    raise ValueError(f"不支持的ASR类型: {class_name}，请检查该配置的type是否设置正确")
+    raise ValueError(f"Unsupported ASR type: {class_name}. Please check if the type is configured correctly")

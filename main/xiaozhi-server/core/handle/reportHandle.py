@@ -64,10 +64,10 @@ def opus_to_wav(conn, opus_data):
             pcm_frame = decoder.decode(opus_packet, 960)  # 960 samples = 60ms
             pcm_data.append(pcm_frame)
         except opuslib_next.OpusError as e:
-            conn.logger.bind(tag=TAG).error(f"Opus解码错误: {e}", exc_info=True)
+            conn.logger.bind(tag=TAG).error(f"Opus decode error: {e}", exc_info=True)
 
     if not pcm_data:
-        raise ValueError("没有有效的PCM数据")
+        raise ValueError("no valid PCM data")
 
     # 创建WAV文件头
     pcm_data_bytes = b"".join(pcm_data)
@@ -110,15 +110,15 @@ def enqueue_tts_report(conn, text, opus_data):
         if conn.chat_history_conf == 2:
             conn.report_queue.put((2, text, opus_data, int(time.time())))
             conn.logger.bind(tag=TAG).debug(
-                f"TTS数据已加入上报队列: {conn.device_id}, 音频大小: {len(opus_data)} "
+                f"TTS data added to report queue: {conn.device_id}, audio size: {len(opus_data)} "
             )
         else:
             conn.report_queue.put((2, text, None, int(time.time())))
             conn.logger.bind(tag=TAG).debug(
-                f"TTS数据已加入上报队列: {conn.device_id}, 不上报音频"
+                f"TTS data added to report queue: {conn.device_id}, do not report audio"
             )
     except Exception as e:
-        conn.logger.bind(tag=TAG).error(f"加入TTS上报队列失败: {text}, {e}")
+        conn.logger.bind(tag=TAG).error(f"failed to add in TTS report queue: {text}, {e}")
 
 
 def enqueue_asr_report(conn, text, opus_data):
@@ -138,12 +138,12 @@ def enqueue_asr_report(conn, text, opus_data):
         if conn.chat_history_conf == 2:
             conn.report_queue.put((1, text, opus_data, int(time.time())))
             conn.logger.bind(tag=TAG).debug(
-                f"ASR数据已加入上报队列: {conn.device_id}, 音频大小: {len(opus_data)} "
+                f"ASR data added to report queue: {conn.device_id}, audio file size: {len(opus_data)} "
             )
         else:
             conn.report_queue.put((1, text, None, int(time.time())))
             conn.logger.bind(tag=TAG).debug(
-                f"ASR数据已加入上报队列: {conn.device_id}, 不上报音频"
+                f"ASR data added to report queue: {conn.device_id}, do not report audio"
             )
     except Exception as e:
-        conn.logger.bind(tag=TAG).debug(f"加入ASR上报队列失败: {text}, {e}")
+        conn.logger.bind(tag=TAG).debug(f"failed to add in ASR report queue: {text}, {e}")

@@ -83,7 +83,7 @@ async def no_voice_close_connect(conn, have_voice):
             conn.client_abort = False
             end_prompt = conn.config.get("end_prompt", {})
             if end_prompt and end_prompt.get("enable", True) is False:
-                conn.logger.bind(tag=TAG).info("结束对话，无需发送结束提示语")
+                conn.logger.bind(tag=TAG).info("End chat, no need to send ending prompt")
                 await conn.close()
                 return
             prompt = end_prompt.get("prompt")
@@ -105,12 +105,12 @@ async def check_bind_device(conn):
     if conn.bind_code:
         # 确保bind_code是6位数字
         if len(conn.bind_code) != 6:
-            conn.logger.bind(tag=TAG).error(f"无效的绑定码格式: {conn.bind_code}")
-            text = "绑定码格式错误，请检查配置。"
+            conn.logger.bind(tag=TAG).error(f"Invalid bind code format: {conn.bind_code}")
+            text = "Bind code format error, please check the configuration."
             await send_stt_message(conn, text)
             return
 
-        text = f"请登录控制面板，输入{conn.bind_code}，绑定设备。"
+        text = f"Please log in to the control panel and enter {conn.bind_code} to bind the device."
         await send_stt_message(conn, text)
 
         # 播放提示音
@@ -126,11 +126,11 @@ async def check_bind_device(conn):
                 num_packets, _ = audio_to_data(num_path)
                 conn.tts.tts_audio_queue.put((SentenceType.MIDDLE, num_packets, None))
             except Exception as e:
-                conn.logger.bind(tag=TAG).error(f"播放数字音频失败: {e}")
+                conn.logger.bind(tag=TAG).error(f"Failed to play digit audio: {e}")
                 continue
         conn.tts.tts_audio_queue.put((SentenceType.LAST, [], None))
     else:
-        text = f"没有找到该设备的版本信息，请正确配置 OTA地址，然后重新编译固件。"
+        text = f"No version info found for this device. Please configure the OTA address correctly and recompile the firmware"
         await send_stt_message(conn, text)
         music_path = "config/assets/bind_not_found.wav"
         opus_packets, _ = audio_to_data(music_path)
