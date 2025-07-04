@@ -22,7 +22,7 @@ class MCPManager:
         if os.path.exists(self.config_path) == False:
             self.config_path = ""
             self.conn.logger.bind(tag=TAG).warning(
-                f"请检查mcp服务配置文件：data/.mcp_server_settings.json"
+                f"please check mcp service config file：data/.mcp_server_settings.json"
             )
         self.client: Dict[str, MCPClient] = {}
         self.tools = []
@@ -118,7 +118,7 @@ class MCPManager:
         raise ValueError(f"Tool {tool_name} not found in any MCP server")
 
     async def cleanup_all(self) -> None:
-        """依次关闭所有 MCPClient，不让异常阻断整体流程。"""
+        """Close all MCPClients one by one to prevent exceptions from interrupting the overall process"""
         for name, client in list(self.client.items()):
             try:
                 await asyncio.wait_for(client.cleanup(), timeout=20)

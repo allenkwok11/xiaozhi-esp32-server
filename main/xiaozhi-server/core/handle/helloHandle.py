@@ -33,15 +33,15 @@ async def handleHelloMessage(conn, msg_json):
     audio_params = msg_json.get("audio_params")
     if audio_params:
         format = audio_params.get("format")
-        conn.logger.bind(tag=TAG).info(f"客户端音频格式: {format}")
+        conn.logger.bind(tag=TAG).info(f"server side audio format: {format}")
         conn.audio_format = format
         conn.welcome_msg["audio_params"] = audio_params
     features = msg_json.get("features")
     if features:
-        conn.logger.bind(tag=TAG).info(f"客户端特性: {features}")
+        conn.logger.bind(tag=TAG).info(f"server side feature: {features}")
         conn.features = features
         if features.get("mcp"):
-            conn.logger.bind(tag=TAG).info("客户端支持MCP")
+            conn.logger.bind(tag=TAG).info("server side supports MCP")
             conn.mcp_client = MCPClient()
             # 发送初始化
             asyncio.create_task(send_mcp_initialize_message(conn))
@@ -85,7 +85,7 @@ async def checkWakeupWords(conn, text):
     conn.client_abort = False
     opus_packets, _ = audio_to_data(response.get("file_path"))
 
-    conn.logger.bind(tag=TAG).info(f"播放唤醒词回复: {response.get('text')}")
+    conn.logger.bind(tag=TAG).info(f"play wake words response: {response.get('text')}")
     await sendAudioMessage(conn, SentenceType.FIRST, opus_packets, response.get("text"))
     await sendAudioMessage(conn, SentenceType.LAST, [], None)
 

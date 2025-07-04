@@ -48,8 +48,8 @@ class OpusEncoderUtils:
             self.encoder.complexity = self.complexity
             self.encoder.signal = constants.SIGNAL_VOICE  # 语音信号优化
         except Exception as e:
-            logging.error(f"初始化Opus编码器失败: {e}")
-            raise RuntimeError("初始化失败") from e
+            logging.error(f"failed to initialize Opus encoder: {e}")
+            raise RuntimeError("initialization failed") from e
 
     def reset_state(self):
         """重置编码器状态"""
@@ -112,7 +112,7 @@ class OpusEncoderUtils:
             encoded = self.encoder.encode(frame_bytes, self.frame_size)
             return encoded
         except Exception as e:
-            logging.error(f"Opus编码失败: {e}")
+            logging.error(f"Opus encoding failed: {e}")
             traceback.print_exc()
             return None
 
@@ -126,7 +126,7 @@ class OpusEncoderUtils:
         # 16位PCM数据范围是 -32768 到 32767
         if np.any((pcm_shorts < -32768) | (pcm_shorts > 32767)):
             invalid_samples = pcm_shorts[(pcm_shorts < -32768) | (pcm_shorts > 32767)]
-            logging.warning(f"发现无效PCM样本: {invalid_samples[:5]}...")
+            logging.warning(f"invalid PCM sample founded: {invalid_samples[:5]}...")
             # 在实际应用中可以选择裁剪而不是抛出异常
             # np.clip(pcm_shorts, -32768, 32767, out=pcm_shorts)
 

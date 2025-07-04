@@ -16,9 +16,9 @@ logger = setup_logging()
 
 async def wait_for_exit() -> None:
     """
-    阻塞直到收到 Ctrl‑C / SIGTERM。
-    - Unix: 使用 add_signal_handler
-    - Windows: 依赖 KeyboardInterrupt
+    Block until Ctrl-C / SIGTERM is received.
+    - Unix: uses add_signal_handler
+    - Windows: relies on KeyboardInterrupt
     """
     loop = asyncio.get_running_loop()
     stop_event = asyncio.Event()
@@ -37,7 +37,7 @@ async def wait_for_exit() -> None:
 
 
 async def monitor_stdin():
-    """监控标准输入，消费回车键"""
+    """Monitor standard input and consume Enter key presses"""
     while True:
         await ainput()  # 异步等待输入，消费回车
 
@@ -68,12 +68,12 @@ async def main():
     port = int(config["server"].get("http_port", 8003))
     if not read_config_from_api:
         logger.bind(tag=TAG).info(
-            "OTA接口是\t\thttp://{}:{}/xiaozhi/ota/",
+            "OTA interface is \t\thttp://{}:{}/xiaozhi/ota/",
             get_local_ip(),
             port,
         )
     logger.bind(tag=TAG).info(
-        "视觉分析接口是\thttp://{}:{}/mcp/vision/explain",
+        "Vision analysis interface is \thttp://{}:{}/mcp/vision/explain",
         get_local_ip(),
         port,
     )
@@ -85,16 +85,16 @@ async def main():
         websocket_port = int(server_config.get("port", 8000))
 
     logger.bind(tag=TAG).info(
-        "Websocket地址是\tws://{}:{}/xiaozhi/v1/",
+        "Websocket address is \tws://{}:{}/xiaozhi/v1/",
         get_local_ip(),
         websocket_port,
     )
 
     logger.bind(tag=TAG).info(
-        "=======上面的地址是websocket协议地址，请勿用浏览器访问======="
+        "======= The above address is a WebSocket protocol address, do not access it via browser ======="
     )
     logger.bind(tag=TAG).info(
-        "如想测试websocket请用谷歌浏览器打开test目录下的test_page.html"
+        "If you want to test WebSocket, please open test_page.html in the test directory using Google Chrome."
     )
     logger.bind(tag=TAG).info(
         "=============================================================\n"
@@ -103,7 +103,7 @@ async def main():
     try:
         await wait_for_exit()  # 阻塞直到收到退出信号
     except asyncio.CancelledError:
-        print("任务被取消，清理资源中...")
+        print("task got cancelled, clearing resources...")
     finally:
         # 取消所有任务（关键修复点）
         stdin_task.cancel()
@@ -117,11 +117,11 @@ async def main():
             timeout=3.0,
             return_when=asyncio.ALL_COMPLETED,
         )
-        print("服务器已关闭，程序退出。")
+        print("Server closed, exit program")
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("手动中断，程序终止。")
+        print("interrupted manually, program ends")

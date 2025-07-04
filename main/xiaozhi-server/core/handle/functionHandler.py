@@ -29,7 +29,7 @@ class FunctionHandler:
             func_names.append(func["function"]["name"])
         # 打印当前支持的函数列表
         self.conn.logger.bind(tag=TAG, session_id=self.conn.session_id).info(
-            f"当前支持的函数列表: {func_names}"
+            f"currently supported function list: {func_names}"
         )
         return func_names
 
@@ -62,13 +62,13 @@ class FunctionHandler:
             funcItem = self.get_function(function_name)
             if not funcItem:
                 return ActionResponse(
-                    action=Action.NOTFOUND, result="没有找到对应的函数", response=""
+                    action=Action.NOTFOUND, result="did not find corresponding function", response=""
                 )
             func = funcItem.func
             arguments = function_call_data["arguments"]
             arguments = json.loads(arguments) if arguments else {}
             self.conn.logger.bind(tag=TAG).debug(
-                f"调用函数: {function_name}, 参数: {arguments}"
+                f"call function: {function_name}, parameter: {arguments}"
             )
             if (
                 funcItem.type == ToolType.SYSTEM_CTL
@@ -81,9 +81,9 @@ class FunctionHandler:
                 return func(conn, **arguments)
             else:
                 return ActionResponse(
-                    action=Action.NOTFOUND, result="没有找到对应的函数", response=""
+                    action=Action.NOTFOUND, result="did not find corresponding function", response=""
                 )
         except Exception as e:
-            self.conn.logger.bind(tag=TAG).error(f"处理function call错误: {e}")
+            self.conn.logger.bind(tag=TAG).error(f"handling function call error: {e}")
 
         return None

@@ -44,7 +44,7 @@ class VisionHandler:
             if not is_valid:
                 response = web.Response(
                     text=json.dumps(
-                        self._create_error_response("无效的认证token或token已过期")
+                        self._create_error_response("invalid token authentication or token expired")
                     ),
                     content_type="application/json",
                     status=401,
@@ -55,37 +55,37 @@ class VisionHandler:
             device_id = request.headers.get("Device-Id", "")
             client_id = request.headers.get("Client-Id", "")
             if device_id != token_device_id:
-                raise ValueError("设备ID与token不匹配")
+                raise ValueError("device ID and token unmatch")
             # 解析multipart/form-data请求
             reader = await request.multipart()
 
             # 读取question字段
             question_field = await reader.next()
             if question_field is None:
-                raise ValueError("缺少问题字段")
+                raise ValueError("Question field is missing")
             question = await question_field.text()
             self.logger.bind(tag=TAG).debug(f"Question: {question}")
 
             # 读取图片文件
             image_field = await reader.next()
             if image_field is None:
-                raise ValueError("缺少图片文件")
+                raise ValueError("image file is missing")
 
             # 读取图片数据
             image_data = await image_field.read()
             if not image_data:
-                raise ValueError("图片数据为空")
+                raise ValueError("image data is null")
 
             # 检查文件大小
             if len(image_data) > MAX_FILE_SIZE:
                 raise ValueError(
-                    f"图片大小超过限制，最大允许{MAX_FILE_SIZE/1024/1024}MB"
+                    f"image size exceeds limit, maximum {MAX_FILE_SIZE/1024/1024}MB is allowed"
                 )
 
             # 检查文件格式
             if not is_valid_image_file(image_data):
                 raise ValueError(
-                    "不支持的文件格式，请上传有效的图片文件（支持JPEG、PNG、GIF、BMP、TIFF、WEBP格式）"
+                    "file format not supported, please upload valid file（JPEG、PNG、GIF、BMP、TIFF、WEBP are supported）"
                 )
 
             # 将图片转换为base64编码
@@ -103,7 +103,7 @@ class VisionHandler:
 
             select_vllm_module = current_config["selected_module"].get("VLLM")
             if not select_vllm_module:
-                raise ValueError("您还未设置默认的视觉分析模块")
+                raise ValueError("you have not configured default visual analysus module")
 
             vllm_type = (
                 select_vllm_module
@@ -112,7 +112,7 @@ class VisionHandler:
             )
 
             if not vllm_type:
-                raise ValueError(f"无法找到VLLM模块对应的供应器{vllm_type}")
+                raise ValueError(f"cannot find VLLM module corresponding provider{vllm_type}")
 
             vllm = create_instance(
                 vllm_type, current_config["VLLM"][select_vllm_module]
@@ -130,15 +130,15 @@ class VisionHandler:
                 content_type="application/json",
             )
         except ValueError as e:
-            self.logger.bind(tag=TAG).error(f"MCP Vision POST请求异常: {e}")
+            self.logger.bind(tag=TAG).error(f"MCP Vision POST request exception: {e}")
             return_json = self._create_error_response(str(e))
             response = web.Response(
                 text=json.dumps(return_json, separators=(",", ":")),
                 content_type="application/json",
             )
         except Exception as e:
-            self.logger.bind(tag=TAG).error(f"MCP Vision POST请求异常: {e}")
-            return_json = self._create_error_response("处理请求时发生错误")
+            self.logger.bind(tag=TAG).error(f"MCP Vision POST request exception: {e}")
+            return_json = self._create_error_response("error occurs when handling request")
             response = web.Response(
                 text=json.dumps(return_json, separators=(",", ":")),
                 content_type="application/json",
@@ -154,15 +154,15 @@ class VisionHandler:
             vision_explain = get_vision_url(self.config)
             if vision_explain and len(vision_explain) > 0 and "null" != vision_explain:
                 message = (
-                    f"MCP Vision 接口运行正常，视觉解释接口地址是：{vision_explain}"
+                    f"MCP Vision interface runs properly，vision explanation interface address is：{vision_explain}"
                 )
             else:
-                message = "MCP Vision 接口运行不正常，请打开data目录下的.config.yaml文件，找到【server.vision_explain】，设置好地址"
+                message = "MCP Vision interface is not functioning properly, please open .config.yaml file under data director, find【server.vision_explain, configure address"
 
             response = web.Response(text=message, content_type="text/plain")
         except Exception as e:
-            self.logger.bind(tag=TAG).error(f"MCP Vision GET请求异常: {e}")
-            return_json = self._create_error_response("服务器内部错误")
+            self.logger.bind(tag=TAG).error(f"MCP Vision GET request exception: {e}")
+            return_json = self._create_error_response("server internal error")
             response = web.Response(
                 text=json.dumps(return_json, separators=(",", ":")),
                 content_type="application/json",
