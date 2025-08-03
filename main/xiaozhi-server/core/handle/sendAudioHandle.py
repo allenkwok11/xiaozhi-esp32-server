@@ -2,42 +2,48 @@ import json
 import asyncio
 import time
 from core.providers.tts.dto.dto import SentenceType
-from core.utils.util import get_string_no_punctuation_or_emoji, analyze_emotion
+from core.utils.util import get_string_no_punctuation_or_emoji, analyze_emotion, parse_llm_response_with_emotion
+from core.utils.emotion_manager import emotion_manager
 from loguru import logger
 
 TAG = __name__
 
-emoji_map = {
-    "neutral": "😶",
-    "happy": "🙂",
-    "laughing": "😆",
-    "funny": "😂",
-    "sad": "😔",
-    "angry": "😠",
-    "crying": "😭",
-    "loving": "😍",
-    "embarrassed": "😳",
-    "surprised": "😲",
-    "shocked": "😱",
-    "thinking": "🤔",
-    "winking": "😉",
-    "cool": "😎",
-    "relaxed": "😌",
-    "delicious": "🤤",
-    "kissy": "😘",
-    "confident": "😏",
-    "sleepy": "😴",
-    "silly": "😜",
-    "confused": "🙄",
-}
+# Emoji mapping is now handled by emotion_manager
+# Remove hardcoded emoji_map and use emotion_manager.get_emoji() instead
 
 
 async def sendAudioMessage(conn, sentenceType, audios, text):
     # 发送句子开始消息
     conn.logger.bind(tag=TAG).info(f"sending audio message: {sentenceType}, {text}")
+    
+    # Always parse and clean the text, regardless of emotion detection method
+    original_text = text
+    clean_text = text
+    llm_emotion = None
+    
     if text is not None:
-        emotion = analyze_emotion(text)
-        emoji = emoji_map.get(emotion, "🙂")  # 默认使用笑脸
+        # Parse LLM response to extract emotion and clean text
+        clean_text, llm_emotion = parse_llm_response_with_emotion(text)
+        
+        # Debug logging to see what's happening with text cleaning
+        if clean_text != original_text:
+            conn.logger.bind(tag=TAG).info(f"🧹 Text cleaned: '{original_text}' -> '{clean_text}'")
+        else:
+            conn.logger.bind(tag=TAG).info(f"🧹 No cleaning needed: '{original_text}'")
+            
+        # Emotion detection: LLM emotion tags take priority over keyword analysis
+        if llm_emotion and llm_emotion in emotion_manager.get_emotion_list():
+            emotion = llm_emotion
+            conn.logger.bind(tag=TAG).info(f"✅ Robot expressing LLM-tagged emotion: '{emotion}' (from response tag)")
+        else:
+            # Fallback to keyword-based analysis (using original text for analysis)
+            emotion = analyze_emotion(original_text)
+            conn.logger.bind(tag=TAG).info(f"🔄 Robot expressing keyword-based emotion: '{emotion}' (from keyword analysis)")
+        
+        # Get emoji from emotion manager
+        emoji = emotion_manager.get_emoji(emotion)
+        conn.logger.bind(tag=TAG).info(f"🎭 Emotion '{emotion}' mapped to emoji: {emoji}")
+        
         await conn.websocket.send(
             json.dumps(
                 {
@@ -48,17 +54,22 @@ async def sendAudioMessage(conn, sentenceType, audios, text):
                 }
             )
         )
+    
+    # Always use clean_text for TTS operations to avoid emotion tags being spoken
     pre_buffer = False
-    if conn.tts.tts_audio_first_sentence and text is not None:
-        conn.logger.bind(tag=TAG).info(f"sending first audio: {text}")
+    if conn.tts.tts_audio_first_sentence and clean_text is not None:
+        conn.logger.bind(tag=TAG).info(f"sending first audio: {clean_text}")
         conn.tts.tts_audio_first_sentence = False
         pre_buffer = True
 
-    await send_tts_message(conn, "sentence_start", text)
+    # Debug logging for TTS calls
+    conn.logger.bind(tag=TAG).info(f"🔊 TTS sentence_start with text: '{clean_text}'")
+    await send_tts_message(conn, "sentence_start", clean_text)
 
     await sendAudio(conn, audios, pre_buffer)
 
-    await send_tts_message(conn, "sentence_end", text)
+    conn.logger.bind(tag=TAG).info(f"🔊 TTS sentence_end with text: '{clean_text}'")
+    await send_tts_message(conn, "sentence_end", clean_text)
 
     # 发送结束消息（如果是最后一个文本）
     if conn.llm_finish_task and sentenceType == SentenceType.LAST:
