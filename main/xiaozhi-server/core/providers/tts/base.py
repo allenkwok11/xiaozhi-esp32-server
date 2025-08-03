@@ -1,5 +1,4 @@
 import os
-import re
 import queue
 import uuid
 import asyncio
@@ -79,7 +78,10 @@ class TTSProviderBase(ABC):
         )
 
     def to_tts(self, text):
+        # Clean markdown and emotion tags for TTS
         text = MarkdownCleaner.clean_markdown(text)
+        logger.bind(tag=TAG).debug(f"Text cleaned for TTS synthesis: '{text[:50]}...'")
+        
         max_repeat_time = 5
         if self.delete_audio_file:
             # 需要删除文件的直接转为音频数据
@@ -170,18 +172,15 @@ class TTSProviderBase(ABC):
                 content_type=ContentType.ACTION,
             )
         )
-        # 对于单句的文本，进行分段处理
-        segments = re.split(r'([。！？!?；;\n])', content_detail)
-        for seg in segments:
-            self.tts_text_queue.put(
-                TTSMessageDTO(
-                    sentence_id=sentence_id,
-                    sentence_type=SentenceType.MIDDLE,
-                    content_type=content_type,
-                    content_detail=seg,
-                    content_file=content_file,
-                )
+        self.tts_text_queue.put(
+            TTSMessageDTO(
+                sentence_id=sentence_id,
+                sentence_type=SentenceType.MIDDLE,
+                content_type=content_type,
+                content_detail=content_detail,
+                content_file=content_file,
             )
+        )
         self.tts_text_queue.put(
             TTSMessageDTO(
                 sentence_id=sentence_id,
