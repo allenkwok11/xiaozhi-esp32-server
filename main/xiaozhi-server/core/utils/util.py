@@ -11,31 +11,16 @@ import requests
 import opuslib_next
 from pydub import AudioSegment
 import copy
+from loguru import logger
 
 TAG = __name__
-emoji_map = {
-    "neutral": "😶",
-    "happy": "🙂",
-    "laughing": "😆",
-    "funny": "😂",
-    "sad": "😔",
-    "angry": "😠",
-    "crying": "😭",
-    "loving": "😍",
-    "embarrassed": "😳",
-    "surprised": "😲",
-    "shocked": "😱",
-    "thinking": "🤔",
-    "winking": "😉",
-    "cool": "😎",
-    "relaxed": "😌",
-    "delicious": "🤤",
-    "kissy": "😘",
-    "confident": "😏",
-    "sleepy": "😴",
-    "silly": "😜",
-    "confused": "🙄",
-}
+
+# Import emotion manager - avoid circular import by importing here
+try:
+    from core.utils.emotion_manager import emotion_manager
+except ImportError:
+    # Fallback if emotion_manager is not available
+    emotion_manager = None
 
 
 def get_local_ip():
@@ -247,16 +232,28 @@ def extract_json_from_string(input_string):
 def analyze_emotion(text):
     """
     分析文本情感并返回对应的emoji名称（支持中英文）
+    Now uses emotion_manager for configuration
     """
     if not text or not isinstance(text, str):
-        return "neutral"
+        default_emotion = emotion_manager.default_emotion if emotion_manager else "neutral"
+        logger.info(f"📝 Text is empty or invalid, returning default emotion: '{default_emotion}'")
+        return default_emotion
 
     original_text = text
     text = text.lower().strip()
 
+    # Check if emotion_manager is available
+    if not emotion_manager:
+        logger.warning("⚠️ emotion_manager not available, returning neutral")
+        return "neutral"
+
+    logger.info(f"🔍 Starting emotion analysis for text: '{original_text[:100]}...'")
+
     # 检查是否包含现有emoji
-    for emotion, emoji in emoji_map.items():
+    for emotion in emotion_manager.get_emotion_list():
+        emoji = emotion_manager.get_emoji(emotion)
         if emoji in original_text:
+            logger.info(f"😀 Detected emoji {emoji}, returning emotion: '{emotion}'")
             return emotion
 
     # 标点符号分析
@@ -264,360 +261,8 @@ def analyze_emotion(text):
     has_question = "?" in original_text or "？" in original_text
     has_ellipsis = "..." in original_text or "…" in original_text
 
-    # 定义情感关键词映射（中英文扩展版）
-    emotion_keywords = {
-        "happy": [
-            "开心",
-            "高兴",
-            "快乐",
-            "愉快",
-            "幸福",
-            "满意",
-            "棒",
-            "好",
-            "不错",
-            "完美",
-            "棒极了",
-            "太好了",
-            "好呀",
-            "好的",
-            "happy",
-            "joy",
-            "great",
-            "good",
-            "nice",
-            "awesome",
-            "fantastic",
-            "wonderful",
-        ],
-        "laughing": [
-            "哈哈",
-            "哈哈哈",
-            "呵呵",
-            "嘿嘿",
-            "嘻嘻",
-            "笑死",
-            "太好笑了",
-            "笑死我了",
-            "lol",
-            "lmao",
-            "haha",
-            "hahaha",
-            "hehe",
-            "rofl",
-            "funny",
-            "laugh",
-        ],
-        "funny": [
-            "搞笑",
-            "滑稽",
-            "逗",
-            "幽默",
-            "笑点",
-            "段子",
-            "笑话",
-            "太逗了",
-            "hilarious",
-            "joke",
-            "comedy",
-        ],
-        "sad": [
-            "伤心",
-            "难过",
-            "悲哀",
-            "悲伤",
-            "忧郁",
-            "郁闷",
-            "沮丧",
-            "失望",
-            "想哭",
-            "难受",
-            "不开心",
-            "唉",
-            "呜呜",
-            "sad",
-            "upset",
-            "unhappy",
-            "depressed",
-            "sorrow",
-            "gloomy",
-        ],
-        "angry": [
-            "生气",
-            "愤怒",
-            "气死",
-            "讨厌",
-            "烦人",
-            "可恶",
-            "烦死了",
-            "恼火",
-            "暴躁",
-            "火大",
-            "愤怒",
-            "气炸了",
-            "angry",
-            "mad",
-            "annoyed",
-            "furious",
-            "pissed",
-            "hate",
-        ],
-        "crying": [
-            "哭泣",
-            "泪流",
-            "大哭",
-            "伤心欲绝",
-            "泪目",
-            "流泪",
-            "哭死",
-            "哭晕",
-            "想哭",
-            "泪崩",
-            "cry",
-            "crying",
-            "tears",
-            "sob",
-            "weep",
-        ],
-        "loving": [
-            "爱你",
-            "喜欢",
-            "爱",
-            "亲爱的",
-            "宝贝",
-            "么么哒",
-            "抱抱",
-            "想你",
-            "思念",
-            "最爱",
-            "亲亲",
-            "喜欢你",
-            "love",
-            "like",
-            "adore",
-            "darling",
-            "sweetie",
-            "honey",
-            "miss you",
-            "heart",
-        ],
-        "embarrassed": [
-            "尴尬",
-            "不好意思",
-            "害羞",
-            "脸红",
-            "难为情",
-            "社死",
-            "丢脸",
-            "出丑",
-            "embarrassed",
-            "awkward",
-            "shy",
-            "blush",
-        ],
-        "surprised": [
-            "惊讶",
-            "吃惊",
-            "天啊",
-            "哇塞",
-            "哇",
-            "居然",
-            "竟然",
-            "没想到",
-            "出乎意料",
-            "surprise",
-            "wow",
-            "omg",
-            "oh my god",
-            "amazing",
-            "unbelievable",
-        ],
-        "shocked": [
-            "震惊",
-            "吓到",
-            "惊呆了",
-            "不敢相信",
-            "震撼",
-            "吓死",
-            "恐怖",
-            "害怕",
-            "吓人",
-            "shocked",
-            "shocking",
-            "scared",
-            "frightened",
-            "terrified",
-            "horror",
-        ],
-        "thinking": [
-            "思考",
-            "考虑",
-            "想一下",
-            "琢磨",
-            "沉思",
-            "冥想",
-            "想",
-            "思考中",
-            "在想",
-            "think",
-            "thinking",
-            "consider",
-            "ponder",
-            "meditate",
-        ],
-        "winking": [
-            "调皮",
-            "眨眼",
-            "你懂的",
-            "坏笑",
-            "邪恶",
-            "奸笑",
-            "使眼色",
-            "wink",
-            "teasing",
-            "naughty",
-            "mischievous",
-        ],
-        "cool": [
-            "酷",
-            "帅",
-            "厉害",
-            "棒极了",
-            "真棒",
-            "牛逼",
-            "强",
-            "优秀",
-            "杰出",
-            "出色",
-            "完美",
-            "cool",
-            "awesome",
-            "amazing",
-            "great",
-            "impressive",
-            "perfect",
-        ],
-        "relaxed": [
-            "放松",
-            "舒服",
-            "惬意",
-            "悠闲",
-            "轻松",
-            "舒适",
-            "安逸",
-            "自在",
-            "relax",
-            "relaxed",
-            "comfortable",
-            "cozy",
-            "chill",
-            "peaceful",
-        ],
-        "delicious": [
-            "好吃",
-            "美味",
-            "香",
-            "馋",
-            "可口",
-            "香甜",
-            "大餐",
-            "大快朵颐",
-            "流口水",
-            "垂涎",
-            "delicious",
-            "yummy",
-            "tasty",
-            "yum",
-            "appetizing",
-            "mouthwatering",
-        ],
-        "kissy": [
-            "亲亲",
-            "么么",
-            "吻",
-            "mua",
-            "muah",
-            "亲一下",
-            "飞吻",
-            "kiss",
-            "xoxo",
-            "hug",
-            "muah",
-            "smooch",
-        ],
-        "confident": [
-            "自信",
-            "肯定",
-            "确定",
-            "毫无疑问",
-            "当然",
-            "必须的",
-            "毫无疑问",
-            "确信",
-            "坚信",
-            "confident",
-            "sure",
-            "certain",
-            "definitely",
-            "positive",
-        ],
-        "sleepy": [
-            "困",
-            "睡觉",
-            "晚安",
-            "想睡",
-            "好累",
-            "疲惫",
-            "疲倦",
-            "困了",
-            "想休息",
-            "睡意",
-            "sleep",
-            "sleepy",
-            "tired",
-            "exhausted",
-            "bedtime",
-            "good night",
-        ],
-        "silly": [
-            "傻",
-            "笨",
-            "呆",
-            "憨",
-            "蠢",
-            "二",
-            "憨憨",
-            "傻乎乎",
-            "呆萌",
-            "silly",
-            "stupid",
-            "dumb",
-            "foolish",
-            "goofy",
-            "ridiculous",
-        ],
-        "confused": [
-            "疑惑",
-            "不明白",
-            "不懂",
-            "困惑",
-            "疑问",
-            "为什么",
-            "怎么回事",
-            "啥意思",
-            "不清楚",
-            "confused",
-            "puzzled",
-            "doubt",
-            "question",
-            "what",
-            "why",
-            "how",
-        ],
-    }
-
     # 特殊句型判断（中英文）
-    # 赞美他人
+    # 赞美他人 - 圣诞节主题
     if any(
         phrase in text
         for phrase in [
@@ -637,8 +282,9 @@ def analyze_emotion(text):
             "so kind",
         ]
     ):
-        return "loving"
-    # 自我赞美
+        logger.info("💖 Detected praise pattern, returning emotion: 'heart'")
+        return "heart"
+    # 自我赞美 - 圣诞节主题
     if any(
         phrase in text
         for phrase in [
@@ -655,8 +301,9 @@ def analyze_emotion(text):
             "so happy",
         ]
     ):
-        return "cool"
-    # 晚安/睡觉相关
+        logger.info("🧝 Detected self-praise pattern, returning emotion: 'elf'")
+        return "elf"
+    # 晚安/睡觉相关 - 保持一致
     if any(
         phrase in text
         for phrase in [
@@ -672,85 +319,152 @@ def analyze_emotion(text):
             "go to bed",
         ]
     ):
-        return "sleepy"
-    # 疑问句
+        logger.info("😴 Detected sleep-related pattern, returning emotion: 'sleep'")
+        return "sleep"
+    # 疑问句 - 圣诞节主题
     if has_question and not has_exclamation:
-        return "thinking"
-    # 强烈情感（感叹号）
+        logger.info("❓ Detected question pattern, returning emotion: 'star'")
+        return "star"
+    # 强烈情感（感叹号）- 圣诞节主题
     if has_exclamation and not has_question:
-        # 检查是否是积极内容
-        positive_words = (
-            emotion_keywords["happy"]
-            + emotion_keywords["laughing"]
-            + emotion_keywords["cool"]
-        )
-        if any(word in text for word in positive_words):
-            return "laughing"
-        # 检查是否是消极内容
-        negative_words = (
-            emotion_keywords["angry"]
-            + emotion_keywords["sad"]
-            + emotion_keywords["crying"]
-        )
-        if any(word in text for word in negative_words):
-            return "angry"
-        return "surprised"
-    # 省略号（表示犹豫或思考）
+        # 对于感叹句，默认使用铃铛
+        logger.info("❗ Detected exclamation pattern, returning emotion: 'bell'")
+        return "bell"
+    # 省略号（表示犹豫或思考）- 圣诞节主题
     if has_ellipsis:
-        return "thinking"
+        logger.info("❄️ Detected ellipsis pattern, returning emotion: 'snowman'")
+        return "snowman"
 
     # 关键词匹配（带权重）
-    emotion_scores = {emotion: 0 for emotion in emoji_map.keys()}
+    logger.info("🔍 Starting keyword matching analysis...")
+    emotion_scores = {emotion: 0 for emotion in emotion_manager.get_emotion_list()}
 
-    # 给匹配到的关键词加分
-    for emotion, keywords in emotion_keywords.items():
+    # Use emotion_manager to get keywords for each emotion
+    matched_keywords = []
+    for emotion in emotion_manager.get_emotion_list():
+        keywords = emotion_manager.get_keywords_for_emotion(emotion)
         for keyword in keywords:
             if keyword in text:
                 emotion_scores[emotion] += 1
+                matched_keywords.append(f"{keyword}({emotion})")
+
+    if matched_keywords:
+        logger.info(f"✅ Matched keywords: {', '.join(matched_keywords[:5])}{'...' if len(matched_keywords) > 5 else ''}")
+    else:
+        logger.info("❌ No keywords matched")
 
     # 给长文本中的重复关键词额外加分
     if len(text) > 20:  # 长文本
-        for emotion, keywords in emotion_keywords.items():
+        logger.info("📏 Long text detected, calculating repeated keyword weights...")
+        for emotion in emotion_manager.get_emotion_list():
+            keywords = emotion_manager.get_keywords_for_emotion(emotion)
             for keyword in keywords:
-                emotion_scores[emotion] += text.count(keyword) * 0.5
+                repeat_count = text.count(keyword)
+                if repeat_count > 1:
+                    bonus_score = int(repeat_count * 0.5)
+                    emotion_scores[emotion] += bonus_score
+                    logger.debug(f"🔄 Keyword '{keyword}' repeated {repeat_count} times, {emotion} +{bonus_score} points")
 
     # 根据分数选择最可能的情感
     max_score = max(emotion_scores.values())
+    
+    # Log emotion scores
+    scored_emotions = [(e, s) for e, s in emotion_scores.items() if s > 0]
+    if scored_emotions:
+        logger.info(f"🏆 Emotion score ranking: {sorted(scored_emotions, key=lambda x: x[1], reverse=True)}")
+    
     if max_score == 0:
-        return "happy"  # 默认
+        default_emotion = emotion_manager.default_emotion
+        logger.info(f"🤔 No matching emotions found, returning default emotion: '{default_emotion}'")
+        return default_emotion
 
     # 可能有多个情感同分，根据上下文选择最合适的
     top_emotions = [e for e, s in emotion_scores.items() if s == max_score]
+    
+    if len(top_emotions) == 1:
+        selected_emotion = top_emotions[0]
+        logger.info(f"🎯 Single highest scoring emotion: '{selected_emotion}' (score: {max_score})")
+        return selected_emotion
+    else:
+        logger.info(f"⚖️ Multiple emotions tied ({max_score} points): {top_emotions}")
 
-    # 如果多个情感同分，使用以下优先级
+    # 如果多个情感同分，使用以下优先级（圣诞主题）
     priority_order = [
-        "laughing",
-        "crying",
-        "angry",
-        "surprised",
-        "shocked",  # 强烈情感优先
-        "loving",
-        "happy",
-        "funny",
-        "cool",  # 积极情感
-        "sad",
-        "embarrassed",
-        "confused",  # 消极情感
-        "thinking",
-        "winking",
-        "relaxed",  # 中性情感
-        "delicious",
-        "kissy",
-        "confident",
-        "sleepy",
-        "silly",  # 特殊场景
+        # 节日相关情感优先
+        "cookie",
+        "elf",
+        "deer",
+        "snowman",
+        "sleep",
+        "heart",
+        "bell",
+        "star",
     ]
 
     for emotion in priority_order:
         if emotion in top_emotions:
+            logger.info(f"🎪 Selected emotion by priority: '{emotion}' (priority: {priority_order.index(emotion) + 1})")
             return emotion
 
-    return top_emotions[0]  # 如果都不在优先级列表里，返回第一个
+    selected_emotion = top_emotions[0]
+    logger.info(f"🎲 Not found in priority list, selecting first: '{selected_emotion}'")
+    return selected_emotion
+
+
+def parse_llm_response_with_emotion(text):
+    """
+    Parse LLM response to separate emotion and clean text
+    Handles formats like [emotion:description] or [EMOTION:emotion_name]
+    Returns tuple: (clean_text, emotion)
+    """
+    if not text:
+        return text, None
+    
+    logger.info(f"🔍 Parsing text for emotion tags: '{text}'")
+    
+    # Look for [emotion:description] or [EMOTION:emotion_name] pattern
+    import re
+    
+    # Pattern to match [EMOTION:emotion_name] - capture what comes after the colon, handle backticks
+    emotion_pattern = r'^\[EMOTION:`?([^`\]]+)`?\]\s*'
+    match = re.match(emotion_pattern, text.strip())
+    
+    if match:
+        emotion = match.group(1).lower().strip()
+        # Remove the emotion tag from the text
+        clean_text = re.sub(emotion_pattern, '', text.strip())
+        
+        logger.info(f"🎭 Found EMOTION tag: '{match.group(0)}' -> emotion: '{emotion}', clean_text: '{clean_text}'")
+        
+        # Validate that the emotion exists in our configuration
+        if emotion_manager and emotion in emotion_manager.get_emotion_list():
+            logger.info(f"🎭 Parsed LLM emotion '{emotion}' from EMOTION tag")
+            return clean_text, emotion
+        else:
+            logger.warning(f"⚠️ LLM provided unknown emotion '{emotion}', ignoring tag")
+            return clean_text, None
+    
+    # Also check for [emotion:description] format (like [sleep:sleep] or [cookie:愉悦])
+    emotion_pattern_alt = r'^\[([^:]+):[^]]+\]\s*'
+    match = re.match(emotion_pattern_alt, text.strip())
+    
+    if match:
+        emotion = match.group(1).lower().strip()
+        # Remove the emotion tag from the text
+        clean_text = re.sub(emotion_pattern_alt, '', text.strip())
+        
+        logger.info(f"🎭 Found alt emotion tag: '{match.group(0)}' -> emotion: '{emotion}', clean_text: '{clean_text}'")
+        
+        # Validate that the emotion exists in our configuration
+        if emotion_manager and emotion in emotion_manager.get_emotion_list():
+            logger.info(f"🎭 Parsed LLM emotion '{emotion}' from alt tag")
+            return clean_text, emotion
+        else:
+            logger.warning(f"⚠️ LLM provided unknown emotion '{emotion}', ignoring tag")
+            return clean_text, None
+    
+    logger.info(f"🤔 No emotion tag found in text")
+    return text, None
 
 
 def audio_to_data(audio_file_path, is_opus=True):
