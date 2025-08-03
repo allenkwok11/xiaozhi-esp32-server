@@ -1,0 +1,51 @@
+emotions:
+  bell:
+    emoji: "🔔"
+    description: "Excitement, blessings, notifications"
+    keywords: ["bell", "ring", "jingle", "chime", "ding", "blessing", "wish", "notification", "announce", "celebrate"]
+  
+  cookie:
+    emoji: "🍪"
+    description: "Joy, food satisfaction, treats"
+    keywords: ["cookie", "treat", "sweet", "dessert", "cake", "pastry", "delicious", "tasty", "yummy", "snack"]
+  
+  deer:
+    emoji: "🦌"
+    description: "Natural, calm, forest-related"
+    keywords: ["reindeer", "deer", "rudolph", "antlers", "forest", "woodland", "nature", "snow", "winter"]
+  
+  heart:
+    emoji: "❤️"
+    description: "Love, care, warmth"
+    keywords: ["heart", "love", "care", "affection", "warm", "caring", "tender", "compassion", "kindness", "cherish"]
+  
+  sleep:
+    emoji: "😴"
+    description: "Tired, rest, good night"
+    keywords: ["sleep", "rest", "tired", "sleepy", "exhausted", "nap", "bed", "good night", "drowsy", "weary"]
+  
+  snowman:
+    emoji: "☃️"
+    description: "Thinking, hesitation, winter"
+    keywords: ["snowman", "winter", "snow", "cold", "ice", "thinking", "ponder", "wonder", "consider", "frost"]
+  
+  star:
+    emoji: "⭐"
+    description: "Curiosity, questions, hope"
+    keywords: ["star", "bright", "shine", "sparkle", "twinkle", "hope", "dream", "wish", "wonder", "curious"]
+  
+  elf:
+    emoji: "🧝"
+    description: "Confidence, creativity, helpful"
+    keywords: ["elf", "helper", "assistant", "creative", "crafty", "workshop", "magic", "helpful", "skillful", "handy"]
+
+  neutral:
+    emoji: "😐"
+    description: "Neutral, no specific emotion"
+    keywords: ["neutral", "indifferent", "calm", "unemotional", "balanced", "steady", "unbiased", "objective", "impartial", "equanimous"]
+# Default emotion with no assigned data (neutral)
+default_emotion: "neutral"
+
+# Emotion detection settings
+context_analysis: true
+fallback_to_keywords: true
