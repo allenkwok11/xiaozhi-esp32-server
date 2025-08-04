@@ -3,49 +3,74 @@ emotions:
     emoji: "🔔"
     description: "Excitement, blessings, notifications"
     keywords: ["bell", "ring", "jingle", "chime", "ding", "blessing", "wish", "notification", "announce", "celebrate"]
+    weight: 1.2  # Higher weight for celebration/excitement emotions
   
   cookie:
     emoji: "🍪"
     description: "Joy, food satisfaction, treats"
     keywords: ["cookie", "treat", "sweet", "dessert", "cake", "pastry", "delicious", "tasty", "yummy", "snack"]
+    weight: 1.0  # Standard weight for general joy
   
   deer:
     emoji: "🦌"
     description: "Natural, calm, forest-related"
     keywords: ["reindeer", "deer", "rudolph", "antlers", "forest", "woodland", "nature", "snow", "winter"]
+    weight: 0.8  # Lower weight for nature-themed emotions
   
   heart:
     emoji: "❤️"
     description: "Love, care, warmth"
     keywords: ["heart", "love", "care", "affection", "warm", "caring", "tender", "compassion", "kindness", "cherish"]
+    weight: 1.5  # Highest weight for love/care emotions
   
   sleep:
     emoji: "😴"
     description: "Tired, rest, good night"
     keywords: ["sleep", "rest", "tired", "sleepy", "exhausted", "nap", "bed", "good night", "drowsy", "weary"]
+    weight: 1.3  # High weight for sleep-related emotions
   
   snowman:
     emoji: "☃️"
     description: "Thinking, hesitation, winter"
     keywords: ["snowman", "winter", "snow", "cold", "ice", "thinking", "ponder", "wonder", "consider", "frost"]
+    weight: 0.9  # Moderate weight for thinking emotions
   
   star:
     emoji: "⭐"
     description: "Curiosity, questions, hope"
     keywords: ["star", "bright", "shine", "sparkle", "twinkle", "hope", "dream", "wish", "wonder", "curious"]
+    weight: 1.1  # Moderate-high weight for curiosity/hope emotions
   
   elf:
     emoji: "🧝"
     description: "Confidence, creativity, helpful"
     keywords: ["elf", "helper", "assistant", "creative", "crafty", "workshop", "magic", "helpful", "skillful", "handy"]
+    weight: 1.0  # Standard weight for helpful emotions
 
   neutral:
     emoji: "😐"
     description: "Neutral, no specific emotion"
     keywords: ["neutral", "indifferent", "calm", "unemotional", "balanced", "steady", "unbiased", "objective", "impartial", "equanimous"]
+    weight: 0.5  # Lower weight for neutral - should be fallback
 # Default emotion with no assigned data (neutral)
 default_emotion: "neutral"
 
 # Emotion detection settings
 context_analysis: true
 fallback_to_keywords: true
+
+# Emotion persistence and decay settings
+emotion_persistence:
+  # Enable emotion persistence across chunks
+  enabled: true
+  
+  # LLM emotion scoring (to match keyword scoring scale)
+  llm_base_score: 5.0  # Base score when LLM provides emotion tag
+  
+  # Decay parameters (radioactive half-life model)
+  half_life_chunks: 2.0  # Number of chunks for emotion strength to halve
+  minimum_score: 0.1     # Minimum score before emotion is considered expired
+  
+  # Scoring weights for fair comparison
+  keyword_multiplier: 1.0  # Multiplier for keyword-based scores
+  llm_multiplier: 1.0      # Multiplier for LLM-based scores (after decay)

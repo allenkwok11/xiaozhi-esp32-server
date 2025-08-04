@@ -12,8 +12,64 @@ import opuslib_next
 from pydub import AudioSegment
 import copy
 from loguru import logger
+import math
+import time
+from typing import Dict, Optional
 
 TAG = __name__
+
+# Global emotion persistence tracker
+class EmotionPersistenceTracker:
+    def __init__(self):
+        self.persistent_emotions = {}  # {emotion: {'score': float, 'timestamp': float, 'chunk_count': int}}
+        self.chunk_counter = 0
+        
+    def add_llm_emotion(self, emotion: str, base_score: float = 5.0):
+        """Add or update LLM-detected emotion with fresh score"""
+        current_time = time.time()
+        self.persistent_emotions[emotion] = {
+            'score': base_score,
+            'timestamp': current_time,
+            'chunk_count': self.chunk_counter,
+            'source': 'llm'
+        }
+        logger.info(f"🎭 LLM emotion '{emotion}' added with score {base_score} at chunk {self.chunk_counter}")
+    
+    def decay_emotions(self, half_life_chunks: float = 3.0, minimum_score: float = 0.1):
+        """Apply radioactive decay to persistent emotions"""
+        self.chunk_counter += 1
+        expired_emotions = []
+        
+        for emotion, data in self.persistent_emotions.items():
+            chunks_elapsed = self.chunk_counter - data['chunk_count']
+            
+            # Radioactive decay formula: N(t) = N₀ * (1/2)^(t/t_half)
+            decay_factor = (0.5) ** (chunks_elapsed / half_life_chunks)
+            new_score = data['score'] * decay_factor
+            
+            if new_score >= minimum_score:
+                data['score'] = new_score
+                logger.debug(f"🔄 Emotion '{emotion}' decayed: {data['score']:.2f} -> {new_score:.2f} (chunks: {chunks_elapsed})")
+            else:
+                expired_emotions.append(emotion)
+                logger.info(f"💀 Emotion '{emotion}' expired after {chunks_elapsed} chunks (score: {new_score:.3f} < {minimum_score})")
+        
+        # Remove expired emotions
+        for emotion in expired_emotions:
+            del self.persistent_emotions[emotion]
+    
+    def get_persistent_scores(self) -> Dict[str, float]:
+        """Get current scores of all persistent emotions"""
+        return {emotion: data['score'] for emotion, data in self.persistent_emotions.items()}
+    
+    def clear(self):
+        """Clear all persistent emotions (for testing or reset)"""
+        self.persistent_emotions.clear()
+        self.chunk_counter = 0
+        logger.info("🧹 Emotion persistence tracker cleared")
+
+# Global instance
+emotion_persistence = EmotionPersistenceTracker()
 
 # Import emotion manager - avoid circular import by importing here
 try:
@@ -365,49 +421,35 @@ def analyze_emotion(text):
                     emotion_scores[emotion] += bonus_score
                     logger.debug(f"🔄 Keyword '{keyword}' repeated {repeat_count} times, {emotion} +{bonus_score} points")
 
-    # 根据分数选择最可能的情感
-    max_score = max(emotion_scores.values())
+    # Apply weighted scoring system instead of simple priority
+    emotion_weights = emotion_manager.get_all_emotion_weights()
+    weighted_scores = {}
     
-    # Log emotion scores
-    scored_emotions = [(e, s) for e, s in emotion_scores.items() if s > 0]
-    if scored_emotions:
-        logger.info(f"🏆 Emotion score ranking: {sorted(scored_emotions, key=lambda x: x[1], reverse=True)}")
+    for emotion, raw_score in emotion_scores.items():
+        if raw_score > 0:
+            weight = emotion_weights.get(emotion, 1.0)
+            weighted_score = raw_score * weight
+            weighted_scores[emotion] = weighted_score
+            logger.debug(f"🎯 {emotion}: raw_score={raw_score} × weight={weight} = weighted_score={weighted_score:.2f}")
     
-    if max_score == 0:
+    # Log emotion scores (both raw and weighted)
+    if weighted_scores:
+        sorted_weighted = sorted(weighted_scores.items(), key=lambda x: x[1], reverse=True)
+        sorted_raw = sorted([(e, emotion_scores[e]) for e in weighted_scores.keys()], key=lambda x: x[1], reverse=True)
+        logger.info(f"� Raw scores: {sorted_raw}")
+        logger.info(f"⚖️ Weighted scores: {[(e, f'{s:.2f}') for e, s in sorted_weighted]}")
+    
+    if not weighted_scores:
         default_emotion = emotion_manager.default_emotion
         logger.info(f"🤔 No matching emotions found, returning default emotion: '{default_emotion}'")
         return default_emotion
 
-    # 可能有多个情感同分，根据上下文选择最合适的
-    top_emotions = [e for e, s in emotion_scores.items() if s == max_score]
+    # Select emotion with highest weighted score
+    best_emotion = max(weighted_scores.items(), key=lambda x: x[1])
+    selected_emotion = best_emotion[0]
+    final_score = best_emotion[1]
     
-    if len(top_emotions) == 1:
-        selected_emotion = top_emotions[0]
-        logger.info(f"🎯 Single highest scoring emotion: '{selected_emotion}' (score: {max_score})")
-        return selected_emotion
-    else:
-        logger.info(f"⚖️ Multiple emotions tied ({max_score} points): {top_emotions}")
-
-    # 如果多个情感同分，使用以下优先级（圣诞主题）
-    priority_order = [
-        # 节日相关情感优先
-        "cookie",
-        "elf",
-        "deer",
-        "snowman",
-        "sleep",
-        "heart",
-        "bell",
-        "star",
-    ]
-
-    for emotion in priority_order:
-        if emotion in top_emotions:
-            logger.info(f"🎪 Selected emotion by priority: '{emotion}' (priority: {priority_order.index(emotion) + 1})")
-            return emotion
-
-    selected_emotion = top_emotions[0]
-    logger.info(f"🎲 Not found in priority list, selecting first: '{selected_emotion}'")
+    logger.info(f"� Selected emotion: '{selected_emotion}' (weighted score: {final_score:.2f})")
     return selected_emotion
 
 
@@ -439,6 +481,13 @@ def parse_llm_response_with_emotion(text):
         # Validate that the emotion exists in our configuration
         if emotion_manager and emotion in emotion_manager.get_emotion_list():
             logger.info(f"🎭 Parsed LLM emotion '{emotion}' from EMOTION tag")
+            
+            # Store LLM emotion for persistence if enabled
+            if emotion_manager.is_persistence_enabled():
+                persistence_config = emotion_manager.get_persistence_config()
+                base_score = persistence_config.get('llm_base_score', 5.0)
+                emotion_persistence.add_llm_emotion(emotion, base_score)
+            
             return clean_text, emotion
         else:
             logger.warning(f"⚠️ LLM provided unknown emotion '{emotion}', ignoring tag")
@@ -458,6 +507,13 @@ def parse_llm_response_with_emotion(text):
         # Validate that the emotion exists in our configuration
         if emotion_manager and emotion in emotion_manager.get_emotion_list():
             logger.info(f"🎭 Parsed LLM emotion '{emotion}' from alt tag")
+            
+            # Store LLM emotion for persistence if enabled
+            if emotion_manager.is_persistence_enabled():
+                persistence_config = emotion_manager.get_persistence_config()
+                base_score = persistence_config.get('llm_base_score', 5.0)
+                emotion_persistence.add_llm_emotion(emotion, base_score)
+            
             return clean_text, emotion
         else:
             logger.warning(f"⚠️ LLM provided unknown emotion '{emotion}', ignoring tag")
@@ -465,6 +521,134 @@ def parse_llm_response_with_emotion(text):
     
     logger.info(f"🤔 No emotion tag found in text")
     return text, None
+
+
+def select_emotion_with_persistence(text: str, llm_emotion: Optional[str] = None, persistence_tracker: Optional[EmotionPersistenceTracker] = None) -> str:
+    """
+    Unified emotion selection with persistence and decay
+    Combines LLM emotions (fresh + persistent) with keyword analysis
+    Returns the best emotion based on comparable scoring
+    """
+    if not emotion_manager:
+        logger.warning("⚠️ emotion_manager not available")
+        return "neutral"
+    
+    # Use global persistence tracker if none provided
+    if persistence_tracker is None:
+        persistence_tracker = emotion_persistence
+    
+    persistence_config = emotion_manager.get_persistence_config()
+    is_persistence_enabled = emotion_manager.is_persistence_enabled()
+    
+    logger.info(f"🎭 Starting unified emotion selection for: '{text[:50]}...'")
+    
+    # Step 1: Decay existing persistent emotions
+    if is_persistence_enabled:
+        half_life = persistence_config.get('half_life_chunks', 3.0)
+        min_score = persistence_config.get('minimum_score', 0.1)
+        persistence_tracker.decay_emotions(half_life, min_score)
+    
+    # Step 2: Get all emotion scores
+    emotion_scores = {}
+    
+    # A) Fresh LLM emotion (highest priority if provided)
+    if llm_emotion and llm_emotion in emotion_manager.get_emotion_list():
+        base_score = persistence_config.get('llm_base_score', 5.0)
+        llm_multiplier = persistence_config.get('llm_multiplier', 1.0)
+        emotion_scores[llm_emotion] = base_score * llm_multiplier
+        logger.info(f"✨ Fresh LLM emotion '{llm_emotion}': score = {emotion_scores[llm_emotion]:.2f}")
+        
+        # Add fresh LLM emotion to persistence tracker
+        if is_persistence_enabled:
+            persistence_tracker.add_llm_emotion(llm_emotion, base_score)
+    
+    # B) Persistent LLM emotions (decayed scores)
+    if is_persistence_enabled:
+        persistent_scores = persistence_tracker.get_persistent_scores()
+        llm_multiplier = persistence_config.get('llm_multiplier', 1.0)
+        for emotion, score in persistent_scores.items():
+            # Fresh LLM emotion takes precedence over persistent one
+            if emotion not in emotion_scores:
+                emotion_scores[emotion] = score * llm_multiplier
+                logger.info(f"🔄 Persistent LLM emotion '{emotion}': score = {emotion_scores[emotion]:.2f}")
+    
+    # C) Keyword-based emotions (using existing analyze_emotion logic)
+    keyword_scores = _calculate_keyword_scores(text)
+    keyword_multiplier = persistence_config.get('keyword_multiplier', 1.0)
+    
+    for emotion, score in keyword_scores.items():
+        # Only add keyword score if no LLM score exists, or combine them intelligently
+        if emotion not in emotion_scores:
+            emotion_scores[emotion] = score * keyword_multiplier
+            logger.info(f"🔤 Keyword emotion '{emotion}': score = {emotion_scores[emotion]:.2f}")
+        else:
+            # Optional: Add keyword reinforcement to existing LLM emotions
+            reinforcement = score * keyword_multiplier * 0.2  # 20% reinforcement
+            emotion_scores[emotion] += reinforcement
+            logger.debug(f"💪 Keyword reinforcement for '{emotion}': +{reinforcement:.2f}")
+    
+    # Step 3: Select best emotion
+    if not emotion_scores:
+        default_emotion = emotion_manager.default_emotion
+        logger.info(f"🤔 No emotions detected, using default: '{default_emotion}'")
+        return default_emotion
+    
+    # Find highest scoring emotion
+    best_emotion = max(emotion_scores.items(), key=lambda x: x[1])
+    selected_emotion = best_emotion[0]
+    final_score = best_emotion[1]
+    
+    # Log final results
+    sorted_scores = sorted(emotion_scores.items(), key=lambda x: x[1], reverse=True)
+    logger.info(f"🏆 Final emotion scores: {[(e, f'{s:.2f}') for e, s in sorted_scores[:3]]}")
+    logger.info(f"🎯 Selected emotion: '{selected_emotion}' (final score: {final_score:.2f})")
+    
+    return selected_emotion
+
+
+def _calculate_keyword_scores(text: str) -> Dict[str, float]:
+    """
+    Calculate keyword-based emotion scores (extracted from analyze_emotion)
+    Returns raw scores before weight multiplication
+    """
+    if not text or not emotion_manager:
+        return {}
+    
+    text_lower = text.lower().strip()
+    emotion_scores = {}
+    
+    # Initialize scores for all emotions
+    for emotion in emotion_manager.get_emotion_list():
+        emotion_scores[emotion] = 0
+    
+    # Score based on keyword matches
+    matched_keywords = []
+    for emotion in emotion_manager.get_emotion_list():
+        keywords = emotion_manager.get_keywords_for_emotion(emotion)
+        emotion_weight = emotion_manager.get_emotion_weight(emotion)
+        
+        for keyword in keywords:
+            if keyword.lower() in text_lower:
+                # Base score for keyword match, then apply emotion weight
+                base_match_score = 1.0
+                weighted_score = base_match_score * emotion_weight
+                emotion_scores[emotion] += weighted_score
+                matched_keywords.append(f"{keyword}({emotion})")
+    
+    # Bonus for repeated keywords in long text
+    if len(text) > 20:
+        for emotion in emotion_manager.get_emotion_list():
+            keywords = emotion_manager.get_keywords_for_emotion(emotion)
+            emotion_weight = emotion_manager.get_emotion_weight(emotion)
+            
+            for keyword in keywords:
+                repeat_count = text_lower.count(keyword.lower())
+                if repeat_count > 1:
+                    bonus_score = int(repeat_count * 0.5) * emotion_weight
+                    emotion_scores[emotion] += bonus_score
+    
+    # Filter out zero scores
+    return {emotion: score for emotion, score in emotion_scores.items() if score > 0}
 
 
 def audio_to_data(audio_file_path, is_opus=True):

@@ -1,6 +1,6 @@
 import yaml
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from loguru import logger
 
 class EmotionManager:
@@ -20,6 +20,16 @@ class EmotionManager:
                     
                 self.emotions = config.get('emotions', {})
                 self.default_emotion = config.get('default_emotion', 'neutral')
+                
+                # Load emotion persistence settings
+                self.persistence_config = config.get('emotion_persistence', {
+                    'enabled': True,
+                    'llm_base_score': 5.0,
+                    'half_life_chunks': 3.0,
+                    'minimum_score': 0.1,
+                    'keyword_multiplier': 1.0,
+                    'llm_multiplier': 1.0
+                })
                 
                 # Build emoji map for backward compatibility
                 self.emoji_map = {
@@ -68,6 +78,32 @@ class EmotionManager:
             emotion: data.get('description', '') 
             for emotion, data in self.emotions.items()
         }
+    
+    def get_emotion_weight(self, emotion: str) -> float:
+        """Get weight for given emotion (default: 1.0)"""
+        if emotion in self.emotions:
+            weight = self.emotions[emotion].get('weight', 1.0)
+            return float(weight) if isinstance(weight, (int, float)) else 1.0
+        return 1.0
+    
+    def get_all_emotion_weights(self) -> Dict[str, float]:
+        """Get all emotion weights for scoring"""
+        weights = {}
+        for emotion, data in self.emotions.items():
+            if isinstance(data, dict):
+                weight = data.get('weight', 1.0)
+                weights[emotion] = float(weight) if isinstance(weight, (int, float)) else 1.0
+            else:
+                weights[emotion] = 1.0
+        return weights
+    
+    def get_persistence_config(self) -> Dict[str, Any]:
+        """Get emotion persistence configuration"""
+        return self.persistence_config.copy()
+    
+    def is_persistence_enabled(self) -> bool:
+        """Check if emotion persistence is enabled"""
+        return self.persistence_config.get('enabled', True)
     
     def generate_emotion_prompt(self) -> str:
         """Generate emotion detection prompt from configuration"""

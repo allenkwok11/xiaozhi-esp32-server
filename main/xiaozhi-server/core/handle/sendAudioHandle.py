@@ -2,7 +2,7 @@ import json
 import asyncio
 import time
 from core.providers.tts.dto.dto import SentenceType
-from core.utils.util import get_string_no_punctuation_or_emoji, analyze_emotion, parse_llm_response_with_emotion
+from core.utils.util import get_string_no_punctuation_or_emoji, analyze_emotion, parse_llm_response_with_emotion, select_emotion_with_persistence, emotion_persistence
 from core.utils.emotion_manager import emotion_manager
 from loguru import logger
 
@@ -31,14 +31,9 @@ async def sendAudioMessage(conn, sentenceType, audios, text):
         else:
             conn.logger.bind(tag=TAG).info(f"🧹 No cleaning needed: '{original_text}'")
             
-        # Emotion detection: LLM emotion tags take priority over keyword analysis
-        if llm_emotion and llm_emotion in emotion_manager.get_emotion_list():
-            emotion = llm_emotion
-            conn.logger.bind(tag=TAG).info(f"✅ Robot expressing LLM-tagged emotion: '{emotion}' (from response tag)")
-        else:
-            # Fallback to keyword-based analysis (using original text for analysis)
-            emotion = analyze_emotion(original_text)
-            conn.logger.bind(tag=TAG).info(f"🔄 Robot expressing keyword-based emotion: '{emotion}' (from keyword analysis)")
+        # Unified emotion detection with persistence and decay
+        emotion = select_emotion_with_persistence(text=original_text, llm_emotion=llm_emotion, persistence_tracker=emotion_persistence)
+        conn.logger.bind(tag=TAG).info(f"🎯 Robot expressing unified emotion: '{emotion}' (combines LLM + persistent + keyword analysis)")
         
         # Get emoji from emotion manager
         emoji = emotion_manager.get_emoji(emotion)
