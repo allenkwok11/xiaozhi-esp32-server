@@ -47,6 +47,18 @@ emotions:
     keywords: ["elf", "helper", "assistant", "creative", "crafty", "workshop", "magic", "helpful", "skillful", "handy"]
     weight: 1.0  # Standard weight for helpful emotions
 
+  wrong:
+    emoji: "❌"
+    description: "Mistake, error, correction needed"
+    keywords: ["wrong", "error", "mistake", "incorrect", "fault", "oops", "fix", "correct", "problem", "issue"]
+    weight: 0.7  # Lower weight for negative emotions
+
+  happy:
+    emoji: "😊"
+    description: "Happiness, joy, positivity"
+    keywords: ["happy", "joy", "smile", "positive", "cheerful", "delight", "pleasure", "content", "satisfied", "elated"]
+    weight: 1.4  # High weight for positive emotions
+
   neutral:
     emoji: "😐"
     description: "Neutral, no specific emotion"
