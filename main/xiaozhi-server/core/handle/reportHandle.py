@@ -43,7 +43,7 @@ def report(conn, type, text, opus_data, report_time):
             report_time=report_time,
         )
     except Exception as e:
-        conn.logger.bind(tag=TAG).error(f"聊天记录上报失败: {e}")
+        conn.logger.bind(tag=TAG).error(f"Fail to upload chat history {e}")
 
 
 def opus_to_wav(conn, opus_data):

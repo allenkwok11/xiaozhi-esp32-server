@@ -75,7 +75,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['logout']), // 引入Vuex的logout action
+    ...mapActions(['logout']), // Vuex logout action
     confirm() {
       if (!this.oldPassword.trim() || !this.newPassword.trim() || !this.confirmNewPassword.trim()) {
           this.$message.error('Please fill in all fields');

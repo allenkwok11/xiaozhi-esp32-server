@@ -13,7 +13,7 @@ from core.utils.asr import create_instance as create_stt_instance
 from core.utils.llm import create_instance as create_llm_instance
 from core.utils.tts import create_instance as create_tts_instance
 
-# 设置全局日志级别为WARNING，抑制INFO级别日志
+# Set global log level to WARNING to suppress INFO logs
 logging.basicConfig(level=logging.WARNING)
 
 
@@ -23,9 +23,9 @@ class AsyncPerformanceTester:
         self.test_sentences = self.config.get("module_test", {}).get(
             "test_sentences",
             [
-                "你好，请介绍一下你自己",
+                "Hello, please introduce yourself",
                 "What's the weather like today?",
-                "请用100字概括量子计算的基本原理和应用前景",
+                "Please summarize the basic principles and applications of quantum computing in 100 words",
             ],
         )
 
@@ -33,7 +33,7 @@ class AsyncPerformanceTester:
         self.wav_root = r"config/assets"
         for file_name in os.listdir(self.wav_root):
             file_path = os.path.join(self.wav_root, file_name)
-            # 检查文件大小是否大于300KB
+            # check if file size > 300KB
             if os.path.getsize(file_path) > 300 * 1024:  # 300KB = 300 * 1024 bytes
                 with open(file_path, "rb") as f:
                     self.test_wav_list.append(f.read())
@@ -44,32 +44,32 @@ class AsyncPerformanceTester:
         """异步检查Ollama服务状态"""
         async with aiohttp.ClientSession() as session:
             try:
-                # 检查服务是否可用
+                # check if service is available
                 async with session.get(f"{base_url}/api/version") as response:
                     if response.status != 200:
                         print(f"🚫 Ollama服务未启动或无法访问: {base_url}")
                         return False
 
-                # 检查模型是否存在
+                # Asynchronously check Ollama service status
                 async with session.get(f"{base_url}/api/tags") as response:
                     if response.status == 200:
                         data = await response.json()
                         models = data.get("models", [])
                         if not any(model["name"] == model_name for model in models):
                             print(
-                                f"🚫 Ollama模型 {model_name} 未找到，请先使用 ollama pull {model_name} 下载"
+                                f"🚫 Ollama model {model_name} not found，please first use  ollama pull {model_name} to download"
                             )
                             return False
                     else:
-                        print(f"🚫 无法获取Ollama模型列表")
+                        print(f"🚫 unable to fetch Ollama model list")
                         return False
                 return True
             except Exception as e:
-                print(f"🚫 无法连接到Ollama服务: {str(e)}")
+                print(f"🚫 Unable to connect to Ollama service: {str(e)}")
                 return False
 
     async def _test_tts(self, tts_name: str, config: Dict) -> Dict:
-        """异步测试单个TTS性能"""
+        """Asynchronously test single TTS performance"""
         try:
             logging.getLogger("core.providers.tts.base").setLevel(logging.WARNING)
 
@@ -85,13 +85,13 @@ class AsyncPerformanceTester:
             module_type = config.get("type", tts_name)
             tts = create_tts_instance(module_type, config, delete_audio_file=True)
 
-            print(f"🎵 测试 TTS: {tts_name}")
+            print(f"🎵 testing TTS: {tts_name}")
 
             tmp_file = tts.generate_filename()
-            await tts.text_to_speak("连接测试", tmp_file)
+            await tts.text_to_speak("connect to test", tmp_file)
 
             if not tmp_file or not os.path.exists(tmp_file):
-                print(f"❌ {tts_name} 连接失败")
+                print(f"❌ {tts_name} connection fails")
                 return {"name": tts_name, "type": "tts", "errors": 1}
 
             total_time = 0
@@ -118,34 +118,34 @@ class AsyncPerformanceTester:
             }
 
         except Exception as e:
-            print(f"⚠️ {tts_name} 测试失败: {str(e)}")
+            print(f"⚠️ {tts_name} test fail: {str(e)}")
             return {"name": tts_name, "type": "tts", "errors": 1}
 
     async def _test_stt(self, stt_name: str, config: Dict) -> Dict:
-        """异步测试单个STT性能"""
+        """Asynchronously test single STT performance"""
         try:
             logging.getLogger("core.providers.asr.base").setLevel(logging.WARNING)
             token_fields = ["access_token", "api_key", "token"]
             if any(
                 field in config
-                and any(x in config[field] for x in ["你的", "placeholder"])
+                and any(x in config[field] for x in ["your", "placeholder"])
                 for field in token_fields
             ):
-                print(f"⏭️  STT {stt_name} 未配置access_token/api_key，已跳过")
+                print(f"⏭️  STT {stt_name} missing access_token/api_key，skipped")
                 return {"name": stt_name, "type": "stt", "errors": 1}
 
             module_type = config.get("type", stt_name)
             stt = create_stt_instance(module_type, config, delete_audio_file=True)
             stt.audio_format = "pcm"
 
-            print(f"🎵 测试 STT: {stt_name}")
+            print(f"🎵 test STT: {stt_name}")
 
             text, _ = await stt.speech_to_text(
                 [self.test_wav_list[0]], "1", stt.audio_format
             )
 
             if text is None:
-                print(f"❌ {stt_name} 连接失败")
+                print(f"❌ {stt_name} connection fails")
                 return {"name": stt_name, "type": "stt", "errors": 1}
 
             total_time = 0
@@ -171,27 +171,27 @@ class AsyncPerformanceTester:
             }
 
         except Exception as e:
-            print(f"⚠️ {stt_name} 测试失败: {str(e)}")
+            print(f"⚠️ {stt_name} testing fail: {str(e)}")
             return {"name": stt_name, "type": "stt", "errors": 1}
 
     async def _test_llm(self, llm_name: str, config: Dict) -> Dict:
-        """异步测试单个LLM性能"""
+        """Test performance of a single LLM asynchronously"""
         try:
-            # 对于Ollama，跳过api_key检查并进行特殊处理
+            # For Ollama，skip api_key check 
             if llm_name == "Ollama":
                 base_url = config.get("base_url", "http://localhost:11434")
                 model_name = config.get("model_name")
                 if not model_name:
-                    print(f"🚫 Ollama未配置model_name")
+                    print(f"🚫 Ollama model_name missing")
                     return {"name": llm_name, "type": "llm", "errors": 1}
 
                 if not await self._check_ollama_service(base_url, model_name):
                     return {"name": llm_name, "type": "llm", "errors": 1}
             else:
                 if "api_key" in config and any(
-                    x in config["api_key"] for x in ["你的", "placeholder", "sk-xxx"]
+                    x in config["api_key"] for x in ["your", "placeholder", "sk-xxx"]
                 ):
-                    print(f"🚫 跳过未配置的LLM: {llm_name}")
+                    print(f"🚫 skipping unconfigured LLM: {llm_name}")
                     return {"name": llm_name, "type": "llm", "errors": 1}
 
             # 获取实际类型（兼容旧配置）
@@ -216,7 +216,7 @@ class AsyncPerformanceTester:
             # 处理结果
             valid_results = [r for r in sentence_results if r is not None]
             if not valid_results:
-                print(f"⚠️  {llm_name} 无有效数据，可能配置错误")
+                print(f"⚠️  {llm_name} no valid data, possible configuration error")
                 return {"name": llm_name, "type": "llm", "errors": 1}
 
             first_token_times = [r["first_token_time"] for r in valid_results]
@@ -228,7 +228,7 @@ class AsyncPerformanceTester:
             filtered_times = [t for t in response_times if t <= mean + 3 * stdev]
 
             if len(filtered_times) < len(test_sentences) * 0.5:
-                print(f"⚠️  {llm_name} 有效数据不足，可能网络不稳定")
+                print(f"⚠️  {llm_name} insufficient valid data, possible network instability")
                 return {"name": llm_name, "type": "llm", "errors": 1}
 
             return {
@@ -247,13 +247,13 @@ class AsyncPerformanceTester:
                 "errors": 0,
             }
         except Exception as e:
-            print(f"LLM {llm_name} 测试失败: {str(e)}")
+            print(f"LLM {llm_name} testing fail: {str(e)}")
             return {"name": llm_name, "type": "llm", "errors": 1}
 
     async def _test_single_sentence(self, llm_name: str, llm, sentence: str) -> Dict:
-        """测试单个句子的性能"""
+        """Test performance of a single sentence"""
         try:
-            print(f"📝 {llm_name} 开始测试: {sentence[:20]}...")
+            print(f"📝 {llm_name} starting test : {sentence[:20]}...")
             sentence_start = time.time()
             first_token_received = False
             first_token_time = None
@@ -266,7 +266,7 @@ class AsyncPerformanceTester:
                     if not first_token_received and chunk.strip() != "":
                         first_token_time = time.time() - sentence_start
                         first_token_received = True
-                        print(f"✓ {llm_name} 首个Token: {first_token_time:.3f}s")
+                        print(f"✓ {llm_name}  first Token: {first_token_time:.3f}s")
                     yield chunk
 
             response_chunks = []
@@ -274,11 +274,11 @@ class AsyncPerformanceTester:
                 response_chunks.append(chunk)
 
             response_time = time.time() - sentence_start
-            print(f"✓ {llm_name} 完成响应: {response_time:.3f}s")
+            print(f"✓ {llm_name} response complete: {response_time:.3f}s")
 
             if first_token_time is None:
                 first_token_time = (
-                    response_time  # 如果没有检测到first token，使用总响应时间
+                    response_time  
                 )
 
             return {
@@ -288,11 +288,11 @@ class AsyncPerformanceTester:
                 "response_time": response_time,
             }
         except Exception as e:
-            print(f"⚠️ {llm_name} 句子测试失败: {str(e)}")
+            print(f"⚠️ {llm_name} sentence test failed: {str(e)}")
             return None
 
     def _generate_combinations(self):
-        """生成最佳组合建议"""
+        """Generate optimal combination recommendations"""
         valid_llms = [
             k
             for k, v in self.results["llm"].items()
@@ -301,7 +301,7 @@ class AsyncPerformanceTester:
         valid_tts = [k for k, v in self.results["tts"].items() if v["errors"] == 0]
         valid_stt = [k for k, v in self.results["stt"].items() if v["errors"] == 0]
 
-        # 找出基准值
+        
         min_first_token = (
             min([self.results["llm"][llm]["avg_first_token"] for llm in valid_llms])
             if valid_llms
@@ -321,24 +321,24 @@ class AsyncPerformanceTester:
         for llm in valid_llms:
             for tts in valid_tts:
                 for stt in valid_stt:
-                    # 计算相对性能分数（越小越好）
+                    # calculate relative performance ）
                     llm_score = (
                         self.results["llm"][llm]["avg_first_token"] / min_first_token
                     )
                     tts_score = self.results["tts"][tts]["avg_time"] / min_tts_time
                     stt_score = self.results["stt"][stt]["avg_time"] / min_stt_time
 
-                    # 计算稳定性分数（标准差/平均值，越小越稳定）
+                    # stability marks
                     llm_stability = (
                         self.results["llm"][llm]["std_first_token"]
                         / self.results["llm"][llm]["avg_first_token"]
                     )
 
-                    # 综合得分（考虑性能和稳定性）
-                    # LLM得分： 性能权重(70%) + 稳定性权重(30%)
+                    # Overall mark
+                    # LLM Score: performance(70%) + stability(30%)
                     llm_final_score = llm_score * 0.7 + llm_stability * 0.3
 
-                    # 总分 = LLM得分(70%) + TTS得分(30%) + STT得分(30%)
+                    # total score = LLM score(70%) + TTS score(30%) + STT score(30%)
                     total_score = (
                         llm_final_score * 0.7 + tts_score * 0.3 + stt_score * 0.3
                     )
@@ -360,7 +360,7 @@ class AsyncPerformanceTester:
                         }
                     )
 
-        # 分数越小越好
+        # lower score : better performance
         self.results["combinations"].sort(key=lambda x: x["score"])
 
     def _print_results(self):
@@ -371,45 +371,45 @@ class AsyncPerformanceTester:
                 stability = data["std_first_token"] / data["avg_first_token"]
                 llm_table.append(
                     [
-                        name,  # 不需要固定宽度，让tabulate自己处理对齐
-                        f"{data['avg_first_token']:.3f}秒",
-                        f"{data['avg_response']:.3f}秒",
+                        name, 
+                        f"{data['avg_first_token']:.3f} second",
+                        f"{data['avg_response']:.3f} second",
                         f"{stability:.3f}",
                     ]
                 )
 
         if llm_table:
-            print("\nLLM 性能排行:\n")
+            print("\nLLM performance ranking:\n")
             print(
                 tabulate(
                     llm_table,
-                    headers=["模型名称", "首字耗时", "总耗时", "稳定性"],
+                    headers=["model name", "first token", "total time", "stability"],
                     tablefmt="github",
                     colalign=("left", "right", "right", "right"),
                     disable_numparse=True,
                 )
             )
         else:
-            print("\n⚠️ 没有可用的LLM模块进行测试。")
+            print("\n⚠️ No available LLM modules for testing.")
 
         tts_table = []
         for name, data in self.results["tts"].items():
             if data["errors"] == 0:
-                tts_table.append([name, f"{data['avg_time']:.3f}秒"])  # 不需要固定宽度
+                tts_table.append([name, f"{data['avg_time']:.3f} seconds"])  
 
         if tts_table:
-            print("\nTTS 性能排行:\n")
+            print("\nTTS performance ranking:\n")
             print(
                 tabulate(
                     tts_table,
-                    headers=["模型名称", "合成耗时"],
+                    headers=["model name", "S ynthesistime"],
                     tablefmt="github",
                     colalign=("left", "right"),
                     disable_numparse=True,
                 )
             )
         else:
-            print("\n⚠️ 没有可用的TTS模块进行测试。")
+            print("\n⚠️ No TTS for testing")
 
         stt_table = []
         for name, data in self.results["stt"].items():
@@ -417,21 +417,21 @@ class AsyncPerformanceTester:
                 stt_table.append([name, f"{data['avg_time']:.3f}秒"])  # 不需要固定宽度
 
         if stt_table:
-            print("\nSTT 性能排行:\n")
+            print("\nSTT Performance Ranking:\n")
             print(
                 tabulate(
                     stt_table,
-                    headers=["模型名称", "合成耗时"],
+                    headers=["Model Name", "Synthesis time"],
                     tablefmt="github",
                     colalign=("left", "right"),
                     disable_numparse=True,
                 )
             )
         else:
-            print("\n⚠️ 没有可用的STT模块进行测试。")
+            print("\n⚠️ No STT for testing")
 
         if self.results["combinations"]:
-            print("\n推荐配置组合 (得分越小越好):\n")
+            print("\nRecommended Configurations (lower score is better):\n")
             combo_table = []
             for combo in self.results["combinations"][:]:
                 combo_table.append(
@@ -449,12 +449,12 @@ class AsyncPerformanceTester:
                 tabulate(
                     combo_table,
                     headers=[
-                        "组合方案",
-                        "综合得分",
-                        "LLM首字耗时",
-                        "稳定性",
-                        "TTS合成耗时",
-                        "STT合成耗时",
+                        "Combination",
+                        "Composite Score",
+                        "LLM First Token",
+                        "Stability",
+                        "TTS Time",
+                        "STT Time",
                     ],
                     tablefmt="github",
                     colalign=("left", "right", "right", "right", "right", "right"),
@@ -462,7 +462,7 @@ class AsyncPerformanceTester:
                 )
             )
         else:
-            print("\n⚠️ 没有可用的模块组合建议。")
+            print("\n⚠️ No available module combinations to recommend.")
 
     def _process_results(self, all_results):
         """处理测试结果"""
@@ -478,16 +478,16 @@ class AsyncPerformanceTester:
                     pass
 
     async def run(self):
-        """执行全量异步测试"""
-        print("🔍 开始筛选可用模块...")
+        """Execute full asynchronous testing"""
+        print("🔍 Starting module screening......")
 
-        # 创建所有测试任务
+        # Create all test tasks
         all_tasks = []
 
-        # LLM测试任务
+        # LLM test tasks
         if self.config.get("LLM") is not None:
             for llm_name, config in self.config.get("LLM", {}).items():
-                # 检查配置有效性
+                # Check configuration validity
                 if llm_name == "CozeLLM":
                     if any(x in config.get("bot_id", "") for x in ["你的"]) or any(
                         x in config.get("user_id", "") for x in ["你的"]
@@ -505,13 +505,13 @@ class AsyncPerformanceTester:
                     base_url = config.get("base_url", "http://localhost:11434")
                     model_name = config.get("model_name")
                     if not model_name:
-                        print(f"🚫 Ollama未配置model_name")
+                        print(f"🚫 Ollama model_name not configured")
                         continue
 
                     if not await self._check_ollama_service(base_url, model_name):
                         continue
 
-                print(f"📋 添加LLM测试任务: {llm_name}")
+                print(f"📋 LLM test mission: {llm_name}")
                 module_type = config.get("type", llm_name)
                 llm = create_llm_instance(module_type, config)
 
@@ -528,12 +528,12 @@ class AsyncPerformanceTester:
                 token_fields = ["access_token", "api_key", "token"]
                 if any(
                     field in config
-                    and any(x in config[field] for x in ["你的", "placeholder"])
+                    and any(x in config[field] for x in ["your", "placeholder"])
                     for field in token_fields
                 ):
-                    print(f"⏭️  TTS {tts_name} 未配置access_token/api_key，已跳过")
+                    print(f"⏭️  TTS {tts_name} doesn’t have access_token/api_key，and has been skipped")
                     continue
-                print(f"🎵 添加TTS测试任务: {tts_name}")
+                print(f"🎵 TTS test mission: {tts_name}")
                 all_tasks.append(self._test_tts(tts_name, config))
 
         # STT测试任务
@@ -543,26 +543,26 @@ class AsyncPerformanceTester:
                     token_fields = ["access_token", "api_key", "token"]
                     if any(
                         field in config
-                        and any(x in config[field] for x in ["你的", "placeholder"])
+                        and any(x in config[field] for x in ["your", "placeholder"])
                         for field in token_fields
                     ):
-                        print(f"⏭️  ASR {stt_name} 未配置access_token/api_key，已跳过")
+                        print(f"⏭️  ASR {stt_name} doesn't have access_token/api_key，skipped")
                         continue
-                    print(f"🎵 添加ASR测试任务: {stt_name}")
+                    print(f"🎵 ASR test mission: {stt_name}")
                     all_tasks.append(self._test_stt(stt_name, config))
         else:
-            print(f"\n⚠️  {self.wav_root} 路径下没有音频文件，已跳过STT测试任务")
+            print(f"\n⚠️  {self.wav_root} no audio package found, test mission skipped")
 
         print(
-            f"\n✅ 找到 {len([t for t in all_tasks if 'test_single_sentence' in str(t)]) / len(self.test_sentences):.0f} 个可用LLM模块"
+            f"\n✅ {len([t for t in all_tasks if 'test_single_sentence' in str(t)]) / len(self.test_sentences):.0f} available LLM Modules found"
         )
         print(
-            f"✅ 找到 {len([t for t in all_tasks if '_test_tts' in str(t)])} 个可用TTS模块"
+            f"✅ {len([t for t in all_tasks if '_test_tts' in str(t)])} TTS Modules found"
         )
         print(
-            f"✅ 找到 {len([t for t in all_tasks if '_test_stt' in str(t)])} 个可用STT模块"
+            f"✅ 找到 {len([t for t in all_tasks if '_test_stt' in str(t)])} STT modules found"
         )
-        print("\n⏳ 开始并发测试所有模块...\n")
+        print("\n⏳ start testing all modules...\n")
 
         # 并发执行所有测试任务
         all_results = await asyncio.gather(*all_tasks, return_exceptions=True)
@@ -630,7 +630,7 @@ class AsyncPerformanceTester:
                 self.results["stt"][result["name"]] = result
 
         # 生成组合建议并打印结果
-        print("\n📊 生成测试报告...")
+        print("\n📊 test result generating")
         self._generate_combinations()
         self._print_results()
 

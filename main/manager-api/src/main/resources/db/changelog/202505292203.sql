@@ -5,7 +5,7 @@ START TRANSACTION;
 
 
 -- intent_llm和function_call不设置函数列表
-update `ai_model_provider` set fields =  '[{"key":"llm","label":"LLM模型","type":"string"}]' where  id = 'SYSTEM_Intent_intent_llm';
+update `ai_model_provider` set fields =  '[{"key":"llm","label":"LLM model","type":"string"}]' where  id = 'SYSTEM_Intent_intent_llm';
 update `ai_model_provider` set fields =  '[]' where  id = 'SYSTEM_Intent_function_call';
 update `ai_model_config` set config_json =  '{\"type\": \"intent_llm\", \"llm\": \"LLM_ChatGLMLLM\"}' where  id = 'Intent_intent_llm';
 UPDATE `ai_model_config` SET config_json = '{\"type\": \"function_call\"}' WHERE id = 'Intent_function_call';

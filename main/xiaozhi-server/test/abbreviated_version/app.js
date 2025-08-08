@@ -54,9 +54,9 @@ async function initOpus() {
         if (typeof Module !== 'undefined') {
             // 尝试使用全局Module
             window.ModuleInstance = Module;
-            console.log('使用全局Module作为ModuleInstance');
+            console.log('use Module as ModuleInstance');
         } else {
-            console.error("Opus库未加载，ModuleInstance和Module对象都不存在");
+            console.error("Opus unloaded ，ModuleInstance and Module do not exist");
             return false;
         }
     }
@@ -76,12 +76,12 @@ async function initOpus() {
             init: function() {
                 // 获取编码器大小
                 const encoderSize = mod._opus_encoder_get_size(this.channels);
-                console.log(`Opus编码器大小: ${encoderSize}字节`);
+                console.log(`Opus encoder size: ${encoderSize}bytes`);
                 
                 // 分配内存
                 this.encoderPtr = mod._malloc(encoderSize);
                 if (!this.encoderPtr) {
-                    throw new Error("无法分配编码器内存");
+                    throw new Error("unable to allocate encoder memory");
                 }
                 
                 // 初始化编码器
@@ -93,7 +93,7 @@ async function initOpus() {
                 );
                 
                 if (err < 0) {
-                    throw new Error(`Opus编码器初始化失败: ${err}`);
+                    throw new Error(`Opus encoder fails to initialize: ${err}`);
                 }
                 
                 return true;
@@ -127,7 +127,7 @@ async function initOpus() {
                 if (encodedBytes < 0) {
                     mod._free(pcmPtr);
                     mod._free(encodedPtr);
-                    throw new Error(`Opus编码失败: ${encodedBytes}`);
+                    throw new Error(`Opus encoding fails: ${encodedBytes}`);
                 }
                 
                 // 复制编码后的数据
@@ -163,12 +163,12 @@ async function initOpus() {
             init: function() {
                 // 获取解码器大小
                 const decoderSize = mod._opus_decoder_get_size(this.channels);
-                console.log(`Opus解码器大小: ${decoderSize}字节`);
+                console.log(`Opus decoder size: ${decoderSize}bytes`);
                 
                 // 分配内存
                 this.decoderPtr = mod._malloc(decoderSize);
                 if (!this.decoderPtr) {
-                    throw new Error("无法分配解码器内存");
+                    throw new Error("Cannot allocate decoder memory");
                 }
                 
                 // 初始化解码器
@@ -179,7 +179,7 @@ async function initOpus() {
                 );
                 
                 if (err < 0) {
-                    throw new Error(`Opus解码器初始化失败: ${err}`);
+                    throw new Error(`Opus encoder fail to initialize: ${err}`);
                 }
                 
                 return true;
@@ -209,7 +209,7 @@ async function initOpus() {
                 if (decodedSamples < 0) {
                     mod._free(opusPtr);
                     mod._free(pcmPtr);
-                    throw new Error(`Opus解码失败: ${decodedSamples}`);
+                    throw new Error(`Opus fails to decode: ${decodedSamples}`);
                 }
                 
                 // 复制解码后的数据
@@ -236,14 +236,14 @@ async function initOpus() {
         
         // 初始化编码器和解码器
         if (opusEncoder.init() && opusDecoder.init()) {
-            console.log("Opus 编码器和解码器初始化成功。");
+            console.log("Opus coder and decoder initialization success");
             return true;
         } else {
-            console.error("Opus 初始化失败");
+            console.error("Opus initialization fails");
             return false;
         }
     } catch (error) {
-        console.error("Opus 初始化失败:", error);
+        console.error("Opus initialization fails:", error);
         return false;
     }
 }
@@ -275,11 +275,11 @@ function startRecording() {
     // 确保有权限并且AudioContext是活跃的
     if (audioContext.state === 'suspended') {
         audioContext.resume().then(() => {
-            console.log("AudioContext已恢复");
+            console.log("AudioContext restored");
             continueStartRecording();
         }).catch(err => {
-            console.error("恢复AudioContext失败:", err);
-            statusLabel.textContent = "无法激活音频上下文，请再次点击";
+            console.error("AudioContext fail to restore:", err);
+            statusLabel.textContent = "unable to activate Audiocontext, please click again";
         });
     } else {
         continueStartRecording();
@@ -296,11 +296,11 @@ function continueStartRecording() {
     // 初始化Opus
     initOpus().then(success => {
         if (!success) {
-            statusLabel.textContent = "Opus初始化失败";
+            statusLabel.textContent = "Opus failed to initialise";
             return;
         }
         
-        console.log("开始录音，参数：", {
+        console.log("start recording，parameters：", {
             sampleRate: SAMPLE_RATE,
             channels: CHANNELS,
             frameSize: FRAME_SIZE,
@@ -323,11 +323,11 @@ function continueStartRecording() {
             } 
         })
         .then(stream => {
-            console.log("获取到麦克风流，实际参数：", stream.getAudioTracks()[0].getSettings());
+            console.log("mic stream received，actual parameters：", stream.getAudioTracks()[0].getSettings());
             
             // 检查流是否有效
             if (!stream || !stream.getAudioTracks().length || !stream.getAudioTracks()[0].enabled) {
-                throw new Error("获取到的音频流无效");
+                throw new Error("invalid audio stream");
             }
             
             mediaStream = stream;
@@ -337,13 +337,13 @@ function continueStartRecording() {
             // 在降级到ScriptProcessor之前尝试使用AudioWorklet
             createAudioProcessor().then(processor => {
                 if (processor) {
-                    console.log("使用AudioWorklet处理音频");
+                    console.log("use AudioWorklet to handle audio");
                     audioProcessor = processor;
                     // 连接音频处理链
                     mediaSource.connect(audioProcessor);
                     audioProcessor.connect(audioContext.destination);
                 } else {
-                    console.log("回退到ScriptProcessor");
+                    console.log("return to ScriptProcessor");
                     // 创建ScriptProcessor节点
                     audioProcessor = audioContext.createScriptProcessor(BUFFER_SIZE, CHANNELS, CHANNELS);
                     
@@ -357,18 +357,18 @@ function continueStartRecording() {
                 
                 // 更新UI
                 isRecording = true;
-                statusLabel.textContent = "录音中...";
+                statusLabel.textContent = "recording...";
                 startButton.disabled = true;
                 stopButton.disabled = false;
                 playButton.disabled = true;
             }).catch(error => {
-                console.error("创建音频处理器失败:", error);
-                statusLabel.textContent = "创建音频处理器失败";
+                console.error("failed to create audio processor:", error);
+                statusLabel.textContent = "failed to create audio processor";
             });
         })
         .catch(error => {
-            console.error("获取麦克风失败:", error);
-            statusLabel.textContent = "获取麦克风失败: " + error.message;
+            console.error("fail to get microphone:", error);
+            statusLabel.textContent = "fail to get microphone: " + error.message;
         });
     });
 }
@@ -458,11 +458,11 @@ async function createAudioProcessor() {
                 workletNode.port.postMessage({ command: 'stop' });
             };
             
-            console.log("AudioWorklet 音频处理器创建成功");
+            console.log("AudioWorklet audio processor created");
             return workletNode;
         }
     } catch (error) {
-        console.error("创建AudioWorklet失败，将使用ScriptProcessor:", error);
+        console.error("AudioWorklet fail to create，ScriptProcessor will be used:", error);
     }
     
     // 如果AudioWorklet不可用或失败，返回null以便回退到ScriptProcessor
@@ -479,11 +479,11 @@ function processAudioData(e) {
     
     // 添加调试信息
     const nonZeroCount = Array.from(inputData).filter(x => Math.abs(x) > 0.001).length;
-    console.log(`接收到音频数据: ${inputData.length} 个样本, 非零样本数: ${nonZeroCount}`);
+    console.log(`${inputData.length} audio samples received, non-zero count: ${nonZeroCount}`);
     
     // 如果全是0，可能是麦克风没有正确获取声音
     if (nonZeroCount < 5) {
-        console.warn("警告: 检测到大量静音样本，请检查麦克风是否正常工作");
+        console.warn("warning: large number of silent samples received, please check microphone");
         // 继续处理，以防有些样本确实是静音
     }
     
@@ -506,16 +506,16 @@ function processAudioData(e) {
     
     // 处理完整帧
     const frameCount = Math.floor(combinedData.length / FRAME_SIZE);
-    console.log(`可编码的完整帧数: ${frameCount}, 缓冲区总大小: ${combinedData.length}`);
+    console.log(`full frame encode-able: ${frameCount}, cache size: ${combinedData.length}`);
     
     for (let i = 0; i < frameCount; i++) {
         const frameData = combinedData.subarray(i * FRAME_SIZE, (i + 1) * FRAME_SIZE);
         
         try {
-            console.log(`编码第 ${i+1}/${frameCount} 帧, 帧大小: ${frameData.length}`);
+            console.log(`encoding frame ${i+1}/${frameCount} , frame size: ${frameData.length}`);
             const encodedData = opusEncoder.encode(frameData);
             if (encodedData) {
-                console.log(`编码成功: ${encodedData.length} 字节`);
+                console.log(`encoding successful: ${encodedData.length} bytes`);
                 recordedOpusData.push(encodedData);
                 
                 // 如果WebSocket已连接，发送编码后的数据
@@ -524,7 +524,7 @@ function processAudioData(e) {
                 }
             }
         } catch (error) {
-            console.error(`Opus编码帧 ${i+1} 失败:`, error);
+            console.error(`Opus encoding failed for frame ${i+1} :`, error);
         }
     }
     
@@ -532,7 +532,7 @@ function processAudioData(e) {
     const remainingSamples = combinedData.length % FRAME_SIZE;
     if (remainingSamples > 0) {
         window.audioDataBuffer = combinedData.subarray(frameCount * FRAME_SIZE);
-        console.log(`保留 ${remainingSamples} 个样本到下一次处理`);
+        console.log(`preserved ${remainingSamples} samples for next processing`);
     } else {
         window.audioDataBuffer = new Int16Array(0);
     }
@@ -543,7 +543,7 @@ function stopRecording() {
     
     // 处理剩余的缓冲数据
     if (window.audioDataBuffer && window.audioDataBuffer.length > 0) {
-        console.log(`停止录音，处理剩余的 ${window.audioDataBuffer.length} 个样本`);
+        console.log(`stop recording，handle the remaining ${window.audioDataBuffer.length} samples`);
         // 如果剩余数据不足一帧，可以通过补零的方式凑成一帧
         if (window.audioDataBuffer.length < FRAME_SIZE) {
             const paddedFrame = new Int16Array(FRAME_SIZE);
@@ -553,7 +553,7 @@ function stopRecording() {
                 paddedFrame[i] = 0;
             }
             try {
-                console.log(`编码最后一帧(补零): ${paddedFrame.length} 样本`);
+                console.log(`Encoding final frame (zero-padded): ${paddedFrame.length} `);
                 const encodedData = opusEncoder.encode(paddedFrame);
                 if (encodedData) {
                     recordedOpusData.push(encodedData);
@@ -564,7 +564,7 @@ function stopRecording() {
                     }
                 }
             } catch (error) {
-                console.error("最后一帧Opus编码失败:", error);
+                console.error("Final frame Opus encoding failed", error);
             }
         } else {
             // 如果数据超过一帧，按正常流程处理
@@ -603,25 +603,25 @@ function stopRecording() {
             audioProcessor.disconnect();
             if (mediaSource) mediaSource.disconnect();
         } catch (error) {
-            console.warn("断开音频处理链时出错:", error);
+            console.warn("error to disconnect:", error);
         }
     }
     
     // 更新UI
     isRecording = false;
-    statusLabel.textContent = "已停止录音，收集了 " + recordedOpusData.length + " 帧Opus数据";
+    statusLabel.textContent = "recording stopped， " + recordedOpusData.length + " flahses of Opus data collected";
     startButton.disabled = false;
     stopButton.disabled = true;
     playButton.disabled = recordedOpusData.length === 0;
     
-    console.log("录制完成:", 
-                "PCM帧数:", recordedPcmData.length, 
-                "Opus帧数:", recordedOpusData.length);
+    console.log("recording finishes:", 
+                "PCM frames:", recordedPcmData.length, 
+                "Opus frames:", recordedOpusData.length);
 }
 
 function playRecording() {
     if (!recordedOpusData.length) {
-        statusLabel.textContent = "没有可播放的录音";
+        statusLabel.textContent = "no recording can be played";
         return;
     }
     
@@ -641,13 +641,13 @@ function playRecording() {
                 allDecodedData.push(...float32Data);
             }
         } catch (error) {
-            console.error("Opus解码失败:", error);
+            console.error("Opus fails to decode:", error);
         }
     }
     
     // 如果没有解码出数据，返回
     if (allDecodedData.length === 0) {
-        statusLabel.textContent = "解码失败，无法播放";
+        statusLabel.textContent = "decoding fails";
         return;
     }
     
@@ -662,12 +662,12 @@ function playRecording() {
     source.start();
     
     // 更新UI
-    statusLabel.textContent = "正在播放...";
+    statusLabel.textContent = "playing...";
     playButton.disabled = true;
     
     // 播放结束后恢复UI
     source.onended = () => {
-        statusLabel.textContent = "播放完毕";
+        statusLabel.textContent = "finish play";
         playButton.disabled = false;
     };
 }
@@ -680,13 +680,13 @@ async function handleBinaryMessage(data) {
         // 根据数据类型进行处理
         if (data instanceof ArrayBuffer) {
             arrayBuffer = data;
-            console.log(`收到ArrayBuffer音频数据，大小: ${data.byteLength}字节`);
+            console.log(`Received ArrayBuffer audio data，size: ${data.byteLength}bytes`);
         } else if (data instanceof Blob) {
             // 如果是Blob类型，转换为ArrayBuffer
             arrayBuffer = await data.arrayBuffer();
-            console.log(`收到Blob音频数据，大小: ${arrayBuffer.byteLength}字节`);
+            console.log(`received Blob Audio data，size: ${arrayBuffer.byteLength}bytes`);
         } else {
-            console.warn(`收到未知类型的二进制数据: ${typeof data}`);
+            console.warn(`received binary data of unknown type: ${typeof data}`);
             return;
         }
 
@@ -702,7 +702,7 @@ async function handleBinaryMessage(data) {
                 startAudioBuffering();
             }
         } else {
-            console.warn('收到空音频数据帧，可能是结束标志');
+            console.warn('Received empty audio frame, possibly an end marker');
             
             // 如果缓冲队列中有数据且没有在播放，立即开始播放
             if (audioBufferQueue.length > 0 && !isAudioPlaying) {
@@ -715,7 +715,7 @@ async function handleBinaryMessage(data) {
             }
         }
     } catch (error) {
-        console.error(`处理二进制消息出错:`, error);
+        console.error(`error when handling binary data:`, error);
     }
 }
 
@@ -724,12 +724,12 @@ function startAudioBuffering() {
     if (isAudioBuffering || isAudioPlaying) return;
     
     isAudioBuffering = true;
-    console.log("开始音频缓冲...");
+    console.log("audio buffer starts...");
     
     // 设置超时，如果在一定时间内没有收集到足够的音频包，就开始播放
     setTimeout(() => {
         if (isAudioBuffering && audioBufferQueue.length > 0) {
-            console.log(`缓冲超时，当前缓冲包数: ${audioBufferQueue.length}，开始播放`);
+            console.log(`Buffer timeout, current buffered packets: ${audioBufferQueue.length}, starting playback`);
             playBufferedAudio();
         }
     }, 300); // 300ms超时
@@ -744,7 +744,7 @@ function startAudioBuffering() {
         // 当累积了足够的音频包，开始播放
         if (audioBufferQueue.length >= BUFFER_THRESHOLD) {
             clearInterval(bufferCheckInterval);
-            console.log(`已缓冲 ${audioBufferQueue.length} 个音频包，开始播放`);
+            console.log(` ${audioBufferQueue.length} audio packages buffered, start playback`);
             playBufferedAudio();
         }
     }, 50);
@@ -780,7 +780,7 @@ function playBufferedAudio() {
                             decodedSamples.push(...floatData);
                         }
                     } catch (error) {
-                        console.error("Opus解码失败:", error);
+                        console.error("Opus decode fails:", error);
                     }
                 }
                 
@@ -832,7 +832,7 @@ function playBufferedAudio() {
                 gainNode.connect(audioContext.destination);
                 
                 this.lastPlayTime = audioContext.currentTime;
-                console.log(`开始播放 ${currentSamples.length} 个样本，约 ${(currentSamples.length / SAMPLE_RATE).toFixed(2)} 秒`);
+                console.log(`${currentSamples.length} sample starts to play， ${(currentSamples.length / SAMPLE_RATE).toFixed(2)} seconds`);
                 
                 // 播放结束后的处理
                 this.source.onended = () => {
@@ -849,7 +849,7 @@ function playBufferedAudio() {
                         this.decodeOpusFrames(frames);
                     } else if (this.endOfStream) {
                         // 流已结束且没有更多数据
-                        console.log("音频播放完成");
+                        console.log("audio play finishes");
                         isAudioPlaying = false;
                         streamingContext = null;
                     } else {
@@ -862,7 +862,7 @@ function playBufferedAudio() {
                                 this.decodeOpusFrames(frames);
                             } else if (this.queue.length === 0 && audioBufferQueue.length === 0) {
                                 // 真的没有更多数据了
-                                console.log("音频播放完成 (超时)");
+                                console.log("audio play finishes, overtime");
                                 isAudioPlaying = false;
                                 streamingContext = null;
                             }
@@ -890,7 +890,7 @@ function playOpusFromServerOld(opusData) {
             if (success) {
                 decodeAndPlayOpusDataOld(opusData);
             } else {
-                statusLabel.textContent = "Opus解码器初始化失败";
+                statusLabel.textContent = "Opus decoder initialization fails";
             }
         });
     } else {
@@ -910,12 +910,12 @@ function decodeAndPlayOpusDataOld(opusData) {
                 allDecodedData.push(...float32Data);
             }
         } catch (error) {
-            console.error("服务端Opus数据解码失败:", error);
+            console.error("Server Opus data initialization fails:", error);
         }
     }
     
     if (allDecodedData.length === 0) {
-        statusLabel.textContent = "服务端数据解码失败";
+        statusLabel.textContent = "Server data initialization fails";
         return;
     }
     
@@ -927,8 +927,8 @@ function decodeAndPlayOpusDataOld(opusData) {
     source.connect(audioContext.destination);
     source.start();
     
-    statusLabel.textContent = "正在播放服务端数据...";
-    source.onended = () => statusLabel.textContent = "服务端数据播放完毕";
+    statusLabel.textContent = "Playing server data...";
+    source.onended = () => statusLabel.textContent = "server data finishes playing";
 }
 
 // 更新playOpusFromServer函数为Promise版本
@@ -964,8 +964,8 @@ function connectToServer() {
     try {
         // 检查URL格式
         if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
-            console.error('URL格式错误，必须以ws://或wss://开头');
-            updateStatus('URL格式错误，必须以ws://或wss://开头', 'error');
+            console.error('URL format error，must start with ws:// or wss://');
+            updateStatus('URL format error，must start with ws:// or wss://', 'error');
             return;
         }
 
@@ -974,8 +974,8 @@ function connectToServer() {
         connUrl.searchParams.append('device_id', 'web_test_device');
         connUrl.searchParams.append('device_mac', '00:11:22:33:44:55');
 
-        console.log(`正在连接: ${connUrl.toString()}`);
-        updateStatus(`正在连接: ${connUrl.toString()}`, 'info');
+        console.log(`connecting: ${connUrl.toString()}`);
+        updateStatus(`connecting: ${connUrl.toString()}`, 'info');
         
         websocket = new WebSocket(connUrl.toString());
 
@@ -983,15 +983,15 @@ function connectToServer() {
         websocket.binaryType = 'arraybuffer';
 
         websocket.onopen = async () => {
-            console.log(`已连接到服务器: ${url}`);
-            updateStatus(`已连接到服务器: ${url}`, 'success');
+            console.log(`server connected: ${url}`);
+            updateStatus(`server connected: ${url}`, 'success');
             isConnected = true;
 
             // 连接成功后发送hello消息
             await sendHelloMessage();
 
             if(connectButton.id === "connectButton") {
-                connectButton.textContent = '断开';
+                connectButton.textContent = 'disconnect';
                 // connectButton.onclick = disconnectFromServer;
                 connectButton.removeEventListener("click", connectToServer);
                 connectButton.addEventListener("click", disconnectFromServer);
@@ -1007,12 +1007,12 @@ function connectToServer() {
         };
 
         websocket.onclose = () => {
-            console.log('已断开连接');
-            updateStatus('已断开连接', 'info');
+            console.log('connection stops');
+            updateStatus('stopped connection', 'info');
             isConnected = false;
 
             if(connectButton.id === "connectButton") {
-                connectButton.textContent = '连接';
+                connectButton.textContent = 'connect';
                 // connectButton.onclick = connectToServer;
                 connectButton.removeEventListener("click", disconnectFromServer);
                 connectButton.addEventListener("click", connectToServer);
@@ -1028,8 +1028,8 @@ function connectToServer() {
         };
 
         websocket.onerror = (error) => {
-            console.error(`WebSocket错误:`, error);
-            updateStatus(`WebSocket错误`, 'error');
+            console.error(`WebSocket error:`, error);
+            updateStatus(`WebSocket error`, 'error');
         };
 
         websocket.onmessage = function (event) {
@@ -1043,7 +1043,7 @@ function connectToServer() {
                     handleBinaryMessage(event.data);
                 }
             } catch (error) {
-                console.error(`WebSocket消息处理错误:`, error);
+                console.error(`WebSocket message handle error:`, error);
                 // 非JSON格式文本消息直接显示
                 if (typeof event.data === 'string') {
                     addMessage(event.data);
@@ -1051,10 +1051,10 @@ function connectToServer() {
             }
         };
 
-        updateStatus('正在连接...', 'info');
+        updateStatus('connecting...', 'info');
     } catch (error) {
-        console.error(`连接错误:`, error);
-        updateStatus(`连接失败: ${error.message}`, 'error');
+        console.error(`connection error:`, error);
+        updateStatus(`connection fails: ${error.message}`, 'error');
     }
 }
 
@@ -1077,19 +1077,19 @@ async function sendHelloMessage() {
         const helloMessage = {
             type: 'hello',
             device_id: 'web_test_device',
-            device_name: 'Web测试设备',
+            device_name: 'Web test',
             device_mac: '00:11:22:33:44:55',
             token: 'your-token1' // 使用config.yaml中配置的token
         };
 
-        console.log('发送hello握手消息');
+        console.log('hello handshake message');
         websocket.send(JSON.stringify(helloMessage));
 
         // 等待服务器响应
         return new Promise(resolve => {
             // 5秒超时
             const timeout = setTimeout(() => {
-                console.error('等待hello响应超时');
+                console.error('waiting for hello response overtime');
                 resolve(false);
             }, 5000);
 
@@ -1098,7 +1098,7 @@ async function sendHelloMessage() {
                 try {
                     const response = JSON.parse(event.data);
                     if (response.type === 'hello' && response.session_id) {
-                        console.log(`服务器握手成功，会话ID: ${response.session_id}`);
+                        console.log(`handshake successful，ID: ${response.session_id}`);
                         clearTimeout(timeout);
                         websocket.removeEventListener('message', onMessageHandler);
                         resolve(true);
@@ -1111,7 +1111,7 @@ async function sendHelloMessage() {
             websocket.addEventListener('message', onMessageHandler);
         });
     } catch (error) {
-        console.error(`发送hello消息错误:`, error);
+        console.error(`error sending hello message:`, error);
         return false;
     }
 }
@@ -1132,13 +1132,13 @@ function sendTextMessage() {
 
         websocket.send(JSON.stringify(listenMessage));
         addMessage(message, true);
-        console.log(`发送文本消息: ${message}`);
+        console.log(`text message sent: ${message}`);
 
         if (messageInput) {
             messageInput.value = '';
         }
     } catch (error) {
-        console.error(`发送消息错误:`, error);
+        console.error(`error sending message:`, error);
     }
 }
 
@@ -1179,40 +1179,40 @@ function updateStatus(message, type = 'info') {
 // 处理文本消息
 function handleTextMessage(message) {
     if (message.type === 'hello') {
-        console.log(`服务器回应：${JSON.stringify(message, null, 2)}`);
+        console.log(`server response：${JSON.stringify(message, null, 2)}`);
     } else if (message.type === 'tts') {
         // TTS状态消息
         if (message.state === 'start') {
-            console.log('服务器开始发送语音');
+            console.log('server start to send audio');
         } else if (message.state === 'sentence_start') {
-            console.log(`服务器发送语音段: ${message.text}`);
+            console.log(`server audio segment: ${message.text}`);
             // 添加文本到会话记录
             if (message.text) {
                 addMessage(message.text);
             }
         } else if (message.state === 'sentence_end') {
-            console.log(`语音段结束: ${message.text}`);
+            console.log(`audio segment ended: ${message.text}`);
         } else if (message.state === 'stop') {
-            console.log('服务器语音传输结束');
+            console.log('Server audio transmission completed');
         }
     } else if (message.type === 'audio') {
         // 音频控制消息
-        console.log(`收到音频控制消息: ${JSON.stringify(message)}`);
+        console.log(`Audio control message received: ${JSON.stringify(message)}`);
     } else if (message.type === 'stt') {
         // 语音识别结果
-        console.log(`识别结果: ${message.text}`);
+        console.log(`Recognition result: ${message.text}`);
         // 添加识别结果到会话记录
-        addMessage(`[语音识别] ${message.text}`, true);
+        addMessage(`[Audio recognition] ${message.text}`, true);
     } else if (message.type === 'llm') {
         // 大模型回复
-        console.log(`大模型回复: ${message.text}`);
+        console.log(`LLM reply: ${message.text}`);
         // 添加大模型回复到会话记录
         if (message.text && message.text !== '😊') {
             addMessage(message.text);
         }
     } else {
         // 未知消息类型
-        console.log(`未知消息类型: ${message.type}`);
+        console.log(`unknown message type: ${message.type}`);
         addMessage(JSON.stringify(message, null, 2));
     }
 }
@@ -1220,17 +1220,17 @@ function handleTextMessage(message) {
 // 发送语音数据到WebSocket
 function sendOpusDataToServer(opusData) {
     if (!websocket || websocket.readyState !== WebSocket.OPEN) {
-        console.error('WebSocket未连接，无法发送音频数据');
+        console.error('WebSocket disconnected, audio data cannot be sent');
         return false;
     }
 
     try {
         // 发送二进制数据
         websocket.send(opusData.buffer);
-        console.log(`已发送Opus音频数据: ${opusData.length}字节`);
+        console.log(`Opus audio sent: ${opusData.length}字节`);
         return true;
     } catch (error) {
-        console.error(`发送音频数据失败:`, error);
+        console.error(`failed to send audio data:`, error);
         return false;
     }
 }
@@ -1247,8 +1247,8 @@ function sendVoiceControlMessage(state) {
         };
 
         websocket.send(JSON.stringify(message));
-        console.log(`发送语音${state === 'start' ? '开始' : '结束'}控制消息`);
+        console.log(`Sent voice${state === 'start' ? 'start' : 'ends'}control message`);
     } catch (error) {
-        console.error(`发送语音控制消息失败:`, error);
+        console.error(`Failed to send voice control message:`, error);
     }
 }

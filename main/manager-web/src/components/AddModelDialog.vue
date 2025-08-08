@@ -10,7 +10,7 @@
         ×
       </button>
 
-      <!-- 模型信息部分 -->
+      <!-- Model Info -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <div style="font-size: 20px; font-weight: bold; color: #3d4566;">Model Info</div>
         <div style="display: flex; align-items: center; gap: 20px;">

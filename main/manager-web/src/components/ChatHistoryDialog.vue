@@ -94,9 +94,9 @@ export default {
             if (!this.messages || this.messages.length === 0) return [];
 
             const result = [];
-            const TIME_INTERVAL = 60 * 1000; // 1分钟的时间间隔（毫秒）
+            const TIME_INTERVAL = 60 * 1000; // 1min time gap
 
-            // 添加第一条消息的时间标记
+            // time label of the first message 
             if (this.messages[0]) {
                 result.push({
                     type: 'time',
@@ -105,12 +105,12 @@ export default {
                 });
             }
 
-            // 处理消息列表
+            // message_list 
             for (let i = 0; i < this.messages.length; i++) {
                 const currentMessage = this.messages[i];
                 result.push(currentMessage);
 
-                // 检查是否需要添加时间标记
+                // check if time label needs to be added
                 if (i < this.messages.length - 1) {
                     const currentTime = new Date(currentMessage.createdAt).getTime();
                     const nextTime = new Date(this.messages[i + 1].createdAt).getTime();
@@ -187,7 +187,7 @@ export default {
 
             this.scrollTimer = setTimeout(() => {
                 const { scrollTop, scrollHeight, clientHeight } = e.target;
-                // 当滚动到底部时加载更多
+                // When scroll down, load more
                 if (scrollHeight - scrollTop <= clientHeight + 50) {
                     this.loadSessions();
                 }
@@ -222,7 +222,7 @@ export default {
         },
         playAudio(message) {
             if (this.playingAudioId === message.audioId) {
-                // 如果正在播放当前音频，则停止播放
+                // If current audio playing , stop 
                 if (this.audioElement) {
                     this.audioElement.pause();
                     this.audioElement = null;
@@ -231,17 +231,17 @@ export default {
                 return;
             }
 
-            // 停止当前正在播放的音频
+            // stop current playing audio
             if (this.audioElement) {
                 this.audioElement.pause();
                 this.audioElement = null;
             }
 
-            // 先获取音频下载ID
+            // get Audio ID
             this.playingAudioId = message.audioId;
             Api.agent.getAudioId(message.audioId, (res) => {
                 if (res.data && res.data.data) {
-                    // 使用获取到的下载ID播放音频
+                    // Play　Audio with ID　obtained
                     this.audioElement = new Audio(Api.getServiceUrl() + `/agent/play/${res.data.data}`);
 
                     this.audioElement.onended = () => {
@@ -254,17 +254,17 @@ export default {
             });
         },
         getUserAvatar(sessionId) {
-            // 从 sessionId 中提取所有数字
+            // extract all numbers from sessionId
             const numbers = sessionId.match(/\d+/g);
             if (!numbers) return require('@/assets/user-avatar1.png');
 
-            // 将所有数字相加
+            // add all numbers
             const sum = numbers.reduce((acc, num) => acc + parseInt(num), 0);
 
-            // 计算模5并加1，得到1-5之间的数字
+            // get a number between 1 and 5
             const avatarIndex = (sum % 5) + 1;
 
-            // 返回对应的头像图片
+            // return avatar photo
             return require(`@/assets/user-avatar${avatarIndex}.png`);
         }
     }
@@ -442,6 +442,6 @@ export default {
     padding: 0;
     overflow: hidden;
     height: calc(90vh - 54px);
-    /* 减去标题栏的高度 */
+    /* reduce the height of heading */
 }
 </style>

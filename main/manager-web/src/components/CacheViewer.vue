@@ -110,22 +110,22 @@ export default {
       this.isLoading = true;
       
       try {
-        // 先检查是否支持缓存API
+        // cache API availability
         if (!('caches' in window)) {
           this.cacheAvailable = false;
           this.isLoading = false;
           return;
         }
         
-        // 检查是否有Service Worker缓存
+        // Service Worker cache
         const cacheNames = await getCacheNames();
         this.cacheAvailable = cacheNames.length > 0;
         
         if (this.cacheAvailable) {
-          // 获取CDN缓存状态
+          // get CDN cache
           this.cacheData = await checkCdnCacheStatus();
           
-          // 在控制台输出完整缓存状态
+          // output cache status in control panel
           await logCacheStatus();
         }
       } catch (error) {

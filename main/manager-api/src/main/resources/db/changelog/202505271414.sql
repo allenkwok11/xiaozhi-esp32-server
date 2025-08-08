@@ -1,14 +1,14 @@
 -- 本地短期记忆配置可以设置独立的LLM
-update `ai_model_provider` set fields =  '[{"key":"llm","label":"LLM模型","type":"string"}]' where  id = 'SYSTEM_Memory_mem_local_short';
+update `ai_model_provider` set fields =  '[{"key":"llm","label":"LLM model","type":"string"}]' where  id = 'SYSTEM_Memory_mem_local_short';
 update `ai_model_config` set config_json =  '{\"type\": \"mem_local_short\", \"llm\": \"LLM_ChatGLMLLM\"}' where  id = 'Memory_mem_local_short';
 
--- 增加火山双流式TTS供应器和模型配置
-delete from `ai_model_provider` where id = 'SYSTEM_TTS_HSDSTTS';
+-- Add Volcano Engine Dual-Stream TTS provider and model configuration
+DELETE FROM `ai_model_provider` WHERE id = 'SYSTEM_TTS_HSDSTTS';
 INSERT INTO `ai_model_provider` (`id`, `model_type`, `provider_code`, `name`, `fields`, `sort`, `creator`, `create_date`, `updater`, `update_date`) VALUES
-('SYSTEM_TTS_HSDSTTS', 'TTS', 'huoshan_double_stream', '火山双流式语音合成', '[{"key":"ws_url","label":"WebSocket地址","type":"string"},{"key":"appid","label":"应用ID","type":"string"},{"key":"access_token","label":"访问令牌","type":"string"},{"key":"resource_id","label":"资源ID","type":"string"},{"key":"speaker","label":"默认音色","type":"string"}]', 13, 1, NOW(), 1, NOW());
+('SYSTEM_TTS_HSDSTTS', 'TTS', 'huoshan_double_stream', 'Volcano Engine Dual-Stream TTS', '[{"key":"ws_url","label":"WebSocket URL","type":"string"},{"key":"appid","label":"App ID","type":"string"},{"key":"access_token","label":"Access Token","type":"string"},{"key":"resource_id","label":"Resource ID","type":"string"},{"key":"speaker","label":"Default Voice","type":"string"}]', 13, 1, NOW(), 1, NOW());
 
 delete from `ai_model_config` where id = 'TTS_HuoshanDoubleStreamTTS';
-INSERT INTO `ai_model_config` VALUES ('TTS_HuoshanDoubleStreamTTS', 'TTS', 'HuoshanDoubleStreamTTS', '火山双流式语音合成', 0, 1, '{\"type\": \"huoshan_double_stream\", \"ws_url\": \"wss://openspeech.bytedance.com/api/v3/tts/bidirection\", \"appid\": \"你的火山引擎语音合成服务appid\", \"access_token\": \"你的火山引擎语音合成服务access_token\", \"resource_id\": \"volc.service_type.10029\", \"speaker\": \"zh_female_wanwanxiaohe_moon_bigtts\"}', NULL, NULL, 16, NULL, NULL, NULL, NULL);
+INSERT INTO `ai_model_config` VALUES ('TTS_HuoshanDoubleStreamTTS', 'TTS', 'HuoshanDoubleStreamTTS', 'Volcano Engine Dual-Stream TTS', 0, 1, '{\"type\": \"huoshan_double_stream\", \"ws_url\": \"wss://openspeech.bytedance.com/api/v3/tts/bidirection\", \"appid\": \"your_volcano_engine_appid\", \"access_token\": \"your_volcano_engine_access_token\", \"resource_id\": \"volc.service_type.10029\", \"speaker\": \"zh_female_wanwanxiaohe_moon_bigtts\"}', NULL, NULL, 16, NULL, NULL, NULL, NULL);
 
 -- 火山双流式TT模型配置说明文档
 UPDATE `ai_model_config` SET 

@@ -36,13 +36,13 @@ class ManageApiClient:
         cls.config = config.get("manager-api")
 
         if not cls.config:
-            raise Exception("manager-api配置错误")
+            raise Exception("manager-api config error")
 
         if not cls.config.get("url") or not cls.config.get("secret"):
-            raise Exception("manager-api的url或secret配置错误")
+            raise Exception("configuration error in url or secret of manager-api ")
 
         if "你" in cls.config.get("secret"):
-            raise Exception("请先配置manager-api的secret")
+            raise Exception("Please config manager-api secret first")
 
         cls._secret = cls.config.get("secret")
         cls.max_retries = cls.config.get("max_retries", 6)  # 最大重试次数
@@ -74,7 +74,7 @@ class ManageApiClient:
         elif result.get("code") == 10042:
             raise DeviceBindException(result.get("msg"))
         elif result.get("code") != 0:
-            raise Exception(f"API返回错误: {result.get('msg', '未知错误')}")
+            raise Exception(f"API return error: {result.get('msg', 'unknown error')}")
 
         # 返回成功数据
         return result.get("data") if result.get("code") == 0 else None
@@ -109,7 +109,7 @@ class ManageApiClient:
                 if retry_count < cls.max_retries and cls._should_retry(e):
                     retry_count += 1
                     print(
-                        f"{method} {endpoint} 请求失败，将在 {cls.retry_delay:.1f} 秒后进行第 {retry_count} 次重试"
+                        f"{method} {endpoint} request fails. After {cls.retry_delay:.1f} seconds, will retry for {retry_count} times"
                     )
                     time.sleep(cls.retry_delay)
                     continue
@@ -155,7 +155,7 @@ def save_mem_local_short(mac_address: str, short_momery: str) -> Optional[Dict]:
             },
         )
     except Exception as e:
-        print(f"存储短期记忆到服务器失败: {e}")
+        print(f"failed to store local memory to server: {e}")
         return None
 
 
@@ -181,7 +181,7 @@ def report(
             },
         )
     except Exception as e:
-        print(f"TTS上报失败: {e}")
+        print(f"TTS upload fail: {e}")
         return None
 
 

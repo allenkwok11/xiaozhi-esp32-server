@@ -1,7 +1,7 @@
 -- 增加LinkeraiTTS供应器和模型配置
 delete from `ai_model_provider` where id = 'SYSTEM_TTS_LinkeraiTTS';
 INSERT INTO `ai_model_provider` (`id`, `model_type`, `provider_code`, `name`, `fields`, `sort`, `creator`, `create_date`, `updater`, `update_date`) VALUES
-('SYSTEM_TTS_LinkeraiTTS', 'TTS', 'linkerai', 'Linkerai语音合成', '[{"key":"api_url","label":"API地址","type":"string"},{"key":"audio_format","label":"音频格式","type":"string"},{"key":"access_token","label":"访问令牌","type":"string"},{"key":"voice","label":"默认音色","type":"string"}]', 14, 1, NOW(), 1, NOW());
+('SYSTEM_TTS_LinkeraiTTS', 'TTS', 'linkerai', 'Linkerai Text-to-Speech', '[{"key":"api_url","label":"API URL","type":"string"},{"key":"audio_format","label":"Audio Format","type":"string"},{"key":"access_token","label":"Access Token","type":"string"},{"key":"voice","label":"Default Voice","type":"string"}]', 14, 1, NOW(), 1, NOW());
 
 delete from `ai_model_config` where id = 'TTS_LinkeraiTTS';
 INSERT INTO `ai_model_config` VALUES ('TTS_LinkeraiTTS', 'TTS', 'LinkeraiTTS', 'Linkerai语音合成', 0, 1, '{\"type\": \"linkerai\", \"api_url\": \"https://tts.linkerai.cn/tts\", \"audio_format\": \"pcm\", \"access_token\": \"U4YdYXVfpwWnk2t5Gp822zWPCuORyeJL\", \"voice\": \"OUeAo1mhq6IBExi\"}', NULL, NULL, 17, NULL, NULL, NULL, NULL);
