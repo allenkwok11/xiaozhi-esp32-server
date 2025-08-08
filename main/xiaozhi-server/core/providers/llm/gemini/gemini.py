@@ -1,7 +1,8 @@
-import os, json, uuid
+import os
+import json
+import uuid
 from types import SimpleNamespace
 from typing import Any, Dict, List, Generator, Tuple, Optional
-import re
 
 import vertexai
 from vertexai.generative_models import GenerativeModel, Tool, FunctionDeclaration, Part, Content
@@ -56,6 +57,14 @@ Remember: Execute functions silently, then speak naturally about the action.
 """
 
 class LLMProvider(LLMProviderBase):
+    """
+    Stateless Vertex AI Gemini provider optimized for MCP:
+    - Rebuilds system instruction, full dialogue, and tools every request
+    - Uses generate_content(stream=True) instead of persistent chats
+    - Streams text chunks directly; passes through function_call parts
+    - Handles GeneratorExit correctly (no yields after close)
+    """
+
     def __init__(self, cfg: Dict[str, Any]):
         log.bind(tag=TAG).info(f"Initializing Gemini Vertex AI provider with config: {cfg}")
         try:
@@ -66,13 +75,13 @@ class LLMProvider(LLMProviderBase):
             if not credentials_path or not os.path.exists(credentials_path):
                 raise KeyError("GOOGLE_APPLICATION_CREDENTIALS environment variable is not set or points to a non-existent file.")
         except KeyError as e:
-            log.bind(tag=TAG).error(f"Configuration missing for Vertex AI. Required key not found: {e}. Please set the GOOGLE_APPLICATION_CREDENTIALS environment variable.")
+            log.bind(tag=TAG).error(
+                f"Configuration missing for Vertex AI. Required key not found: {e}. "
+                f"Please set the GOOGLE_APPLICATION_CREDENTIALS environment variable."
+            )
             raise e
 
         vertexai.init()
-        self.model = GenerativeModel(self.model_name)
-        self.chats: Dict[str, Any] = {}
-
         self.gen_cfg = {
             "temperature": 0.7,
             "top_p": 0.9,
@@ -81,7 +90,7 @@ class LLMProvider(LLMProviderBase):
         }
 
     @staticmethod
-    def _build_tools(funcs: List[Dict[str, Any]] | None):
+    def _build_tools(funcs: Optional[List[Dict[str, Any]]]):
         if not funcs:
             return None
         return [
@@ -98,233 +107,283 @@ class LLMProvider(LLMProviderBase):
         ]
 
     def response(self, session_id: str, dialogue: List[Dict], **kwargs) -> Generator[str, None, None]:
-        """Generate response without function calls - optimized for speed"""
+        """
+        Generate a response without function calling. Streams plain text chunks.
+        session_id is ignored to keep the provider stateless per MCP turn.
+        """
         try:
-            for content in self._generate(session_id, dialogue, None):
+            for content in self._generate_stateless(dialogue, tools=None):
                 if isinstance(content, str) and content.strip():
-                    # Quick filter for obvious code patterns only
-                    if not self._is_obvious_code(content):
-                        yield content
+                    yield content
+        except GeneratorExit:
+            # Consumer closed the generator; stop cleanly
+            raise
         except Exception as e:
             log.bind(tag=TAG).error(f"Error in response generation: {e}")
-            yield f"I apologize, but I encountered an error. Please try again."
+            yield "I apologize, but I encountered an error. Please try again."
 
-    def response_with_functions(self, session_id: str, dialogue: List[Dict], functions=None) -> Generator[Tuple[Optional[str], Optional[List]], None, None]:
-        """Generate response with function calls - optimized for speed"""
+    def response_with_functions(
+        self,
+        session_id: str,
+        dialogue: List[Dict],
+        functions: Optional[List[Dict[str, Any]]] = None
+    ) -> Generator[Tuple[Optional[str], Optional[List]], None, None]:
+        """
+        Generate response with function calls.
+        Yields (text_chunk, None) for text tokens,
+        then (None, [function_calls]) if any were emitted,
+        and finally (None, None) to signal completion.
+        """
         try:
-            for result in self._generate(session_id, dialogue, self._build_tools(functions)):
-                yield result
+            tools = self._build_tools(functions)
+            termination_sent = False
+            for result in self._generate_stateless(dialogue, tools=tools):
+                if isinstance(result, tuple):
+                    yield result
+                elif isinstance(result, str):
+                    yield result, None
+            # Normal completion: ensure a final termination signal
+            yield None, None
+            termination_sent = True
+        except GeneratorExit:
+            # Upstream closed; do not yield anything during close
+            raise
         except Exception as e:
             log.bind(tag=TAG).error(f"Error in function call streaming: {e}")
-            yield f"I encountered an error: {str(e)}", None
+            try:
+                yield f"I encountered an error: {str(e)}", None
+                yield None, None
+            except GeneratorExit:
+                # If the consumer closed while we were reporting error, just stop
+                raise
 
-    def _generate(self, session_id: str, dialogue: List[Dict], tools):
-        """Simplified generation logic - similar to OpenAI approach"""
-        
-        chat = self.chats.get(session_id)
-        
-        # Create chat session only if needed 
-        if not chat:
-            chat = self._create_chat_session(session_id, dialogue)
+    def _generate_stateless(self, dialogue: List[Dict], tools):
+        """
+        Stateless generation:
+        - Rebuilds system instruction on every call
+        - Maps the entire dialogue into Vertex 'contents'
+        - Calls model.generate_content with streaming
+        """
+        if not dialogue:
+            if tools is None:
+                return
+            else:
+                # No content; still indicate completion for tool flows
+                yield None, None
+                return
 
-        # Get the latest message to send
-        latest_message = dialogue[-1] if dialogue else None
-        
-        if not latest_message or not latest_message.get("content"):
+        # Extract system instruction if present
+        system_instruction = None
+        working_dialogue = dialogue
+        if working_dialogue and working_dialogue[0].get("role") == "system":
+            original_instruction = working_dialogue[0].get("content", "")
+            system_instruction = f"""{emotional_prompt}
+
+{FUNCTION_CALLING_PROMPT}
+
+{original_instruction}"""
+            working_dialogue = working_dialogue[1:]
+
+        # No content to send
+        if not working_dialogue:
             if tools is None:
                 return
             else:
                 yield None, None
                 return
 
+        # Build contents from the full dialogue provided by MCP
         try:
-            stream = chat.send_message(
-                content=latest_message["content"],
+            contents: List[Content] = self._map_dialogue_to_contents(working_dialogue)
+        except GeneratorExit:
+            raise
+        except Exception as e:
+            log.bind(tag=TAG).error(f"Failed to map dialogue to contents: {e}")
+            if tools is None:
+                yield "I'm having technical difficulties. Please try again."
+            else:
+                yield "Technical issues occurred.", None
+                yield None, None
+            return
+
+        model = GenerativeModel(self.model_name, system_instruction=system_instruction)
+
+        stream = None
+        try:
+            stream = model.generate_content(
+                contents=contents,
                 generation_config=self.gen_cfg,
                 tools=tools,
                 stream=True,
             )
-            
-            # Simplified stream processing - similar to OpenAI
-            yield from self._process_stream_fast(stream, tools)
-            
+            yield from self._process_stream(stream, tools)
+        except GeneratorExit:
+            # Consumer closed; ensure stream is closed, then re-raise
+            self._cancel_stream(stream)
+            raise
         except Exception as e:
             log.bind(tag=TAG).error(f"Error calling Vertex AI: {e}")
             if tools is None:
-                yield f"I'm having technical difficulties. Please try again."
+                yield "I'm having technical difficulties. Please try again."
             else:
                 yield "Technical issues occurred.", None
+                yield None, None
+        finally:
+            # Best-effort cleanup; DO NOT yield here
+            self._cancel_stream(stream)
 
-    def _create_chat_session(self, session_id: str, dialogue: List[Dict]):
-        """Simplified chat creation - more like OpenAI stateless approach"""
+    def _cancel_stream(self, stream):
+        """Attempt to close/cancel the Vertex stream safely."""
+        if stream is None:
+            return
+        try:
+            # Some SDKs expose close(); others may have cancel()
+            if hasattr(stream, "close") and callable(getattr(stream, "close")):
+                stream.close()
+            elif hasattr(stream, "cancel") and callable(getattr(stream, "cancel")):
+                stream.cancel()
+        except Exception:
+            pass
+
+    def _map_dialogue_to_contents(self, dialogue: List[Dict]) -> List[Content]:
+        """
+        Map MCP-style dialogue to VertexAI Content list.
+        Supports:
+        - role=user|assistant text messages
+        - assistant tool_calls (function_call)
+        - tool/function responses (role='tool')
+        """
         role_map = {"assistant": "model", "user": "user"}
-        history: list[Content] = []
-        system_instruction = None
+        contents: List[Content] = []
 
-        # Handle system instruction
-        if dialogue and dialogue[0].get("role") == "system":
-            original_instruction = dialogue[0].get("content", "")
-            
-            # Simplified enhanced instruction
-            system_instruction = f"""
-{emotional_prompt}
-
-{FUNCTION_CALLING_PROMPT}
-
-{original_instruction}
-"""
-            dialogue = dialogue[1:]
-
-        model = GenerativeModel(self.model_name, system_instruction=system_instruction)
-
-
-        # Simplified history building - exclude last message
-        for m in dialogue[:-1]:
-            r = m["role"]
-            
-            try:
-                if r == "assistant" and "tool_calls" in m:
-                    tc = m["tool_calls"][0]
-                    history.append(Content(role="model", parts=[Part.from_dict({
-                        'function_call': {
-                            'name': tc['function']['name'],
-                            'args': json.loads(tc['function']['arguments'])
-                        }
-                    })]))
-                    continue
-
-                if r == "tool":
-                    history.append(Content(role="function", parts=[Part.from_dict({
-                        'function_response': {
-                            'name': m.get('name', 'unknown'),
-                            'response': {'content': str(m.get('content', ''))}
-                        }
-                    })]))
-                    continue
-
-                mapped_role = role_map.get(r)
-                if mapped_role:
-                    content_text = str(m.get("content", "")).strip()
-                    if content_text:
-                        history.append(Content(role=mapped_role, parts=[Part.from_text(content_text)]))
-                            
-            except Exception as e:
-                log.bind(tag=TAG).debug(f"Error processing dialogue message: {e}")
+        for m in dialogue:
+            r = m.get("role")
+            # Assistant function call(s)
+            if r == "assistant" and "tool_calls" in m and m["tool_calls"]:
+                for tc in m["tool_calls"]:
+                    try:
+                        args = tc["function"].get("arguments")
+                        if isinstance(args, str):
+                            args_dict = json.loads(args) if args.strip() else {}
+                        elif isinstance(args, dict):
+                            args_dict = args
+                        else:
+                            args_dict = {}
+                        contents.append(Content(
+                            role="model",
+                            parts=[Part.from_dict({
+                                "function_call": {
+                                    "name": tc["function"]["name"],
+                                    "args": args_dict
+                                }
+                            })]
+                        ))
+                    except Exception as e:
+                        log.bind(tag=TAG).debug(f"Error mapping assistant tool_call: {e}")
                 continue
 
-        chat = model.start_chat(history=history)
-        self.chats[session_id] = chat
-        return chat
+            # Tool/function response
+            if r == "tool":
+                try:
+                    contents.append(Content(
+                        role="function",
+                        parts=[Part.from_dict({
+                            "function_response": {
+                                "name": m.get("name", "unknown"),
+                                "response": {"content": str(m.get("content", ""))}
+                            }
+                        })]
+                    ))
+                except Exception as e:
+                    log.bind(tag=TAG).debug(f"Error mapping tool response: {e}")
+                continue
 
-    def _process_stream_fast(self, stream, tools) -> Generator:
-        """Fast stream processing - similar to OpenAI approach"""
+            # Regular user/assistant text
+            mapped_role = role_map.get(r)
+            if mapped_role:
+                text = str(m.get("content", "")).strip()
+                if text:
+                    contents.append(Content(role=mapped_role, parts=[Part.from_text(text)]))
+
+        return contents
+
+    def _process_stream(self, stream, tools) -> Generator:
+        """
+        Process Vertex streaming responses.
+        - Emits text chunks as str (tools is None) or (text, None) if tools are used
+        - Collects function calls and emits them once at the end as (None, [calls])
+        - Emits a final (None, None) only on normal completion when tools are used
+        """
         function_calls_found = []
-        
+        normal_completion = False
+
         try:
             for chunk in stream:
-                if not chunk.candidates:
+                if not getattr(chunk, "candidates", None):
                     continue
-                
                 candidate = chunk.candidates[0]
-                if not candidate.content or not candidate.content.parts:
+                if not getattr(candidate, "content", None) or not candidate.content.parts:
                     continue
-                
+
                 for part in candidate.content.parts:
-                    # Handle function calls
-                    if hasattr(part, 'function_call') and part.function_call:
-                        fc = part.function_call
-                        function_call = SimpleNamespace(
+                    fc = getattr(part, "function_call", None)
+                    if fc:
+                        try:
+                            args = dict(getattr(fc, "args", {}) or {})
+                        except Exception:
+                            args = {}
+                        function_calls_found.append(SimpleNamespace(
                             id=uuid.uuid4().hex,
                             type="function",
                             function=SimpleNamespace(
-                                name=fc.name,
-                                arguments=json.dumps(dict(fc.args), ensure_ascii=False),
+                                name=getattr(fc, "name", ""),
+                                arguments=json.dumps(args, ensure_ascii=False),
                             ),
-                        )
-                        function_calls_found.append(function_call)
-                        
-                    # Handle text content
-                    elif hasattr(part, 'text') and part.text:
-                        text_content = part.text.strip()
-                        if text_content:
-                            # Fast filtering - only check for obvious code patterns
-                            if tools is not None and self._is_obvious_code(text_content):
-                                # Try quick extraction
-                                extracted_function = self._quick_extract_function(text_content)
-                                if extracted_function:
-                                    function_call = SimpleNamespace(
-                                        id=uuid.uuid4().hex,
-                                        type="function",
-                                        function=SimpleNamespace(
-                                            name=extracted_function,
-                                            arguments="{}",
-                                        ),
-                                    )
-                                    function_calls_found.append(function_call)
-                                continue
-                            
-                            # Yield immediately - like OpenAI
-                            if tools is None:
-                                yield text_content
-                            else:
-                                yield text_content, None
+                        ))
+                        continue
 
-            # Return function calls if any were found
-            if function_calls_found and tools is not None:
+                    text = getattr(part, "text", None)
+                    if text:
+                        text_content = text.strip()
+                        if not text_content:
+                            continue
+                        if tools is None:
+                            yield text_content
+                        else:
+                            yield text_content, None
+
+            # Normal end of stream
+            normal_completion = True
+
+            if tools is not None and function_calls_found:
                 yield None, function_calls_found
-                
-        except Exception as e:
-            log.bind(tag=TAG).error(f"Error processing stream: {e}")
-            if tools is None:
-                yield f"Processing error."
-            else:
-                yield "Processing error.", None
-        finally:
+
             if tools is not None:
                 yield None, None
 
-    def _is_obvious_code(self, text: str) -> bool:
-        """Fast check for obvious code patterns only"""
-        if not text or len(text.strip()) == 0:
-            return False
-            
-        text_lower = text.lower().strip()
-        
-        # Only check the most obvious code patterns for speed
-        obvious_patterns = [
-            'print(',
-            'default_api.',
-            'self_chassis_',
-            '()',
-        ]
-        
-        for pattern in obvious_patterns:
-            if pattern in text_lower:
-                return True
-        
-        # Quick check for very short return-like values
-        if len(text.strip()) < 6 and text_lower in ['none', 'true', 'false']:
-            return True
-        
-        return False
-
-    def _quick_extract_function(self, text: str) -> Optional[str]:
-        """Quick function extraction - simplified"""
-        if not text:
-            return None
-            
-        # Quick regex for common patterns
-        if 'self_chassis_' in text.lower():
-            match = re.search(r'(self_chassis_\w+)', text, re.IGNORECASE)
-            if match:
-                return match.group(1)
-        
-        if 'shake' in text.lower():
-            return 'self_chassis_shake_body_start'
-        
-        return None
+        except GeneratorExit:
+            # Consumer closed; do not yield, just stop
+            raise
+        except Exception as e:
+            log.bind(tag=TAG).error(f"Error processing stream: {e}")
+            if tools is None:
+                try:
+                    yield "Processing error."
+                except GeneratorExit:
+                    raise
+            else:
+                try:
+                    yield "Processing error.", None
+                    yield None, None
+                except GeneratorExit:
+                    raise
+        finally:
+            # No yields here; just cleanup if needed (handled upstream)
+            pass
 
     def cleanup_session(self, session_id: str):
-        """Clean up session"""
-        if session_id in self.chats:
-            del self.chats[session_id]
+        """
+        Stateless provider: nothing to clean up.
+        Kept for interface compatibility.
+        """
+        return
