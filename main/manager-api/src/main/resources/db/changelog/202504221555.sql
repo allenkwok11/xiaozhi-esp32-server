@@ -1,7 +1,7 @@
--- 添加火山引擎边缘大模型网关（LLM + TTS）
-INSERT INTO `ai_model_config` VALUES ('LLM_VolcesAiGatewayLLM', 'LLM', 'VolcesAiGatewayTTS', '火山引擎边缘大模型网关', 0, 1, '{\"type\": \"openai\", \"base_url\": \"https://ai-gateway.vei.volces.com/v1\", \"model_name\": \"doubao-pro-32k-functioncall\", \"api_key\": \"你的网关访问密钥\"}', NULL, NULL, 14, NULL, NULL, NULL, NULL);
-INSERT INTO `ai_model_config` VALUES ('TTS_VolcesAiGatewayTTS', 'TTS', 'VolcesAiGatewayTTS', '火山引擎边缘大模型网关', 0, 1, '{\"type\": \"openai\", \"api_key\": \"你的网关访问密钥\", \"api_url\": \"https://ai-gateway.vei.volces.com/v1/audio/speech\", \"model\": \"doubao-tts\", \"voice\": \"zh_male_shaonianzixin_moon_bigtts\", \"speed\": 1, \"output_dir\": \"tmp/\"}', NULL, NULL, 15, NULL, NULL, NULL, NULL);
--- 添加火山引擎边缘大模型网关语音合成音色
+-- Add Volcano Engine Edge AI Gateway (LLM + TTS)
+INSERT INTO `ai_model_config` VALUES ('LLM_VolcesAiGatewayLLM', 'LLM', 'VolcesAiGatewayTTS', 'Volcano Engine Edge AI Gateway', 0, 1, '{\"type\": \"openai\", \"base_url\": \"https://ai-gateway.vei.volces.com/v1\", \"model_name\": \"doubao-pro-32k-functioncall\", \"api_key\": \"your_gateway_access_key\"}', NULL, NULL, 14, NULL, NULL, NULL, NULL);
+INSERT INTO `ai_model_config` VALUES ('TTS_VolcesAiGatewayTTS', 'TTS', 'VolcesAiGatewayTTS', 'Volcano Engine Edge AI Gateway', 0, 1, '{\"type\": \"openai\", \"api_key\": \"your_gateway_access_key\", \"api_url\": \"https://ai-gateway.vei.volces.com/v1/audio/speech\", \"model\": \"doubao-tts\", \"voice\": \"zh_male_shaonianzixin_moon_bigtts\", \"speed\": 1, \"output_dir\": \"tmp/\"}', NULL, NULL, 15, NULL, NULL, NULL, NULL);
+-- Add voice styles for Volcano Engine Edge AI Gateway TTS
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0001', 'TTS_VolcesAiGatewayTTS', '灿灿/Shiny', 'zh_female_cancan_mars_bigtts', '中文、美式英语', NULL, NULL, 1, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0002', 'TTS_VolcesAiGatewayTTS', '清新女声', 'zh_female_qingxinnvsheng_mars_bigtts', '中文', NULL, NULL, 2, NULL, NULL, NULL, NULL);
 INSERT INTO `ai_tts_voice` VALUES ('TTS_VolcesAiGatewayTTS_0003', 'TTS_VolcesAiGatewayTTS', '爽快思思/Skye', 'zh_female_shuangkuaisisi_moon_bigtts', '中文、美式英语', NULL, NULL, 3, NULL, NULL, NULL, NULL);

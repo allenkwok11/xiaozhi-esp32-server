@@ -51,7 +51,7 @@
                     style="width: 150px; height: 40px; cursor: pointer;" @click="fetchCaptcha" />
                 </div>
 
-                <!-- 手机验证码 -->
+                <!-- mobile verification code -->
 
                 <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
                   <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
@@ -67,19 +67,19 @@
                 </div>
               </template>
 
-              <!-- 密码输入框 -->
+              <!-- input box for password -->
               <div class="input-box">
                 <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
                 <el-input v-model="form.password" placeholder="Please enter Password" type="password" />
               </div>
 
-              <!-- 新增确认密码 -->
+              <!-- confirm new password -->
               <div class="input-box">
                 <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
                 <el-input v-model="form.confirmPassword" placeholder="Please confirm password" type="password" />
               </div>
 
-              <!-- 验证码部分保持相同 -->
+              <!-- same verification code box -->
               <div v-if="!enableMobileRegister"
                 style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
                 <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">

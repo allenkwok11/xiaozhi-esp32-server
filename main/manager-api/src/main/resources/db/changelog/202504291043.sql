@@ -1,10 +1,10 @@
 -- 增加FunASR服务语音识别模型供应器和配置
 DELETE FROM `ai_model_provider` WHERE `id` = 'SYSTEM_ASR_FunASRServer';
 INSERT INTO `ai_model_provider` (`id`, `model_type`, `provider_code`, `name`, `fields`, `sort`, `creator`, `create_date`, `updater`, `update_date`) VALUES
-('SYSTEM_ASR_FunASRServer', 'ASR', 'fun_server', 'FunASR服务语音识别', '[{"key":"host","label":"服务地址","type":"string"},{"key":"port","label":"端口号","type":"number"}]', 4, 1, NOW(), 1, NOW());
+('SYSTEM_ASR_FunASRServer', 'ASR', 'fun_server', 'FunASR Speech Recognition', '[{"key":"host","label":"服务地址","type":"string"},{"key":"port","label":"Port","type":"number"}]', 4, 1, NOW(), 1, NOW());
 
 DELETE FROM `ai_model_config` WHERE `id` = 'ASR_FunASRServer';
-INSERT INTO `ai_model_config` VALUES ('ASR_FunASRServer', 'ASR', 'FunASRServer', 'FunASR服务语音识别', 0, 1, '{\"type\": \"fun_server\", \"host\": \"127.0.0.1\", \"port\": 10096}', NULL, NULL, 5, NULL, NULL, NULL, NULL);
+INSERT INTO `ai_model_config` VALUES ('ASR_FunASRServer', 'ASR', 'FunASRServer', 'FunASR Speech Recognition', 0, 1, '{\"type\": \"fun_server\", \"host\": \"127.0.0.1\", \"port\": 10096}', NULL, NULL, 5, NULL, NULL, NULL, NULL);
 
 -- 修改ai_model_config表的remark字段类型为TEXT
 ALTER TABLE `ai_model_config` MODIFY COLUMN `remark` TEXT COMMENT '备注'; 

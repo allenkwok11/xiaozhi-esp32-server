@@ -1,5 +1,5 @@
 -- 更新模型供应器表
-UPDATE `ai_model_provider` SET fields = '[{"key": "host", "type": "string", "label": "服务地址"}, {"key": "port", "type": "number", "label": "端口号"}, {"key": "type", "type": "string", "label": "服务类型"}, {"key": "is_ssl", "type": "boolean", "label": "是否使用SSL"}, {"key": "api_key", "type": "string", "label": "API密钥"}, {"key": "output_dir", "type": "string", "label": "输出目录"}]' WHERE id = 'SYSTEM_ASR_FunASRServer';
+UPDATE `ai_model_provider` SET fields = '[{"key": "host", "type": "string", "label": "Service URL"}, {"key": "port", "type": "number", "label": "Port"}, {"key": "type", "type": "string", "label": "Service Type"}, {"key": "is_ssl", "type": "boolean", "label": "use SSL"}, {"key": "api_key", "type": "string", "label": "API key"}, {"key": "output_dir", "type": "string", "label": "Output directory"}]' WHERE id = 'SYSTEM_ASR_FunASRServer';
 
 -- 更新模型配置表
 UPDATE `ai_model_config` SET 

@@ -110,11 +110,11 @@ def setup_logging():
 
 def update_module_string(selected_module_str):
     """更新模块字符串并重新配置日志处理器"""
-    logger.debug(f"更新日志配置组件")
+    logger.debug(f"update logger config module")
     current_module = logger._core.extra["selected_module"]
 
     if current_module == selected_module_str:
-        logger.debug(f"组件未更改无需更新")
+        logger.debug(f"no module changed, no update needed")
         return
 
     try:
@@ -169,5 +169,5 @@ def update_module_string(selected_module_str):
         )
 
     except Exception as e:
-        logger.error(f"日志配置更新失败: {str(e)}")
+        logger.error(f"Logging Update fails: {str(e)}")
         raise

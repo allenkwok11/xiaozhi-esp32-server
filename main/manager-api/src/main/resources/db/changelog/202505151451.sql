@@ -1,6 +1,6 @@
 -- 修改自定义TTS接口请求定义
 update `ai_model_provider` set `fields` =
-'[{"key":"url","label":"服务地址","type":"string"},{"key":"method","label":"请求方式","type":"string"},{"key":"params","label":"请求参数","type":"dict","dict_name":"params"},{"key":"headers","label":"请求头","type":"dict","dict_name":"headers"},{"key":"format","label":"音频格式","type":"string"},{"key":"output_dir","label":"输出目录","type":"string"}]'
+'[{"key":"url","label":"Service URL","type":"string"},{"key":"method","label":"HTTP Method","type":"string"},{"key":"params","label":"Request Parameters","type":"dict","dict_name":"params"},{"key":"headers","label":"Request Headers","type":"dict","dict_name":"headers"},{"key":"format","label":"Audio Format","type":"string"},{"key":"output_dir","label":"Output Directory","type":"string"}]'
 where `id` = 'SYSTEM_TTS_custom';
 
 -- 修改自定义TTS配置说明

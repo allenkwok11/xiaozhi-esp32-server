@@ -93,7 +93,7 @@ async def no_voice_close_connect(conn, have_voice):
 
 
 async def max_out_size(conn):
-    text = "不好意思，我现在有点事情要忙，明天这个时候我们再聊，约好了哦！明天不见不散，拜拜！"
+    text = "Sorry, I'm currently busy with something. Let's chat again at this time tomorrow! It's a date! See you tomorrow, bye!"
     await send_stt_message(conn, text)
     file_path = "config/assets/max_output_size.wav"
     opus_packets, _ = audio_to_data(file_path)
