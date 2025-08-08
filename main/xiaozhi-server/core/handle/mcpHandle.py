@@ -204,6 +204,52 @@ async def handle_mcp_message(conn, mcp_client: MCPClient, payload: dict):
         method = payload["method"]
         conn.logger.bind(tag=TAG).info(f"MCP client-side request received: {method}")
 
+        # ====== SANTA TTS HANDLER (PLUGIN-BASED VERSION) ======
+        if method == "tts/speak":
+            try:
+                import urllib.parse
+                
+                # Get parameters
+                params = payload.get("params", {})
+                raw_text = params.get('text', '')
+                text = urllib.parse.unquote_plus(raw_text)  # Decode URL encoding
+                
+                conn.logger.bind(tag=TAG).info(f"🎅 Received Santa speak request: {text}")
+                
+                # Use the santa_speak plugin function
+                from plugins_func.functions.santa_speak import santa_speak
+                
+                # Call the plugin function
+                response = santa_speak(conn, text)
+                
+                # Send success response back to client
+                response_payload = {
+                    "jsonrpc": "2.0",
+                    "id": payload.get("id"),
+                    "result": {
+                        "success": True, 
+                        "message": response.response, 
+                        "text": text
+                    }
+                }
+                await send_mcp_message(conn, response_payload)
+                return
+                
+            except Exception as e:
+                conn.logger.bind(tag=TAG).error(f"❌ Santa TTS Error: {e}")
+                import traceback
+                conn.logger.bind(tag=TAG).error(f"❌ Full error: {traceback.format_exc()}")
+                
+                # Send error response back to client
+                error_payload = {
+                    "jsonrpc": "2.0",
+                    "id": payload.get("id"),
+                    "error": {"code": -1, "message": f"Santa TTS failed: {str(e)}"}
+                }
+                await send_mcp_message(conn, error_payload)
+                return
+        # ====== END SANTA TTS HANDLER ======
+
     elif "error" in payload:
         error_data = payload["error"]
         error_msg = error_data.get("message", "unknown error")
@@ -273,7 +319,7 @@ async def send_mcp_tools_list_continue_request(conn, cursor: str):
         "method": "tools/list",
         "params": {"cursor": cursor},
     }
-    conn.logger.bind(tag=TAG).info(f"sned MCP tool list with cursor request: {cursor}")
+    conn.logger.bind(tag=TAG).info(f"send MCP tool list with cursor request: {cursor}")
     await send_mcp_message(conn, payload)
 
 
