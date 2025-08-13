@@ -108,6 +108,7 @@ class MemoryProvider(MemoryProviderBase):
     def __init__(self, config, summary_memory):
         super().__init__(config)
         self.short_memory = ""
+        self.long_memory = {"entities": [], "relations": []}  # Enhanced with long-term memory storage
         self.save_to_file = True
         self.memory_path = get_project_dir() + "data/.memory.yaml"
         self.load_memory(summary_memory)
@@ -120,7 +121,7 @@ class MemoryProvider(MemoryProviderBase):
         self.load_memory(summary_memory)
 
     def load_memory(self, summary_memory):
-        # api获取到总结记忆后直接返回
+        # Return directly after getting summary memory from API
         if summary_memory or not self.save_to_file:
             self.short_memory = summary_memory
             return
@@ -130,21 +131,153 @@ class MemoryProvider(MemoryProviderBase):
             with open(self.memory_path, "r", encoding="utf-8") as f:
                 all_memory = yaml.safe_load(f) or {}
         if self.role_id in all_memory:
-            self.short_memory = all_memory[self.role_id]
+            mem = all_memory[self.role_id]
+            # Compatible with old format and new format
+            if isinstance(mem, str):
+                self.short_memory = mem
+            else:
+                self.short_memory = mem.get("short_term", "")
+                self.long_memory = mem.get("long_term", {"entities": [], "relations": []})
 
     def save_memory_to_file(self):
         all_memory = {}
         if os.path.exists(self.memory_path):
             with open(self.memory_path, "r", encoding="utf-8") as f:
                 all_memory = yaml.safe_load(f) or {}
-        all_memory[self.role_id] = self.short_memory
+        # Save both short-term and long-term memory
+        all_memory[self.role_id] = {
+            "short_term": self.short_memory,
+            "long_term": self.long_memory
+        }
         with open(self.memory_path, "w", encoding="utf-8") as f:
             yaml.dump(all_memory, f, allow_unicode=True)
 
+    def extract_observations_from_text(self, text):
+        """Extract entities and relations from text"""
+        lines = text.strip().split("\n")
+        entities = []
+        relations = []
+        now = time.strftime("%Y-%m-%d")
+
+        for line in lines:
+            # English and Chinese name extraction
+            if ("my name is" in line.lower() or "i am" in line.lower() or 
+                "我叫" in line or "我的名字" in line or "我是" in line):
+                name = ""
+                if "my name is" in line.lower():
+                    name = line.lower().split("my name is")[-1].strip().replace(".", "")
+                elif "i am" in line.lower():
+                    name = line.lower().split("i am")[-1].strip().replace(".", "")
+
+                # Only add if name is not empty and has meaningful content
+                if name and len(name.strip()) > 1:
+                    # Clean up the name - remove common prefixes
+                    name = name.replace("user:", "").replace("用户:", "").strip()
+                    # Remove articles and common words
+                    name = name.replace("the ", "").replace("a ", "").replace("an ", "").strip()
+                    if name and len(name.strip()) > 1:
+                        entities.append({"name": name, "entityType": "person", "observations": [f"named on {now}"], "score": 80, "last_updated": now})
+            elif ("like" in line.lower() or "喜欢" in line) and ("user:" in line.lower() or "用户:" in line):
+                # Extract what the user likes
+                liked_item = ""
+                if "like" in line.lower():
+                    # Extract content after "like"
+                    parts = line.lower().split("like")
+                    if len(parts) > 1:
+                        liked_item = parts[-1].strip().replace(".", "").replace("ing", "")
+                        # Remove "User:" prefix if present
+                        liked_item = liked_item.replace("user:", "").strip()
+                        # Remove common articles
+                        liked_item = liked_item.replace("to ", "").replace("the ", "").replace("a ", "").replace("an ", "").strip()
+
+                if liked_item and len(liked_item.strip()) > 1:
+                    entities.append({"name": liked_item, "entityType": "interest", "observations": [f"user likes {liked_item}"], "score": 75, "last_updated": now})
+                    relations.append({"from": "user", "to": liked_item, "relationType": "likes"})
+            elif "live in" in line.lower() or "住在" in line or "居住" in line:
+                location = ""
+                if "live in" in line.lower():
+                    location = line.lower().split("live in")[-1].strip().replace(".", "")
+                elif "住在" in line:
+                    location = line.split("住在")[-1].strip().replace("。", "")
+                elif "居住" in line:
+                    location = line.split("居住")[-1].strip().replace("在", "").replace("。", "")
+                
+                if location and len(location.strip()) > 1:
+                    # Clean up location - remove common prefixes
+                    location = location.replace("user:", "").replace("用户:", "").strip()
+                    location = location.replace("the ", "").replace("a ", "").replace("in ", "").strip()
+                    if location and len(location.strip()) > 1:
+                        entities.append({"name": location, "entityType": "location", "observations": [], "score": 60, "last_updated": now})
+                        relations.append({"from": "user", "to": location, "relationType": "lives_in"})
+            elif "work" in line.lower() or "工作" in line or "职业" in line:
+                job = ""
+                if "work" in line.lower():
+                    job = line.lower().split("work")[-1].strip().replace(".", "")
+                elif "工作" in line:
+                    job = line.split("工作")[-1].strip().replace("是", "").replace("。", "")
+                elif "职业" in line:
+                    job = line.split("职业")[-1].strip().replace("是", "").replace("。", "")
+                
+                if job and len(job.strip()) > 1:
+                    # Clean up job title - remove common prefixes
+                    job = job.replace("user:", "").replace("用户:", "").strip()
+                    job = job.replace("as a ", "").replace("as an ", "").replace("a ", "").replace("an ", "").strip()
+                    if job and len(job.strip()) > 1:
+                        entities.append({"name": job, "entityType": "job", "observations": [], "score": 70, "last_updated": now})
+                        relations.append({"from": "user", "to": job, "relationType": "works_as"})
+        return {"entities": entities, "relations": relations}
+
+    def trim_long_memory(self, max_entities=100):
+        """Clean up stale long-term memories"""
+        today = time.strftime("%Y-%m-%d")
+        def is_stale(entity):
+            try:
+                last = time.strptime(entity.get("last_updated", "1970-01-01"), "%Y-%m-%d")
+                age = (time.mktime(time.strptime(today, "%Y-%m-%d")) - time.mktime(last)) / 86400
+                return entity.get("score", 50) < 60 and age > 60
+            except:
+                return False
+        self.long_memory["entities"] = [e for e in self.long_memory["entities"] if not is_stale(e)]
+
+    def delete_memory_by_semantic(self, text: str):
+        """Delete memory based on semantic content"""
+        deleted = []
+        if "forget" in text.lower() or "delete" in text.lower() or "remove" in text.lower():
+            for e in list(self.long_memory["entities"]):
+                if e["name"].lower() in text.lower():
+                    self.long_memory["entities"].remove(e)
+                    deleted.append(f"Entity {e['name']} deleted")
+                else:
+                    matched_obs = [obs for obs in e.get("observations", []) if any(key.lower() in text.lower() for key in obs.split())]
+                    if matched_obs:
+                        for obs in matched_obs:
+                            e["observations"].remove(obs)
+                        e["score"] -= 10
+                        e["last_updated"] = time.strftime("%Y-%m-%d")
+                        deleted.append(f"Entity {e['name']} observations deleted: {matched_obs}")
+            
+            # Save changes to file if any deletions were made
+            if deleted and self.save_to_file:
+                self.save_memory_to_file()
+        
+        return deleted
+
+    def query_long_memory(self, keyword: str):
+        """Query long-term memory"""
+        matches = []
+        keyword_lower = keyword.lower()
+        for e in self.long_memory["entities"]:
+            if keyword_lower in e["name"].lower() or any(keyword_lower in obs.lower() for obs in e.get("observations", [])):
+                matches.append(e)
+        for r in self.long_memory["relations"]:
+            if keyword_lower in r["from"].lower() or keyword_lower in r["to"].lower() or keyword_lower in r["relationType"].lower():
+                matches.append(r)
+        return matches
+
     async def save_memory(self, msgs):
-        # 打印使用的模型信息
+        # Print model information being used
         model_info = getattr(self.llm, "model_name", str(self.llm.__class__.__name__))
-        logger.bind(tag=TAG).debug(f"使用记忆保存模型: {model_info}")
+        logger.bind(tag=TAG).debug(f"Using memory saving model: {model_info}")
         if self.llm is None:
             logger.bind(tag=TAG).error("LLM is not set for memory provider")
             return None
@@ -162,7 +295,7 @@ class MemoryProvider(MemoryProviderBase):
             msgStr += "历史记忆：\n"
             msgStr += self.short_memory
 
-        # 当前时间
+        # Current time
         time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         msgStr += f"当前时间：{time_str}"
 
@@ -175,8 +308,22 @@ class MemoryProvider(MemoryProviderBase):
             )
             json_str = extract_json_data(result)
             try:
-                json.loads(json_str)  # 检查json格式是否正确
+                json.loads(json_str)  # Check if JSON format is correct
                 self.short_memory = json_str
+                
+                # Extract long-term memory
+                graph_data = self.extract_observations_from_text(msgStr)
+                if graph_data["entities"] or graph_data["relations"]:
+                    existing_entity_names = {e["name"] for e in self.long_memory["entities"]}
+                    for entity in graph_data["entities"]:
+                        if entity["name"] not in existing_entity_names:
+                            self.long_memory["entities"].append(entity)
+
+                    for rel in graph_data["relations"]:
+                        if rel not in self.long_memory["relations"]:
+                            self.long_memory["relations"].append(rel)
+                
+                self.trim_long_memory()
                 self.save_memory_to_file()
             except Exception as e:
                 print("Error:", e)
