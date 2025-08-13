@@ -178,13 +178,13 @@ def _get_random_play_prompt(song_name):
     # 移除文件扩展名
     clean_name = os.path.splitext(song_name)[0]
     prompts = [
-        f"正在为您播放，{clean_name}",
-        f"请欣赏歌曲，{clean_name}",
-        f"即将为您播放，{clean_name}",
-        f"为您带来，{clean_name}",
-        f"让我们聆听，{clean_name}",
-        f"接下来请欣赏，{clean_name}",
-        f"为您献上，{clean_name}",
+        f"Now playing, {clean_name}",
+        f"Enjoy the song, {clean_name}",
+        f"About to play, {clean_name}",
+        f"Bringing you, {clean_name}",
+        f"Let's listen to, {clean_name}",
+        f"Next up, {clean_name}",
+        f"Presenting, {clean_name}",
     ]
     # 直接使用random.choice，不设置seed
     return random.choice(prompts)
@@ -214,10 +214,33 @@ async def play_local_music(conn, specific_file=None):
         if not os.path.exists(music_path):
             conn.logger.bind(tag=TAG).error(f"选定的音乐文件不存在: {music_path}")
             return
+        
         text = _get_random_play_prompt(selected_music)
         await send_stt_message(conn, text)
         conn.dialogue.put(Message(role="assistant", content=text))
 
+        # ADD THIS: Clear TTS queue before adding music content
+        conn.logger.bind(tag=TAG).info("Clearing TTS queue for music playback")
+        
+        # Clear text queue (this removes any pending "EMOTION:bell" content)
+        while not conn.tts.tts_text_queue.empty():
+            try:
+                conn.tts.tts_text_queue.get_nowait()
+            except:
+                break
+        
+        # Clear audio queue as well
+        while not conn.tts.tts_audio_queue.empty():
+            try:
+                conn.tts.tts_audio_queue.get_nowait()
+            except:
+                break
+
+        # Generate a new sentence ID for the music
+        import uuid
+        conn.sentence_id = str(uuid.uuid4()).replace("-", "")
+
+        # Now add music content to clean queue
         conn.tts.tts_text_queue.put(
             TTSMessageDTO(
                 sentence_id=conn.sentence_id,
