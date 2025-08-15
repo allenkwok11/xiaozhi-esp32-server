@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  xiaozhi-esp32-server:
+    build:
+      context: .
+      dockerfile: Dockerfile-server
+    container_name: xiaozhi-server
+    depends_on:
+      - xiaozhi-esp32-server-db
+      - xiaozhi-esp32-server-redis
+    restart: always
+    ports:
+      - "8000:8000"
+      - "8003:8003"
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - TZ=UTC
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/xiaozhi-esp32-server/vertex.json
+    volumes:
+      - ./main/xiaozhi-server/data:/opt/xiaozhi-esp32-server/data
+      - ./main/xiaozhi-server/models:/opt/xiaozhi-esp32-server/models:ro
+      - ./vertex-ai-credentials.json:/opt/xiaozhi-esp32-server/vertex.json:ro
+
+  xiaozhi-esp32-server-web:
+    build:
+      context: .
+      dockerfile: Dockerfile-web
+    container_name: xiaozhi-web
+    restart: always
+    depends_on:
+      - xiaozhi-esp32-server-db
+      - xiaozhi-esp32-server-redis
+    ports:
+      - "8002:8002"
+    environment:
+      - TZ=Asia/Shanghai
+      - SPRING_DATASOURCE_DRUID_URL=jdbc:mysql://xiaozhi-esp32-server-db:3306/xiaozhi_esp32_server?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true&connectTimeout=30000&socketTimeout=30000&autoReconnect=true&failOverReadOnly=false&maxReconnects=10
+      - SPRING_DATASOURCE_DRUID_USERNAME=root
+      - SPRING_DATASOURCE_DRUID_PASSWORD=123456
+      - SPRING_DATA_REDIS_HOST=xiaozhi-esp32-server-redis
+      - SPRING_DATA_REDIS_PORT=6379
+    volumes:
+      - ./main/xiaozhi-server/uploadfile:/uploadfile
+
+  xiaozhi-esp32-server-db:
+    image: mysql:latest
+    container_name: xiaozhi-esp32-server-db
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    expose:
+      - "3306"
+    volumes:
+      - ./main/xiaozhi-server/mysql/data:/var/lib/mysql
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=xiaozhi_esp32_server
+      - MYSQL_INITDB_ARGS=--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  xiaozhi-esp32-server-redis:
+    image: redis:latest
+    container_name: xiaozhi-esp32-server-redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    expose:
+      - "6379"
+
+networks:
+  default:
+    driver: bridge

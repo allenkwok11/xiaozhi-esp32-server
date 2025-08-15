@@ -1,29 +1,46 @@
-# 第一阶段：构建Python依赖
+# Stage 1: build Python dependencies
 FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
+# Install build dependencies required to compile native wheels (e.g. pyaudio)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        pkg-config \
+        portaudio19-dev \
+        libsndfile1 \
+        libasound2-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip/setuptools/wheel to improve wheel builds
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
 COPY main/xiaozhi-server/requirements.txt .
 
-# 安装Python依赖
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 第二阶段：生产镜像
+# Stage 2: production image
 FROM python:3.10-slim
 
 WORKDIR /opt/xiaozhi-esp32-server
 
-# 安装系统依赖
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libopus0 ffmpeg && \
+    apt-get install -y --no-install-recommends \
+        libopus0 \
+        ffmpeg \
+        libportaudio2 \
+        libsndfile1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 从构建阶段复制Python包和前端构建产物
+# Copy Python packages and frontend build artifacts from the builder stage
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
-# 复制应用代码
+# Copy application code
 COPY main/xiaozhi-server .
 
-# 启动应用
+# Start the application
 CMD ["python", "app.py"]

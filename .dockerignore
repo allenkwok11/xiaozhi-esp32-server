@@ -5,3 +5,11 @@ __pycache__
 Dockerfile
 tmp/
 data/
+# exclude runtime data and large files from build context
+main/xiaozhi-server/mysql/data
+main/xiaozhi-server/models
+main/xiaozhi-server/uploadfile
+main/xiaozhi-server/data
+*.tar
+*.log
+.vscode
