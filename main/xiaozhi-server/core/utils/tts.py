@@ -83,8 +83,8 @@ class MarkdownCleaner:
     # 这里要把 replace_xxx 的静态方法放在最前定义，以便在列表里能正确引用它们。
     REGEXES = [
         (re.compile(r'```.*?```', re.DOTALL), ''),  # 代码块
-        (re.compile(r'`\[EMOTION:\s*[^\]]+\s*\]`', re.IGNORECASE), ''),  # 情感标签 (backticks)
-        (re.compile(r'\[EMOTION:\s*[^\]]+\s*\]', re.IGNORECASE), ''),  # 情感标签 (plain)
+        (re.compile(r'`EMOTION:\s*[^\]]+\s*\]`', re.IGNORECASE), ''),  # 情感标签 (backticks)
+        (re.compile(r'EMOTION:\s*[^\]]+\s*\]', re.IGNORECASE), ''),  # 情感标签 (plain)
         (re.compile(r'^#+\s*', re.MULTILINE), ''),  # 标题
         (re.compile(r'(\*\*|__)(.*?)\1'), r'\2'),  # 粗体
         (re.compile(r'(\*|_)(?=\S)(.*?)(?<=\S)\1'), r'\2'),  # 斜体

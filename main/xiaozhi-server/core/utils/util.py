@@ -468,7 +468,7 @@ def parse_llm_response_with_emotion(text):
     import re
     
     # Pattern to match [EMOTION:emotion_name] - capture what comes after the colon, handle backticks
-    emotion_pattern = r'^\[EMOTION:`?([^`\]]+)`?\]\s*'
+    emotion_pattern = r'^EMOTION:`?([^`\]]+)`?\]\s*'
     match = re.match(emotion_pattern, text.strip())
     
     if match:
