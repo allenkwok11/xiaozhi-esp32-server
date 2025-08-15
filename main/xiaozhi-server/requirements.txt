@@ -37,3 +37,4 @@ portalocker==2.10.1
 google-cloud-aiplatform
 google-cloud-texttospeech
 google-cloud-speech
+pyaudio
