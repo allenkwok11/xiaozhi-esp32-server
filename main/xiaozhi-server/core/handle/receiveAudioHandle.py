@@ -88,7 +88,7 @@ async def no_voice_close_connect(conn, have_voice):
                 return
             prompt = end_prompt.get("prompt")
             if not prompt:
-                prompt = "请你以```时间过得真快```未来头，用富有感情、依依不舍的话来结束这场对话吧。！"
+                prompt = "Please start with something like 'Time flies' and close this conversation with a warm, heartfelt, and gently reluctant goodbye that gracefully ends the session."
             await startToChat(conn, prompt)
 
 
