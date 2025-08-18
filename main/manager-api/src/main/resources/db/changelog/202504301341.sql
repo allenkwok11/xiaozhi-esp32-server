@@ -82,4 +82,5 @@ INSERT INTO `sys_dict_data` (`id`, `dict_type_id`, `dict_label`, `dict_value`, `
 (101051, 101, '无名科技星智1.54(ML307)', 'xingzhi-cube-1.54tft-ml307', '无名科技星智1.54(ML307)', 51, 1, NOW(), 1, NOW()),
 (101052, 101, 'SenseCAP Watcher', 'sensecap-watcher', 'SenseCAP Watcher', 52, 1, NOW(), 1, NOW()),
 (101053, 101, '四博智联AI陪伴盒子', 'doit-s3-aibox', '四博智联AI陪伴盒子', 53, 1, NOW(), 1, NOW()),
-(101054, 101, '元控·青春', 'mixgo-nova', '元控·青春', 54, 1, NOW(), 1, NOW());
+(101054, 101, '元控·青春', 'mixgo-nova', '元控·青春', 54, 1, NOW(), 1, NOW()),
+(101055, 101, 'Hey Santa (ESP32-S3)', 'heysanta', 'Modified Lichung board by Mangdang', 55, 1, NOW(), 1, NOW());
