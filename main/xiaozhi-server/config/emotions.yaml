@@ -11,12 +11,6 @@ emotions:
     keywords: ["cookie", "treat", "sweet", "dessert", "cake", "pastry", "delicious", "tasty", "yummy", "snack"]
     weight: 1.0  # Standard weight for general joy
   
-  deer:
-    emoji: "🦌"
-    description: "Natural, calm, forest-related"
-    keywords: ["reindeer", "deer", "rudolph", "antlers", "forest", "woodland", "nature", "snow", "winter"]
-    weight: 0.8  # Lower weight for nature-themed emotions
-  
   heart:
     emoji: "❤️"
     description: "Love, care, warmth"
@@ -80,7 +74,7 @@ emotion_persistence:
   llm_base_score: 5.0  # Base score when LLM provides emotion tag
   
   # Decay parameters (radioactive half-life model)
-  half_life_chunks: 2.0  # Number of chunks for emotion strength to halve
+  half_life_chunks: 3.0  # Number of chunks for emotion strength to halve
   minimum_score: 0.1     # Minimum score before emotion is considered expired
   
   # Scoring weights for fair comparison
