@@ -27,7 +27,7 @@ emotional_prompt = f"""
     {emotion_list}
     - {emotion_manager.default_emotion}: Default/fallback emotion
 
-    IMPORTANT: Start each response with [EMOTION:emotion_name] where emotion_name is one of the emotions listed above. For example: [EMOTION:neutral] or [EMOTION:bell] or [EMOTION:star]
+    IMPORTANT: Start each response with [EMOTION:emotion_name] where emotion_name is one of the emotions listed above. For example: [EMOTION:neutral] or [EMOTION:bell] or [EMOTION:star]\n
 """
 
 
