@@ -476,7 +476,7 @@ def parse_llm_response_with_emotion(text):
         # Remove the emotion tag from the text
         clean_text = re.sub(emotion_pattern, '', text.strip())
         
-        logger.info(f"🎭 Found EMOTION tag: '{match.group(0)}' -> emotion: '{emotion}', clean_text: '{clean_text}'")
+        logger.debug(f"🎭 Found EMOTION tag: '{match.group(0)}' -> emotion: '{emotion}', clean_text: '{clean_text}'")
         
         # Validate that the emotion exists in our configuration
         if emotion_manager and emotion in emotion_manager.get_emotion_list():
@@ -502,7 +502,7 @@ def parse_llm_response_with_emotion(text):
         # Remove the emotion tag from the text
         clean_text = re.sub(emotion_pattern_alt, '', text.strip())
         
-        logger.info(f"🎭 Found alt emotion tag: '{match.group(0)}' -> emotion: '{emotion}', clean_text: '{clean_text}'")
+        logger.debug(f"🎭 Found alt emotion tag: '{match.group(0)}' -> emotion: '{emotion}', clean_text: '{clean_text}'")
         
         # Validate that the emotion exists in our configuration
         if emotion_manager and emotion in emotion_manager.get_emotion_list():
