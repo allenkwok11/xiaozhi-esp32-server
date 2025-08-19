@@ -751,9 +751,56 @@ class ConnectionHandler:
                             self.loop,
                         ).result()
                         self.logger.bind(tag=TAG).debug(f"MCP-tool call result: {result}")
-                        result = ActionResponse(
-                            action=Action.REQLLM, result=result, response=""
-                        )
+
+                        # If the MCP tool called is the system quit, handle exit here:
+                        try:
+                            is_quit_tool = function_name in (
+                                "self_system_quit",
+                                "self.system.quit",
+                                "system.quit",
+                            )
+                        except Exception:
+                            is_quit_tool = False
+
+                        if is_quit_tool:
+                            # Normalize tool output to text
+                            goodbye_text = None
+                            try:
+                                if isinstance(result, str):
+                                    goodbye_text = result
+                                elif isinstance(result, dict):
+                                    # try to extract content text
+                                    content = result.get("content")
+                                    if isinstance(content, list) and len(content) > 0:
+                                        first = content[0]
+                                        if isinstance(first, dict) and "text" in first:
+                                            goodbye_text = first["text"]
+                                else:
+                                    goodbye_text = str(result)
+                            except Exception:
+                                goodbye_text = str(result)
+
+                            # Speak goodbye if available
+                            try:
+                                if goodbye_text and hasattr(self, "tts") and self.tts:
+                                    # Use tts_one_sentence to speak a final line
+                                    self.tts.tts_one_sentence(self, ContentType.TEXT, content_detail=goodbye_text)
+                                    # also append to dialogue for history
+                                    self.dialogue.put(Message(role="assistant", content=goodbye_text))
+                            except Exception as e:
+                                self.logger.bind(tag=TAG).error(f"failed to play goodbye TTS: {e}")
+
+                            # Schedule connection close on the event loop and return a simple response
+                            try:
+                                asyncio.run_coroutine_threadsafe(self.close(self.websocket), self.loop)
+                            except Exception as e:
+                                self.logger.bind(tag=TAG).error(f"failed to schedule connection close: {e}")
+
+                            result = ActionResponse(action=Action.RESPONSE, result=None, response=goodbye_text or "Goodbye")
+                        else:
+                            result = ActionResponse(
+                                action=Action.REQLLM, result=result, response=""
+                            )
                     except Exception as e:
                         self.logger.bind(tag=TAG).error(f"failed to call MCP tool: {e}")
                         result = ActionResponse(

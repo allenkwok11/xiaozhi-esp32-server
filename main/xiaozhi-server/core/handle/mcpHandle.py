@@ -3,6 +3,8 @@ import asyncio
 from concurrent.futures import Future
 from core.utils.util import get_vision_url, sanitize_tool_name
 from core.utils.auth import AuthToken
+from core.providers.tts.dto.dto import ContentType
+from core.utils.dialogue import Message
 
 TAG = __name__
 
@@ -248,6 +250,24 @@ async def handle_mcp_message(conn, mcp_client: MCPClient, payload: dict):
                 }
                 await send_mcp_message(conn, error_payload)
                 return
+        # ====== SYSTEM QUIT HANDLER ======
+        if method in ("self_system_quit", "self.system.quit", "system.quit", "system/quit"):
+            try:
+                params = payload.get("params", {}) or {}
+                goodbye_text = params.get("say_goodbye") or params.get("text") or "Goodbye"
+                conn.logger.bind(tag=TAG).info(f"Received quit request from client, saying goodbye: {goodbye_text}")
+                try:
+                    if goodbye_text and hasattr(conn, "tts") and conn.tts:
+                        conn.tts.tts_one_sentence(conn, ContentType.TEXT, content_detail=goodbye_text)
+                        conn.dialogue.put(Message(role="assistant", content=goodbye_text))
+                except Exception as e:
+                    conn.logger.bind(tag=TAG).error(f"failed to play goodbye TTS: {e}")
+
+                # close connection
+                await conn.close(conn.websocket)
+                return
+            except Exception as e:
+                conn.logger.bind(tag=TAG).error(f"error handling quit request: {e}")
         # ====== END SANTA TTS HANDLER ======
 
     elif "error" in payload:
