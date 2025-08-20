@@ -327,8 +327,9 @@ def get_time_zone(conn, user_input: str):
         location = timezone.split('/')[-1].replace('_', ' ')
         basic_response = f"It's {time_str} on {date_str} in {location}"
         
-        # Let LLM format it conversationally
-        formatted_response = _format_response_with_llm(basic_response, user_input, conn)
+        # Let LLM format it conversationally; include the ISO datetime and natural date so the LLM sees the exact year
+        raw_for_llm = f"{basic_response} (ISO:{dt.isoformat()}, date:{dt.strftime('%m/%d/%Y')}, year:{dt.year})"
+        formatted_response = _format_response_with_llm(raw_for_llm, user_input, conn)
         
         return ActionResponse(
             action=Action.RESPONSE, 
