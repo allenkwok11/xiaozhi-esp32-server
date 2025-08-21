@@ -45,14 +45,14 @@
               <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
               <el-input v-model="form.password" placeholder="please enter Password" type="password" />
             </div>
-            <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
+            <!-- <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
               <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
                 <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png" />
                 <el-input v-model="form.captcha" placeholder="please enter Verification Code" style="flex: 1;" />
               </div>
               <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="Verification Code"
                 style="width: 150px; height: 40px; cursor: pointer;" @click="fetchCaptcha" />
-            </div>
+            </div> -->
             <div
               style="font-weight: 400;font-size: 14px;text-align: left;color: #5778ff;display: flex;justify-content: space-between;margin-top: 20px;">
               <div v-if="allowUserRegister" style="cursor: pointer;" @click="goToRegister">new user register</div>
@@ -190,11 +190,13 @@ export default {
         return;
       }
       // validate verification code
-      if (!this.validateInput(this.form.captcha, 'Verification Code cannot be empty')) {
-        return;
-      }
+      // if (!this.validateInput(this.form.captcha, 'Verification Code cannot be empty')) {
+      //   return;
+      // }
 
-      this.form.captchaId = this.captchaUuid
+      // this.form.captchaId = this.captchaUuid
+      this.form.captcha = '';
+      this.form.captchaId = '';
       Api.user.login(this.form, ({ data }) => {
         showSuccess('login successfully！');
         this.$store.commit('setToken', JSON.stringify(data.data));

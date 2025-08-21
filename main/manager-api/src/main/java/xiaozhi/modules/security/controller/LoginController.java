@@ -66,10 +66,10 @@ public class LoginController {
     @Operation(summary = "SMS verification code")
     public Result<Void> smsVerification(@RequestBody SmsVerificationDTO dto) {
         // 验证图形验证码
-        boolean validate = captchaService.validate(dto.getCaptchaId(), dto.getCaptcha(), true);
-        if (!validate) {
-            throw new RenException("wrong graphic verification code");
-        }
+        // boolean validate = captchaService.validate(dto.getCaptchaId(), dto.getCaptcha(), true);
+        // if (!validate) {
+        //     throw new RenException("wrong graphic verification code");
+        // }
         Boolean isMobileRegister = sysParamsService
                 .getValueObject(Constant.SysMSMParam.SERVER_ENABLE_MOBILE_REGISTER.getValue(), Boolean.class);
         if (!isMobileRegister) {
@@ -84,10 +84,10 @@ public class LoginController {
     @Operation(summary = "login")
     public Result<TokenDTO> login(@RequestBody LoginDTO login) {
         // 验证是否正确输入验证码
-        boolean validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha(), true);
-        if (!validate) {
-            throw new RenException("wrong graphic verification code, refresh to get a new one");
-        }
+        // boolean validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha(), true);
+        // if (!validate) {
+        //     throw new RenException("wrong graphic verification code, refresh to get a new one");
+        // }
         // 按照用户名获取用户
         SysUserDTO userDTO = sysUserService.getByUsername(login.getUsername());
         // 判断用户是否存在
@@ -122,12 +122,12 @@ public class LoginController {
             if (!validate) {
                 throw new RenException("SMS verification code error, please try again");
             }
-        } else {
+        // } else {
             // 验证是否正确输入验证码
-            validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha(), true);
-            if (!validate) {
-                throw new RenException("graphic verification code error, please try again");
-            }
+            // validate = captchaService.validate(login.getCaptchaId(), login.getCaptcha(), true);
+            // if (!validate) {
+            //     throw new RenException("graphic verification code error, please try again");
+            // }
         }
 
         // 按照用户名获取用户
