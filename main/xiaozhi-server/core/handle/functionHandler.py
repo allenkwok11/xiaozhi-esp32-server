@@ -41,6 +41,8 @@ class FunctionHandler:
         """注册必要的函数"""
         self.function_registry.register_function("handle_exit_intent")
         self.function_registry.register_function("get_time_zone")
+        self.function_registry.register_function("next_closest_holiday")
+        self.function_registry.register_function("get_public_holidays")
 
     def register_config_functions(self):
         """注册配置中的函数,可以不同客户端使用不同的配置"""
