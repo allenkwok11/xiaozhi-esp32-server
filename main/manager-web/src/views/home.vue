@@ -7,9 +7,11 @@
         <!-- 首页内容 -->
         <div class="add-device">
           <div class="add-device-bg">
+            <!--
             <div class="hellow-text" style="margin-top: 30px;">
               HI, XIAOZHI
             </div>
+            -->
             <div class="hellow-text">
               Let's have a 
               <div style="display: inline-block;color: #5778FF;">
